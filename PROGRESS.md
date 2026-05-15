@@ -35,7 +35,7 @@ Protocol:
 - [x] 2.5 Implement real runtime model probe - commit `5dd8cce`
 - [x] 2.6 Implement `POST /api/models/benchmark` - implemented before tracker
 - [x] 2.7 Implement `POST /api/models/unload` - implemented before tracker
-- [ ] 2.8 Default routing logic with runtime-aware fallbacks - partial
+- [x] 2.8 Default routing logic with runtime-aware fallbacks - commit `c906446`
 - [x] 2.9 Wire needed-feature-downloads and future-scaling endpoints - commit `75d054d`
 
 ## Phase 3 - Voice Loop
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `2.8 Default routing logic with runtime-aware fallbacks`.
+Next task: `3.1 Python voice module/service`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
