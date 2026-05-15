@@ -1,7 +1,8 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { createReadStream, existsSync, statSync } from "node:fs";
 import { randomBytes } from "node:crypto";
+import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { URL } from "node:url";
 import {
@@ -76,6 +77,25 @@ const pendingSystemActions = new Map<string, SystemAction>();
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
   response.writeHead(statusCode, JSON_HEADERS);
   response.end(JSON.stringify(body, null, 2));
+}
+
+function sendVoiceAsset(response: ServerResponse, fileName: string): void {
+  const safeName = basename(fileName);
+  const allowed = (status.voiceAssets ?? []).some((asset) => basename(asset.localPath) === safeName);
+  const filePath = join(VOICE_ASSET_ROOT, safeName);
+  if (!allowed || !existsSync(filePath)) {
+    sendJson(response, 404, { error: "Voice asset not found", fileName: safeName });
+    return;
+  }
+
+  const size = statSync(filePath).size;
+  response.writeHead(200, {
+    "access-control-allow-origin": "*",
+    "content-type": safeName.toLowerCase().endsWith(".mp3") ? "audio/mpeg" : "application/octet-stream",
+    "content-length": size,
+    "cache-control": "private, max-age=3600",
+  });
+  createReadStream(filePath).pipe(response);
 }
 
 function readBody(request: IncomingMessage): Promise<unknown> {
@@ -898,6 +918,12 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   }
 
   const url = new URL(request.url ?? "/", "http://localhost");
+
+  if (request.method === "GET" && url.pathname.startsWith("/api/assets/voice/")) {
+    const fileName = decodeURIComponent(url.pathname.slice("/api/assets/voice/".length));
+    sendVoiceAsset(response, fileName);
+    return;
+  }
 
   if (request.method === "GET" && url.pathname === "/api/events") {
     events.addClient(response);

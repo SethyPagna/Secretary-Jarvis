@@ -665,7 +665,7 @@ function VoicePanel({ status }: { status: JarvisStatus }) {
               <strong>{asset.label}</strong>
               <span>{asset.role} / {asset.fileName}</span>
             </div>
-            <audio controls preload="none" src={`/${asset.localPath}`} />
+            <audio controls preload="none" src={`${API_BASE_URL}/api/assets/voice/${encodeURIComponent(asset.fileName)}`} />
           </article>
         ))}
       </div>
