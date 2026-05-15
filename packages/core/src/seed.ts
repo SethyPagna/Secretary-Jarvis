@@ -216,7 +216,7 @@ export const seededStatus: JarvisStatus = {
   },
   protectedCore: {
     mode: "sealed",
-    protectedPaths: [
+      protectedPaths: [
       "packages/core/src/policy.ts",
       "services/gateway/src/server.ts",
       "models/huggingface",
@@ -464,7 +464,7 @@ export const seededStatus: JarvisStatus = {
       id: "memory-curator",
       name: "Mnemosyne",
       role: "Promotes durable memories and detects contradictions",
-      soulPath: "souls/memory-curator/SOUL.md",
+      soulPath: "souls/mnemosyne/SOUL.md",
       modelProfileId: "ollama-nomic-embed",
       permissions: ["read-local", "write-local"],
       status: "reviewing",
@@ -473,7 +473,7 @@ export const seededStatus: JarvisStatus = {
       id: "safety",
       name: "Sentinel",
       role: "Evaluates approvals, privacy scope, and prompt-injection risk",
-      soulPath: "souls/safety/SOUL.md",
+      soulPath: "souls/sentinel/SOUL.md",
       modelProfileId: "ollama-qwen3-8b",
       permissions: ["read-local"],
       status: "waiting-approval",
