@@ -14,6 +14,10 @@ import {
   createVoiceSession,
   neededFeatureDownloads,
   evaluateActionPolicy,
+  classifySystemCommand,
+  createSystemActionDraft,
+  createUndoJournalEntry,
+  isReversibleSystemCommand,
   readinessForModel,
   readyModelAssets,
   seededStatus,
@@ -713,8 +717,8 @@ function createSystemAction(params: {
 }): SystemAction {
   const timestamp = now();
   const actionId = id("system-action");
-  const category = params.category ?? classifySystemAction(params.command);
-  const reversible = isReversibleSystemAction(category, params.command);
+  const category = params.category ?? classifySystemCommand(params.command);
+  const reversible = isReversibleSystemCommand(category, params.command);
   const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
   const actionRequest: ActionRequest = {
     id: actionId,
@@ -732,70 +736,26 @@ function createSystemAction(params: {
     allowedConnectors: getEnabledConnectorIds(),
   });
 
-  return {
+  return createSystemActionDraft({
     id: actionId,
     label: params.label,
     category,
     command: params.command,
     target: params.target,
-    reversible,
-    approvalRequired: decision.decision !== "allow",
-    rollbackNote: reversible
-      ? "Jarvis will keep a 20-minute checkpoint so this change can be restored as if it did not happen."
-      : "This action cannot be perfectly undone; approval must acknowledge that limitation.",
-    status: decision.decision === "deny" ? "blocked" : decision.decision === "requires_approval" ? "waiting-approval" : "draft",
     createdAt: timestamp,
-    expiresAt: reversible ? expiresAt : undefined,
+    expiresAt,
     actionRequest,
     decision,
-  };
-}
-
-function classifySystemAction(command: string): ActionRequest["category"] {
-  if (/delete|remove|rm\b|del\b/i.test(command)) {
-    return "delete-local";
-  }
-  if (/powershell|\.ps1|cmd\.exe|script/i.test(command)) {
-    return "run-script";
-  }
-  if (/service|ollama serve|start|stop/i.test(command)) {
-    return "service-control";
-  }
-  if (/window|focus|minimize|maximize/i.test(command)) {
-    return "window-control";
-  }
-  if (/open|launch/i.test(command)) {
-    return "app-control";
-  }
-  if (/move|copy|rename|write|edit|organize/i.test(command)) {
-    return "write-local";
-  }
-  return "read-local";
-}
-
-function isReversibleSystemAction(category: ActionRequest["category"], command: string): boolean {
-  if (category === "read-local" || category === "app-control" || category === "window-control" || category === "service-control") {
-    return false;
-  }
-  return !/format|purchase|send|post|credential|account|factory|encrypt|wipe/i.test(command);
+  });
 }
 
 function createUndoEntry(action: SystemAction): UndoJournalEntry {
-  const timestamp = now();
-  return {
+  return createUndoJournalEntry({
     id: id("undo"),
-    actionId: action.id,
-    label: action.label,
-    target: action.target,
-    reversible: action.reversible,
-    status: action.reversible ? "available" : "not-reversible",
-    createdAt: timestamp,
-    expiresAt: action.expiresAt ?? new Date(Date.now() + 20 * 60 * 1000).toISOString(),
-    rollbackNote: action.rollbackNote,
-    snapshotSummary: action.reversible
-      ? `Checkpoint reserved for ${action.target}. Implementation will capture file/config state before execution.`
-      : `No perfect rollback is available for ${action.category}.`,
-  };
+    action,
+    createdAt: now(),
+    ttlMinutes: 20,
+  });
 }
 
 async function brainJson<T>(path: string, init?: RequestInit, timeoutMs = 3500): Promise<T | undefined> {

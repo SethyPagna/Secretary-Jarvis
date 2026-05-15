@@ -244,12 +244,15 @@ export class JarvisStore {
   addUndoJournalEntry(entry: UndoJournalEntry): void {
     this.db
       .prepare(
-        `INSERT INTO undo_journal (id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO undo_journal (
+           id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary, operation_json
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
            status = excluded.status,
            rollback_note = excluded.rollback_note,
-           snapshot_summary = excluded.snapshot_summary`,
+           snapshot_summary = excluded.snapshot_summary,
+           operation_json = excluded.operation_json`,
       )
       .run(
         entry.id,
@@ -262,14 +265,15 @@ export class JarvisStore {
         entry.expiresAt,
         entry.rollbackNote,
         entry.snapshotSummary,
+        JSON.stringify(entry.operation),
       );
   }
 
   getUndoJournalEntry(entryId: string): UndoJournalEntry | undefined {
     const row = this.db
       .prepare(
-        `SELECT id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary
-         FROM undo_journal WHERE id = ? OR action_id = ?`,
+        `SELECT id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary,
+         operation_json FROM undo_journal WHERE id = ? OR action_id = ?`,
       )
       .get(entryId, entryId) as UndoJournalRow | undefined;
     return row ? undoJournalFromRow(row) : undefined;
@@ -278,8 +282,8 @@ export class JarvisStore {
   listUndoJournal(limit = 80): UndoJournalEntry[] {
     const rows = this.db
       .prepare(
-        `SELECT id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary
-         FROM undo_journal ORDER BY created_at DESC LIMIT ?`,
+        `SELECT id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary,
+         operation_json FROM undo_journal ORDER BY created_at DESC LIMIT ?`,
       )
       .all(limit) as unknown as UndoJournalRow[];
     return rows.map(undoJournalFromRow);
@@ -367,9 +371,25 @@ export class JarvisStore {
         created_at TEXT NOT NULL,
         expires_at TEXT NOT NULL,
         rollback_note TEXT NOT NULL,
-        snapshot_summary TEXT NOT NULL
+        snapshot_summary TEXT NOT NULL,
+        operation_json TEXT NOT NULL DEFAULT '{"kind":"write-local","command":"unknown","dryRunOnly":true,"restoreStrategy":"state-marker"}'
       );
     `);
+    this.addColumnIfMissing(
+      "undo_journal",
+      "operation_json",
+      `TEXT NOT NULL DEFAULT '{"kind":"write-local","command":"unknown","dryRunOnly":true,"restoreStrategy":"state-marker"}'`,
+    );
+  }
+
+  private addColumnIfMissing(table: string, column: string, definition: string): void {
+    try {
+      this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    } catch (error) {
+      if (!(error instanceof Error) || !/duplicate column name/i.test(error.message)) {
+        throw error;
+      }
+    }
   }
 }
 
@@ -445,6 +465,7 @@ interface UndoJournalRow {
   expires_at: string;
   rollback_note: string;
   snapshot_summary: string;
+  operation_json: string;
 }
 
 function conversationFromRow(row: ConversationRow): Conversation {
@@ -533,5 +554,6 @@ function undoJournalFromRow(row: UndoJournalRow): UndoJournalEntry {
     expiresAt: row.expires_at,
     rollbackNote: row.rollback_note,
     snapshotSummary: row.snapshot_summary,
+    operation: JSON.parse(row.operation_json) as UndoJournalEntry["operation"],
   };
 }

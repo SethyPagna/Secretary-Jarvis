@@ -593,6 +593,12 @@ export interface UndoJournalEntry {
   expiresAt: string;
   rollbackNote: string;
   snapshotSummary: string;
+  operation: {
+    kind: ActionCategory;
+    command: string;
+    dryRunOnly: boolean;
+    restoreStrategy: "copy-back" | "move-back" | "config-restore" | "state-marker" | "none";
+  };
 }
 
 export interface ReferenceSource {
