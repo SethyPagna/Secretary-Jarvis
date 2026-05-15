@@ -17,7 +17,7 @@ Protocol:
 - [x] 0.2 Add `GET /api/setup/doctor` - implemented before tracker
 - [x] 0.3 Add `GET /api/setup/needed-feature-downloads` - commit `75d054d`
 - [x] 0.4 Add `GET /api/models/future-scaling` - commit `75d054d`
-- [ ] 0.5 Run doctor, fix missing pieces, and commit
+- [x] 0.5 Run doctor, fix missing pieces, and commit - commit `aea09ef`
 
 ## Phase 1 - Desktop HUD & Dashboard Shell
 - [x] 1.1 Create `apps/hud/` Electron + React + Vite project - commit `3872403`
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `0.5 Run doctor, fix missing pieces, and commit`.
+Next task: `2.5 Implement real runtime model probe`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
