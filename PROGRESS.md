@@ -32,7 +32,7 @@ Protocol:
 - [x] 2.2 Seed five ready model assets - commit `3603db8`
 - [x] 2.3 Implement `GET /api/models` - implemented before tracker
 - [x] 2.4 Implement `POST /api/models/scan` - commit `3603db8`
-- [ ] 2.5 Implement real runtime model probe - readiness probe exists, heavy runtime load missing
+- [x] 2.5 Implement real runtime model probe - commit `5dd8cce`
 - [x] 2.6 Implement `POST /api/models/benchmark` - implemented before tracker
 - [x] 2.7 Implement `POST /api/models/unload` - implemented before tracker
 - [ ] 2.8 Default routing logic with runtime-aware fallbacks - partial
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `2.5 Implement real runtime model probe`.
+Next task: `2.8 Default routing logic with runtime-aware fallbacks`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
