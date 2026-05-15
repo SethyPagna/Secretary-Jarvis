@@ -48,6 +48,8 @@ import {
   type JarvisStatus,
   type ModelProfile,
   type OutboundMessageDraft,
+  type PrivacyMode,
+  type ScaleProfile,
   type StreamEvent,
   type TaskRun,
   type TaskProfile,
@@ -101,6 +103,23 @@ interface BrainStatusResponse {
   capabilities?: { capabilities?: BrainCapability[] };
   audio?: Record<string, unknown>;
   vision?: Record<string, unknown>;
+}
+
+interface DoctorStatus {
+  tools?: Array<{ id: string; label: string; installed: boolean; version?: string; path?: string; notes: string }>;
+  localOnly?: boolean;
+  tauriCli?: { ok: boolean; output: string };
+}
+
+interface BenchmarkResponse {
+  benchmark: {
+    id: string;
+    modelId: string;
+    taskProfile: TaskProfile;
+    latencyMs: number;
+    tokensPerSecond: number;
+    notes: string;
+  };
 }
 
 async function loadStatus(): Promise<JarvisStatus> {
@@ -275,8 +294,9 @@ function ModelHub({ status, onTaskSelect }: { status: JarvisStatus; onTaskSelect
   );
 }
 
-function ModelCatalogPanel({ status }: { status: JarvisStatus }) {
+function ModelCatalogPanel({ status, onRefresh }: { status: JarvisStatus; onRefresh: () => Promise<void> }) {
   const [dryRun, setDryRun] = useState<ModelDryRunResponse | null>(null);
+  const [benchmark, setBenchmark] = useState<BenchmarkResponse["benchmark"] | null>(null);
   const [busyModelRef, setBusyModelRef] = useState<string | null>(null);
 
   async function runDryRun(model: ModelProfile) {
@@ -291,6 +311,36 @@ function ModelCatalogPanel({ status }: { status: JarvisStatus }) {
         throw new Error("Model dry-run failed");
       }
       setDryRun((await response.json()) as ModelDryRunResponse);
+    } finally {
+      setBusyModelRef(null);
+    }
+  }
+
+  async function selectModel(model: ModelProfile) {
+    const response = await fetch(`${API_BASE_URL}/api/models/${encodeURIComponent(model.id)}/select`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      throw new Error("Model select failed");
+    }
+    await onRefresh();
+  }
+
+  async function benchmarkModel(model: ModelProfile) {
+    setBusyModelRef(model.modelRef);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/models/benchmark`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ modelId: model.id, taskProfile: model.taskProfiles[0] ?? "daily-assistant" }),
+      });
+      if (!response.ok) {
+        throw new Error("Model benchmark failed");
+      }
+      const body = (await response.json()) as BenchmarkResponse;
+      setBenchmark(body.benchmark);
     } finally {
       setBusyModelRef(null);
     }
@@ -315,9 +365,17 @@ function ModelCatalogPanel({ status }: { status: JarvisStatus }) {
             <em>{model.scale}</em>
             <em>{model.source ?? model.runtime}</em>
             <em>{model.artifact?.estimatedSizeGb ? `${model.artifact.estimatedSizeGb} GB` : "unknown"}</em>
-            <button type="button" onClick={() => runDryRun(model)} disabled={busyModelRef === model.modelRef}>
-              {busyModelRef === model.modelRef ? "Checking" : "Dry-run"}
-            </button>
+            <div className="catalog-actions">
+              <button type="button" onClick={() => selectModel(model)} disabled={!model.enabled && model.installState !== "installed"}>
+                Use
+              </button>
+              <button type="button" onClick={() => benchmarkModel(model)} disabled={busyModelRef === model.modelRef}>
+                Bench
+              </button>
+              <button type="button" onClick={() => runDryRun(model)} disabled={busyModelRef === model.modelRef}>
+                {busyModelRef === model.modelRef ? "Checking" : "Dry"}
+              </button>
+            </div>
           </article>
         ))}
       </div>
@@ -326,6 +384,13 @@ function ModelCatalogPanel({ status }: { status: JarvisStatus }) {
           <strong>{dryRun.dryRun.modelRef}</strong>
           <span>{dryRun.dryRun.installPlan.commandPreview}</span>
           <em>{dryRun.decision.decision} / {dryRun.dryRun.estimatedSizeGb ?? "unknown"} GB</em>
+        </div>
+      )}
+      {benchmark && (
+        <div className="dry-run-result benchmark-result">
+          <strong>{benchmark.modelId}</strong>
+          <span>{benchmark.notes}</span>
+          <em>{benchmark.tokensPerSecond} t/s / {benchmark.latencyMs} ms</em>
         </div>
       )}
     </section>
@@ -458,7 +523,19 @@ function Approvals({ status, onRefresh }: { status: JarvisStatus; onRefresh: () 
   );
 }
 
-function ConnectorsAndSkills({ status }: { status: JarvisStatus }) {
+function ConnectorsAndSkills({ status, onRefresh }: { status: JarvisStatus; onRefresh: () => Promise<void> }) {
+  async function toggleConnector(connectorId: string, enabled: boolean) {
+    const response = await fetch(`${API_BASE_URL}/api/connectors/${connectorId}/enable`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ enabled }),
+    });
+    if (!response.ok) {
+      throw new Error("Connector toggle failed");
+    }
+    await onRefresh();
+  }
+
   return (
     <section className="panel connectors-panel">
       <div className="panel-header">
@@ -475,7 +552,12 @@ function ConnectorsAndSkills({ status }: { status: JarvisStatus }) {
               <strong>{connector.name}</strong>
               <span>{connector.category}</span>
             </div>
-            <em>{connector.enabled ? "enabled" : "locked"}</em>
+            <div className="connector-actions">
+              <em>{connector.enabled ? "enabled" : "locked"}</em>
+              <button type="button" onClick={() => toggleConnector(connector.id, !connector.enabled)}>
+                {connector.enabled ? "Lock" : "Enable"}
+              </button>
+            </div>
           </article>
         ))}
       </div>
@@ -1051,6 +1133,100 @@ function BrainPanel() {
   );
 }
 
+function SettingsPanel({ status, onRefresh }: { status: JarvisStatus; onRefresh: () => Promise<void> }) {
+  const [privacyMode, setPrivacyMode] = useState<PrivacyMode>(status.privacyMode);
+  const [scaleProfile, setScaleProfile] = useState<ScaleProfile>(status.scaleProfile);
+
+  useEffect(() => {
+    setPrivacyMode(status.privacyMode);
+    setScaleProfile(status.scaleProfile);
+  }, [status.privacyMode, status.scaleProfile]);
+
+  async function saveSettings() {
+    const response = await fetch(`${API_BASE_URL}/api/settings`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ privacyMode, scaleProfile }),
+    });
+    if (!response.ok) {
+      throw new Error("Settings update failed");
+    }
+    await onRefresh();
+  }
+
+  return (
+    <section className="panel settings-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Runtime</h2>
+          <p>Privacy and scale routing.</p>
+        </div>
+        <ShieldCheck size={22} aria-hidden="true" />
+      </div>
+      <div className="settings-grid">
+        <label>
+          <span>Privacy</span>
+          <select value={privacyMode} onChange={(event) => setPrivacyMode(event.target.value as PrivacyMode)}>
+            <option value="strict-local">strict-local</option>
+            <option value="local-hybrid-disabled">local-hybrid-disabled</option>
+            <option value="trusted-lan">trusted-lan</option>
+          </select>
+        </label>
+        <label>
+          <span>Scale</span>
+          <select value={scaleProfile} onChange={(event) => setScaleProfile(event.target.value as ScaleProfile)}>
+            <option value="laptop">laptop</option>
+            <option value="workstation">workstation</option>
+            <option value="homelab">homelab</option>
+          </select>
+        </label>
+        <button type="button" onClick={saveSettings}>Apply</button>
+      </div>
+    </section>
+  );
+}
+
+function ServiceHealthPanel() {
+  const [doctor, setDoctor] = useState<DoctorStatus | null>(null);
+
+  async function refreshDoctor() {
+    const response = await fetch(`${API_BASE_URL}/api/setup/doctor`);
+    if (!response.ok) {
+      throw new Error("Doctor check failed");
+    }
+    setDoctor((await response.json()) as DoctorStatus);
+  }
+
+  useEffect(() => {
+    refreshDoctor().catch(() => setDoctor(null));
+  }, []);
+
+  const tools = doctor?.tools ?? [];
+
+  return (
+    <section className="panel service-health-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Services</h2>
+          <p>Local tool readiness.</p>
+        </div>
+        <Network size={22} aria-hidden="true" />
+      </div>
+      <div className="service-health-list">
+        {tools.slice(0, 8).map((tool) => (
+          <article key={tool.id}>
+            <strong>{tool.label}</strong>
+            <span>{tool.installed ? "ready" : "missing"}</span>
+          </article>
+        ))}
+      </div>
+      <div className="panel-actions single-action">
+        <button type="button" onClick={refreshDoctor}>Refresh services</button>
+      </div>
+    </section>
+  );
+}
+
 function ConversationPanel({
   status,
   liveEvents,
@@ -1352,8 +1528,10 @@ export function App() {
         <SecurityPanel status={status} />
         <PerformancePanel status={status} />
         <BrainPanel />
+        <SettingsPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
+        <ServiceHealthPanel />
         <ModelHub status={status} onTaskSelect={selectTask} />
-        <ModelCatalogPanel status={status} />
+        <ModelCatalogPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
         <VoicePanel status={status} />
         <SocialOutboxPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
         <MobilePairingPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
@@ -1362,7 +1540,7 @@ export function App() {
         <AgentFlow agents={status.agents} />
         <MemoryTimeline status={status} />
         <Approvals status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <ConnectorsAndSkills status={status} />
+        <ConnectorsAndSkills status={status} onRefresh={async () => setStatus(await loadStatus())} />
         <ModalityStudio />
         <GrowthReport status={status} />
       </section>

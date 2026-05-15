@@ -27,7 +27,9 @@ import {
   type MemoryWrite,
   type OutboundMessageDraft,
   type PerformanceSnapshot,
+  type PrivacyMode,
   type ReportSnapshot,
+  type ScaleProfile,
   type TaskRun,
   type TaskProfile,
   type RuntimeKind,
@@ -833,6 +835,48 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/settings") {
+    sendJson(response, 200, {
+      privacyMode: status.privacyMode,
+      scaleProfile: status.scaleProfile,
+      activeModelId: status.activeModelId,
+      localOnly: status.privacyMode === "strict-local",
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/settings") {
+    const body = (await readBody(request)) as {
+      privacyMode?: PrivacyMode;
+      scaleProfile?: ScaleProfile;
+    };
+    const privacyModes: PrivacyMode[] = ["strict-local", "local-hybrid-disabled", "trusted-lan"];
+    const scaleProfiles: ScaleProfile[] = ["laptop", "workstation", "homelab"];
+    status = {
+      ...status,
+      privacyMode: body.privacyMode && privacyModes.includes(body.privacyMode) ? body.privacyMode : status.privacyMode,
+      scaleProfile: body.scaleProfile && scaleProfiles.includes(body.scaleProfile) ? body.scaleProfile : status.scaleProfile,
+    };
+    const memoryWrite: MemoryWrite = {
+      id: id("memory"),
+      kind: "decision",
+      content: `Runtime settings updated: privacy=${status.privacyMode}, scale=${status.scaleProfile}.`,
+      importance: 0.7,
+      createdAt: now(),
+      tags: ["settings", "runtime"],
+    };
+    store.addMemoryWrite(memoryWrite);
+    events.publish("status", { status: statusWithRuntimeState() });
+    events.publish("memory", { memoryWrite });
+    sendJson(response, 200, {
+      privacyMode: status.privacyMode,
+      scaleProfile: status.scaleProfile,
+      activeModelId: status.activeModelId,
+      memoryWrite,
+    });
+    return;
+  }
+
   if (request.method === "POST" && url.pathname === "/api/emergency-stop") {
     const body = (await readBody(request)) as { reason?: string };
     const reason = body.reason?.trim() || "Emergency stop requested by the owner.";
@@ -954,6 +998,28 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     }
     events.publish("model", { unloadedModelId: modelId, activeModelId: status.activeModelId });
     sendJson(response, 200, { unloadedModelId: modelId, activeModelId: status.activeModelId });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname.startsWith("/api/models/") && url.pathname.endsWith("/select")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const modelId = decodeURIComponent(parts[2] ?? "");
+    const runtimeStatus = statusWithRuntimeState();
+    const selected = runtimeStatus.models.find((model) => model.id === modelId || model.modelRef === modelId);
+    if (!selected) {
+      sendJson(response, 404, { error: "Model not found", modelId });
+      return;
+    }
+    if (!selected.enabled && selected.installState !== "installed") {
+      sendJson(response, 409, {
+        error: "Model is staged but not enabled or installed",
+        selected,
+      });
+      return;
+    }
+    status = { ...status, activeModelId: selected.id };
+    events.publish("model", { selected, activeModelId: selected.id });
+    sendJson(response, 200, { selected, activeModelId: selected.id });
     return;
   }
 

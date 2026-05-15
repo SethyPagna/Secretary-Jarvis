@@ -520,7 +520,9 @@ h1 {
 .device-panel,
 .security-panel,
 .performance-panel,
-.brain-panel {
+.brain-panel,
+.settings-panel,
+.service-health-panel {
   grid-column: span 5;
 }
 
@@ -624,7 +626,7 @@ h1 {
 .catalog-row {
   align-items: center;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) 80px 140px 90px 92px;
+  grid-template-columns: minmax(260px, 1fr) 80px 140px 90px minmax(150px, auto);
 }
 
 .catalog-row div {
@@ -674,6 +676,13 @@ h1 {
   text-transform: uppercase;
 }
 
+.catalog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
 .catalog-row button,
 .panel-actions button,
 .social-form button,
@@ -684,6 +693,11 @@ h1 {
   background: rgba(89, 215, 255, 0.12);
   color: var(--text);
   cursor: pointer;
+}
+
+.catalog-actions button {
+  min-width: 46px;
+  padding: 0 8px;
 }
 
 .catalog-row button:disabled {
@@ -935,6 +949,22 @@ h1 {
   gap: 10px;
 }
 
+.connector-actions {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.connector-actions button {
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(246, 251, 248, 0.06);
+  color: var(--text);
+  cursor: pointer;
+}
+
 .connector-card span {
   display: block;
   margin-top: 5px;
@@ -994,7 +1024,9 @@ h1 {
 .vision-list,
 .security-tags,
 .performance-bars,
-.brain-capabilities {
+.brain-capabilities,
+.settings-grid,
+.service-health-list {
   display: grid;
   gap: 10px;
   padding: 0 18px 18px;
@@ -1011,7 +1043,9 @@ h1 {
 .map-caption,
 .performance-bars div,
 .brain-status,
-.brain-capabilities article {
+.brain-capabilities article,
+.settings-grid label,
+.service-health-list article {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.18);
@@ -1279,6 +1313,64 @@ h1 {
 
 .brain-capabilities p {
   line-height: 1.4;
+}
+
+.settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+}
+
+.settings-grid label {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.settings-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.settings-grid select,
+.settings-grid button {
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  font: inherit;
+}
+
+.settings-grid select {
+  padding: 0 10px;
+}
+
+.settings-grid button {
+  padding: 0 16px;
+  background: rgba(89, 215, 255, 0.12);
+  cursor: pointer;
+}
+
+.service-health-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.service-health-list article {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+}
+
+.service-health-list span {
+  color: var(--green);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.single-action {
+  grid-template-columns: 1fr;
 }
 
 .report-body svg {
@@ -1672,7 +1764,9 @@ h1 {
   .device-panel,
   .security-panel,
   .performance-panel,
-  .brain-panel {
+  .brain-panel,
+  .settings-panel,
+  .service-health-panel {
     grid-column: span 12;
   }
 }
@@ -1698,7 +1792,9 @@ h1 {
   .report-grid,
   .device-grid,
   .vision-list,
-  .security-tags {
+  .security-tags,
+  .settings-grid,
+  .service-health-list {
     grid-template-columns: 1fr;
   }
 
