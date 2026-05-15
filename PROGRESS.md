@@ -24,7 +24,7 @@ Protocol:
 - [x] 1.2 Add centered idle orb component - commit `0025183`
 - [x] 1.3 Add HUD animation state machine - commit `7efb444`
 - [x] 1.4 Build expandable mini panel - commit `ce71eda`
-- [ ] 1.5 Redesign dashboard into grouped, collapsible sections - partial dashboard grouping exists
+- [x] 1.5 Redesign dashboard into grouped, collapsible sections - commit `9cb7795`
 - [ ] 1.6 Link tray controls to IPC - partial in `apps/desktop`
 
 ## Phase 2 - Local Model Hub & Runtime Wiring
