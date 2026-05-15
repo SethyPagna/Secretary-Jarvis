@@ -25,7 +25,7 @@ Protocol:
 - [x] 1.3 Add HUD animation state machine - commit `7efb444`
 - [x] 1.4 Build expandable mini panel - commit `ce71eda`
 - [x] 1.5 Redesign dashboard into grouped, collapsible sections - commit `9cb7795`
-- [ ] 1.6 Link tray controls to IPC - partial in `apps/desktop`
+- [x] 1.6 Link tray controls to IPC - commit `8fb0274`
 
 ## Phase 2 - Local Model Hub & Runtime Wiring
 - [x] 2.1 Define core model/setup types - implemented before tracker
