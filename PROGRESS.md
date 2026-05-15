@@ -9,7 +9,7 @@ Protocol:
 ## Initiation
 - [x] I.1 Assess codebase - commit `786b926`
 - [x] I.2 Save master plan - commit `2420b87`
-- [x] I.3 Create progress tracker - commit `self: docs(I.3)`
+- [x] I.3 Create progress tracker - commit `ed1a70f`
 - [ ] I.4 Session protocol - ongoing; enforce in every future session
 
 ## Phase 0 - Foundation & Doctor Checks
@@ -20,7 +20,7 @@ Protocol:
 - [ ] 0.5 Run doctor, fix missing pieces, and commit
 
 ## Phase 1 - Desktop HUD & Dashboard Shell
-- [ ] 1.1 Create `apps/hud/` Electron + React + Vite project
+- [x] 1.1 Create `apps/hud/` Electron + React + Vite project - commit `3872403`
 - [ ] 1.2 Add centered idle orb component
 - [ ] 1.3 Add HUD animation state machine
 - [ ] 1.4 Build expandable mini panel
