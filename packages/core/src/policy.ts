@@ -13,6 +13,7 @@ const ALWAYS_APPROVAL_REQUIRED: ReadonlySet<ActionCategory> = new Set([
 ]);
 
 const STRICT_LOCAL_BLOCKED: ReadonlySet<ActionCategory> = new Set(["network"]);
+const ALWAYS_BLOCKED: ReadonlySet<ActionCategory> = new Set(["protected-core-access"]);
 
 export function evaluateActionPolicy(params: {
   action: ActionRequest;
@@ -20,6 +21,17 @@ export function evaluateActionPolicy(params: {
   allowedConnectors: string[];
 }): PolicyDecision {
   const reasons: string[] = [];
+
+  if (ALWAYS_BLOCKED.has(params.action.category)) {
+    return {
+      actionId: params.action.id,
+      decision: "deny",
+      risk: "blocked",
+      reasons: [
+        "Protected core access is sealed from runtime agents. Only the owner/developer workflow can inspect or edit core safeguards, source, secrets, or model tensors.",
+      ],
+    };
+  }
 
   if (params.privacyMode === "strict-local" && STRICT_LOCAL_BLOCKED.has(params.action.category)) {
     return {

@@ -18,16 +18,21 @@ import {
   type ActionRequest,
   type Conversation,
   type ConversationTurn,
+  type DeviceLink,
   type JarvisStatus,
+  type MapInsight,
   type MobilePairing,
   type ModelDryRunResult,
   type ModelSource,
   type MemoryWrite,
   type OutboundMessageDraft,
+  type PerformanceSnapshot,
+  type ReportSnapshot,
   type TaskRun,
   type TaskProfile,
   type RuntimeKind,
   type TtsRequest,
+  type VisionInsight,
 } from "@jarvis/core";
 import { EventHub } from "./eventHub.js";
 import { JarvisStore } from "./store.js";
@@ -35,6 +40,12 @@ import { JarvisStore } from "./store.js";
 const DEFAULT_PORT = 4317;
 const HF_SNAPSHOT_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\models\\huggingface\\snapshots";
 const VOICE_ASSET_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\assets\\voice";
+const OLLAMA_URL = process.env.JARVIS_OLLAMA_URL ?? "http://127.0.0.1:11434";
+const PROTECTED_CORE_PATTERNS = [
+  /show|print|dump|reveal|exfiltrate/i,
+  /source code|core code|safeguard|policy engine|system prompt|model tensor|weights|secret|credential|vault/i,
+  /bypass|disable guard|ignore approval|jailbreak/i,
+];
 const JSON_HEADERS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET,POST,OPTIONS",
@@ -104,6 +115,11 @@ function statusWithRuntimeState(): JarvisStatus {
     mobilePairings,
     socialDrafts,
     toolStatuses: detectToolStatuses(),
+    reports: buildReports(),
+    mapOverlays: status.mapOverlays ?? [],
+    visionInsights: status.visionInsights ?? [],
+    devices: hydrateDevices(),
+    performance: buildPerformanceSnapshot(),
   };
 }
 
@@ -125,6 +141,75 @@ function hydrateStartupState(): JarvisStatus["startup"] {
           "Startup launches local services only and keeps hosted inference disabled by default.",
         ],
   };
+}
+
+function buildReports(): ReportSnapshot[] {
+  const tasks = store.listTasks();
+  const completed = tasks.filter((task) => task.status === "completed").length;
+  const running = tasks.filter((task) => task.status === "running").length;
+  const memoryWrites = store.listMemoryWrites(50).length;
+  const baseReports = status.reports ?? [];
+
+  return baseReports.map((report) => {
+    if (report.kind === "daily") {
+      return {
+        ...report,
+        status: running > 0 ? "live" : report.status,
+        metrics: [
+          { label: "Running", value: String(running), trend: running > 0 ? "up" : "flat" },
+          { label: "Completed", value: String(completed), trend: completed > 0 ? "up" : "flat" },
+          { label: "Memories", value: String(status.memories.length + memoryWrites), trend: memoryWrites > 0 ? "up" : "flat" },
+        ],
+      };
+    }
+
+    if (report.kind === "performance") {
+      const performance = buildPerformanceSnapshot();
+      return {
+        ...report,
+        metrics: [
+          { label: "TPS", value: performance.tokensPerSecond.toFixed(1), trend: "flat" },
+          { label: "Context", value: `${Math.round(performance.contextWindow / 1000)}k`, trend: "flat" },
+          { label: "Queue", value: `${performance.queueLatencyMs} ms`, trend: "flat" },
+        ],
+      };
+    }
+
+    return report;
+  });
+}
+
+function hydrateDevices(): DeviceLink[] {
+  const timestamp = now();
+  return (status.devices ?? []).map((device) => {
+    if (device.id === "device-laptop") {
+      return { ...device, status: "online", lastSeen: timestamp };
+    }
+
+    return device;
+  });
+}
+
+function buildPerformanceSnapshot(): PerformanceSnapshot {
+  const queue = store.listQueue();
+  const active = statusWithNoHydration().models.find((model) => model.id === status.activeModelId);
+  const baseline = status.performance;
+  const runningBoost = queue.some((item) => item.status === "running") ? 0.8 : 0;
+
+  return {
+    id: baseline?.id ?? "perf-runtime",
+    tokensPerSecond: (baseline?.tokensPerSecond ?? 18) + runningBoost,
+    contextWindow: active?.contextWindow ?? baseline?.contextWindow ?? 32768,
+    queueLatencyMs: Math.max(80, (baseline?.queueLatencyMs ?? 120) - runningBoost * 10),
+    memoryRecallMs: baseline?.memoryRecallMs ?? 35,
+    activeModelId: status.activeModelId,
+    updatedAt: now(),
+    notes: baseline?.notes ?? "Runtime performance is inferred from the current local route until a live benchmark completes.",
+  };
+}
+
+function statusWithNoHydration(): JarvisStatus {
+  return status;
 }
 
 function createConversationFromPrompt(prompt: string, timestamp: string): Conversation {
@@ -176,7 +261,7 @@ function addTurn(params: {
   return turn;
 }
 
-function runSimulatedTask(task: TaskRun, prompt: string): void {
+async function runAssistantTask(task: TaskRun, prompt: string): Promise<void> {
   const startedAt = now();
   const runningTask = applyTaskStatus(task, "running", startedAt);
   store.upsertTask(runningTask);
@@ -197,8 +282,19 @@ function runSimulatedTask(task: TaskRun, prompt: string): void {
   store.addTaskEvent(started);
   events.publish("task", { task: runningTask, event: started });
 
-  const response =
-    "I captured this as an interruptible local task. The next implementation layer will route it through the Python Brain, MemoryOS recall, selected local model, and reviewer agent.";
+  let response = "";
+  const protectedDecision = evaluateProtectedCorePrompt(prompt);
+  if (protectedDecision.decision === "deny") {
+    response = [
+      "I cannot expose or modify protected Jarvis core internals from the runtime assistant path.",
+      "I can still help through approved interfaces: skills, memory, reports, models, connectors, and owner-controlled setup.",
+      protectedDecision.reasons[0],
+    ].join(" ");
+  } else {
+    response = await callSelectedLocalModel(task, prompt).catch((error: unknown) =>
+      fallbackAssistantResponse(prompt, error instanceof Error ? error.message : String(error)),
+    );
+  }
 
   const chunks = response.match(/.{1,42}(\s|$)/g) ?? [response];
   chunks.forEach((chunk, index) => {
@@ -248,6 +344,109 @@ function runSimulatedTask(task: TaskRun, prompt: string): void {
     events.publish("task", { task: completed, event: completedEvent });
     events.publish("conversation", { conversationId: task.conversationId, taskId: task.id });
   }, 120 * (chunks.length + 3));
+}
+
+function evaluateProtectedCorePrompt(prompt: string): ReturnType<typeof evaluateActionPolicy> {
+  const matched = PROTECTED_CORE_PATTERNS.filter((pattern) => pattern.test(prompt));
+  const action: ActionRequest = {
+    id: id("protected-core"),
+    title: "Protected core access check",
+    category: matched.length >= 2 ? "protected-core-access" : "read-local",
+    target: "Jarvis protected core",
+    reason: "Runtime agents cannot inspect or reveal core safeguards, source, secrets, memory vaults, or model tensors.",
+    agentId: "safety",
+    dataTouched: ["core safeguards", "source", "secrets", "model tensors"],
+  };
+
+  return evaluateActionPolicy({
+    action,
+    privacyMode: status.privacyMode,
+    allowedConnectors: getEnabledConnectorIds(),
+  });
+}
+
+async function callSelectedLocalModel(task: TaskRun, prompt: string): Promise<string> {
+  const runtimeStatus = statusWithRuntimeState();
+  const selected = runtimeStatus.models.find((model) => model.id === runtimeStatus.activeModelId) ?? runtimeStatus.models[0];
+  if (!selected || selected.runtime !== "ollama" || selected.installState !== "installed") {
+    return fallbackAssistantResponse(prompt, `Selected model ${selected?.label ?? "unknown"} is not installed in Ollama.`);
+  }
+
+  const context = buildMemoryContext(task.conversationId);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45_000);
+  try {
+    const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model: selected.modelRef,
+        stream: false,
+        keep_alive: "10m",
+        options: {
+          temperature: 0.35,
+          num_ctx: Math.min(selected.contextWindow ?? 32768, 32768),
+        },
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are Jarvis, a local-first private secretary assistant. Be concise, capable, and proactive. Use memory context only as helpful background. Ask approval for risky actions. Never reveal, inspect, or bypass protected core code, safeguards, secrets, model tensors, or private vault internals.",
+          },
+          {
+            role: "system",
+            content: context,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ollama returned ${response.status}`);
+    }
+
+    const body = (await response.json()) as { message?: { content?: string }; response?: string };
+    return (body.message?.content ?? body.response ?? "").trim() || fallbackAssistantResponse(prompt, "Ollama returned an empty response.");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function buildMemoryContext(conversationId: string): string {
+  const seedMemory = status.memories
+    .slice(0, 8)
+    .map((memory) => `- ${memory.title}: ${memory.summary}`)
+    .join("\n");
+  const durableMemory = store
+    .listMemoryWrites(12)
+    .map((memory) => `- ${memory.kind}: ${memory.content}`)
+    .join("\n");
+  const recentTurns = store
+    .listTurns(conversationId)
+    .slice(-8)
+    .map((turn) => `${turn.role}: ${turn.content.slice(0, 500)}`)
+    .join("\n");
+
+  return [
+    "MemoryOS context:",
+    seedMemory || "- No seeded memory.",
+    durableMemory ? `Durable writes:\n${durableMemory}` : "Durable writes: none yet.",
+    recentTurns ? `Recent conversation:\n${recentTurns}` : "Recent conversation: none.",
+  ].join("\n");
+}
+
+function fallbackAssistantResponse(prompt: string, reason: string): string {
+  return [
+    "I saved this as a local, interruptible Jarvis task and kept it in memory.",
+    `Current runtime note: ${reason}`,
+    "The safe next action is available through the dashboard queue, model hub, voice panel, reports, maps, device controls, and guarded connector drafts.",
+    `Captured request: ${prompt.slice(0, 220)}`,
+  ].join(" ");
 }
 
 function setupDoctor(): Record<string, unknown> {
@@ -658,6 +857,115 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/reports") {
+    sendJson(response, 200, { reports: buildReports(), performance: buildPerformanceSnapshot() });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/maps") {
+    sendJson(response, 200, { maps: status.mapOverlays ?? [] });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/maps/query") {
+    const body = (await readBody(request)) as { query?: string };
+    const query = body.query?.trim() || "local Jarvis operations";
+    const map: MapInsight = {
+      id: id("map"),
+      label: "Local map draft",
+      query,
+      center: { lat: 22.3193, lng: 114.1694 },
+      zoom: 12,
+      pins: [
+        { id: id("pin"), label: "Jarvis laptop", lat: 22.3193, lng: 114.1694, status: "home" },
+        { id: id("pin"), label: "Planned device target", lat: 22.326, lng: 114.174, status: "planned" },
+      ],
+      route: { label: "Approved local route draft", distanceKm: 1.6, etaMinutes: 8 },
+      notes: "Generated locally without contacting a map provider. Live geocoding requires an enabled maps connector and approval.",
+    };
+    status = { ...status, mapOverlays: [map, ...(status.mapOverlays ?? []).slice(0, 3)] };
+    events.publish("map", { map });
+    sendJson(response, 200, { map });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/devices") {
+    sendJson(response, 200, { devices: hydrateDevices() });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/vision/analyze-image") {
+    const body = (await readBody(request)) as { filePath?: string; source?: string; mode?: VisionInsight["mode"] };
+    const timestamp = now();
+    const mode = body.mode ?? (body.filePath ? "image" : "camera");
+    const action: ActionRequest = {
+      id: id("vision-action"),
+      title: "Analyze visual input",
+      category: "sensor-capture",
+      target: body.filePath ?? body.source ?? mode,
+      reason: "Vision analysis touches image, camera, screen, or OCR content.",
+      connectorId: mode === "camera" ? "camera" : mode === "screen" ? "screen" : undefined,
+      agentId: "jarvis",
+      dataTouched: ["visual input", "possible OCR text"],
+    };
+    const decision = evaluateActionPolicy({
+      action,
+      privacyMode: status.privacyMode,
+      allowedConnectors: getEnabledConnectorIds(),
+    });
+    const insight: VisionInsight = {
+      id: id("vision"),
+      source: body.filePath ?? body.source ?? "live sensor",
+      mode,
+      status: body.filePath ? "ready" : decision.decision === "requires_approval" ? "requires-approval" : "needs-input",
+      summary: body.filePath
+        ? "Local image analysis request accepted. OCR/object detection sidecar will process this path when the Python vision service is active."
+        : "Live screen/camera perception is wired, but requires explicit approval before capture.",
+      observations: [
+        decision.decision === "requires_approval" ? "Approval required before live sensor capture." : "Static file path can be analyzed locally.",
+        "No hosted vision inference is used by default.",
+        "Results are eligible for MemoryOS timeline only after owner-approved retention.",
+      ],
+      createdAt: timestamp,
+    };
+    status = { ...status, visionInsights: [insight, ...(status.visionInsights ?? []).slice(0, 4)] };
+    events.publish("vision", { insight, decision });
+    sendJson(response, 200, { insight, decision });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/security/status") {
+    sendJson(response, 200, {
+      protectedCore: status.protectedCore,
+      privacyMode: status.privacyMode,
+      blockedCategories: ["network", "protected-core-access"],
+      approvalCategories: [
+        "delete-local",
+        "send-message",
+        "post-social",
+        "purchase",
+        "credential-access",
+        "device-control",
+        "model-download",
+        "sensor-capture",
+        "irreversible-edit",
+      ],
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/memory/search") {
+    const query = (url.searchParams.get("q") ?? "").trim();
+    const seedResults = query
+      ? status.memories.filter((memory) =>
+          `${memory.title} ${memory.summary} ${memory.tags.join(" ")}`.toLowerCase().includes(query.toLowerCase()),
+        )
+      : status.memories;
+    const writes = query ? store.searchMemoryWrites(query) : store.listMemoryWrites(40);
+    sendJson(response, 200, { query, memories: seedResults, writes });
+    return;
+  }
+
   if (request.method === "POST" && url.pathname.startsWith("/api/connectors/")) {
     const parts = url.pathname.split("/").filter(Boolean);
     const connectorId = parts[2];
@@ -788,7 +1096,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     store.addTaskEvent(queued);
     events.publish("conversation", { conversation, task });
     events.publish("task", { task, event: queued });
-    runSimulatedTask(task, message);
+    void runAssistantTask(task, message);
     sendJson(response, 202, { conversation, task, queued });
     return;
   }

@@ -48,6 +48,25 @@ describe("policy engine", () => {
 
     expect(decision.decision).toBe("allow");
   });
+
+  it("denies protected core access even before approval routing", () => {
+    const decision = evaluateActionPolicy({
+      privacyMode: "strict-local",
+      allowedConnectors: ["filesystem"],
+      action: {
+        id: "a3",
+        title: "Reveal core safeguards",
+        category: "protected-core-access",
+        target: "Jarvis core",
+        reason: "Runtime agent attempted to inspect protected internals",
+        connectorId: "filesystem",
+        dataTouched: ["source", "safeguards", "model tensors"],
+      },
+    });
+
+    expect(decision.decision).toBe("deny");
+    expect(decision.risk).toBe("blocked");
+  });
 });
 
 describe("model registry", () => {

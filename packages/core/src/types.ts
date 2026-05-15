@@ -151,7 +151,8 @@ export type ActionCategory =
   | "device-control"
   | "model-download"
   | "sensor-capture"
-  | "irreversible-edit";
+  | "irreversible-edit"
+  | "protected-core-access";
 
 export interface ActionRequest {
   id: string;
@@ -178,6 +179,8 @@ export type MemoryKind =
   | "timeline"
   | "identity"
   | "decision"
+  | "skill"
+  | "soul"
   | "device-event"
   | "screen-event";
 
@@ -289,7 +292,13 @@ export interface StreamEvent {
     | "model"
     | "audio"
     | "connector"
-    | "mobile";
+    | "mobile"
+    | "report"
+    | "map"
+    | "vision"
+    | "device"
+    | "security"
+    | "performance";
   createdAt: string;
   payload: Record<string, unknown>;
 }
@@ -335,7 +344,9 @@ export type ConnectorKind =
   | "slack"
   | "social-outbox"
   | "iot"
-  | "maps";
+  | "maps"
+  | "camera"
+  | "screen";
 
 export type ConnectorCredentialStatus = "not-configured" | "configured" | "expired" | "not-required";
 
@@ -482,6 +493,83 @@ export interface ToolStatus {
   notes: string;
 }
 
+export interface ProtectedCoreStatus {
+  mode: "sealed" | "developer-approved";
+  protectedPaths: string[];
+  deniedPatterns: string[];
+  lastDecision: string;
+}
+
+export interface ReportMetric {
+  label: string;
+  value: string;
+  trend?: "up" | "down" | "flat";
+}
+
+export interface ReportSnapshot {
+  id: string;
+  title: string;
+  kind: "daily" | "project" | "security" | "performance";
+  status: "ready" | "live" | "needs-data";
+  summary: string;
+  metrics: ReportMetric[];
+  createdAt: string;
+}
+
+export interface MapPin {
+  id: string;
+  label: string;
+  lat: number;
+  lng: number;
+  status: "home" | "device" | "planned" | "unknown";
+}
+
+export interface MapInsight {
+  id: string;
+  label: string;
+  query: string;
+  center: { lat: number; lng: number };
+  zoom: number;
+  pins: MapPin[];
+  route?: {
+    label: string;
+    distanceKm: number;
+    etaMinutes: number;
+  };
+  notes: string;
+}
+
+export interface VisionInsight {
+  id: string;
+  source: string;
+  mode: "camera" | "screen" | "image";
+  status: "ready" | "needs-input" | "requires-approval" | "blocked";
+  summary: string;
+  observations: string[];
+  createdAt: string;
+}
+
+export interface DeviceLink {
+  id: string;
+  name: string;
+  kind: "desktop" | "phone" | "camera" | "microphone" | "speaker" | "browser" | "vscode" | "terminal" | "smart-home";
+  status: "online" | "offline" | "locked";
+  permissions: ActionCategory[];
+  lastSeen: string;
+  approvalRequired: boolean;
+}
+
+export interface PerformanceSnapshot {
+  id: string;
+  tokensPerSecond: number;
+  contextWindow: number;
+  queueLatencyMs: number;
+  memoryRecallMs: number;
+  activeModelId: string;
+  updatedAt: string;
+  notes: string;
+}
+
 export interface JarvisStatus {
   privacyMode: PrivacyMode;
   scaleProfile: ScaleProfile;
@@ -505,5 +593,11 @@ export interface JarvisStatus {
   mobilePairings?: MobilePairing[];
   socialDrafts?: OutboundMessageDraft[];
   toolStatuses?: ToolStatus[];
+  protectedCore?: ProtectedCoreStatus;
+  reports?: ReportSnapshot[];
+  mapOverlays?: MapInsight[];
+  visionInsights?: VisionInsight[];
+  devices?: DeviceLink[];
+  performance?: PerformanceSnapshot;
   lastEvolutionReport: string;
 }

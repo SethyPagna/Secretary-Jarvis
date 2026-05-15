@@ -105,6 +105,16 @@ export class JarvisStore {
     return rows.map(turnFromRow);
   }
 
+  listRecentTurns(limit = 24): ConversationTurn[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, conversation_id, role, content, created_at, task_id, token_estimate
+         FROM turns ORDER BY created_at DESC LIMIT ?`,
+      )
+      .all(limit) as unknown as TurnRow[];
+    return rows.map(turnFromRow);
+  }
+
   upsertTask(task: TaskRun): void {
     this.db
       .prepare(
@@ -204,6 +214,30 @@ export class JarvisStore {
         write.createdAt,
         JSON.stringify(write.tags),
       );
+  }
+
+  listMemoryWrites(limit = 100): MemoryWrite[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, conversation_id, task_id, kind, content, importance, created_at, tags_json
+         FROM memory_writes ORDER BY created_at DESC LIMIT ?`,
+      )
+      .all(limit) as unknown as MemoryWriteRow[];
+    return rows.map(memoryWriteFromRow);
+  }
+
+  searchMemoryWrites(query: string, limit = 40): MemoryWrite[] {
+    const pattern = `%${query}%`;
+    const rows = this.db
+      .prepare(
+        `SELECT id, conversation_id, task_id, kind, content, importance, created_at, tags_json
+         FROM memory_writes
+         WHERE content LIKE ? OR tags_json LIKE ? OR kind LIKE ?
+         ORDER BY importance DESC, created_at DESC
+         LIMIT ?`,
+      )
+      .all(pattern, pattern, pattern, limit) as unknown as MemoryWriteRow[];
+    return rows.map(memoryWriteFromRow);
   }
 
   private migrate(): void {
@@ -322,6 +356,17 @@ interface TaskEventRow {
   payload_json: string;
 }
 
+interface MemoryWriteRow {
+  id: string;
+  conversation_id: string | null;
+  task_id: string | null;
+  kind: MemoryWrite["kind"];
+  content: string;
+  importance: number;
+  created_at: string;
+  tags_json: string;
+}
+
 function conversationFromRow(row: ConversationRow): Conversation {
   return {
     id: row.id,
@@ -379,5 +424,18 @@ function taskEventFromRow(row: TaskEventRow): TaskEvent {
     message: row.message,
     createdAt: row.created_at,
     payload: JSON.parse(row.payload_json) as Record<string, unknown>,
+  };
+}
+
+function memoryWriteFromRow(row: MemoryWriteRow): MemoryWrite {
+  return {
+    id: row.id,
+    conversationId: row.conversation_id ?? undefined,
+    taskId: row.task_id ?? undefined,
+    kind: row.kind,
+    content: row.content,
+    importance: row.importance,
+    createdAt: row.created_at,
+    tags: JSON.parse(row.tags_json) as string[],
   };
 }

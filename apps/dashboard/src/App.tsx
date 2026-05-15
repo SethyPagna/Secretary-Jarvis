@@ -1,7 +1,9 @@
 import {
   Activity,
+  BarChart3,
   Brain,
   Cable,
+  Camera,
   CheckCircle2,
   ChevronRight,
   Cpu,
@@ -10,11 +12,17 @@ import {
   Eye,
   Fingerprint,
   GitBranch,
+  Gauge,
+  HardDrive,
   Image,
   Lock,
   Map,
+  MapPin,
   Mic,
+  Minimize2,
   Music,
+  Navigation,
+  Network,
   Play,
   Radar,
   Radio,
@@ -27,7 +35,7 @@ import {
   Volume2,
   XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   evaluateActionPolicy,
   seededStatus,
@@ -55,6 +63,8 @@ const TASKS: Array<{ id: TaskProfile; label: string }> = [
   { id: "image-generation", label: "Image" },
   { id: "video-generation", label: "Video" },
   { id: "music-generation", label: "Music" },
+  { id: "maps-geospatial", label: "Maps" },
+  { id: "tts", label: "Speak" },
 ];
 
 const MODALITIES = [
@@ -95,19 +105,23 @@ function localPolicyDecision(action: ActionRequest, status: JarvisStatus) {
 
 function FloatingJarvisOrb({ status }: { status: JarvisStatus }) {
   const model = activeModel(status);
+  const [minimized, setMinimized] = useState(false);
 
   return (
-    <aside className="floating-orb" aria-label="Jarvis floating presence">
+    <aside className={minimized ? "floating-orb minimized" : "floating-orb"} aria-label="Jarvis floating presence">
       <div className="orb-core">
         <div className="orb-ring ring-a" />
         <div className="orb-ring ring-b" />
         <div className="orb-pulse" />
         <Brain size={30} aria-hidden="true" />
       </div>
-      <div>
+      {!minimized && <div className="orb-label">
         <strong>Jarvis</strong>
         <span>{model.label}</span>
-      </div>
+      </div>}
+      <button className="orb-minimize" type="button" onClick={() => setMinimized((value) => !value)} aria-label="Toggle floating Jarvis">
+        <Minimize2 size={16} aria-hidden="true" />
+      </button>
     </aside>
   );
 }
@@ -164,6 +178,32 @@ function SystemSummary({ status }: { status: JarvisStatus }) {
         <strong>{enabledConnectors}</strong>
       </article>
     </section>
+  );
+}
+
+function ModeDock({ status }: { status: JarvisStatus }) {
+  const modes = [
+    { label: "Chat", icon: Brain, active: true },
+    { label: "Voice", icon: Mic, active: status.voiceSession?.state === "listening" },
+    { label: "Vision", icon: Camera, active: (status.visionInsights ?? []).some((item) => item.status === "ready") },
+    { label: "Maps", icon: Navigation, active: (status.mapOverlays ?? []).length > 0 },
+    { label: "Reports", icon: BarChart3, active: (status.reports ?? []).some((report) => report.status === "live") },
+    { label: "Devices", icon: Network, active: (status.devices ?? []).some((device) => device.status === "online") },
+    { label: "Core", icon: ShieldCheck, active: status.protectedCore?.mode === "sealed" },
+  ];
+
+  return (
+    <nav className="mode-dock" aria-label="Jarvis modes">
+      {modes.map((mode) => {
+        const Icon = mode.icon;
+        return (
+          <button className={mode.active ? "active" : ""} type="button" key={mode.label} title={mode.label}>
+            <Icon size={19} aria-hidden="true" />
+            <span>{mode.label}</span>
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -670,6 +710,216 @@ function GrowthReport({ status }: { status: JarvisStatus }) {
   );
 }
 
+function ReportsPanel({ status }: { status: JarvisStatus }) {
+  const reports = status.reports ?? [];
+
+  return (
+    <section className="panel reports-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Reports</h2>
+          <p>Live briefs, posture, and throughput.</p>
+        </div>
+        <BarChart3 size={22} aria-hidden="true" />
+      </div>
+      <div className="report-grid">
+        {reports.map((report) => (
+          <article className="report-card" key={report.id}>
+            <div className="report-title">
+              <strong>{report.title}</strong>
+              <span>{report.status}</span>
+            </div>
+            <p>{report.summary}</p>
+            <div className="report-chart">
+              {report.metrics.map((metric) => (
+                <div key={metric.label} style={{ "--bar": `${Math.max(18, metric.value.length * 9)}%` } as CSSProperties}>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                </div>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function MapPanel({ status, onRefresh }: { status: JarvisStatus; onRefresh: () => Promise<void> }) {
+  const [query, setQuery] = useState("Plan local device route");
+  const maps = status.mapOverlays ?? [];
+  const activeMap = maps[0];
+
+  async function createMapQuery() {
+    const response = await fetch(`${API_BASE_URL}/api/maps/query`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+    if (!response.ok) {
+      throw new Error("Map query failed");
+    }
+    await onRefresh();
+  }
+
+  return (
+    <section className="panel map-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Map Room</h2>
+          <p>Offline-first routes and device context.</p>
+        </div>
+        <MapPin size={22} aria-hidden="true" />
+      </div>
+      <div className="map-canvas" aria-label="Local map visualization">
+        <div className="map-gridline vertical-a" />
+        <div className="map-gridline vertical-b" />
+        <div className="map-route" />
+        {(activeMap?.pins ?? []).slice(0, 4).map((pin, index) => (
+          <span className={`map-pin pin-${index}`} key={pin.id} title={pin.label}>
+            <MapPin size={15} aria-hidden="true" />
+          </span>
+        ))}
+      </div>
+      <div className="map-caption">
+        <strong>{activeMap?.label ?? "No map draft"}</strong>
+        <span>{activeMap?.notes ?? "Create a local query to stage a map insight."}</span>
+      </div>
+      <div className="map-query">
+        <input value={query} onChange={(event) => setQuery(event.target.value)} />
+        <button type="button" onClick={createMapQuery}>Route</button>
+      </div>
+    </section>
+  );
+}
+
+function VisionPanel({ status, onRefresh }: { status: JarvisStatus; onRefresh: () => Promise<void> }) {
+  const [filePath, setFilePath] = useState("C:\\Users\\user\\Downloads\\Secretary Jarvis\\voice");
+  const latest = (status.visionInsights ?? [])[0];
+
+  async function analyzeImage() {
+    const response = await fetch(`${API_BASE_URL}/api/vision/analyze-image`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ filePath, mode: "image" }),
+    });
+    if (!response.ok) {
+      throw new Error("Vision analysis failed");
+    }
+    await onRefresh();
+  }
+
+  return (
+    <section className="panel vision-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Vision</h2>
+          <p>Camera, screen, OCR, and image input.</p>
+        </div>
+        <Camera size={22} aria-hidden="true" />
+      </div>
+      <div className="vision-scope">
+        <Eye size={38} aria-hidden="true" />
+        <div>
+          <strong>{latest?.status ?? "needs-input"}</strong>
+          <span>{latest?.summary ?? "Static files can be queued. Live sensors need approval."}</span>
+        </div>
+      </div>
+      <div className="vision-list">
+        {(latest?.observations ?? ["No hosted vision by default.", "Identity and camera are approval-gated."]).map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      </div>
+      <div className="map-query">
+        <input value={filePath} onChange={(event) => setFilePath(event.target.value)} />
+        <button type="button" onClick={analyzeImage}>Analyze</button>
+      </div>
+    </section>
+  );
+}
+
+function DevicePanel({ status }: { status: JarvisStatus }) {
+  return (
+    <section className="panel device-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Devices</h2>
+          <p>Local machine, sensors, apps, and future LAN nodes.</p>
+        </div>
+        <HardDrive size={22} aria-hidden="true" />
+      </div>
+      <div className="device-grid">
+        {(status.devices ?? []).map((device) => (
+          <article key={device.id}>
+            <strong>{device.name}</strong>
+            <span>{device.kind} / {device.status}</span>
+            <em>{device.approvalRequired ? "approval" : "trusted"}</em>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SecurityPanel({ status }: { status: JarvisStatus }) {
+  const core = status.protectedCore;
+
+  return (
+    <section className="panel security-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Safety Kernel</h2>
+          <p>Core sealed from runtime agents.</p>
+        </div>
+        <ShieldCheck size={22} aria-hidden="true" />
+      </div>
+      <div className="security-core">
+        <Lock size={24} aria-hidden="true" />
+        <div>
+          <strong>{core?.mode ?? "sealed"}</strong>
+          <span>{core?.lastDecision ?? "Protected core access is denied to runtime agents."}</span>
+        </div>
+      </div>
+      <div className="security-tags">
+        {(core?.deniedPatterns ?? ["core", "secrets", "tensors"]).slice(0, 6).map((pattern) => (
+          <span key={pattern}>{pattern}</span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PerformancePanel({ status }: { status: JarvisStatus }) {
+  const performance = status.performance;
+
+  return (
+    <section className="panel performance-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Throughput</h2>
+          <p>Tokens, context, queue, and recall.</p>
+        </div>
+        <Gauge size={22} aria-hidden="true" />
+      </div>
+      <div className="performance-bars">
+        <div style={{ "--level": `${Math.min(100, (performance?.tokensPerSecond ?? 0) * 3)}%` } as CSSProperties}>
+          <span>Tokens/s</span>
+          <strong>{performance?.tokensPerSecond.toFixed(1) ?? "0.0"}</strong>
+        </div>
+        <div style={{ "--level": `${Math.min(100, ((performance?.contextWindow ?? 0) / 32768) * 100)}%` } as CSSProperties}>
+          <span>Context</span>
+          <strong>{performance ? `${Math.round(performance.contextWindow / 1000)}k` : "0k"}</strong>
+        </div>
+        <div style={{ "--level": `${Math.max(12, 100 - (performance?.queueLatencyMs ?? 120) / 2)}%` } as CSSProperties}>
+          <span>Queue</span>
+          <strong>{performance?.queueLatencyMs ?? 0} ms</strong>
+        </div>
+      </div>
+      <p className="perf-note">{performance?.notes}</p>
+    </section>
+  );
+}
+
 function ConversationPanel({
   status,
   liveEvents,
@@ -847,6 +1097,12 @@ export function App() {
     eventSource.addEventListener("audio", handleEvent);
     eventSource.addEventListener("connector", handleEvent);
     eventSource.addEventListener("mobile", handleEvent);
+    eventSource.addEventListener("report", handleEvent);
+    eventSource.addEventListener("map", handleEvent);
+    eventSource.addEventListener("vision", handleEvent);
+    eventSource.addEventListener("device", handleEvent);
+    eventSource.addEventListener("security", handleEvent);
+    eventSource.addEventListener("performance", handleEvent);
     eventSource.onerror = () => setGatewayState("fallback");
     return () => eventSource.close();
   }, []);
@@ -896,9 +1152,16 @@ export function App() {
         </div>
       </section>
       <SystemSummary status={status} />
+      <ModeDock status={status} />
       <section className="dashboard-grid">
         <ConversationPanel status={status} liveEvents={liveEvents} onTaskCreated={setStatus} />
         <TaskQueuePanel tasks={status.tasks ?? []} onRefresh={async () => setStatus(await loadStatus())} />
+        <ReportsPanel status={status} />
+        <MapPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
+        <VisionPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
+        <DevicePanel status={status} />
+        <SecurityPanel status={status} />
+        <PerformancePanel status={status} />
         <ModelHub status={status} onTaskSelect={selectTask} />
         <ModelCatalogPanel status={status} />
         <VoicePanel status={status} />
