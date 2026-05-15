@@ -21,7 +21,7 @@ Protocol:
 
 ## Phase 1 - Desktop HUD & Dashboard Shell
 - [x] 1.1 Create `apps/hud/` Electron + React + Vite project - commit `3872403`
-- [ ] 1.2 Add centered idle orb component
+- [x] 1.2 Add centered idle orb component - commit `0025183`
 - [ ] 1.3 Add HUD animation state machine
 - [ ] 1.4 Build expandable mini panel
 - [ ] 1.5 Redesign dashboard into grouped, collapsible sections - partial dashboard grouping exists
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `1.1 Create apps/hud/ Electron + React + Vite project`.
+Next task: `1.3 Add HUD animation state machine`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
