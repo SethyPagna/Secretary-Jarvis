@@ -13,7 +13,7 @@ Protocol:
 - [ ] I.4 Session protocol - ongoing; enforce in every future session
 
 ## Phase 0 - Foundation & Doctor Checks
-- [ ] 0.1 Create `services/gateway/src/doctor.ts` - partial inline doctor exists in gateway
+- [x] 0.1 Create `services/gateway/src/doctor.ts` - commit `8c2719c`
 - [x] 0.2 Add `GET /api/setup/doctor` - implemented before tracker
 - [x] 0.3 Add `GET /api/setup/needed-feature-downloads` - commit `75d054d`
 - [x] 0.4 Add `GET /api/models/future-scaling` - commit `75d054d`
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `0.1 Extract doctor checks into services/gateway/src/doctor.ts`.
+Next task: `0.5 Run doctor, fix missing pieces, and commit`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
