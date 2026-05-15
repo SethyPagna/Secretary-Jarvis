@@ -111,6 +111,33 @@ class VoiceService:
             "fallback": "vosk after feature dependency download",
         }
 
+    def wake_word_status(self) -> dict[str, Any]:
+        porcupine_ready = self.package_available("pvporcupine")
+        vosk_ready = self.package_available("vosk") and (self.secretary_root / "models" / "wake-word").exists()
+        ready = porcupine_ready or vosk_ready
+        return {
+            "wakeWord": "jarvis",
+            "status": "ready" if ready else "staged",
+            "enabled": ready,
+            "primary": "porcupine" if porcupine_ready else "vosk-wake-profile",
+            "porcupineInstalled": porcupine_ready,
+            "voskWakeProfileInstalled": vosk_ready,
+            "privacy": "Microphone wake listening remains off until explicitly enabled by the owner.",
+            "nextAction": "Install Porcupine or place a local Vosk wake profile in models/wake-word.",
+        }
+
+    def simulate_wake_word(self, phrase: str) -> dict[str, Any]:
+        normalized = phrase.strip().lower()
+        detected = "jarvis" in normalized
+        return {
+            "detected": detected,
+            "phrase": phrase,
+            "wakeWord": "jarvis",
+            "hudState": "wake" if detected else "idle",
+            "message": "Wake word detected; HUD should transition to listening." if detected else "Wake word not detected.",
+            "status": self.wake_word_status(),
+        }
+
     def transcribe_file(self, file_path: str) -> dict[str, Any]:
         info = self.file_info(file_path) if file_path else {}
         duration = self.audio_duration_seconds(file_path) if file_path and info.get("exists") else None

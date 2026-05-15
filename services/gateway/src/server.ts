@@ -1181,6 +1181,36 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/voice/wake/status") {
+    const wakeStatus = await brainJson<Record<string, unknown>>("/voice/wake/status");
+    sendJson(response, 200, wakeStatus ?? {
+      wakeWord: "jarvis",
+      status: "staged",
+      enabled: false,
+      message: "Python Brain is offline; wake-word listening is unavailable.",
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/voice/wake/simulate") {
+    const body = (await readBody(request)) as { phrase?: string };
+    const wake = await brainJson<Record<string, unknown>>(
+      "/voice/wake/simulate",
+      { method: "POST", body: JSON.stringify({ phrase: body.phrase ?? "" }) },
+      5000,
+    );
+    const result = wake ?? {
+      detected: false,
+      phrase: body.phrase ?? "",
+      wakeWord: "jarvis",
+      hudState: "error",
+      message: "Python Brain is offline; wake-word simulation could not run.",
+    };
+    events.publish("audio", { wakeWord: result });
+    sendJson(response, 200, result);
+    return;
+  }
+
   if (request.method === "POST" && url.pathname === "/api/voice/test") {
     const body = (await readBody(request)) as { text?: string; voiceProfileId?: string };
     const profile = (status.voiceProfiles ?? []).find((candidate) => candidate.id === body.voiceProfileId) ?? status.voiceProfiles?.[0];

@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 from voice import VoiceService
 
 HOST = "127.0.0.1"
-PORT = 5000
+PORT = int(os.environ.get("JARVIS_BRAIN_PORT", "5000"))
 BUILD_ID = "brain-capabilities-v2"
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SECRETARY_ROOT = PROJECT_ROOT.parent
@@ -231,6 +231,10 @@ class BrainHandler(BaseHTTPRequestHandler):
             json_response(self, 200, VOICE.voice_profiles())
             return
 
+        if path == "/voice/wake/status":
+            json_response(self, 200, VOICE.wake_word_status())
+            return
+
         if path == "/vision/status":
             json_response(
                 self,
@@ -336,6 +340,11 @@ class BrainHandler(BaseHTTPRequestHandler):
 
         if path == "/voice/stt/probe":
             json_response(self, 200, VOICE.stt_probe())
+            return
+
+        if path == "/voice/wake/simulate":
+            phrase = str(payload.get("phrase", "")).strip()
+            json_response(self, 200, VOICE.simulate_wake_word(phrase))
             return
 
         if path == "/audio/stt/file":
