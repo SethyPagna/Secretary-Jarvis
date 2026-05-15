@@ -355,6 +355,11 @@ class BrainHandler(BaseHTTPRequestHandler):
             self.handle_tts(payload)
             return
 
+        if path == "/audio/tts/stop":
+            reason = str(payload.get("reason", "owner interrupt")).strip()
+            json_response(self, 200, VOICE.stop_speaking(reason))
+            return
+
         if path == "/vision/analyze-image":
             self.handle_vision_analyze(payload)
             return

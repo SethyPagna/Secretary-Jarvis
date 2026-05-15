@@ -32,6 +32,14 @@ export function HudPanel({
     onClose();
   }
 
+  async function stopSpeaking() {
+    await fetch(`${apiBaseUrl}/api/audio/tts/stop`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: "HUD stop speaking" })
+    }).catch(() => undefined);
+  }
+
   return (
     <section className={`hud-panel hud-panel-${panel}`} aria-label={`Jarvis ${panel} panel`}>
       <button className="panel-close" type="button" onClick={onClose} aria-label="Close panel">
@@ -56,6 +64,7 @@ export function HudPanel({
           <header><Mic size={18} /><strong>Voice</strong></header>
           <div className="mic-pulse"><Mic size={30} /></div>
           <p>Say a command...</p>
+          <button className="hud-secondary-action" type="button" onClick={stopSpeaking}>Stop speaking</button>
         </>
       )}
       {panel === "text" && (

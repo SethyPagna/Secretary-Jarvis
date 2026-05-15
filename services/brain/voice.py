@@ -17,6 +17,12 @@ class VoiceService:
         self.secretary_root = secretary_root
         self.hf_snapshot_root = secretary_root / "models" / "huggingface" / "snapshots"
         self.audio_dir = project_root / "data" / "audio" / "tts"
+        self.speaking_state: dict[str, Any] = {
+            "speaking": False,
+            "interruptible": True,
+            "lastAudioPath": None,
+            "lastInterruptedAt": None,
+        }
 
     def capabilities(self) -> list[dict[str, Any]]:
         whisper_snapshot = self.snapshot_available("openai__whisper-large-v3-turbo")
@@ -84,6 +90,7 @@ class VoiceService:
             "tts": {"engine": "piper", "installed": bool(shutil.which("piper"))},
             "ttsFallback": {"engine": "windows-sapi", "installed": os.name == "nt"},
             "vad": {"engine": "package-backed-vad", "enabled": True, "installed": self.package_available("webrtcvad")},
+            "speaking": self.speaking_state,
             "capabilities": self.capabilities(),
         }
 
@@ -129,12 +136,14 @@ class VoiceService:
     def simulate_wake_word(self, phrase: str) -> dict[str, Any]:
         normalized = phrase.strip().lower()
         detected = "jarvis" in normalized
+        interrupted = self.stop_speaking("wake-word barge-in") if detected and self.speaking_state["speaking"] else None
         return {
             "detected": detected,
             "phrase": phrase,
             "wakeWord": "jarvis",
             "hudState": "wake" if detected else "idle",
             "message": "Wake word detected; HUD should transition to listening." if detected else "Wake word not detected.",
+            "bargeIn": interrupted,
             "status": self.wake_word_status(),
         }
 
@@ -161,23 +170,63 @@ class VoiceService:
         piper_ready = bool(shutil.which("piper"))
         if not text:
             return {"status": "needs-input", "error": "text is required"}
+        self.speaking_state = {
+            "speaking": True,
+            "interruptible": True,
+            "lastAudioPath": self.speaking_state.get("lastAudioPath"),
+            "lastInterruptedAt": None,
+        }
         if not piper_ready and os.name == "nt":
             try:
-                return {**self.synthesize_with_windows_sapi(text), "textPreview": text[:80]}
+                result = {**self.synthesize_with_windows_sapi(text), "textPreview": text[:80], "interruptible": True}
+                self.speaking_state = {
+                    "speaking": False,
+                    "interruptible": True,
+                    "lastAudioPath": result.get("audioPath"),
+                    "lastInterruptedAt": None,
+                }
+                return result
             except Exception as error:  # noqa: BLE001 - diagnostic local fallback.
+                self.speaking_state = {**self.speaking_state, "speaking": False}
                 return {
                     "status": "missing-engine",
                     "engine": "windows-sapi",
                     "audioPath": None,
                     "message": f"Windows SAPI fallback failed: {error}",
                     "textPreview": text[:80],
+                    "interruptible": True,
                 }
-        return {
+        result = {
             "status": "ready" if piper_ready else "missing-engine",
             "engine": "piper",
             "audioPath": "data/audio/tts/latest.wav" if piper_ready else None,
             "message": "Piper accepted local synthesis." if piper_ready else "Install Piper before real TTS.",
             "textPreview": text[:80],
+            "interruptible": True,
+        }
+        self.speaking_state = {
+            "speaking": False,
+            "interruptible": True,
+            "lastAudioPath": result.get("audioPath"),
+            "lastInterruptedAt": None,
+        }
+        return result
+
+    def stop_speaking(self, reason: str = "owner interrupt") -> dict[str, Any]:
+        was_speaking = bool(self.speaking_state.get("speaking"))
+        interrupted_at = time.time()
+        self.speaking_state = {
+            **self.speaking_state,
+            "speaking": False,
+            "interruptible": True,
+            "lastInterruptedAt": interrupted_at,
+        }
+        return {
+            "stopped": was_speaking,
+            "reason": reason,
+            "speaking": False,
+            "interruptedAt": interrupted_at,
+            "message": "Speaking stopped." if was_speaking else "No active speech playback was running.",
         }
 
     def synthesize_with_windows_sapi(self, text: str) -> dict[str, Any]:

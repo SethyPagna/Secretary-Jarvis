@@ -1330,6 +1330,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       engine?: string;
       audioPath?: string;
       message?: string;
+      interruptible?: boolean;
     }>(
       "/audio/tts",
       {
@@ -1354,9 +1355,28 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
             ? "Piper is not installed yet; using the supplied Jarvis voice sample for local playback."
             : "Piper is not installed or not on PATH. TTS is wired but cannot synthesize yet."),
       engine: brainResult?.engine ?? (piperReady ? "piper" : "voice-sample"),
+      interruptible: brainResult?.interruptible ?? true,
     };
     events.publish("audio", { tts: result });
     sendJson(response, 200, { tts: result });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/audio/tts/stop") {
+    const body = (await readBody(request)) as { reason?: string };
+    const stopResult = await brainJson<Record<string, unknown>>(
+      "/audio/tts/stop",
+      { method: "POST", body: JSON.stringify({ reason: body.reason ?? "owner interrupt" }) },
+      5000,
+    );
+    const result = stopResult ?? {
+      stopped: false,
+      reason: body.reason ?? "owner interrupt",
+      speaking: false,
+      message: "Python Brain is offline; no speech process was stopped.",
+    };
+    events.publish("audio", { stopSpeaking: result });
+    sendJson(response, 200, result);
     return;
   }
 
