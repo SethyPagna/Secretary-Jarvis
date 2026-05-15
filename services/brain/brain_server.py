@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+from voice import VoiceService
 
 HOST = "127.0.0.1"
 PORT = 5000
@@ -24,6 +25,7 @@ DATA_AUDIO_DIR = PROJECT_ROOT / "data" / "audio" / "tts"
 TASKS: dict[str, dict[str, Any]] = {}
 MEMORIES: list[dict[str, Any]] = []
 SOCIAL_DRAFTS: list[dict[str, Any]] = []
+VOICE = VoiceService(PROJECT_ROOT, SECRETARY_ROOT)
 
 MODEL_SIZE_ESTIMATES_GB = {
     "Qwen/Qwen3.5-9B": 22,
@@ -120,38 +122,7 @@ def capabilities_payload() -> dict[str, Any]:
             "audioArtifacts": str(DATA_AUDIO_DIR),
         },
         "capabilities": [
-            {
-                "id": "stt-whisper-transformers",
-                "label": "Whisper large-v3-turbo",
-                "kind": "stt",
-                "status": "ready" if whisper_snapshot and package_available("transformers") else "staged" if whisper_snapshot else "missing",
-                "installed": whisper_snapshot,
-                "details": "Snapshot detected locally; install transformers/torch to run this Python path.",
-            },
-            {
-                "id": "stt-whisper-cpp",
-                "label": "whisper.cpp",
-                "kind": "stt",
-                "status": "ready" if shutil.which("whisper-cli") else "missing",
-                "installed": bool(shutil.which("whisper-cli")),
-                "details": "Native command-line STT path.",
-            },
-            {
-                "id": "tts-piper",
-                "label": "Piper",
-                "kind": "tts",
-                "status": "ready" if shutil.which("piper") else "missing",
-                "installed": bool(shutil.which("piper")),
-                "details": "Preferred fast local TTS engine.",
-            },
-            {
-                "id": "tts-windows-sapi",
-                "label": "Windows SAPI",
-                "kind": "tts",
-                "status": "ready" if os.name == "nt" else "missing",
-                "installed": os.name == "nt",
-                "details": "Built-in Windows local speech synthesis fallback.",
-            },
+            *VOICE.capabilities(),
             {
                 "id": "vision-file-inspector",
                 "label": "Local image/file inspector",
@@ -159,14 +130,6 @@ def capabilities_payload() -> dict[str, Any]:
                 "status": "ready",
                 "installed": True,
                 "details": "Dependency-light local file metadata and optional PIL image dimensions.",
-            },
-            {
-                "id": "vad-webrtc-target",
-                "label": "Package-backed VAD",
-                "kind": "vad",
-                "status": "ready" if package_available("webrtcvad") else "staged",
-                "installed": package_available("webrtcvad"),
-                "details": "Production path uses package-backed VAD; handwritten MFCC remains a learning reference only.",
             },
         ],
     }
@@ -257,23 +220,7 @@ class BrainHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/audio/status":
-            payload = capabilities_payload()
-            json_response(
-                self,
-                200,
-                {
-                    "stt": {
-                        "engine": "openai/whisper-large-v3-turbo",
-                        "snapshotInstalled": snapshot_available("openai__whisper-large-v3-turbo"),
-                        "transformersInstalled": package_available("transformers"),
-                        "whisperCppInstalled": bool(shutil.which("whisper-cli")),
-                    },
-                    "tts": {"engine": "piper", "installed": bool(shutil.which("piper"))},
-                    "ttsFallback": {"engine": "windows-sapi", "installed": os.name == "nt"},
-                    "vad": {"engine": "package-backed-vad", "enabled": True, "installed": package_available("webrtcvad")},
-                    "capabilities": payload["capabilities"],
-                },
-            )
+            json_response(self, 200, VOICE.audio_status())
             return
 
         if path == "/models/readiness":
@@ -281,20 +228,7 @@ class BrainHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/voice/profiles":
-            json_response(
-                self,
-                200,
-                {
-                    "profiles": [
-                        {"id": "voice-profile-jarvis", "agentId": "jarvis", "status": "ready", "engine": "voice-sample"},
-                        {"id": "voice-profile-friday", "agentId": "friday", "status": "staged", "engine": "piper"},
-                        {"id": "voice-profile-daedalus", "agentId": "daedalus", "status": "staged", "engine": "piper"},
-                        {"id": "voice-profile-argus", "agentId": "argus", "status": "staged", "engine": "piper"},
-                        {"id": "voice-profile-sentinel", "agentId": "sentinel", "status": "ready", "engine": "windows-sapi"},
-                    ],
-                    "message": "Agent voice profiles are wired; Piper profiles activate after the feature dependency is installed.",
-                },
-            )
+            json_response(self, 200, VOICE.voice_profiles())
             return
 
         if path == "/vision/status":
@@ -401,20 +335,7 @@ class BrainHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/voice/stt/probe":
-            whisper_snapshot = snapshot_available("openai__whisper-large-v3-turbo")
-            json_response(
-                self,
-                200,
-                {
-                    "primary": "openai/whisper-large-v3-turbo",
-                    "status": "ready" if whisper_snapshot and package_available("transformers") else "ready-asset" if whisper_snapshot else "missing",
-                    "snapshotInstalled": whisper_snapshot,
-                    "transformersInstalled": package_available("transformers"),
-                    "torchInstalled": package_available("torch"),
-                    "whisperCppInstalled": bool(shutil.which("whisper-cli")),
-                    "fallback": "vosk after feature dependency download",
-                },
-            )
+            json_response(self, 200, VOICE.stt_probe())
             return
 
         if path == "/audio/stt/file":
@@ -507,65 +428,14 @@ class BrainHandler(BaseHTTPRequestHandler):
 
     def handle_stt_file(self, payload: dict[str, Any]) -> None:
         file_path = str(payload.get("filePath", "")).strip()
-        info = file_info(file_path) if file_path else {}
-        duration = audio_duration_seconds(file_path) if file_path and info.get("exists") else None
-        whisper_snapshot = snapshot_available("openai__whisper-large-v3-turbo")
-        transformers_ready = whisper_snapshot and package_available("transformers")
-        whisper_cpp_ready = bool(shutil.which("whisper-cli"))
-        ready = transformers_ready or whisper_cpp_ready
-        json_response(
-            self,
-            200,
-            {
-                "status": "ready" if ready else "staged" if whisper_snapshot else "missing-engine",
-                "engine": "openai/whisper-large-v3-turbo" if transformers_ready else "whisper.cpp" if whisper_cpp_ready else "staged-whisper",
-                "filePath": file_path,
-                "file": info,
-                "durationSeconds": duration,
-                "text": f"Local STT staged for {Path(file_path).name or 'audio'}."
-                if ready
-                else "",
-                "message": "STT engine is staged. Install transformers/torch or whisper.cpp to transcribe this file."
-                if not ready
-                else "STT pipeline accepted the local audio file.",
-            },
-        )
+        json_response(self, 200, VOICE.transcribe_file(file_path))
 
     def handle_tts(self, payload: dict[str, Any]) -> None:
         text = str(payload.get("text", "")).strip()
-        piper_ready = bool(shutil.which("piper"))
         if not text:
             json_response(self, 400, {"error": "text is required"})
             return
-        if not piper_ready and os.name == "nt":
-            try:
-                result = synthesize_with_windows_sapi(text)
-                json_response(self, 200, {**result, "textPreview": text[:80]})
-                return
-            except Exception as error:  # noqa: BLE001 - diagnostic local fallback.
-                json_response(
-                    self,
-                    200,
-                    {
-                        "status": "missing-engine",
-                        "engine": "windows-sapi",
-                        "audioPath": None,
-                        "message": f"Windows SAPI fallback failed: {error}",
-                        "textPreview": text[:80],
-                    },
-                )
-                return
-        json_response(
-            self,
-            200,
-            {
-                "status": "ready" if piper_ready else "missing-engine",
-                "engine": "piper",
-                "audioPath": "data/audio/tts/latest.wav" if piper_ready else None,
-                "message": "Piper accepted local synthesis." if piper_ready else "Install Piper before real TTS.",
-                "textPreview": text[:80],
-            },
-        )
+        json_response(self, 200, VOICE.synthesize(text))
 
     def handle_vision_analyze(self, payload: dict[str, Any]) -> None:
         file_path = str(payload.get("filePath", "")).strip()
