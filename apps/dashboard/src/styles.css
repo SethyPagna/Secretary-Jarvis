@@ -152,6 +152,15 @@ h1 {
   cursor: pointer;
 }
 
+.danger-button {
+  color: var(--danger);
+}
+
+.danger-button:hover {
+  border-color: rgba(255, 104, 116, 0.55);
+  background: rgba(255, 104, 116, 0.12);
+}
+
 .floating-orb {
   position: fixed;
   right: 22px;
@@ -814,6 +823,55 @@ h1 {
   font-size: 12px;
 }
 
+.memory-write {
+  border-color: rgba(117, 240, 178, 0.26);
+  background: rgba(117, 240, 178, 0.055);
+}
+
+.memory-search,
+.device-command {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 0 18px 12px;
+}
+
+.device-command {
+  grid-template-columns: minmax(0, 0.65fr) minmax(180px, 0.35fr);
+}
+
+.memory-search input,
+.memory-search button,
+.device-command input {
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  font: inherit;
+}
+
+.memory-search input,
+.device-command input {
+  padding: 0 10px;
+}
+
+.memory-search button {
+  padding: 0 14px;
+  background: rgba(89, 215, 255, 0.12);
+  cursor: pointer;
+}
+
+.device-command span {
+  min-height: 38px;
+  padding: 9px 10px;
+  border: 1px solid rgba(72, 217, 255, 0.15);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .approval-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1133,6 +1191,15 @@ h1 {
   padding: 12px;
 }
 
+.device-grid button {
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(246, 251, 248, 0.06);
+  color: var(--text);
+  cursor: pointer;
+}
+
 .device-grid em {
   color: var(--amber);
   font-style: normal;
@@ -1178,7 +1245,8 @@ h1 {
 
 .conversation-body,
 .event-feed,
-.task-list {
+.task-list,
+.conversation-transcript {
   display: grid;
   gap: 10px;
   padding: 0 18px 18px;
@@ -1363,6 +1431,46 @@ h1 {
 
 .event-feed {
   padding-top: 0;
+}
+
+.conversation-transcript {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.turn {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.turn.user {
+  border-color: rgba(255, 209, 102, 0.24);
+}
+
+.turn.assistant {
+  border-color: rgba(117, 240, 178, 0.24);
+}
+
+.turn.streaming {
+  background: rgba(72, 217, 255, 0.07);
+  animation: breathe 2.8s ease-in-out infinite;
+}
+
+.turn strong {
+  display: block;
+  color: var(--cyan);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.turn p {
+  margin-top: 6px;
+  color: #d8e4dc;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .event-feed article {
@@ -1576,10 +1684,12 @@ h1 {
   .voice-assets article,
   .startup-grid,
   .startup-services,
-    .social-form,
-    .mobile-form,
-    .panel-actions,
-    .map-query {
+  .social-form,
+  .mobile-form,
+  .panel-actions,
+  .map-query,
+  .memory-search,
+  .device-command {
     grid-template-columns: 1fr;
   }
 

@@ -666,6 +666,113 @@ function createMobilePairing(baseUrl: string, deviceName?: string): MobilePairin
   };
 }
 
+function recordPendingApproval(action: ActionRequest): ActionRequest {
+  const existing = status.pendingApprovals.find((approval) => approval.id === action.id);
+  if (!existing) {
+    status = {
+      ...status,
+      pendingApprovals: [action, ...status.pendingApprovals].slice(0, 30),
+    };
+  }
+  return existing ?? action;
+}
+
+function completeApproval(approvalId: string, outcome: "approved" | "denied"): {
+  approval?: ActionRequest;
+  memoryWrite?: MemoryWrite;
+} {
+  const approval = status.pendingApprovals.find((candidate) => candidate.id === approvalId);
+  if (!approval) {
+    return {};
+  }
+
+  const timestamp = now();
+  const shouldEnableConnector = outcome === "approved" && approval.connectorId;
+  status = {
+    ...status,
+    pendingApprovals: status.pendingApprovals.filter((candidate) => candidate.id !== approvalId),
+    connectors: shouldEnableConnector
+      ? status.connectors.map((connector) =>
+          connector.id === approval.connectorId ? { ...connector, enabled: true } : connector,
+        )
+      : status.connectors,
+  };
+
+  if (outcome === "approved" && /screen/i.test(approval.target)) {
+    status = {
+      ...status,
+      connectors: status.connectors.map((connector) =>
+        connector.id === "screen" ? { ...connector, enabled: true } : connector,
+      ),
+      devices: (status.devices ?? []).map((device) =>
+        device.id === "device-camera" || device.id === "device-mic"
+          ? device
+          : /screen|vscode/i.test(device.name)
+            ? { ...device, status: "online", approvalRequired: false }
+            : device,
+      ),
+    };
+  }
+
+  if (outcome === "approved" && /camera/i.test(approval.target)) {
+    status = {
+      ...status,
+      connectors: status.connectors.map((connector) =>
+        connector.id === "camera" ? { ...connector, enabled: true } : connector,
+      ),
+      devices: (status.devices ?? []).map((device) =>
+        device.id === "device-camera" ? { ...device, status: "online", approvalRequired: false } : device,
+      ),
+    };
+  }
+
+  const memoryWrite: MemoryWrite = {
+    id: id("memory"),
+    kind: "decision",
+    content: `Approval ${outcome}: ${approval.title}. Target: ${approval.target}.`,
+    importance: outcome === "approved" ? 0.8 : 0.64,
+    createdAt: timestamp,
+    tags: ["approval", outcome, approval.category],
+  };
+  store.addMemoryWrite(memoryWrite);
+  return { approval, memoryWrite };
+}
+
+function cancelActiveTasks(reason: string): { cancelled: TaskRun[]; eventCount: number } {
+  const timestamp = now();
+  const candidates = store
+    .listTasks()
+    .filter((task) => task.status === "queued" || task.status === "running" || task.status === "paused" || task.status === "waiting-approval");
+  const cancelled: TaskRun[] = [];
+
+  candidates.forEach((task) => {
+    const next = {
+      ...applyTaskStatus(task, "cancelled", timestamp),
+      checkpoint: task.checkpoint ?? reason,
+    };
+    store.upsertTask(next);
+    store.upsertQueueItem({
+      taskId: next.id,
+      status: "cancelled",
+      priority: 0,
+      enqueuedAt: task.createdAt,
+      finishedAt: timestamp,
+    });
+    const event = taskEvent({
+      id: id("task-event"),
+      taskId: task.id,
+      kind: "cancelled",
+      message: reason,
+      createdAt: timestamp,
+    });
+    store.addTaskEvent(event);
+    events.publish("task", { task: next, event });
+    cancelled.push(next);
+  });
+
+  return { cancelled, eventCount: cancelled.length };
+}
+
 async function routeRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
   if (request.method === "OPTIONS") {
     response.writeHead(204, JSON_HEADERS);
@@ -699,6 +806,53 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/setup/doctor") {
     sendJson(response, 200, setupDoctor());
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/emergency-stop") {
+    const body = (await readBody(request)) as { reason?: string };
+    const reason = body.reason?.trim() || "Emergency stop requested by the owner.";
+    const result = cancelActiveTasks(reason);
+    status = {
+      ...status,
+      agents: status.agents.map((agent) => ({ ...agent, status: agent.id === "safety" ? "reviewing" : "idle" })),
+    };
+    const memoryWrite: MemoryWrite = {
+      id: id("memory"),
+      kind: "decision",
+      content: `Emergency stop: ${reason}. Cancelled ${result.cancelled.length} active task(s).`,
+      importance: 0.9,
+      createdAt: now(),
+      tags: ["emergency-stop", "safety"],
+    };
+    store.addMemoryWrite(memoryWrite);
+    events.publish("security", { emergencyStop: true, reason, cancelled: result.cancelled.length });
+    events.publish("memory", { memoryWrite });
+    sendJson(response, 200, { ...result, memoryWrite });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/approvals") {
+    sendJson(response, 200, { approvals: status.pendingApprovals });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname.startsWith("/api/approvals/")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const approvalId = parts[2];
+    const action = parts[3];
+    if (action !== "approve" && action !== "deny") {
+      sendJson(response, 404, { error: "Unknown approval action", action });
+      return;
+    }
+    const result = completeApproval(approvalId, action === "approve" ? "approved" : "denied");
+    if (!result.approval) {
+      sendJson(response, 404, { error: "Approval not found", approvalId });
+      return;
+    }
+    events.publish("approval", { approval: result.approval, outcome: action, memoryWrite: result.memoryWrite });
+    events.publish("memory", { memoryWrite: result.memoryWrite });
+    sendJson(response, 200, { approval: result.approval, outcome: action, memoryWrite: result.memoryWrite });
     return;
   }
 
@@ -894,6 +1048,58 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "POST" && url.pathname.startsWith("/api/devices/")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const deviceId = parts[2];
+    const actionName = parts[3];
+    const device = hydrateDevices().find((candidate) => candidate.id === deviceId);
+    if (!device) {
+      sendJson(response, 404, { error: "Device not found", deviceId });
+      return;
+    }
+    if (actionName !== "dry-run") {
+      sendJson(response, 404, { error: "Unknown device action", actionName });
+      return;
+    }
+
+    const body = (await readBody(request)) as { command?: string };
+    const command = body.command?.trim() || `Inspect ${device.name}`;
+    const category = device.permissions.includes("sensor-capture")
+      ? "sensor-capture"
+      : device.permissions.includes("device-control")
+        ? "device-control"
+        : "read-local";
+    const action: ActionRequest = {
+      id: id("device-action"),
+      title: `${device.name} dry-run`,
+      category,
+      target: device.name,
+      reason: `Dry-run only: ${command}`,
+      connectorId: device.kind === "desktop" ? "filesystem" : undefined,
+      agentId: "jarvis",
+      dataTouched: [device.kind, "local device state"],
+    };
+    const decision = evaluateActionPolicy({
+      action,
+      privacyMode: status.privacyMode,
+      allowedConnectors: getEnabledConnectorIds(),
+    });
+    if (decision.decision === "requires_approval") {
+      recordPendingApproval(action);
+    }
+    events.publish("device", { device, command, decision, action });
+    sendJson(response, 200, {
+      device,
+      command,
+      dryRun: {
+        action,
+        decision,
+        preview: `${command} would touch ${action.dataTouched.join(", ")}. No device command was executed.`,
+      },
+    });
+    return;
+  }
+
   if (request.method === "POST" && url.pathname === "/api/vision/analyze-image") {
     const body = (await readBody(request)) as { filePath?: string; source?: string; mode?: VisionInsight["mode"] };
     const timestamp = now();
@@ -1005,6 +1211,9 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         privacyMode: status.privacyMode,
         allowedConnectors: getEnabledConnectorIds(),
       });
+      if (decision.decision === "requires_approval") {
+        recordPendingApproval(action);
+      }
       const draft = createOutboundMessageDraft({
         id: id("draft"),
         connectorId,
@@ -1227,6 +1436,9 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       return;
     }
     const { dryRun, decision } = createDryRunResponse(modelRef, body.source);
+    if (decision.decision === "requires_approval") {
+      recordPendingApproval(dryRun.approvalAction);
+    }
     events.publish("approval", { action: dryRun.approvalAction, decision, dryRun });
     sendJson(response, decision.decision === "deny" ? 403 : 202, {
       action: dryRun.approvalAction,

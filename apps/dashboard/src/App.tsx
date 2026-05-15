@@ -41,7 +41,9 @@ import {
   seededStatus,
   type ActionRequest,
   type AgentProfile,
+  type ConversationTurn,
   type MobilePairing,
+  type MemoryWrite,
   type ModelDryRunResult,
   type JarvisStatus,
   type ModelProfile,
@@ -126,7 +128,7 @@ function FloatingJarvisOrb({ status }: { status: JarvisStatus }) {
   );
 }
 
-function Header({ status }: { status: JarvisStatus }) {
+function Header({ status, onEmergencyStop }: { status: JarvisStatus; onEmergencyStop: () => Promise<void> }) {
   return (
     <header className="topbar">
       <div className="brand-lockup">
@@ -143,7 +145,7 @@ function Header({ status }: { status: JarvisStatus }) {
           <Lock size={16} aria-hidden="true" />
           {status.privacyMode}
         </div>
-        <button className="icon-button" type="button" aria-label="Emergency stop">
+        <button className="icon-button danger-button" type="button" aria-label="Emergency stop" onClick={onEmergencyStop}>
           <XCircle size={20} aria-hidden="true" />
         </button>
       </div>
@@ -337,6 +339,18 @@ function AgentFlow({ agents }: { agents: AgentProfile[] }) {
 }
 
 function MemoryTimeline({ status }: { status: JarvisStatus }) {
+  const [query, setQuery] = useState("privacy");
+  const [writes, setWrites] = useState<MemoryWrite[]>([]);
+
+  async function searchMemory() {
+    const response = await fetch(`${API_BASE_URL}/api/memory/search?q=${encodeURIComponent(query)}`);
+    if (!response.ok) {
+      throw new Error("Memory search failed");
+    }
+    const body = (await response.json()) as { writes?: MemoryWrite[] };
+    setWrites(body.writes ?? []);
+  }
+
   return (
     <section className="panel timeline-panel">
       <div className="panel-header">
@@ -346,7 +360,21 @@ function MemoryTimeline({ status }: { status: JarvisStatus }) {
         </div>
         <Database size={22} aria-hidden="true" />
       </div>
+      <div className="memory-search">
+        <input value={query} onChange={(event) => setQuery(event.target.value)} />
+        <button type="button" onClick={searchMemory}>Recall</button>
+      </div>
       <div className="timeline">
+        {writes.map((memory) => (
+          <article className="timeline-event memory-write" key={memory.id}>
+            <time>{new Date(memory.createdAt).toLocaleString()}</time>
+            <div>
+              <strong>{memory.kind}</strong>
+              <p>{memory.content}</p>
+              <span>{memory.tags.join(" / ")}</span>
+            </div>
+          </article>
+        ))}
         {status.memories.map((memory) => (
           <article className="timeline-event" key={memory.id}>
             <time>{new Date(memory.timestamp).toLocaleString()}</time>
@@ -362,7 +390,19 @@ function MemoryTimeline({ status }: { status: JarvisStatus }) {
   );
 }
 
-function Approvals({ status }: { status: JarvisStatus }) {
+function Approvals({ status, onRefresh }: { status: JarvisStatus; onRefresh: () => Promise<void> }) {
+  async function decideApproval(approvalId: string, action: "approve" | "deny") {
+    const response = await fetch(`${API_BASE_URL}/api/approvals/${approvalId}/${action}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      throw new Error(`Approval ${action} failed`);
+    }
+    await onRefresh();
+  }
+
   return (
     <section className="panel approvals-panel">
       <div className="panel-header">
@@ -383,11 +423,11 @@ function Approvals({ status }: { status: JarvisStatus }) {
                 <span>{decision.reasons.join(" ")}</span>
               </div>
               <div className="approval-actions">
-                <button className="approve" type="button">
+                <button className="approve" type="button" onClick={() => decideApproval(approval.id, "approve")}>
                   <CheckCircle2 size={16} aria-hidden="true" />
                   Approve
                 </button>
-                <button className="deny" type="button">
+                <button className="deny" type="button" onClick={() => decideApproval(approval.id, "deny")}>
                   <XCircle size={16} aria-hidden="true" />
                   Deny
                 </button>
@@ -838,7 +878,24 @@ function VisionPanel({ status, onRefresh }: { status: JarvisStatus; onRefresh: (
   );
 }
 
-function DevicePanel({ status }: { status: JarvisStatus }) {
+function DevicePanel({ status, onRefresh }: { status: JarvisStatus; onRefresh: () => Promise<void> }) {
+  const [command, setCommand] = useState("Inspect status only");
+  const [lastDryRun, setLastDryRun] = useState<string>("No device action staged.");
+
+  async function dryRunDevice(deviceId: string) {
+    const response = await fetch(`${API_BASE_URL}/api/devices/${deviceId}/dry-run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ command }),
+    });
+    if (!response.ok) {
+      throw new Error("Device dry-run failed");
+    }
+    const body = (await response.json()) as { dryRun?: { preview?: string; decision?: { decision?: string } } };
+    setLastDryRun(`${body.dryRun?.decision?.decision ?? "checked"}: ${body.dryRun?.preview ?? "No action executed."}`);
+    await onRefresh();
+  }
+
   return (
     <section className="panel device-panel">
       <div className="panel-header">
@@ -848,12 +905,17 @@ function DevicePanel({ status }: { status: JarvisStatus }) {
         </div>
         <HardDrive size={22} aria-hidden="true" />
       </div>
+      <div className="device-command">
+        <input value={command} onChange={(event) => setCommand(event.target.value)} />
+        <span>{lastDryRun}</span>
+      </div>
       <div className="device-grid">
         {(status.devices ?? []).map((device) => (
           <article key={device.id}>
             <strong>{device.name}</strong>
             <span>{device.kind} / {device.status}</span>
             <em>{device.approvalRequired ? "approval" : "trusted"}</em>
+            <button type="button" onClick={() => dryRunDevice(device.id)}>Dry-run</button>
           </article>
         ))}
       </div>
@@ -931,8 +993,26 @@ function ConversationPanel({
 }) {
   const [message, setMessage] = useState("");
   const [taskProfile, setTaskProfile] = useState<TaskProfile>("daily-assistant");
+  const [turns, setTurns] = useState<ConversationTurn[]>([]);
   const conversations = status.conversations ?? [];
   const latestConversation = conversations[0];
+  const liveTokens = liveEvents
+    .filter((event) => event.type === "token")
+    .slice(0, 8)
+    .map((event) => String(event.payload.content ?? ""))
+    .reverse()
+    .join(" ");
+
+  useEffect(() => {
+    if (!latestConversation?.id) {
+      setTurns([]);
+      return;
+    }
+    fetch(`${API_BASE_URL}/api/conversations/${latestConversation.id}`)
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("conversation fetch failed"))))
+      .then((body: { turns?: ConversationTurn[] }) => setTurns(body.turns ?? []))
+      .catch(() => setTurns([]));
+  }, [latestConversation?.id, status.tasks?.[0]?.updatedAt]);
 
   async function sendMessage() {
     const trimmed = message.trim();
@@ -984,6 +1064,24 @@ function ConversationPanel({
             Send to Jarvis
           </button>
         </div>
+      </div>
+      <div className="conversation-transcript">
+        {turns.length === 0 ? (
+          <p className="empty-state">No saved turns yet.</p>
+        ) : (
+          turns.slice(-8).map((turn) => (
+            <article className={`turn ${turn.role}`} key={turn.id}>
+              <strong>{turn.role}</strong>
+              <p>{turn.content}</p>
+            </article>
+          ))
+        )}
+        {liveTokens && (
+          <article className="turn assistant streaming">
+            <strong>streaming</strong>
+            <p>{liveTokens}</p>
+          </article>
+        )}
       </div>
       <div className="event-feed">
         {liveEvents.slice(0, 5).map((event) => (
@@ -1077,7 +1175,17 @@ export function App() {
     const handleEvent = (message: MessageEvent<string>) => {
       const event = JSON.parse(message.data) as StreamEvent;
       setLiveEvents((previous) => [event, ...previous].slice(0, 40));
-      if (event.type === "task" || event.type === "conversation" || event.type === "status") {
+      if (
+        event.type === "task" ||
+        event.type === "conversation" ||
+        event.type === "status" ||
+        event.type === "approval" ||
+        event.type === "memory" ||
+        event.type === "device" ||
+        event.type === "security" ||
+        event.type === "vision" ||
+        event.type === "map"
+      ) {
         loadStatus()
           .then((nextStatus) => {
             setStatus(nextStatus);
@@ -1133,10 +1241,22 @@ export function App() {
     }
   }
 
+  async function emergencyStop() {
+    const response = await fetch(`${API_BASE_URL}/api/emergency-stop`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: "Emergency stop from Jarvis desktop console." }),
+    });
+    if (!response.ok) {
+      throw new Error("Emergency stop failed");
+    }
+    setStatus(await loadStatus());
+  }
+
   return (
     <main className="app-shell">
       <FloatingJarvisOrb status={status} />
-      <Header status={status} />
+      <Header status={status} onEmergencyStop={emergencyStop} />
       <section className="hero-surface">
         <div className="hero-copy">
           <h2>Private intelligence, wired to grow.</h2>
@@ -1159,7 +1279,7 @@ export function App() {
         <ReportsPanel status={status} />
         <MapPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
         <VisionPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <DevicePanel status={status} />
+        <DevicePanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
         <SecurityPanel status={status} />
         <PerformancePanel status={status} />
         <ModelHub status={status} onTaskSelect={selectTask} />
@@ -1171,7 +1291,7 @@ export function App() {
         <ReferencePanel status={status} />
         <AgentFlow agents={status.agents} />
         <MemoryTimeline status={status} />
-        <Approvals status={status} />
+        <Approvals status={status} onRefresh={async () => setStatus(await loadStatus())} />
         <ConnectorsAndSkills status={status} />
         <ModalityStudio />
         <GrowthReport status={status} />
