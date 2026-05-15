@@ -17,4 +17,16 @@ python services/brain/brain_server.py
 Current endpoints:
 
 - `GET /health`
+- `GET /capabilities`
+- `GET /audio/status`
+- `GET /vision/status`
 - `POST /command`
+- `POST /audio/stt/file`
+- `POST /audio/tts`
+- `POST /vision/analyze-image`
+- `POST /memory/write`
+- `POST /memory/search`
+
+The core server uses only the Python standard library. Optional local upgrades are listed in
+`requirements.txt`; Jarvis detects them at runtime and reports whether each path is `ready`,
+`staged`, or `missing`.

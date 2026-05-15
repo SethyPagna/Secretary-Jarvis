@@ -519,7 +519,8 @@ h1 {
 .vision-panel,
 .device-panel,
 .security-panel,
-.performance-panel {
+.performance-panel,
+.brain-panel {
   grid-column: span 5;
 }
 
@@ -992,7 +993,8 @@ h1 {
 .device-grid,
 .vision-list,
 .security-tags,
-.performance-bars {
+.performance-bars,
+.brain-capabilities {
   display: grid;
   gap: 10px;
   padding: 0 18px 18px;
@@ -1007,7 +1009,9 @@ h1 {
 .security-core,
 .vision-scope,
 .map-caption,
-.performance-bars div {
+.performance-bars div,
+.brain-status,
+.brain-capabilities article {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.18);
@@ -1231,6 +1235,50 @@ h1 {
 .perf-note {
   padding: 0 18px 18px;
   line-height: 1.45;
+}
+
+.brain-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin: 0 18px 12px;
+  padding: 12px;
+}
+
+.brain-status strong {
+  color: var(--green);
+  text-transform: uppercase;
+}
+
+.brain-status.offline strong {
+  color: var(--danger);
+}
+
+.brain-status span,
+.brain-capabilities span,
+.brain-capabilities p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.brain-status button {
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(89, 215, 255, 0.12);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.brain-capabilities article {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+}
+
+.brain-capabilities p {
+  line-height: 1.4;
 }
 
 .report-body svg {
@@ -1623,7 +1671,8 @@ h1 {
   .vision-panel,
   .device-panel,
   .security-panel,
-  .performance-panel {
+  .performance-panel,
+  .brain-panel {
     grid-column: span 12;
   }
 }
@@ -1687,9 +1736,10 @@ h1 {
   .social-form,
   .mobile-form,
   .panel-actions,
-  .map-query,
-  .memory-search,
-  .device-command {
+    .map-query,
+    .memory-search,
+    .device-command,
+    .brain-status {
     grid-template-columns: 1fr;
   }
 

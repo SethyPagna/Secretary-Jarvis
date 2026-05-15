@@ -85,6 +85,24 @@ interface ModelDryRunResponse {
   decision: { decision: string; reasons: string[] };
 }
 
+interface BrainCapability {
+  id: string;
+  label: string;
+  kind: string;
+  status: string;
+  installed: boolean;
+  details: string;
+}
+
+interface BrainStatusResponse {
+  online: boolean;
+  url: string;
+  health?: { buildId?: string; readyCapabilities?: string[] };
+  capabilities?: { capabilities?: BrainCapability[] };
+  audio?: Record<string, unknown>;
+  vision?: Record<string, unknown>;
+}
+
 async function loadStatus(): Promise<JarvisStatus> {
   const response = await fetch(API_STATUS_URL);
   if (!response.ok) {
@@ -982,6 +1000,57 @@ function PerformancePanel({ status }: { status: JarvisStatus }) {
   );
 }
 
+function BrainPanel() {
+  const [brain, setBrain] = useState<BrainStatusResponse | null>(null);
+
+  async function refreshBrain() {
+    const response = await fetch(`${API_BASE_URL}/api/brain/status`);
+    const body = (await response.json()) as BrainStatusResponse;
+    setBrain(body);
+  }
+
+  useEffect(() => {
+    refreshBrain().catch(() =>
+      setBrain({
+        online: false,
+        url: "http://127.0.0.1:5000",
+      }),
+    );
+  }, []);
+
+  const capabilities = brain?.capabilities?.capabilities ?? [];
+
+  return (
+    <section className="panel brain-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Python Brain</h2>
+          <p>Orchestration, voice, memory, and perception sidecar.</p>
+        </div>
+        <TerminalSquare size={22} aria-hidden="true" />
+      </div>
+      <div className={brain?.online ? "brain-status online" : "brain-status offline"}>
+        <strong>{brain?.online ? "online" : "offline"}</strong>
+        <span>{brain?.health?.buildId ?? brain?.url ?? "http://127.0.0.1:5000"}</span>
+        <button type="button" onClick={refreshBrain}>Refresh</button>
+      </div>
+      <div className="brain-capabilities">
+        {capabilities.length === 0 ? (
+          <p className="empty-state">Brain capabilities are unavailable.</p>
+        ) : (
+          capabilities.map((capability) => (
+            <article key={capability.id}>
+              <strong>{capability.label}</strong>
+              <span>{capability.kind} / {capability.status}</span>
+              <p>{capability.details}</p>
+            </article>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ConversationPanel({
   status,
   liveEvents,
@@ -1282,6 +1351,7 @@ export function App() {
         <DevicePanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
         <SecurityPanel status={status} />
         <PerformancePanel status={status} />
+        <BrainPanel />
         <ModelHub status={status} onTaskSelect={selectTask} />
         <ModelCatalogPanel status={status} />
         <VoicePanel status={status} />

@@ -41,6 +41,7 @@ const DEFAULT_PORT = 4317;
 const HF_SNAPSHOT_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\models\\huggingface\\snapshots";
 const VOICE_ASSET_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\assets\\voice";
 const OLLAMA_URL = process.env.JARVIS_OLLAMA_URL ?? "http://127.0.0.1:11434";
+const BRAIN_URL = process.env.JARVIS_BRAIN_URL ?? "http://127.0.0.1:5000";
 const PROTECTED_CORE_PATTERNS = [
   /show|print|dump|reveal|exfiltrate/i,
   /source code|core code|safeguard|policy engine|system prompt|model tensor|weights|secret|credential|vault/i,
@@ -666,6 +667,29 @@ function createMobilePairing(baseUrl: string, deviceName?: string): MobilePairin
   };
 }
 
+async function brainJson<T>(path: string, init?: RequestInit, timeoutMs = 3500): Promise<T | undefined> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${BRAIN_URL}${path}`, {
+      ...init,
+      headers: {
+        "content-type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      return undefined;
+    }
+    return (await response.json()) as T;
+  } catch {
+    return undefined;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function recordPendingApproval(action: ActionRequest): ActionRequest {
   const existing = status.pendingApprovals.find((approval) => approval.id === action.id);
   if (!existing) {
@@ -935,11 +959,31 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/audio/status") {
     const runtimeStatus = statusWithRuntimeState();
+    const brainAudio = await brainJson<Record<string, unknown>>("/audio/status");
     sendJson(response, 200, {
       engines: runtimeStatus.audioEngines ?? [],
       voiceSession: runtimeStatus.voiceSession,
       voiceAssets: runtimeStatus.voiceAssets ?? [],
       toolStatuses: detectToolStatuses().filter((tool) => ["whisper-cli", "piper"].includes(tool.id)),
+      brain: brainAudio ?? { status: "offline", message: "Python Brain is not reachable." },
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/brain/status") {
+    const [health, capabilities, audio, vision] = await Promise.all([
+      brainJson<Record<string, unknown>>("/health"),
+      brainJson<Record<string, unknown>>("/capabilities"),
+      brainJson<Record<string, unknown>>("/audio/status"),
+      brainJson<Record<string, unknown>>("/vision/status"),
+    ]);
+    sendJson(response, health ? 200 : 503, {
+      online: Boolean(health),
+      health,
+      capabilities,
+      audio,
+      vision,
+      url: BRAIN_URL,
     });
     return;
   }
@@ -947,9 +991,25 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   if (request.method === "POST" && url.pathname === "/api/audio/transcribe-file") {
     const body = (await readBody(request)) as { filePath?: string };
     const timestamp = now();
+    const brainResult = await brainJson<{
+      status?: string;
+      engine?: string;
+      text?: string;
+      message?: string;
+      durationSeconds?: number;
+    }>(
+      "/audio/stt/file",
+      {
+        method: "POST",
+        body: JSON.stringify({ filePath: body.filePath }),
+      },
+      8000,
+    );
     const localWhisperReady = existsSync(`${HF_SNAPSHOT_ROOT}\\openai__whisper-large-v3-turbo`);
     const toolsReady =
-      localWhisperReady || detectToolStatuses().some((tool) => tool.id === "whisper-cli" && tool.installed);
+      brainResult?.status === "ready" ||
+      localWhisperReady ||
+      detectToolStatuses().some((tool) => tool.id === "whisper-cli" && tool.installed);
     const session = createVoiceSession({
       id: status.voiceSession?.id ?? id("voice-session"),
       now: timestamp,
@@ -960,11 +1020,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
           session,
           {
             id: id("transcript"),
-            text: `Transcription placeholder for ${body.filePath ?? "uploaded local audio"}.`,
+            text: brainResult?.text || `Transcription staged for ${body.filePath ?? "uploaded local audio"}.`,
             startMs: 0,
-            endMs: 1000,
-            confidence: localWhisperReady ? 0.9 : 0.82,
-            engineId: localWhisperReady ? "whisper-large-v3-turbo" : session.sttEngineId,
+            endMs: Math.round((brainResult?.durationSeconds ?? 1) * 1000),
+            confidence: brainResult?.status === "ready" ? 0.9 : localWhisperReady ? 0.82 : 0.7,
+            engineId: brainResult?.engine ?? (localWhisperReady ? "whisper-large-v3-turbo" : session.sttEngineId),
             final: true,
           },
           timestamp,
@@ -978,25 +1038,44 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         ? nextSession.transcript.at(-1)
         : {
             status: "missing-engine",
-            message: "No local Whisper snapshot or whisper.cpp binary was found for transcription.",
+            message: brainResult?.message ?? "No local Whisper snapshot or whisper.cpp binary was found for transcription.",
           },
+      brain: brainResult,
     });
     return;
   }
 
   if (request.method === "POST" && url.pathname === "/api/audio/tts") {
     const body = (await readBody(request)) as Partial<TtsRequest>;
+    const brainResult = await brainJson<{
+      status?: string;
+      engine?: string;
+      audioPath?: string;
+      message?: string;
+    }>(
+      "/audio/tts",
+      {
+        method: "POST",
+        body: JSON.stringify({ text: body.text, voiceId: body.voiceId, engineId: body.engineId }),
+      },
+      12_000,
+    );
     const piperReady = detectToolStatuses().some((tool) => tool.id === "piper" && tool.installed);
     const voiceSample = `${VOICE_ASSET_ROOT}\\jarvis.mp3`;
     const result = {
       requestId: body.id ?? id("tts"),
-      status: piperReady || existsSync(voiceSample) ? "ready" : "missing-engine",
-      audioPath: piperReady ? "data/audio/tts/latest.wav" : existsSync(voiceSample) ? "assets/voice/jarvis.mp3" : undefined,
-      message: piperReady
-        ? "Piper TTS request accepted for local synthesis."
-        : existsSync(voiceSample)
-          ? "Piper is not installed yet; using the supplied Jarvis voice sample for local playback."
-          : "Piper is not installed or not on PATH. TTS is wired but cannot synthesize yet.",
+      status: brainResult?.status === "ready" || piperReady || existsSync(voiceSample) ? "ready" : "missing-engine",
+      audioPath:
+        brainResult?.audioPath ??
+        (piperReady ? "data/audio/tts/latest.wav" : existsSync(voiceSample) ? "assets/voice/jarvis.mp3" : undefined),
+      message:
+        brainResult?.message ??
+        (piperReady
+          ? "Piper TTS request accepted for local synthesis."
+          : existsSync(voiceSample)
+            ? "Piper is not installed yet; using the supplied Jarvis voice sample for local playback."
+            : "Piper is not installed or not on PATH. TTS is wired but cannot synthesize yet."),
+      engine: brainResult?.engine ?? (piperReady ? "piper" : "voice-sample"),
     };
     events.publish("audio", { tts: result });
     sendJson(response, 200, { tts: result });
@@ -1104,6 +1183,22 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     const body = (await readBody(request)) as { filePath?: string; source?: string; mode?: VisionInsight["mode"] };
     const timestamp = now();
     const mode = body.mode ?? (body.filePath ? "image" : "camera");
+    const brainVision = body.filePath
+      ? await brainJson<{
+          status?: string;
+          summary?: string;
+          observations?: string[];
+          dimensions?: Record<string, unknown>;
+          message?: string;
+        }>(
+          "/vision/analyze-image",
+          {
+            method: "POST",
+            body: JSON.stringify({ filePath: body.filePath }),
+          },
+          8000,
+        )
+      : undefined;
     const action: ActionRequest = {
       id: id("vision-action"),
       title: "Analyze visual input",
@@ -1123,20 +1218,29 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       id: id("vision"),
       source: body.filePath ?? body.source ?? "live sensor",
       mode,
-      status: body.filePath ? "ready" : decision.decision === "requires_approval" ? "requires-approval" : "needs-input",
+      status:
+        body.filePath && brainVision?.status === "ready"
+          ? "ready"
+          : body.filePath
+            ? "needs-input"
+            : decision.decision === "requires_approval"
+              ? "requires-approval"
+              : "needs-input",
       summary: body.filePath
-        ? "Local image analysis request accepted. OCR/object detection sidecar will process this path when the Python vision service is active."
+        ? brainVision?.summary ?? "Local image analysis request accepted. OCR/object detection sidecar will process this path when active."
         : "Live screen/camera perception is wired, but requires explicit approval before capture.",
-      observations: [
-        decision.decision === "requires_approval" ? "Approval required before live sensor capture." : "Static file path can be analyzed locally.",
-        "No hosted vision inference is used by default.",
-        "Results are eligible for MemoryOS timeline only after owner-approved retention.",
-      ],
+      observations:
+        brainVision?.observations ??
+        [
+          decision.decision === "requires_approval" ? "Approval required before live sensor capture." : "Static file path can be analyzed locally.",
+          "No hosted vision inference is used by default.",
+          "Results are eligible for MemoryOS timeline only after owner-approved retention.",
+        ],
       createdAt: timestamp,
     };
     status = { ...status, visionInsights: [insight, ...(status.visionInsights ?? []).slice(0, 4)] };
-    events.publish("vision", { insight, decision });
-    sendJson(response, 200, { insight, decision });
+    events.publish("vision", { insight, decision, brain: brainVision });
+    sendJson(response, 200, { insight, decision, brain: brainVision });
     return;
   }
 
