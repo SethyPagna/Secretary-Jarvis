@@ -39,7 +39,7 @@ Protocol:
 - [x] 2.9 Wire needed-feature-downloads and future-scaling endpoints - commit `75d054d`
 
 ## Phase 3 - Voice Loop
-- [ ] 3.1 Python voice module/service - partial in `services/brain/brain_server.py`
+- [x] 3.1 Python voice module/service - commit `e6a1530`
 - [x] 3.2 Add voice endpoints - commit `709bfaf`
 - [ ] 3.3 Wake-word system
 - [ ] 3.4 Barge-in / interruptible speaking
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `3.1 Python voice module/service`.
+Next task: `3.3 Wake-word system`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
