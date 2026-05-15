@@ -104,6 +104,9 @@ export interface ReadyModelAsset {
   primaryUse: string;
   runtimeAdapters: RuntimeKind[];
   hardwareFit: HardwareFit;
+  detected?: boolean;
+  detectedPath?: string;
+  setupNotes?: string[];
 }
 
 export interface NeededFeatureDownload {

@@ -12,6 +12,7 @@ import {
   createOutboundMessageDraft,
   createSteeringEvent,
   createVoiceSession,
+  hydrateReadyModelAssets,
   neededFeatureDownloads,
   evaluateActionPolicy,
   classifySystemCommand,
@@ -19,7 +20,6 @@ import {
   createUndoJournalEntry,
   isReversibleSystemCommand,
   readinessForModel,
-  readyModelAssets,
   seededStatus,
   selectModelForTask,
   taskEvent,
@@ -117,13 +117,15 @@ function estimateTokens(content: string): number {
 }
 
 function statusWithRuntimeState(): JarvisStatus {
+  const hydratedReadyAssets = hydrateReadyModelAssets(existsSync);
+  const hydratedModels = status.models.map(hydrateModelState);
   return {
     ...status,
-    models: status.models.map(hydrateModelState),
-    readyModelAssets,
+    models: hydratedModels,
+    readyModelAssets: hydratedReadyAssets,
     neededFeatureDownloads: hydrateFeatureDownloads(),
     futureScalingModels,
-    modelReadiness: status.models.map((model) => readinessForModel(hydrateModelState(model), existsSync)),
+    modelReadiness: hydratedModels.map((model) => readinessForModel(model, existsSync, hydratedReadyAssets)),
     audioEngines: (status.audioEngines ?? []).map(hydrateAudioEngineState),
     voiceAssets: (status.voiceAssets ?? []).filter((asset) => existsSync(`C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\${asset.localPath}`)),
     startup: hydrateStartupState(),

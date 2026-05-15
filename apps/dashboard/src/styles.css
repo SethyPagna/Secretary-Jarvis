@@ -1920,6 +1920,46 @@ h1 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.asset-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 0 18px 12px;
+}
+
+.asset-strip details {
+  min-width: 0;
+  border: 1px solid rgba(98, 240, 178, 0.22);
+  border-radius: 8px;
+  background: rgba(98, 240, 178, 0.055);
+}
+
+.asset-strip summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
+  color: var(--green);
+  cursor: pointer;
+}
+
+.asset-strip summary span,
+.asset-strip p,
+.asset-strip small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-strip p,
+.asset-strip small {
+  display: block;
+  padding: 0 10px 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .readiness-card,
 .future-list article,
 .souls-grid article,
@@ -2253,7 +2293,8 @@ h1 {
 
 @media (max-width: 1120px) {
   .hero-surface,
-  .summary-grid {
+  .summary-grid,
+  .asset-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2299,6 +2340,7 @@ h1 {
 
   .hero-surface,
   .summary-grid,
+  .asset-strip,
   .mode-dock,
   .flow-map,
   .connector-grid,
@@ -2346,10 +2388,10 @@ h1 {
   .social-form,
   .mobile-form,
   .panel-actions,
-    .map-query,
-    .memory-search,
-    .device-command,
-    .brain-status {
+  .map-query,
+  .memory-search,
+  .device-command,
+  .brain-status {
     grid-template-columns: 1fr;
   }
 

@@ -216,10 +216,33 @@ export const futureScalingModels: FutureScalingModel[] = [
   },
 ];
 
-export function readinessForModel(model: ModelProfile, pathExists: (path: string) => boolean): ModelReadiness {
-  const readyAsset = readyModelAssets.find((asset) => asset.profileId === model.id);
+export function hydrateReadyModelAssets(pathExists: (path: string) => boolean): ReadyModelAsset[] {
+  return readyModelAssets.map((asset) => {
+    const detected = pathExists(asset.localPath);
+    return {
+      ...asset,
+      detected,
+      detectedPath: detected ? asset.localPath : undefined,
+      setupNotes: detected
+        ? [
+            "Local model folder detected.",
+            asset.hardwareFit === "laptop-ready"
+              ? "Ready for laptop routing once the matching runtime probe succeeds."
+              : "Keep staged until an optimized runtime or LAN endpoint is configured.",
+          ]
+        : ["Expected local model folder is missing."],
+    };
+  });
+}
+
+export function readinessForModel(
+  model: ModelProfile,
+  pathExists: (path: string) => boolean,
+  assets: ReadyModelAsset[] = readyModelAssets,
+): ModelReadiness {
+  const readyAsset = assets.find((asset) => asset.profileId === model.id);
   const artifactPath = readyAsset?.localPath ?? model.artifact?.localPath;
-  const downloaded = artifactPath ? pathExists(artifactPath) : model.installState === "installed";
+  const downloaded = readyAsset?.detected ?? (artifactPath ? pathExists(artifactPath) : model.installState === "installed");
   const isFutureScaling = futureScalingModels.some((future) => future.modelRef === model.modelRef);
   const hardwareFit: HardwareFit = readyAsset?.hardwareFit ?? fitForModel(model);
   const runtimeState = resolveRuntimeState(model, downloaded, hardwareFit, isFutureScaling);

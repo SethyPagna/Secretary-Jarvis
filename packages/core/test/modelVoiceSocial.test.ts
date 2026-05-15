@@ -5,6 +5,7 @@ import {
   createOutboundMessageDraft,
   createVoiceSession,
   futureScalingModels,
+  hydrateReadyModelAssets,
   neededFeatureDownloads,
   readinessForModel,
   readyModelAssets,
@@ -65,13 +66,24 @@ describe("model readiness catalogs", () => {
   });
 
   it("classifies downloaded heavy assets as ready assets that still need an appropriate runtime", () => {
+    const assets = hydrateReadyModelAssets((path) => path.includes("Qwen__Qwen3.6-27B"));
     const qwen27 = defaultModelProfiles.find((model) => model.id === "hf-qwen36-27b");
     expect(qwen27).toBeDefined();
-    const readiness = readinessForModel(qwen27!, () => true);
+    const readiness = readinessForModel(qwen27!, () => false, assets);
 
     expect(readiness.downloadState).toBe("complete");
     expect(readiness.runtimeState).toBe("needs-runtime");
     expect(readiness.hardwareFit).toBe("workstation");
+  });
+
+  it("marks ready model assets as detected only when their expected folders exist", () => {
+    const assets = hydrateReadyModelAssets((path) => path.endsWith("openai__whisper-large-v3-turbo"));
+    const whisper = assets.find((asset) => asset.profileId === "hf-whisper-large-v3-turbo");
+    const qwen = assets.find((asset) => asset.profileId === "hf-qwen35-9b");
+
+    expect(whisper?.detected).toBe(true);
+    expect(whisper?.detectedPath).toContain("openai__whisper-large-v3-turbo");
+    expect(qwen?.detected).toBe(false);
   });
 });
 

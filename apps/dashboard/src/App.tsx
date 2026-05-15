@@ -55,6 +55,7 @@ import {
   type NeededFeatureDownload,
   type JarvisStatus,
   type ModelProfile,
+  type ReadyModelAsset,
   type OutboundMessageDraft,
   type PrivacyMode,
   type ScaleProfile,
@@ -1453,6 +1454,7 @@ interface FutureScalingResponse {
 
 interface ModelReadinessResponse {
   readiness: ModelReadiness[];
+  readyModelAssets?: ReadyModelAsset[];
 }
 
 interface UndoJournalResponse {
@@ -1584,6 +1586,7 @@ function SectionRail({ active, onChange }: { active: AppSection; onChange: (sect
 
 function ModelReadinessPanel() {
   const response = useGatewayResource<ModelReadinessResponse>("/api/models/readiness", { readiness: [] });
+  const detectedAssets = response.readyModelAssets?.filter((asset) => asset.detected) ?? [];
 
   return (
     <section className="panel model-readiness-panel">
@@ -1593,6 +1596,18 @@ function ModelReadinessPanel() {
           <p>Downloaded assets are separated from runtime probes and future scaling.</p>
         </div>
         <Cpu size={22} aria-hidden="true" />
+      </div>
+      <div className="asset-strip">
+        {detectedAssets.map((asset) => (
+          <details key={asset.id}>
+            <summary>
+              <CheckCircle2 size={14} aria-hidden="true" />
+              <span>{asset.label}</span>
+            </summary>
+            <p>{asset.detectedPath}</p>
+            <small>{asset.hardwareFit} / {asset.runtimeAdapters.join(", ")}</small>
+          </details>
+        ))}
       </div>
       <div className="readiness-grid">
         {response.readiness.map((model) => (
