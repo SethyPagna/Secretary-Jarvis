@@ -1136,8 +1136,9 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
-  if (request.method === "POST" && url.pathname.startsWith("/api/models/") && url.pathname.endsWith("/select")) {
-    const parts = url.pathname.split("/").filter(Boolean);
+  const modelSelectParts = url.pathname.split("/").filter(Boolean);
+  if (request.method === "POST" && modelSelectParts.length === 4 && modelSelectParts[0] === "api" && modelSelectParts[1] === "models" && modelSelectParts[3] === "select") {
+    const parts = modelSelectParts;
     const modelId = decodeURIComponent(parts[2] ?? "");
     const runtimeStatus = statusWithRuntimeState();
     const selected = runtimeStatus.models.find((model) => model.id === modelId || model.modelRef === modelId);
@@ -1935,10 +1936,12 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   if (request.method === "POST" && url.pathname === "/api/models/select") {
     const body = (await readBody(request)) as { taskProfile?: TaskProfile };
     const taskProfile = body.taskProfile ?? "daily-assistant";
+    const runtimeStatus = statusWithRuntimeState();
     const selected = selectModelForTask({
       taskProfile,
       scaleProfile: status.scaleProfile,
-      models: status.models,
+      models: runtimeStatus.models,
+      readiness: runtimeStatus.modelReadiness,
     });
 
     status = {

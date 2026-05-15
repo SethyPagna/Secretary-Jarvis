@@ -1,4 +1,4 @@
-import type { ModelProfile, RuntimeAdapter, ScaleProfile, TaskProfile } from "./types.js";
+import type { ModelProfile, ModelReadiness, RuntimeAdapter, ScaleProfile, TaskProfile } from "./types.js";
 
 const DISABLED_CLOUD_NOTE =
   "Cloud or hosted inference is represented for planning only and remains disabled in strict local mode.";
@@ -326,22 +326,30 @@ export function selectModelForTask(params: {
   taskProfile: TaskProfile;
   scaleProfile: ScaleProfile;
   models?: ModelProfile[];
+  readiness?: ModelReadiness[];
 }): ModelProfile {
   const models = params.models ?? defaultModelProfiles;
+  const readinessById = new Map((params.readiness ?? []).map((readiness) => [readiness.modelId, readiness]));
   const eligible = models.filter(
     (model) =>
-      model.enabled &&
       model.safety !== "disabled-cloud" &&
       model.taskProfiles.includes(params.taskProfile),
   );
 
-  const exactScale = eligible.find((model) => model.scale === params.scaleProfile);
-  if (exactScale) {
-    return exactScale;
+  const ranked = eligible
+    .map((model) => ({
+      model,
+      score: routingScore(model, params.taskProfile, params.scaleProfile, readinessById.get(model.id)),
+    }))
+    .filter((candidate) => candidate.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (ranked[0]) {
+    return ranked[0].model;
   }
 
   const fallback =
-    eligible.find((model) => model.scale === "laptop") ??
+    eligible.find((model) => model.enabled && model.scale === "laptop") ??
     eligible[0] ??
     models.find(
       (model) =>
@@ -355,4 +363,105 @@ export function selectModelForTask(params: {
   }
 
   return fallback;
+}
+
+function routingScore(
+  model: ModelProfile,
+  taskProfile: TaskProfile,
+  scaleProfile: ScaleProfile,
+  readiness?: ModelReadiness,
+): number {
+  const runtimeState = readiness?.runtimeProbe?.ok
+    ? "ready"
+    : readiness?.runtimeProbe?.status === "served"
+      ? "ready"
+      : readiness?.runtimeState;
+  const readinessScore = runtimeStateScore(runtimeState);
+  if (readinessScore <= 0 && !model.enabled) {
+    return 0;
+  }
+
+  let score = readinessScore;
+  score += scaleScore(model.scale, scaleProfile);
+  score += model.enabled ? 8 : 0;
+  score += taskPreferenceScore(model, taskProfile, scaleProfile, readiness);
+  score -= memoryPenalty(model, scaleProfile);
+  return score;
+}
+
+function runtimeStateScore(runtimeState: ModelReadiness["runtimeState"] | undefined): number {
+  if (runtimeState === "ready") {
+    return 100;
+  }
+  if (runtimeState === "ready-asset") {
+    return 72;
+  }
+  if (runtimeState === "needs-runtime") {
+    return 24;
+  }
+  if (runtimeState === "future-scaling") {
+    return 8;
+  }
+  return 0;
+}
+
+function scaleScore(modelScale: ScaleProfile, desiredScale: ScaleProfile): number {
+  if (modelScale === desiredScale) {
+    return 22;
+  }
+  if (desiredScale === "laptop" && modelScale === "workstation") {
+    return -18;
+  }
+  if (desiredScale === "laptop" && modelScale === "homelab") {
+    return -32;
+  }
+  if (desiredScale === "workstation" && modelScale === "laptop") {
+    return 8;
+  }
+  if (desiredScale === "homelab" && modelScale !== "homelab") {
+    return 4;
+  }
+  return 0;
+}
+
+function taskPreferenceScore(
+  model: ModelProfile,
+  taskProfile: TaskProfile,
+  scaleProfile: ScaleProfile,
+  readiness?: ModelReadiness,
+): number {
+  const ref = `${model.id} ${model.modelRef} ${model.label}`.toLowerCase();
+  const servedOrReady = readiness?.runtimeProbe?.ok || readiness?.runtimeState === "ready" || readiness?.runtimeState === "ready-asset";
+
+  if (taskProfile === "daily-assistant") {
+    return (model.runtime === "ollama" ? 18 : 0) + (model.scale === "laptop" ? 10 : 0);
+  }
+  if (taskProfile === "coding" || taskProfile === "deep-reasoning") {
+    const qwenScore = ref.includes("qwen") ? 22 : 0;
+    const heavyReadyBonus = scaleProfile !== "laptop" && model.scale !== "laptop" && servedOrReady ? 12 : 0;
+    return qwenScore + heavyReadyBonus;
+  }
+  if (taskProfile === "audio-transcription") {
+    return ref.includes("whisper") ? 35 : 0;
+  }
+  if (taskProfile === "screen-vision") {
+    return ref.includes("gemma") ? 18 : ref.includes("qwen") ? 12 : 0;
+  }
+  if (taskProfile === "rag") {
+    return model.modalities.includes("embedding") ? 24 : 0;
+  }
+  return 0;
+}
+
+function memoryPenalty(model: ModelProfile, scaleProfile: ScaleProfile): number {
+  if (scaleProfile !== "laptop") {
+    return 0;
+  }
+  if (model.recommendedMemoryGb >= 64) {
+    return 34;
+  }
+  if (model.recommendedMemoryGb >= 32) {
+    return 18;
+  }
+  return 0;
 }

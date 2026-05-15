@@ -91,4 +91,50 @@ describe("model registry", () => {
     expect(model.id).toBe("hf-qwen35-9b");
     expect(model.safety).toBe("local-only");
   });
+
+  it("does not route laptop coding work to heavy models that still need an endpoint", () => {
+    const model = selectModelForTask({
+      taskProfile: "coding",
+      scaleProfile: "laptop",
+      models: seededStatus.models,
+      readiness: [
+        {
+          modelId: "hf-qwen35-9b",
+          label: "Qwen3.5 9B Multimodal",
+          modelRef: "Qwen/Qwen3.5-9B",
+          downloadState: "complete",
+          runtimeState: "ready-asset",
+          hardwareFit: "laptop-staged",
+          runtimePlan: "Safe local asset.",
+          missingFiles: [],
+          recommendedUse: "coding",
+          nextAction: "probe",
+        },
+        {
+          modelId: "hf-qwen36-27b",
+          label: "Qwen3.6 27B Homelab",
+          modelRef: "Qwen/Qwen3.6-27B",
+          downloadState: "complete",
+          runtimeState: "needs-runtime",
+          hardwareFit: "workstation",
+          runtimePlan: "Needs SGLang/vLLM endpoint.",
+          missingFiles: [],
+          recommendedUse: "heavy coding",
+          nextAction: "start endpoint",
+        },
+      ],
+    });
+
+    expect(model.id).toBe("hf-qwen35-9b");
+  });
+
+  it("routes speech transcription work to the local Whisper asset", () => {
+    const model = selectModelForTask({
+      taskProfile: "audio-transcription",
+      scaleProfile: "laptop",
+      models: seededStatus.models,
+    });
+
+    expect(model.id).toBe("hf-whisper-large-v3-turbo");
+  });
 });
