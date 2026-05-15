@@ -82,18 +82,47 @@ button {
   top: calc(50% + 76px);
   left: 50%;
   width: min(260px, 60vw);
-  height: 1px;
+  min-height: 22px;
   overflow: hidden;
   transform: translateX(-50%);
-  background: rgba(0, 229, 255, 0.1);
+  display: grid;
+  gap: 8px;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .hud-activation-line span {
   display: block;
+  position: relative;
   width: 42%;
-  height: 100%;
+  height: 1px;
   background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.9), transparent);
   animation: line-scan 1.6s ease-in-out infinite;
+}
+
+.hud-activation-line strong {
+  font-weight: 500;
+  text-shadow: 0 0 14px rgba(0, 229, 255, 0.45);
+}
+
+.hud-state-thinking .orb-aura,
+.hud-state-planning .orb-aura {
+  background: radial-gradient(circle, rgba(255, 0, 127, 0.22), rgba(0, 229, 255, 0.08) 48%, transparent 72%);
+  box-shadow:
+    0 0 34px rgba(255, 0, 127, 0.26),
+    0 0 86px rgba(0, 229, 255, 0.14);
+}
+
+.hud-state-approval .orb-aura {
+  background: radial-gradient(circle, rgba(255, 209, 102, 0.24), rgba(0, 229, 255, 0.08) 48%, transparent 72%);
+}
+
+.hud-state-error .orb-aura {
+  background: radial-gradient(circle, rgba(255, 0, 72, 0.3), rgba(0, 0, 0, 0.08) 48%, transparent 72%);
 }
 
 .hud-corner-control {
