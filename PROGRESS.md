@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `1.5 Redesign dashboard into grouped, collapsible sections`.
+Next task: `0.1 Extract doctor checks into services/gateway/src/doctor.ts`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
