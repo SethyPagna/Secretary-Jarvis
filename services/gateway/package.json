@@ -1,0 +1,19 @@
+{
+  "name": "@jarvis/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --watch --loader ts-node/esm src/server.ts",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@jarvis/core": "0.1.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}

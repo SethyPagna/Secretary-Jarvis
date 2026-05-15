@@ -1,0 +1,509 @@
+export type PrivacyMode = "strict-local" | "local-hybrid-disabled" | "trusted-lan";
+
+export type ScaleProfile = "laptop" | "workstation" | "homelab";
+
+export type Modality =
+  | "text"
+  | "code"
+  | "vision"
+  | "image"
+  | "video"
+  | "audio"
+  | "music"
+  | "speech"
+  | "maps"
+  | "research"
+  | "embedding";
+
+export type TaskProfile =
+  | "daily-assistant"
+  | "deep-reasoning"
+  | "coding"
+  | "research"
+  | "rag"
+  | "screen-vision"
+  | "image-generation"
+  | "video-generation"
+  | "audio-transcription"
+  | "voice-cloning"
+  | "tts"
+  | "music-generation"
+  | "maps-geospatial";
+
+export type RuntimeKind =
+  | "ollama"
+  | "lmstudio"
+  | "llama-cpp"
+  | "vllm"
+  | "sglang"
+  | "huggingface-local"
+  | "huggingface-tgi"
+  | "lan-local";
+
+export type ModelSafety = "local-only" | "lan-only" | "disabled-cloud";
+
+export type ModelSource =
+  | "ollama-library"
+  | "huggingface"
+  | "gguf-local"
+  | "openai-compatible-lan"
+  | "docker-model-runner"
+  | "disabled-hosted";
+
+export type InstallState = "available" | "missing" | "staged" | "installed" | "disabled";
+
+export interface ModelArtifact {
+  source: ModelSource;
+  repoId?: string;
+  localPath?: string;
+  quantization?: string;
+  estimatedSizeGb?: number;
+  gated?: boolean;
+  license?: string;
+}
+
+export interface ModelProfile {
+  id: string;
+  label: string;
+  runtime: RuntimeKind;
+  modelRef: string;
+  modalities: Modality[];
+  taskProfiles: TaskProfile[];
+  scale: ScaleProfile;
+  safety: ModelSafety;
+  enabled: boolean;
+  recommendedMemoryGb: number;
+  recommendedVramGb?: number;
+  contextWindow?: number;
+  source?: ModelSource;
+  installState?: InstallState;
+  artifact?: ModelArtifact;
+  benchmarkScore?: number;
+  notes: string;
+}
+
+export interface RuntimeAdapter {
+  id: RuntimeKind;
+  label: string;
+  source: ModelSource;
+  toolCommand?: string;
+  localOnly: boolean;
+  enabledByDefault: boolean;
+}
+
+export interface ModelInstallPlan {
+  id: string;
+  modelRef: string;
+  source: ModelSource;
+  runtime: RuntimeKind;
+  commandPreview: string;
+  localCachePath: string;
+  estimatedSizeGb?: number;
+  requiresApproval: boolean;
+  localOnly: boolean;
+  notes: string[];
+  blockers: string[];
+}
+
+export interface ModelDryRunResult {
+  modelRef: string;
+  source: ModelSource;
+  canEstimate: boolean;
+  willDownload: boolean;
+  estimatedSizeGb?: number;
+  installPlan: ModelInstallPlan;
+  approvalAction: ActionRequest;
+}
+
+export interface BenchmarkRun {
+  id: string;
+  modelId: string;
+  taskProfile: TaskProfile;
+  promptTokens: number;
+  outputTokens: number;
+  latencyMs: number;
+  tokensPerSecond: number;
+  createdAt: string;
+  notes: string;
+}
+
+export interface HardwareProfile {
+  id: string;
+  label: string;
+  totalRamGb: number;
+  gpuName: string;
+  vramGb: number;
+  acceleration: "cpu" | "cuda" | "rocm-optional" | "metal" | "unknown";
+  notes: string[];
+}
+
+export type RiskLevel = "safe" | "approval-required" | "blocked";
+
+export type ActionCategory =
+  | "read-local"
+  | "write-local"
+  | "delete-local"
+  | "network"
+  | "send-message"
+  | "post-social"
+  | "purchase"
+  | "credential-access"
+  | "device-control"
+  | "model-download"
+  | "sensor-capture"
+  | "irreversible-edit";
+
+export interface ActionRequest {
+  id: string;
+  title: string;
+  category: ActionCategory;
+  target: string;
+  reason: string;
+  connectorId?: string;
+  agentId?: string;
+  dataTouched: string[];
+}
+
+export interface PolicyDecision {
+  actionId: string;
+  decision: "allow" | "deny" | "requires_approval";
+  risk: RiskLevel;
+  reasons: string[];
+}
+
+export type MemoryKind =
+  | "session"
+  | "daily-note"
+  | "semantic"
+  | "timeline"
+  | "identity"
+  | "decision"
+  | "device-event"
+  | "screen-event";
+
+export interface MemoryEvent {
+  id: string;
+  kind: MemoryKind;
+  title: string;
+  summary: string;
+  source: string;
+  timestamp: string;
+  confidence: number;
+  tags: string[];
+}
+
+export type ConversationRole = "user" | "assistant" | "system" | "tool";
+
+export interface Conversation {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  summary: string;
+  tokenBudget: number;
+}
+
+export interface ConversationTurn {
+  id: string;
+  conversationId: string;
+  role: ConversationRole;
+  content: string;
+  createdAt: string;
+  taskId?: string;
+  tokenEstimate: number;
+}
+
+export type TaskStatus =
+  | "queued"
+  | "running"
+  | "paused"
+  | "waiting-approval"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+export type InterruptPolicy = "soft-steer" | "hard-cancel" | "parallel-branch";
+
+export interface TaskRun {
+  id: string;
+  conversationId: string;
+  title: string;
+  status: TaskStatus;
+  activeAgentId: string;
+  taskProfile: TaskProfile;
+  createdAt: string;
+  updatedAt: string;
+  checkpoint?: string;
+  result?: string;
+}
+
+export interface TaskQueueItem {
+  taskId: string;
+  status: TaskStatus;
+  priority: number;
+  enqueuedAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+export type TaskEventKind =
+  | "queued"
+  | "started"
+  | "token"
+  | "tool"
+  | "memory-write"
+  | "steered"
+  | "interrupted"
+  | "checkpoint"
+  | "cancelled"
+  | "completed"
+  | "failed";
+
+export interface TaskEvent {
+  id: string;
+  taskId: string;
+  kind: TaskEventKind;
+  message: string;
+  createdAt: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface SteeringEvent {
+  id: string;
+  taskId: string;
+  instruction: string;
+  policy: InterruptPolicy;
+  createdAt: string;
+}
+
+export interface StreamEvent {
+  id: string;
+  type:
+    | "status"
+    | "conversation"
+    | "task"
+    | "memory"
+    | "approval"
+    | "token"
+    | "setup"
+    | "model"
+    | "audio"
+    | "connector"
+    | "mobile";
+  createdAt: string;
+  payload: Record<string, unknown>;
+}
+
+export interface MemoryWrite {
+  id: string;
+  conversationId?: string;
+  taskId?: string;
+  kind: MemoryKind;
+  content: string;
+  importance: number;
+  createdAt: string;
+  tags: string[];
+}
+
+export interface AgentProfile {
+  id: string;
+  name: string;
+  role: string;
+  soulPath: string;
+  modelProfileId: string;
+  permissions: ActionCategory[];
+  status: "idle" | "listening" | "planning" | "executing" | "reviewing" | "waiting-approval" | "sleeping";
+}
+
+export interface SkillManifest {
+  id: string;
+  name: string;
+  description: string;
+  permissions: ActionCategory[];
+  source: "jarvis" | "openclaw-reference" | "ruflo-reference" | "user";
+  enabled: boolean;
+}
+
+export type ConnectorKind =
+  | "filesystem"
+  | "local-app"
+  | "dev-tool"
+  | "discord"
+  | "telegram"
+  | "whatsapp"
+  | "email"
+  | "slack"
+  | "social-outbox"
+  | "iot"
+  | "maps";
+
+export type ConnectorCredentialStatus = "not-configured" | "configured" | "expired" | "not-required";
+
+export interface ConnectorManifest {
+  id: string;
+  name: string;
+  category: "software" | "device" | "social" | "developer" | "media" | "maps";
+  kind?: ConnectorKind;
+  credentialStatus?: ConnectorCredentialStatus;
+  permissions: ActionCategory[];
+  dataTouched: string[];
+  approvalRequired: ActionCategory[];
+  enabled: boolean;
+  rollback: "none" | "best-effort" | "transactional";
+}
+
+export interface ConnectorDryRun {
+  id: string;
+  connectorId: string;
+  action: ActionCategory;
+  target: string;
+  preview: string;
+  decision: PolicyDecision;
+  createdAt: string;
+  auditSummary: string;
+}
+
+export interface OutboundMessageDraft {
+  id: string;
+  connectorId: string;
+  recipient: string;
+  channel: string;
+  content: string;
+  createdAt: string;
+  status: "draft" | "waiting-approval" | "approved" | "sent" | "blocked";
+  approvalActionId: string;
+  rollback: "none" | "best-effort";
+  auditSummary: string;
+}
+
+export type AudioEngineKind = "whisper-transformers" | "whisper-cpp" | "vosk" | "piper";
+
+export interface AudioEngine {
+  id: string;
+  kind: AudioEngineKind;
+  label: string;
+  role: "stt" | "tts" | "vad";
+  command?: string;
+  modelRef?: string;
+  installed: boolean;
+  status: "ready" | "missing" | "planned";
+  notes: string;
+}
+
+export interface VadSegment {
+  id: string;
+  startMs: number;
+  endMs: number;
+  confidence: number;
+}
+
+export interface TranscriptChunk {
+  id: string;
+  text: string;
+  startMs: number;
+  endMs: number;
+  confidence: number;
+  engineId: string;
+  final: boolean;
+}
+
+export interface TtsRequest {
+  id: string;
+  text: string;
+  voiceId: string;
+  engineId: string;
+  createdAt: string;
+}
+
+export interface TtsResult {
+  requestId: string;
+  status: "ready" | "missing-engine" | "failed";
+  audioPath?: string;
+  message: string;
+}
+
+export interface VoiceSession {
+  id: string;
+  state: "idle" | "listening" | "transcribing" | "speaking" | "missing-tools" | "error";
+  sttEngineId: string;
+  ttsEngineId: string;
+  vadEnabled: boolean;
+  transcript: TranscriptChunk[];
+  updatedAt: string;
+  message: string;
+}
+
+export interface VoiceAsset {
+  id: string;
+  label: string;
+  fileName: string;
+  localPath: string;
+  role: "intro" | "morning" | "identity" | "sample";
+  durationHint?: string;
+  notes: string;
+}
+
+export interface ReferenceSource {
+  id: string;
+  name: string;
+  kind: "openclaw" | "ruflo" | "jarvis-version" | "tooling";
+  localPath: string;
+  license: "mit" | "apache-2.0" | "unknown" | "mixed";
+  status: "vendored-reference" | "audited" | "adopted";
+  adoptedPatterns: string[];
+  notes: string;
+}
+
+export interface StartupState {
+  mode: "manual" | "startup-task-ready" | "startup-task-registered";
+  scriptPath: string;
+  backgroundServices: string[];
+  notes: string[];
+}
+
+export interface MobilePairing {
+  id: string;
+  tokenPreview: string;
+  baseUrl: string;
+  status: "pending" | "confirmed" | "revoked";
+  createdAt: string;
+  expiresAt: string;
+  deviceName?: string;
+}
+
+export interface ToolStatus {
+  id: string;
+  label: string;
+  command: string;
+  installed: boolean;
+  version?: string;
+  path?: string;
+  localInstallerPath?: string;
+  notes: string;
+}
+
+export interface JarvisStatus {
+  privacyMode: PrivacyMode;
+  scaleProfile: ScaleProfile;
+  activeModelId: string;
+  models: ModelProfile[];
+  runtimeAdapters?: RuntimeAdapter[];
+  hardwareProfile?: HardwareProfile;
+  audioEngines?: AudioEngine[];
+  voiceSession?: VoiceSession;
+  voiceAssets?: VoiceAsset[];
+  referenceSources?: ReferenceSource[];
+  startup?: StartupState;
+  agents: AgentProfile[];
+  memories: MemoryEvent[];
+  skills: SkillManifest[];
+  connectors: ConnectorManifest[];
+  pendingApprovals: ActionRequest[];
+  conversations?: Conversation[];
+  tasks?: TaskRun[];
+  queue?: TaskQueueItem[];
+  mobilePairings?: MobilePairing[];
+  socialDrafts?: OutboundMessageDraft[];
+  toolStatuses?: ToolStatus[];
+  lastEvolutionReport: string;
+}

@@ -1,0 +1,39 @@
+{
+  "name": "jarvis-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @jarvis/core && npm run build -w @jarvis/gateway && npm run build -w @jarvis/dashboard && npm run build -w @jarvis/desktop",
+    "test": "npm run test -w @jarvis/core",
+    "dev:dashboard": "npm run dev -w @jarvis/dashboard",
+    "dev:gateway": "npm run dev -w @jarvis/gateway",
+    "dev:brain": "python services/brain/brain_server.py",
+    "dev:desktop": "npm run dev -w @jarvis/desktop",
+    "dev:tauri": "npm run tauri:dev -w @jarvis/desktop",
+    "start:gateway": "npm run start -w @jarvis/gateway",
+    "doctor": "npm run doctor -w @jarvis/desktop && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",
+    "setup:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1"
+  },
+  "engines": {
+    "node": ">=22.16"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4",
+    "vitest": "^4.0.14"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.1.0",
+    "lucide-react": "^0.561.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  }
+}
