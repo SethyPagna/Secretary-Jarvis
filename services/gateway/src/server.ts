@@ -1,5 +1,4 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { execFileSync } from "node:child_process";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { basename, join } from "node:path";
@@ -47,6 +46,7 @@ import {
   type UndoJournalEntry,
   type VisionInsight,
 } from "@jarvis/core";
+import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
 import { JarvisStore } from "./store.js";
 
@@ -514,67 +514,6 @@ function fallbackAssistantResponse(prompt: string, reason: string): string {
   ].join(" ");
 }
 
-function setupDoctor(): Record<string, unknown> {
-  const tools = detectToolStatuses();
-  const toolMap = new Map(tools.map((tool) => [tool.id, tool]));
-  const tauriCliPaths = [
-    "node_modules/.bin/tauri.cmd",
-    "../node_modules/.bin/tauri.cmd",
-    "../../node_modules/.bin/tauri.cmd",
-  ];
-  const hasTauriCli = tauriCliPaths.some((candidate) => existsSync(candidate));
-
-  return {
-    node: commandVersion("node", ["--version"]),
-    python: commandVersion("python", ["--version"]),
-    rustc: doctorEntryFromTool(toolMap.get("rustc")),
-    cargo: doctorEntryFromTool(toolMap.get("cargo")),
-    npm: commandVersion("cmd.exe", ["/d", "/s", "/c", "npm.cmd --version"]),
-    ollama: doctorEntryFromTool(toolMap.get("ollama")),
-    docker: commandVersion("docker", ["--version"]),
-    tauriCli: {
-      ok: hasTauriCli,
-      output: hasTauriCli ? "local Tauri CLI installed" : "local Tauri CLI missing",
-    },
-    desktopRuntime: "Electron HUD primary. Tauri remains the full dashboard/fallback shell.",
-    localOnly: status.privacyMode === "strict-local",
-    localInstallers: {
-      ollama: localInstallerPath("OllamaSetup.exe"),
-      rustup: localInstallerPath("rustup-init.exe"),
-      cargoArchive: localInstallerPath("cargo-master.zip"),
-    },
-    tools,
-  };
-}
-
-function doctorEntryFromTool(tool: NonNullable<JarvisStatus["toolStatuses"]>[number] | undefined): {
-  ok: boolean;
-  output: string;
-} {
-  return {
-    ok: Boolean(tool?.installed),
-    output: tool?.version ?? tool?.path ?? tool?.notes ?? "not detected",
-  };
-}
-
-function detectToolStatuses(): NonNullable<JarvisStatus["toolStatuses"]> {
-  return [
-    toolStatus("ollama", "Ollama", "ollama", ["OllamaSetup.exe"], ["$env:LOCALAPPDATA\\Programs\\Ollama\\ollama.exe"]),
-    toolStatus("rustc", "Rust compiler", "rustc", ["rustup-init.exe"], ["$env:USERPROFILE\\.cargo\\bin\\rustc.exe"]),
-    toolStatus("cargo", "Cargo", "cargo", ["cargo-master.zip"], ["$env:USERPROFILE\\.cargo\\bin\\cargo.exe"]),
-    toolStatus("hf", "Hugging Face CLI", "hf", [], [
-      "$env:APPDATA\\Python\\Python313\\Scripts\\hf.exe",
-      "$env:USERPROFILE\\.local\\bin\\hf.exe",
-    ]),
-    toolStatus("git-xet", "Git Xet", "git-xet", [], [
-      "$env:APPDATA\\Python\\Python313\\site-packages\\hf_xet",
-      "$env:LOCALAPPDATA\\Programs\\Git LFS\\git-xet.exe",
-    ]),
-    toolStatus("whisper-cli", "whisper.cpp", "whisper-cli", [], []),
-    toolStatus("piper", "Piper TTS", "piper", [], []),
-  ];
-}
-
 function hydrateModelState(model: JarvisStatus["models"][number]): JarvisStatus["models"][number] {
   if (model.source === "ollama-library") {
     const installed = ollamaModelInstalled(model.modelRef);
@@ -620,56 +559,6 @@ function hydrateAudioEngineState(engine: NonNullable<JarvisStatus["audioEngines"
 function ollamaModelInstalled(modelRef: string): boolean {
   const result = commandVersion("ollama", ["list"]);
   return result.ok && result.output.toLowerCase().includes(modelRef.toLowerCase());
-}
-
-function toolStatus(
-  idValue: string,
-  label: string,
-  command: string,
-  installerNames: string[],
-  candidatePaths: string[],
-): NonNullable<JarvisStatus["toolStatuses"]>[number] {
-  const version = commandVersion(command, ["--version"]);
-  const installedPath = version.ok ? command : firstExistingPath(candidatePaths);
-  const localInstaller = installerNames.map(localInstallerPath).find((candidate) => candidate !== undefined);
-  return {
-    id: idValue,
-    label,
-    command,
-    installed: Boolean(installedPath),
-    version: version.ok ? version.output : undefined,
-    path: installedPath,
-    localInstallerPath: localInstaller,
-    notes: installedPath
-      ? "Tool is available or found in a common local install path."
-      : localInstaller
-        ? "Tool is not on PATH, but a local installer/archive exists in the project parent directory."
-        : "Tool is not available on PATH and no local installer/archive was found.",
-  };
-}
-
-function firstExistingPath(paths: string[]): string | undefined {
-  return paths.map(expandEnvPath).find((candidate) => existsSync(candidate));
-}
-
-function localInstallerPath(fileName: string): string | undefined {
-  const candidate = `C:\\Users\\user\\Downloads\\Secretary Jarvis\\${fileName}`;
-  return existsSync(candidate) ? candidate : undefined;
-}
-
-function expandEnvPath(input: string): string {
-  return input
-    .replace("$env:LOCALAPPDATA", process.env.LOCALAPPDATA ?? "")
-    .replace("$env:USERPROFILE", process.env.USERPROFILE ?? "");
-}
-
-function commandVersion(command: string, args: string[]): { ok: boolean; output: string } {
-  try {
-    const output = execFileSync(command, args, { encoding: "utf8", timeout: 5000, windowsHide: true });
-    return { ok: true, output: output.trim() };
-  } catch (error) {
-    return { ok: false, output: error instanceof Error ? error.message : String(error) };
-  }
 }
 
 function runtimeForSource(source: ModelSource): RuntimeKind {
@@ -981,7 +870,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   }
 
   if (request.method === "GET" && url.pathname === "/api/setup/doctor") {
-    sendJson(response, 200, setupDoctor());
+    sendJson(response, 200, setupDoctor({ privacyMode: status.privacyMode, voiceAssetRoot: VOICE_ASSET_ROOT }));
     return;
   }
 
