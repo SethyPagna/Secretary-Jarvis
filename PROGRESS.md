@@ -41,7 +41,7 @@ Protocol:
 ## Phase 3 - Voice Loop
 - [x] 3.1 Python voice module/service - commit `e6a1530`
 - [x] 3.2 Add voice endpoints - commit `709bfaf`
-- [ ] 3.3 Wake-word system
+- [x] 3.3 Wake-word system - commit `3b94bc0`
 - [ ] 3.4 Barge-in / interruptible speaking
 - [ ] 3.5 Per-agent voice hooks - partial through seeded voice profiles
 
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `3.3 Wake-word system`.
+Next task: `3.4 Barge-in / interruptible speaking`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
