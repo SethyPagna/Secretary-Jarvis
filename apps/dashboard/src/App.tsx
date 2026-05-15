@@ -1695,6 +1695,28 @@ function SectionBrief({ active, status }: { active: AppSection; status: JarvisSt
 function ModelReadinessPanel() {
   const response = useGatewayResource<ModelReadinessResponse>("/api/models/readiness", { readiness: [] });
   const detectedAssets = response.readyModelAssets?.filter((asset) => asset.detected) ?? [];
+  const [probeResults, setProbeResults] = useState<Record<string, NonNullable<ModelReadiness["runtimeProbe"]>>>({});
+  const [probingModelId, setProbingModelId] = useState<string | null>(null);
+
+  async function probeModel(modelId: string) {
+    setProbingModelId(modelId);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/models/${encodeURIComponent(modelId)}/probe`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ safeMode: true }),
+      });
+      if (!response.ok) {
+        throw new Error(`Probe failed: ${response.status}`);
+      }
+      const payload = (await response.json()) as { runtimeProbe?: NonNullable<ModelReadiness["runtimeProbe"]> };
+      if (payload.runtimeProbe) {
+        setProbeResults((current) => ({ ...current, [modelId]: payload.runtimeProbe! }));
+      }
+    } finally {
+      setProbingModelId(null);
+    }
+  }
 
   return (
     <section className="panel model-readiness-panel">
@@ -1718,17 +1740,25 @@ function ModelReadinessPanel() {
         ))}
       </div>
       <div className="readiness-grid">
-        {response.readiness.map((model) => (
-          <article key={model.modelId} className={`readiness-card ${model.runtimeState}`}>
-            <div>
-              <strong>{model.label}</strong>
-              <span>{model.modelRef}</span>
-            </div>
-            <em>{model.runtimeState}</em>
-            <p>{briefText(model.recommendedUse, 110)}</p>
-            <small>{model.hardwareFit} / {model.downloadState}</small>
-          </article>
-        ))}
+        {response.readiness.map((model) => {
+          const probe = probeResults[model.modelId] ?? model.runtimeProbe;
+          return (
+            <article key={model.modelId} className={`readiness-card ${model.runtimeState}`}>
+              <div className="readiness-card-head">
+                <div>
+                  <strong>{model.label}</strong>
+                  <span>{model.modelRef}</span>
+                </div>
+                <button type="button" onClick={() => void probeModel(model.modelId)} disabled={probingModelId === model.modelId}>
+                  {probingModelId === model.modelId ? "Probing" : "Probe"}
+                </button>
+              </div>
+              <em>{probe ? `${probe.runtime} / ${probe.status}` : model.runtimeState}</em>
+              <p>{briefText(probe?.notes[0] ?? model.recommendedUse, 110)}</p>
+              <small>{model.hardwareFit} / {model.downloadState}{probe ? ` / ${probe.latencyMs} ms` : ""}</small>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

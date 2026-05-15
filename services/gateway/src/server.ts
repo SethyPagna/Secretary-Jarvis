@@ -48,6 +48,7 @@ import {
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
+import { probeModelRuntime } from "./modelProbe.js";
 import { JarvisStore } from "./store.js";
 
 const DEFAULT_PORT = 4317;
@@ -66,6 +67,7 @@ const JSON_HEADERS = {
   "access-control-allow-headers": "content-type",
   "content-type": "application/json; charset=utf-8",
 };
+const RUNTIME_KINDS: RuntimeKind[] = ["ollama", "lmstudio", "llama-cpp", "vllm", "sglang", "huggingface-local", "huggingface-tgi", "lan-local"];
 
 let status: JarvisStatus = structuredClone(seededStatus);
 const store = new JarvisStore();
@@ -1035,7 +1037,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
-  if (request.method === "POST" && (url.pathname === "/api/models/scan" || url.pathname === "/api/models/:id/probe")) {
+  if (request.method === "POST" && url.pathname === "/api/models/scan") {
     const runtimeStatus = statusWithRuntimeState();
     events.publish("model", {
       readiness: runtimeStatus.modelReadiness ?? [],
@@ -1052,14 +1054,26 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   if (request.method === "POST" && url.pathname.startsWith("/api/models/") && url.pathname.endsWith("/probe")) {
     const parts = url.pathname.split("/").filter(Boolean);
     const modelId = decodeURIComponent(parts[2] ?? "");
+    const body = (await readBody(request)) as { runtime?: RuntimeKind; safeMode?: boolean };
     const runtimeStatus = statusWithRuntimeState();
+    const model = runtimeStatus.models.find((item) => item.id === modelId || item.modelRef === modelId);
     const readiness = (runtimeStatus.modelReadiness ?? []).find((item) => item.modelId === modelId || item.modelRef === modelId);
-    if (!readiness) {
+    if (!model || !readiness) {
       sendJson(response, 404, { error: "Model not found", modelId });
       return;
     }
-    events.publish("model", { probe: readiness });
-    sendJson(response, 200, { readiness });
+    const requestedRuntime = body.runtime && RUNTIME_KINDS.includes(body.runtime) ? body.runtime : undefined;
+    const runtimeProbe = await probeModelRuntime(model, readiness, runtimeStatus.readyModelAssets ?? [], {
+      runtime: requestedRuntime,
+      safeMode: body.safeMode ?? true,
+    });
+    const probedReadiness = { ...readiness, runtimeProbe };
+    events.publish("model", { probe: runtimeProbe, readiness: probedReadiness });
+    sendJson(response, 200, {
+      readiness: probedReadiness,
+      runtimeProbe,
+      note: "Runtime probe is safe by default: local file and endpoint checks only; no large weight load is attempted.",
+    });
     return;
   }
 

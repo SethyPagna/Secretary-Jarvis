@@ -143,6 +143,38 @@ export interface ModelReadiness {
   missingFiles: string[];
   recommendedUse: string;
   nextAction: string;
+  runtimeProbe?: RuntimeProbe;
+}
+
+export type RuntimeProbeStatus =
+  | "ready"
+  | "served"
+  | "asset-ready"
+  | "missing-tool"
+  | "missing-model"
+  | "needs-endpoint"
+  | "too-heavy"
+  | "disabled"
+  | "error";
+
+export interface RuntimeProbe {
+  id: string;
+  modelId: string;
+  modelRef: string;
+  runtime: RuntimeKind;
+  status: RuntimeProbeStatus;
+  ok: boolean;
+  safeMode: boolean;
+  checkedAt: string;
+  latencyMs: number;
+  endpoint?: string;
+  command?: string;
+  artifactPath?: string;
+  fileCount?: number;
+  sizeBytes?: number;
+  estimatedMemoryGb?: number;
+  notes: string[];
+  blockers: string[];
 }
 
 export interface RuntimeAdapter {

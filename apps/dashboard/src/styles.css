@@ -2079,6 +2079,29 @@ h1 {
   padding: 13px;
 }
 
+.readiness-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.readiness-card-head button {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(72, 217, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(72, 217, 255, 0.09);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.readiness-card-head button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
 .readiness-card.ready,
 .readiness-card.ready-asset {
   border-color: rgba(98, 240, 178, 0.34);
