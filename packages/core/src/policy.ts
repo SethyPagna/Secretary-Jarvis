@@ -10,6 +10,8 @@ const ALWAYS_APPROVAL_REQUIRED: ReadonlySet<ActionCategory> = new Set([
   "model-download",
   "sensor-capture",
   "irreversible-edit",
+  "run-script",
+  "service-control",
 ]);
 
 const STRICT_LOCAL_BLOCKED: ReadonlySet<ActionCategory> = new Set(["network"]);

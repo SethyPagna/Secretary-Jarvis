@@ -1,5 +1,6 @@
 param(
   [switch]$NoDashboard,
+  [switch]$NoHud,
   [switch]$OpenDashboard,
   [int]$GatewayPort = 4317,
   [int]$DashboardPort = 5174
@@ -63,6 +64,10 @@ Start-JarvisProcess -Name "TypeScript Gateway" -FilePath "cmd.exe" -Arguments "/
 
 if (-not $NoDashboard) {
   Start-JarvisProcess -Name "Dashboard" -FilePath "cmd.exe" -Arguments "/d /s /c npm.cmd run dev:dashboard -- --host 127.0.0.1 --port $DashboardPort" -WorkingDirectory $Root
+}
+
+if (-not $NoHud) {
+  Start-JarvisProcess -Name "Electron HUD" -FilePath "cmd.exe" -Arguments "/d /s /c npm.cmd run build -w @jarvis/desktop && npm.cmd run hud -w @jarvis/desktop" -WorkingDirectory $Root
 }
 
 if ($OpenDashboard) {

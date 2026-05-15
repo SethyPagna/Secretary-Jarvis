@@ -4,6 +4,11 @@ import {
   createModelDryRun,
   createOutboundMessageDraft,
   createVoiceSession,
+  futureScalingModels,
+  neededFeatureDownloads,
+  readinessForModel,
+  readyModelAssets,
+  defaultModelProfiles,
   evaluateActionPolicy,
   resolveToolStatus,
 } from "../src/index.js";
@@ -40,6 +45,33 @@ describe("model install dry runs", () => {
     });
 
     expect(decision.decision).toBe("requires_approval");
+  });
+});
+
+describe("model readiness catalogs", () => {
+  it("keeps ready local assets separate from future scaling models", () => {
+    expect(readyModelAssets.map((asset) => asset.profileId)).toEqual(
+      expect.arrayContaining([
+        "hf-qwen35-9b",
+        "hf-qwen36-27b",
+        "hf-whisper-large-v3-turbo",
+        "hf-gemma4-e4b-it",
+        "hf-gemma4-26b-a4b-it",
+      ]),
+    );
+    expect(futureScalingModels.map((model) => model.modelRef)).toContain("deepseek-ai/DeepSeek-V4-Flash");
+    expect(neededFeatureDownloads.some((download) => download.id === "feature-piper")).toBe(true);
+    expect(neededFeatureDownloads.some((download) => download.label.includes("DeepSeek"))).toBe(false);
+  });
+
+  it("classifies downloaded heavy assets as ready assets that still need an appropriate runtime", () => {
+    const qwen27 = defaultModelProfiles.find((model) => model.id === "hf-qwen36-27b");
+    expect(qwen27).toBeDefined();
+    const readiness = readinessForModel(qwen27!, () => true);
+
+    expect(readiness.downloadState).toBe("complete");
+    expect(readiness.runtimeState).toBe("needs-runtime");
+    expect(readiness.hardwareFit).toBe("workstation");
   });
 });
 

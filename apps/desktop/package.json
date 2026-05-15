@@ -7,11 +7,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "npx electron dist/main.js",
-    "doctor": "node -e \"console.log(JSON.stringify({ ok: true, shell: 'electron-or-tauri', dashboardUrl: process.env.JARVIS_DASHBOARD_URL || 'http://127.0.0.1:5174' }, null, 2))\"",
+    "hud": "npx electron dist/main.js --hud-only",
+    "doctor": "node -e \"console.log(JSON.stringify({ ok: true, shell: 'electron-hud-primary-tauri-fallback', dashboardUrl: process.env.JARVIS_DASHBOARD_URL || 'http://127.0.0.1:5174' }, null, 2))\"",
     "tauri:dev": "set PATH=%USERPROFILE%\\.cargo\\bin;%PATH%&& npx tauri dev",
     "tauri:build": "set PATH=%USERPROFILE%\\.cargo\\bin;%PATH%&& npx tauri build"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.10.1"
+    "@tauri-apps/cli": "^2.10.1",
+    "electron": "^39.2.7"
   }
 }

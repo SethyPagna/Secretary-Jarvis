@@ -1,12 +1,15 @@
 const DASHBOARD_URL = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:5174";
+const GATEWAY_URL = process.env.JARVIS_GATEWAY_URL ?? "http://127.0.0.1:4317";
 const WINDOW_WIDTH = 1180;
 const WINDOW_HEIGHT = 820;
+const HUD_ONLY = process.argv.includes("--hud-only");
 
 type DesktopWindow = {
   show(): void;
   hide(): void;
   focus(): void;
   isVisible(): boolean;
+  setAlwaysOnTop(flag: boolean, level?: string): void;
   on(event: "closed", listener: () => void): void;
   loadURL(url: string): Promise<void>;
 };
@@ -51,15 +54,17 @@ function createMainWindow(): DesktopWindow {
 function createFloatingWindow(): DesktopWindow {
   const display = screen.getPrimaryDisplay().workArea;
   const window = new BrowserWindow({
-    width: 320,
-    height: 120,
-    x: display.x + display.width - 348,
-    y: display.y + display.height - 150,
+    width: 560,
+    height: 160,
+    x: display.x + display.width - 590,
+    y: display.y + display.height - 190,
     frame: false,
     resizable: false,
     alwaysOnTop: true,
+    focusable: true,
     skipTaskbar: true,
     transparent: true,
+    hasShadow: false,
     title: "Jarvis Floating",
     webPreferences: {
       contextIsolation: true,
@@ -68,7 +73,8 @@ function createFloatingWindow(): DesktopWindow {
     },
   });
 
-  void window.loadURL(`${DASHBOARD_URL}?floating=1`);
+  window.setAlwaysOnTop(true, "screen-saver");
+  void window.loadURL(`${DASHBOARD_URL}?hud=1`);
   window.on("closed", () => {
     floatingWindow = null;
   });
@@ -98,7 +104,17 @@ function createTray(): void {
   nextTray.setContextMenu(
     Menu.buildFromTemplate([
       { label: "Open Jarvis", click: showMainWindow },
-      { label: "Toggle Floating Jarvis", click: toggleFloatingWindow },
+      { label: "Toggle HUD", click: toggleFloatingWindow },
+      {
+        label: "Emergency Stop",
+        click: () => {
+          void fetch(`${GATEWAY_URL}/api/emergency-stop`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ reason: "Emergency stop from Electron tray." }),
+          }).catch(() => undefined);
+        },
+      },
       { type: "separator" },
       { label: "Quit", click: () => app.quit() },
     ]),
@@ -109,8 +125,10 @@ function createTray(): void {
 
 await app.whenReady();
 createTray();
-showMainWindow();
 floatingWindow = createFloatingWindow();
+if (!HUD_ONLY) {
+  showMainWindow();
+}
 
 app.on("activate", showMainWindow);
 app.on("window-all-closed", () => {

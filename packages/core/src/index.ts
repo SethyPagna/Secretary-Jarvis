@@ -4,6 +4,7 @@ export * from "./modelInstall.js";
 export * from "./policy.js";
 export * from "./seed.js";
 export * from "./social.js";
+export * from "./setupCatalog.js";
 export * from "./taskQueue.js";
 export * from "./toolDoctor.js";
 export * from "./voice.js";

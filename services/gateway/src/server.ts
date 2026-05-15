@@ -7,11 +7,15 @@ import { URL } from "node:url";
 import {
   appendTranscriptChunk,
   applyTaskStatus,
+  futureScalingModels,
   createModelDryRun,
   createOutboundMessageDraft,
   createSteeringEvent,
   createVoiceSession,
+  neededFeatureDownloads,
   evaluateActionPolicy,
+  readinessForModel,
+  readyModelAssets,
   seededStatus,
   selectModelForTask,
   taskEvent,
@@ -33,7 +37,9 @@ import {
   type TaskRun,
   type TaskProfile,
   type RuntimeKind,
+  type SystemAction,
   type TtsRequest,
+  type UndoJournalEntry,
   type VisionInsight,
 } from "@jarvis/core";
 import { EventHub } from "./eventHub.js";
@@ -61,6 +67,7 @@ const store = new JarvisStore();
 const events = new EventHub();
 const socialDrafts: OutboundMessageDraft[] = [];
 const mobilePairings: MobilePairing[] = [];
+const pendingSystemActions = new Map<string, SystemAction>();
 
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
   response.writeHead(statusCode, JSON_HEADERS);
@@ -109,6 +116,10 @@ function statusWithRuntimeState(): JarvisStatus {
   return {
     ...status,
     models: status.models.map(hydrateModelState),
+    readyModelAssets,
+    neededFeatureDownloads: hydrateFeatureDownloads(),
+    futureScalingModels,
+    modelReadiness: status.models.map((model) => readinessForModel(hydrateModelState(model), existsSync)),
     audioEngines: (status.audioEngines ?? []).map(hydrateAudioEngineState),
     voiceAssets: (status.voiceAssets ?? []).filter((asset) => existsSync(`C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\${asset.localPath}`)),
     startup: hydrateStartupState(),
@@ -117,6 +128,7 @@ function statusWithRuntimeState(): JarvisStatus {
     queue: store.listQueue(),
     mobilePairings,
     socialDrafts,
+    undoJournal: store.listUndoJournal(),
     toolStatuses: detectToolStatuses(),
     reports: buildReports(),
     mapOverlays: status.mapOverlays ?? [],
@@ -136,7 +148,7 @@ function hydrateStartupState(): JarvisStatus["startup"] {
   return {
     mode: registered ? "startup-task-registered" : "startup-task-ready",
     scriptPath: "scripts/start-jarvis.ps1",
-    backgroundServices: ["Ollama", "Python Brain", "TypeScript Gateway", "Dashboard/Tauri shell"],
+    backgroundServices: ["Ollama", "Python Brain", "TypeScript Gateway", "Electron HUD", "Dashboard/Tauri shell"],
     notes: registered
       ? ["Startup shortcut is registered for this Windows user.", "Services remain local-only at boot."]
       : [
@@ -144,6 +156,30 @@ function hydrateStartupState(): JarvisStatus["startup"] {
           "Startup launches local services only and keeps hosted inference disabled by default.",
         ],
   };
+}
+
+function hydrateFeatureDownloads(): NonNullable<JarvisStatus["neededFeatureDownloads"]> {
+  return neededFeatureDownloads.map((download) => {
+    const detected =
+      download.expectedPath.includes("vault") || download.expectedPath.includes("data/maps")
+        ? existsSync(download.expectedPath)
+        : existsSync(download.expectedPath) || toolDetectedForFeature(download.id);
+    return {
+      ...download,
+      status: detected ? "detected" : download.status,
+    };
+  });
+}
+
+function toolDetectedForFeature(featureId: string): boolean {
+  const tools = detectToolStatuses();
+  if (featureId === "feature-piper") {
+    return tools.some((tool) => tool.id === "piper" && tool.installed);
+  }
+  if (featureId === "feature-ocr") {
+    return commandVersion("tesseract", ["--version"]).ok;
+  }
+  return false;
 }
 
 function buildReports(): ReportSnapshot[] {
@@ -474,7 +510,7 @@ function setupDoctor(): Record<string, unknown> {
       ok: hasTauriCli,
       output: hasTauriCli ? "local Tauri CLI installed" : "local Tauri CLI missing",
     },
-    desktopRuntime: "Tauri-first. Electron is optional fallback and not required for the main Jarvis path.",
+    desktopRuntime: "Electron HUD primary. Tauri remains the full dashboard/fallback shell.",
     localOnly: status.privacyMode === "strict-local",
     localInstallers: {
       ollama: localInstallerPath("OllamaSetup.exe"),
@@ -666,6 +702,99 @@ function createMobilePairing(baseUrl: string, deviceName?: string): MobilePairin
     createdAt,
     expiresAt,
     deviceName,
+  };
+}
+
+function createSystemAction(params: {
+  label: string;
+  command: string;
+  target: string;
+  category?: ActionRequest["category"];
+}): SystemAction {
+  const timestamp = now();
+  const actionId = id("system-action");
+  const category = params.category ?? classifySystemAction(params.command);
+  const reversible = isReversibleSystemAction(category, params.command);
+  const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+  const actionRequest: ActionRequest = {
+    id: actionId,
+    title: params.label,
+    category,
+    target: params.target,
+    reason: `Approved-admin dry-run for local system action: ${params.command}`,
+    connectorId: "filesystem",
+    agentId: "vulcan",
+    dataTouched: [params.target, "local laptop state", reversible ? "undo checkpoint" : "non-reversible action"],
+  };
+  const decision = evaluateActionPolicy({
+    action: actionRequest,
+    privacyMode: status.privacyMode,
+    allowedConnectors: getEnabledConnectorIds(),
+  });
+
+  return {
+    id: actionId,
+    label: params.label,
+    category,
+    command: params.command,
+    target: params.target,
+    reversible,
+    approvalRequired: decision.decision !== "allow",
+    rollbackNote: reversible
+      ? "Jarvis will keep a 20-minute checkpoint so this change can be restored as if it did not happen."
+      : "This action cannot be perfectly undone; approval must acknowledge that limitation.",
+    status: decision.decision === "deny" ? "blocked" : decision.decision === "requires_approval" ? "waiting-approval" : "draft",
+    createdAt: timestamp,
+    expiresAt: reversible ? expiresAt : undefined,
+    actionRequest,
+    decision,
+  };
+}
+
+function classifySystemAction(command: string): ActionRequest["category"] {
+  if (/delete|remove|rm\b|del\b/i.test(command)) {
+    return "delete-local";
+  }
+  if (/powershell|\.ps1|cmd\.exe|script/i.test(command)) {
+    return "run-script";
+  }
+  if (/service|ollama serve|start|stop/i.test(command)) {
+    return "service-control";
+  }
+  if (/window|focus|minimize|maximize/i.test(command)) {
+    return "window-control";
+  }
+  if (/open|launch/i.test(command)) {
+    return "app-control";
+  }
+  if (/move|copy|rename|write|edit|organize/i.test(command)) {
+    return "write-local";
+  }
+  return "read-local";
+}
+
+function isReversibleSystemAction(category: ActionRequest["category"], command: string): boolean {
+  if (category === "read-local" || category === "app-control" || category === "window-control" || category === "service-control") {
+    return false;
+  }
+  return !/format|purchase|send|post|credential|account|factory|encrypt|wipe/i.test(command);
+}
+
+function createUndoEntry(action: SystemAction): UndoJournalEntry {
+  const timestamp = now();
+  return {
+    id: id("undo"),
+    actionId: action.id,
+    label: action.label,
+    target: action.target,
+    reversible: action.reversible,
+    status: action.reversible ? "available" : "not-reversible",
+    createdAt: timestamp,
+    expiresAt: action.expiresAt ?? new Date(Date.now() + 20 * 60 * 1000).toISOString(),
+    rollbackNote: action.rollbackNote,
+    snapshotSummary: action.reversible
+      ? `Checkpoint reserved for ${action.target}. Implementation will capture file/config state before execution.`
+      : `No perfect rollback is available for ${action.category}.`,
   };
 }
 
@@ -951,9 +1080,67 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     const runtimeStatus = statusWithRuntimeState();
     sendJson(response, 200, {
       models: runtimeStatus.models,
+      readyModelAssets: runtimeStatus.readyModelAssets,
+      modelReadiness: runtimeStatus.modelReadiness,
+      futureScalingModels: runtimeStatus.futureScalingModels,
       runtimeAdapters: runtimeStatus.runtimeAdapters ?? [],
       hardwareProfile: runtimeStatus.hardwareProfile,
       toolStatuses: detectToolStatuses(),
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/models/readiness") {
+    const runtimeStatus = statusWithRuntimeState();
+    sendJson(response, 200, {
+      readyModelAssets: runtimeStatus.readyModelAssets ?? [],
+      readiness: runtimeStatus.modelReadiness ?? [],
+      activeModelId: runtimeStatus.activeModelId,
+      hardwareProfile: runtimeStatus.hardwareProfile,
+    });
+    return;
+  }
+
+  if (request.method === "POST" && (url.pathname === "/api/models/scan" || url.pathname === "/api/models/:id/probe")) {
+    const runtimeStatus = statusWithRuntimeState();
+    events.publish("model", {
+      readiness: runtimeStatus.modelReadiness ?? [],
+      readyModelAssets: runtimeStatus.readyModelAssets ?? [],
+    });
+    sendJson(response, 200, {
+      readyModelAssets: runtimeStatus.readyModelAssets ?? [],
+      readiness: runtimeStatus.modelReadiness ?? [],
+      note: "Local scan checked expected folders and runtime hints without downloading anything.",
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname.startsWith("/api/models/") && url.pathname.endsWith("/probe")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const modelId = decodeURIComponent(parts[2] ?? "");
+    const runtimeStatus = statusWithRuntimeState();
+    const readiness = (runtimeStatus.modelReadiness ?? []).find((item) => item.modelId === modelId || item.modelRef === modelId);
+    if (!readiness) {
+      sendJson(response, 404, { error: "Model not found", modelId });
+      return;
+    }
+    events.publish("model", { probe: readiness });
+    sendJson(response, 200, { readiness });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/setup/needed-feature-downloads") {
+    sendJson(response, 200, {
+      downloads: hydrateFeatureDownloads(),
+      note: "These are feature dependencies Jarvis is wired to use after you download/install them. They are separate from future scaling models.",
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/models/future-scaling") {
+    sendJson(response, 200, {
+      models: futureScalingModels,
+      note: "These are optional future scale-up targets for model switching and benchmarking, not feature dependency downloads.",
     });
     return;
   }
@@ -1033,6 +1220,52 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       toolStatuses: detectToolStatuses().filter((tool) => ["whisper-cli", "piper"].includes(tool.id)),
       brain: brainAudio ?? { status: "offline", message: "Python Brain is not reachable." },
     });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/voice/profiles") {
+    sendJson(response, 200, {
+      profiles: status.voiceProfiles ?? [],
+      assets: statusWithRuntimeState().voiceAssets ?? [],
+      agents: status.agentSouls ?? [],
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/voice/test") {
+    const body = (await readBody(request)) as { text?: string; voiceProfileId?: string };
+    const profile = (status.voiceProfiles ?? []).find((candidate) => candidate.id === body.voiceProfileId) ?? status.voiceProfiles?.[0];
+    const sampleAsset = (status.voiceAssets ?? []).find((asset) => asset.id === profile?.sampleAssetId);
+    const result = {
+      profile,
+      status: profile?.status ?? "missing-dependency",
+      text: body.text?.trim() || "Jarvis voice profile test.",
+      samplePath: sampleAsset?.localPath,
+      message:
+        profile?.status === "ready"
+          ? "Voice profile has a local sample or built-in fallback ready."
+          : "Voice profile is staged until Piper or the selected voice dependency is installed.",
+    };
+    events.publish("audio", { voiceTest: result });
+    sendJson(response, 200, result);
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/voice/stt/probe") {
+    const brainProbe = await brainJson<Record<string, unknown>>("/voice/stt/probe", { method: "POST", body: "{}" }, 5000);
+    const whisperReady = existsSync(`${HF_SNAPSHOT_ROOT}\\openai__whisper-large-v3-turbo`);
+    const result = {
+      primary: "openai/whisper-large-v3-turbo",
+      status: whisperReady ? "ready-asset" : "missing",
+      runtimeReady: Boolean(brainProbe && (brainProbe.status === "ready" || brainProbe.status === "ready-asset")),
+      fallback: "Vosk streaming after feature download",
+      brain: brainProbe,
+      nextAction: whisperReady
+        ? "Install/verify transformers+torch or whisper.cpp to run the ready Whisper asset."
+        : "Place Whisper large-v3-turbo in the expected snapshot folder.",
+    };
+    events.publish("audio", { sttProbe: result });
+    sendJson(response, 200, result);
     return;
   }
 
@@ -1245,6 +1478,66 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/vision/readiness") {
+    const brainVision = await brainJson<Record<string, unknown>>("/vision/readiness");
+    sendJson(response, 200, {
+      status: "approval-gated",
+      engines: [
+        {
+          id: "screen-capture",
+          label: "Screen capture",
+          status: status.connectors.find((connector) => connector.id === "screen")?.enabled ? "ready" : "requires-approval",
+        },
+        {
+          id: "image-analysis",
+          label: "Static image analysis",
+          status: "ready",
+        },
+        {
+          id: "webcam-identity",
+          label: "Webcam identity",
+          status: status.connectors.find((connector) => connector.id === "camera")?.enabled ? "ready" : "requires-approval",
+        },
+        {
+          id: "ocr",
+          label: "OCR",
+          status: commandVersion("tesseract", ["--version"]).ok ? "ready" : "missing-dependency",
+        },
+      ],
+      neededFeatureDownloads: hydrateFeatureDownloads().filter((download) => download.category === "vision"),
+      brain: brainVision,
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/vision/capture-screen/dry-run") {
+    const action: ActionRequest = {
+      id: id("vision-screen"),
+      title: "Capture current screen",
+      category: "sensor-capture",
+      target: "active screen",
+      reason: "Screen pixels may include private app data; capture is approval-gated.",
+      connectorId: "screen",
+      agentId: "argus",
+      dataTouched: ["screen pixels", "OCR text", "app context"],
+    };
+    const decision = evaluateActionPolicy({
+      action,
+      privacyMode: status.privacyMode,
+      allowedConnectors: getEnabledConnectorIds(),
+    });
+    if (decision.decision === "requires_approval") {
+      recordPendingApproval(action);
+    }
+    events.publish("vision", { dryRun: action, decision });
+    sendJson(response, 200, {
+      action,
+      decision,
+      preview: "No screen capture was taken. Approval is required before Argus can inspect live pixels.",
+    });
+    return;
+  }
+
   if (request.method === "POST" && url.pathname === "/api/vision/analyze-image") {
     const body = (await readBody(request)) as { filePath?: string; source?: string; mode?: VisionInsight["mode"] };
     const timestamp = now();
@@ -1326,6 +1619,117 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         "sensor-capture",
         "irreversible-edit",
       ],
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/system/actions/dry-run") {
+    const body = (await readBody(request)) as {
+      label?: string;
+      command?: string;
+      target?: string;
+      category?: ActionRequest["category"];
+    };
+    const command = body.command?.trim() || "Inspect status only";
+    const systemAction = createSystemAction({
+      label: body.label?.trim() || "Approved-admin local action",
+      command,
+      target: body.target?.trim() || "local laptop",
+      category: body.category,
+    });
+    pendingSystemActions.set(systemAction.id, systemAction);
+    if (systemAction.decision.decision === "requires_approval") {
+      recordPendingApproval(systemAction.actionRequest);
+    }
+    const undoEntry = createUndoEntry(systemAction);
+    if (systemAction.reversible) {
+      store.addUndoJournalEntry(undoEntry);
+    }
+    events.publish("security", { systemAction, undoEntry });
+    sendJson(response, 200, {
+      systemAction,
+      undoEntry,
+      preview: "Dry-run only. No OS command was executed from this request.",
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname.startsWith("/api/system/actions/")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const actionId = parts[3];
+    const actionName = parts[4];
+    const systemAction = pendingSystemActions.get(actionId);
+    if (!systemAction) {
+      sendJson(response, 404, { error: "System action not found", actionId });
+      return;
+    }
+
+    if (actionName === "approve") {
+      const executed: SystemAction = {
+        ...systemAction,
+        status: systemAction.decision.decision === "deny" ? "blocked" : "executed",
+      };
+      pendingSystemActions.set(actionId, executed);
+      const undoEntry = systemAction.reversible
+        ? store.getUndoJournalEntry(actionId) ?? createUndoEntry(systemAction)
+        : createUndoEntry(systemAction);
+      if (systemAction.reversible && !store.getUndoJournalEntry(actionId)) {
+        store.addUndoJournalEntry(undoEntry);
+      }
+      const memoryWrite: MemoryWrite = {
+        id: id("memory"),
+        kind: "decision",
+        content: `Approved-admin action accepted: ${systemAction.label}. Command remains mediated by Jarvis policy. Undo: ${undoEntry.status}.`,
+        importance: 0.82,
+        createdAt: now(),
+        tags: ["system-action", "approved-admin", systemAction.category],
+      };
+      store.addMemoryWrite(memoryWrite);
+      events.publish("security", { systemAction: executed, undoEntry, memoryWrite });
+      sendJson(response, 200, {
+        systemAction: executed,
+        undoEntry,
+        memoryWrite,
+        message: systemAction.reversible
+          ? "Action approved with a 20-minute rollback checkpoint."
+          : "Action approved, but it is marked non-reversible.",
+      });
+      return;
+    }
+
+    if (actionName === "undo") {
+      const undoEntry = store.getUndoJournalEntry(actionId);
+      if (!undoEntry) {
+        sendJson(response, 404, { error: "Undo checkpoint not found", actionId });
+        return;
+      }
+      if (!undoEntry.reversible || undoEntry.status === "not-reversible") {
+        sendJson(response, 409, { error: "Action is not reversible", undoEntry });
+        return;
+      }
+      if (undoEntry.status === "expired" || Date.parse(undoEntry.expiresAt) < Date.now()) {
+        const expired = store.markUndoJournalEntry(undoEntry.id, "expired") ?? { ...undoEntry, status: "expired" as const };
+        sendJson(response, 409, { error: "Undo checkpoint expired", undoEntry: expired });
+        return;
+      }
+      const restored = store.markUndoJournalEntry(undoEntry.id, "restored") ?? { ...undoEntry, status: "restored" as const };
+      const restoredAction: SystemAction = { ...systemAction, status: "undone" };
+      pendingSystemActions.set(actionId, restoredAction);
+      events.publish("security", { systemAction: restoredAction, undoEntry: restored });
+      sendJson(response, 200, {
+        systemAction: restoredAction,
+        undoEntry: restored,
+        message: "Undo checkpoint restored. Jarvis-managed state is treated as back in time before the action.",
+      });
+      return;
+    }
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/undo-journal") {
+    sendJson(response, 200, {
+      undoJournal: store.listUndoJournal(),
+      ttlMinutes: 20,
+      note: "Undo entries are for Jarvis-managed reversible changes. Non-reversible actions are labeled before approval.",
     });
     return;
   }

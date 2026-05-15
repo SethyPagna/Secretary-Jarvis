@@ -52,6 +52,19 @@ export type ModelSource =
 
 export type InstallState = "available" | "missing" | "staged" | "installed" | "disabled";
 
+export type ModelDownloadState = "complete" | "partial" | "missing" | "not-required";
+
+export type ModelRuntimeState =
+  | "ready"
+  | "ready-asset"
+  | "needs-runtime"
+  | "too-heavy"
+  | "future-scaling"
+  | "disabled"
+  | "missing";
+
+export type HardwareFit = "laptop-ready" | "laptop-staged" | "workstation" | "homelab" | "external-endpoint";
+
 export interface ModelArtifact {
   source: ModelSource;
   repoId?: string;
@@ -80,6 +93,53 @@ export interface ModelProfile {
   artifact?: ModelArtifact;
   benchmarkScore?: number;
   notes: string;
+}
+
+export interface ReadyModelAsset {
+  id: string;
+  profileId: string;
+  label: string;
+  modelRef: string;
+  localPath: string;
+  primaryUse: string;
+  runtimeAdapters: RuntimeKind[];
+  hardwareFit: HardwareFit;
+}
+
+export interface NeededFeatureDownload {
+  id: string;
+  category: "voice" | "vision" | "media" | "maps" | "connector";
+  label: string;
+  purpose: string;
+  expectedPath: string;
+  installHint: string;
+  status: "needed" | "detected" | "optional";
+  plugsInto: string[];
+}
+
+export interface FutureScalingModel {
+  id: string;
+  label: string;
+  modelRef: string;
+  scale: ScaleProfile;
+  purpose: string;
+  expectedRuntime: RuntimeKind;
+  expectedPath?: string;
+  notes: string;
+}
+
+export interface ModelReadiness {
+  modelId: string;
+  label: string;
+  modelRef: string;
+  downloadState: ModelDownloadState;
+  runtimeState: ModelRuntimeState;
+  hardwareFit: HardwareFit;
+  artifactPath?: string;
+  runtimePlan: string;
+  missingFiles: string[];
+  recommendedUse: string;
+  nextAction: string;
 }
 
 export interface RuntimeAdapter {
@@ -143,6 +203,10 @@ export type ActionCategory =
   | "read-local"
   | "write-local"
   | "delete-local"
+  | "run-script"
+  | "app-control"
+  | "window-control"
+  | "service-control"
   | "network"
   | "send-message"
   | "post-social"
@@ -221,6 +285,7 @@ export type TaskStatus =
   | "running"
   | "paused"
   | "waiting-approval"
+  | "checkpointed"
   | "completed"
   | "failed"
   | "cancelled";
@@ -303,6 +368,29 @@ export interface StreamEvent {
   payload: Record<string, unknown>;
 }
 
+export type HudState =
+  | "idle"
+  | "wake"
+  | "listening"
+  | "recognizing"
+  | "thinking"
+  | "planning"
+  | "executing"
+  | "speaking"
+  | "approval"
+  | "error";
+
+export interface HudStreamEvent {
+  id: string;
+  state: HudState;
+  brief: string;
+  detailRef?: string;
+  severity: "info" | "success" | "warning" | "danger";
+  icon: string;
+  actionButtons: Array<"more-details" | "approve" | "deny" | "undo" | "open-dashboard" | "mute">;
+  createdAt: string;
+}
+
 export interface MemoryWrite {
   id: string;
   conversationId?: string;
@@ -322,6 +410,18 @@ export interface AgentProfile {
   modelProfileId: string;
   permissions: ActionCategory[];
   status: "idle" | "listening" | "planning" | "executing" | "reviewing" | "waiting-approval" | "sleeping";
+}
+
+export interface AgentSoul {
+  id: string;
+  name: string;
+  role: string;
+  personality: string;
+  voiceProfileId: string;
+  modelPreference: string;
+  memoryScope: MemoryKind[];
+  permissions: ActionCategory[];
+  status: AgentProfile["status"];
 }
 
 export interface SkillManifest {
@@ -454,6 +554,47 @@ export interface VoiceAsset {
   notes: string;
 }
 
+export interface VoiceProfile {
+  id: string;
+  agentId: string;
+  label: string;
+  enginePreference: "windows-sapi" | "piper" | "voice-sample" | "future-clone";
+  sampleAssetId?: string;
+  style: string;
+  status: "ready" | "staged" | "missing-dependency";
+}
+
+export type VisionEngineStatus = "ready" | "requires-approval" | "missing-dependency" | "staged";
+
+export interface SystemAction {
+  id: string;
+  label: string;
+  category: ActionCategory;
+  command: string;
+  target: string;
+  reversible: boolean;
+  approvalRequired: boolean;
+  rollbackNote: string;
+  status: "draft" | "waiting-approval" | "approved" | "executed" | "undone" | "blocked" | "expired";
+  createdAt: string;
+  expiresAt?: string;
+  actionRequest: ActionRequest;
+  decision: PolicyDecision;
+}
+
+export interface UndoJournalEntry {
+  id: string;
+  actionId: string;
+  label: string;
+  target: string;
+  reversible: boolean;
+  status: "available" | "restored" | "expired" | "not-reversible";
+  createdAt: string;
+  expiresAt: string;
+  rollbackNote: string;
+  snapshotSummary: string;
+}
+
 export interface ReferenceSource {
   id: string;
   name: string;
@@ -575,11 +716,17 @@ export interface JarvisStatus {
   scaleProfile: ScaleProfile;
   activeModelId: string;
   models: ModelProfile[];
+  readyModelAssets?: ReadyModelAsset[];
+  neededFeatureDownloads?: NeededFeatureDownload[];
+  futureScalingModels?: FutureScalingModel[];
+  modelReadiness?: ModelReadiness[];
   runtimeAdapters?: RuntimeAdapter[];
   hardwareProfile?: HardwareProfile;
   audioEngines?: AudioEngine[];
   voiceSession?: VoiceSession;
   voiceAssets?: VoiceAsset[];
+  voiceProfiles?: VoiceProfile[];
+  agentSouls?: AgentSoul[];
   referenceSources?: ReferenceSource[];
   startup?: StartupState;
   agents: AgentProfile[];
@@ -594,6 +741,8 @@ export interface JarvisStatus {
   socialDrafts?: OutboundMessageDraft[];
   toolStatuses?: ToolStatus[];
   protectedCore?: ProtectedCoreStatus;
+  undoJournal?: UndoJournalEntry[];
+  hudEvents?: HudStreamEvent[];
   reports?: ReportSnapshot[];
   mapOverlays?: MapInsight[];
   visionInsights?: VisionInsight[];

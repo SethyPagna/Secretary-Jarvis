@@ -6,15 +6,19 @@ import {
   Camera,
   CheckCircle2,
   ChevronRight,
+  CircleDot,
   Cpu,
   Database,
   Download,
   Eye,
   Fingerprint,
+  FolderDown,
   GitBranch,
   Gauge,
   HardDrive,
   Image,
+  Layers3,
+  ListTree,
   Lock,
   Map,
   MapPin,
@@ -31,8 +35,10 @@ import {
   Smartphone,
   Sparkles,
   TerminalSquare,
+  Undo2,
   Video,
   Volume2,
+  Wrench,
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
@@ -44,13 +50,17 @@ import {
   type ConversationTurn,
   type MobilePairing,
   type MemoryWrite,
+  type ModelReadiness,
   type ModelDryRunResult,
+  type NeededFeatureDownload,
   type JarvisStatus,
   type ModelProfile,
   type OutboundMessageDraft,
   type PrivacyMode,
   type ScaleProfile,
   type StreamEvent,
+  type FutureScalingModel,
+  type UndoJournalEntry,
   type TaskRun,
   type TaskProfile,
 } from "@jarvis/core";
@@ -1398,10 +1408,346 @@ function TaskQueuePanel({ tasks, onRefresh }: { tasks: TaskRun[]; onRefresh: () 
   );
 }
 
+type AppSection =
+  | "home"
+  | "chat"
+  | "models"
+  | "voice"
+  | "vision"
+  | "agents"
+  | "memory"
+  | "skills"
+  | "devices"
+  | "social"
+  | "maps"
+  | "reports"
+  | "security"
+  | "settings";
+
+const SECTIONS: Array<{ id: AppSection; label: string; icon: typeof Brain }> = [
+  { id: "home", label: "Home", icon: CircleDot },
+  { id: "chat", label: "Chat", icon: Brain },
+  { id: "models", label: "Models", icon: Cpu },
+  { id: "voice", label: "Voice", icon: Mic },
+  { id: "vision", label: "Vision", icon: Eye },
+  { id: "agents", label: "Agents", icon: ListTree },
+  { id: "memory", label: "Memory", icon: Database },
+  { id: "skills", label: "Skills", icon: Cable },
+  { id: "devices", label: "Devices", icon: HardDrive },
+  { id: "social", label: "Social", icon: Send },
+  { id: "maps", label: "Maps", icon: Map },
+  { id: "reports", label: "Reports", icon: BarChart3 },
+  { id: "security", label: "Security", icon: ShieldCheck },
+  { id: "settings", label: "Settings", icon: Wrench },
+];
+
+interface FeatureDownloadsResponse {
+  downloads: NeededFeatureDownload[];
+  note: string;
+}
+
+interface FutureScalingResponse {
+  models: FutureScalingModel[];
+  note: string;
+}
+
+interface ModelReadinessResponse {
+  readiness: ModelReadiness[];
+}
+
+interface UndoJournalResponse {
+  undoJournal: UndoJournalEntry[];
+}
+
+function briefText(value: string | undefined, max = 118): string {
+  if (!value) {
+    return "Ready.";
+  }
+  return value.length > max ? `${value.slice(0, max).trim()}...` : value;
+}
+
+function useGatewayResource<T>(path: string, fallback: T): T {
+  const [value, setValue] = useState<T>(fallback);
+  useEffect(() => {
+    fetch(`${API_BASE_URL}${path}`)
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error(path))))
+      .then((body: T) => setValue(body))
+      .catch(() => setValue(fallback));
+  }, [path]);
+  return value;
+}
+
+function HudOverlay({ status, liveEvents, onOpenDashboard }: { status: JarvisStatus; liveEvents: StreamEvent[]; onOpenDashboard?: () => void }) {
+  const latestTask = (status.tasks ?? [])[0];
+  const latestApproval = status.pendingApprovals[0];
+  const latestToken = liveEvents.find((event) => event.type === "token");
+  const voiceState = status.voiceSession?.state ?? "idle";
+  const hudState = latestApproval
+    ? "approval"
+    : latestTask?.status === "running"
+      ? "executing"
+      : latestToken
+        ? "speaking"
+        : voiceState === "listening" || voiceState === "transcribing"
+          ? "listening"
+          : "idle";
+  const current = activeModel(status);
+  const caption =
+    latestApproval?.title ??
+    latestToken?.payload.content?.toString() ??
+    latestTask?.title ??
+    `${current.label} ready`;
+
+  return (
+    <main className={`hud-shell hud-${hudState}`}>
+      <div className="hud-particle-field" aria-hidden="true" />
+      <section className="hud-orb-panel" aria-label="Jarvis HUD">
+        <div className="hud-orb">
+          <div className="hud-orb-ring ring-one" />
+          <div className="hud-orb-ring ring-two" />
+          <div className="hud-orb-core">
+            <Brain size={24} aria-hidden="true" />
+          </div>
+        </div>
+        <div className="hud-caption">
+          <span>{hudState}</span>
+          <strong>{briefText(caption, 74)}</strong>
+          <p>{briefText(status.voiceSession?.message ?? current.notes, 92)}</p>
+        </div>
+        <div className="hud-actions">
+          <button type="button" onClick={onOpenDashboard}>
+            <Layers3 size={15} aria-hidden="true" />
+          </button>
+          <button type="button" title="Emergency stop">
+            <XCircle size={15} aria-hidden="true" />
+          </button>
+        </div>
+      </section>
+      <div className="hud-wave" aria-hidden="true">
+        {Array.from({ length: 22 }).map((_, index) => (
+          <span key={index} style={{ "--i": index } as CSSProperties} />
+        ))}
+      </div>
+    </main>
+  );
+}
+
+function CommandDeck({ status, gatewayState, onSectionChange }: { status: JarvisStatus; gatewayState: string; onSectionChange: (section: AppSection) => void }) {
+  const current = activeModel(status);
+  const runningTasks = (status.tasks ?? []).filter((task) => task.status === "running").length;
+  const readyAssets = status.readyModelAssets?.length ?? 0;
+  const approvals = status.pendingApprovals.length;
+
+  return (
+    <section className="command-deck">
+      <div className="deck-copy">
+        <span>Gateway {gatewayState}</span>
+        <h2>Jarvis is quiet until needed.</h2>
+        <p>{briefText(`Active model: ${current.label}. ${current.notes}`, 150)}</p>
+        <div className="deck-actions">
+          <button type="button" onClick={() => onSectionChange("chat")}>Command</button>
+          <button type="button" onClick={() => onSectionChange("models")}>Models</button>
+          <button type="button" onClick={() => onSectionChange("security")}>Approvals</button>
+        </div>
+      </div>
+      <div className="deck-visual" aria-hidden="true">
+        <div className="deck-orbit orbit-a" />
+        <div className="deck-orbit orbit-b" />
+        <div className="deck-core">
+          <Brain size={42} />
+        </div>
+      </div>
+      <div className="deck-metrics">
+        <article><span>Ready assets</span><strong>{readyAssets}</strong></article>
+        <article><span>Running</span><strong>{runningTasks}</strong></article>
+        <article><span>Approvals</span><strong>{approvals}</strong></article>
+      </div>
+    </section>
+  );
+}
+
+function SectionRail({ active, onChange }: { active: AppSection; onChange: (section: AppSection) => void }) {
+  return (
+    <nav className="section-rail" aria-label="Jarvis command sections">
+      {SECTIONS.map((section) => {
+        const Icon = section.icon;
+        return (
+          <button key={section.id} className={active === section.id ? "active" : ""} type="button" onClick={() => onChange(section.id)}>
+            <Icon size={17} aria-hidden="true" />
+            <span>{section.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function ModelReadinessPanel() {
+  const response = useGatewayResource<ModelReadinessResponse>("/api/models/readiness", { readiness: [] });
+
+  return (
+    <section className="panel model-readiness-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Ready Model Wiring</h2>
+          <p>Downloaded assets are separated from runtime probes and future scaling.</p>
+        </div>
+        <Cpu size={22} aria-hidden="true" />
+      </div>
+      <div className="readiness-grid">
+        {response.readiness.map((model) => (
+          <article key={model.modelId} className={`readiness-card ${model.runtimeState}`}>
+            <div>
+              <strong>{model.label}</strong>
+              <span>{model.modelRef}</span>
+            </div>
+            <em>{model.runtimeState}</em>
+            <p>{briefText(model.recommendedUse, 110)}</p>
+            <small>{model.hardwareFit} / {model.downloadState}</small>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FeatureDownloadsPanel() {
+  const response = useGatewayResource<FeatureDownloadsResponse>("/api/setup/needed-feature-downloads", { downloads: [], note: "" });
+
+  return (
+    <section className="panel setup-downloads-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Needed Feature Downloads</h2>
+          <p>Feature dependencies Jarvis is already coded to plug in after you download them.</p>
+        </div>
+        <FolderDown size={22} aria-hidden="true" />
+      </div>
+      <div className="download-groups">
+        {response.downloads.map((download) => (
+          <details key={download.id}>
+            <summary>
+              <span>{download.category}</span>
+              <strong>{download.label}</strong>
+              <em>{download.status}</em>
+            </summary>
+            <p>{download.purpose}</p>
+            <code>{download.expectedPath}</code>
+            <small>{download.installHint}</small>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FutureScalingPanel() {
+  const response = useGatewayResource<FutureScalingResponse>("/api/models/future-scaling", { models: [], note: "" });
+
+  return (
+    <section className="panel future-scaling-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Future Scaling</h2>
+          <p>Optional larger model targets for later switching and benchmarking.</p>
+        </div>
+        <Layers3 size={22} aria-hidden="true" />
+      </div>
+      <div className="future-list">
+        {response.models.map((model) => (
+          <article key={model.id}>
+            <strong>{model.label}</strong>
+            <span>{model.modelRef}</span>
+            <p>{briefText(model.purpose, 110)}</p>
+            <em>{model.scale} / {model.expectedRuntime}</em>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AgentSoulsPanel({ status }: { status: JarvisStatus }) {
+  const souls = status.agentSouls ?? [];
+
+  return (
+    <section className="panel souls-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Agent Souls</h2>
+          <p>Named assistants with voice, personality, memory scope, and permissions.</p>
+        </div>
+        <Fingerprint size={22} aria-hidden="true" />
+      </div>
+      <div className="souls-grid">
+        {souls.map((soul) => (
+          <article key={soul.id}>
+            <strong>{soul.name}</strong>
+            <span>{soul.role}</span>
+            <p>{briefText(soul.personality, 92)}</p>
+            <em>{soul.status} / {soul.voiceProfileId}</em>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function UndoJournalPanel() {
+  const response = useGatewayResource<UndoJournalResponse>("/api/undo-journal", { undoJournal: [] });
+  const [lastAction, setLastAction] = useState<string>("No approved-admin action staged.");
+
+  async function dryRunAction() {
+    const request = {
+      label: "Organize local workspace preview",
+      command: "organize downloads with reversible file moves",
+      target: "C:\\Users\\user\\Downloads\\Secretary Jarvis",
+    };
+    const res = await fetch(`${API_BASE_URL}/api/system/actions/dry-run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(request),
+    });
+    const body = (await res.json()) as { systemAction?: { status?: string; rollbackNote?: string } };
+    setLastAction(`${body.systemAction?.status ?? "checked"}: ${body.systemAction?.rollbackNote ?? "Dry-run completed."}`);
+  }
+
+  return (
+    <section className="panel undo-panel">
+      <div className="panel-header">
+        <div>
+          <h2>Time-Travel Undo</h2>
+          <p>Jarvis-managed reversible changes keep a 20-minute checkpoint.</p>
+        </div>
+        <Undo2 size={22} aria-hidden="true" />
+      </div>
+      <div className="undo-command">
+        <button type="button" onClick={dryRunAction}>Stage safe dry-run</button>
+        <span>{lastAction}</span>
+      </div>
+      <div className="undo-list">
+        {response.undoJournal.length === 0 ? (
+          <p className="empty-state">No undo checkpoints yet.</p>
+        ) : (
+          response.undoJournal.slice(0, 6).map((entry) => (
+            <article key={entry.id}>
+              <strong>{entry.label}</strong>
+              <span>{entry.status} / expires {new Date(entry.expiresAt).toLocaleTimeString()}</span>
+              <p>{entry.rollbackNote}</p>
+            </article>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function App() {
   const [status, setStatus] = useState<JarvisStatus>(seededStatus);
   const [gatewayState, setGatewayState] = useState<"live" | "fallback">("fallback");
   const [liveEvents, setLiveEvents] = useState<StreamEvent[]>([]);
+  const [activeSection, setActiveSection] = useState<AppSection>("home");
+  const isHud = new URLSearchParams(window.location.search).has("floating") || new URLSearchParams(window.location.search).has("hud");
 
   useEffect(() => {
     loadStatus()
@@ -1461,6 +1807,7 @@ export function App() {
   }, []);
 
   const currentModel = useMemo(() => activeModel(status), [status]);
+  const refreshStatus = async () => setStatus(await loadStatus());
 
   async function selectTask(taskProfile: TaskProfile) {
     try {
@@ -1498,51 +1845,127 @@ export function App() {
     setStatus(await loadStatus());
   }
 
+  if (isHud) {
+    return <HudOverlay status={status} liveEvents={liveEvents} onOpenDashboard={() => window.open(window.location.origin, "_blank")} />;
+  }
+
+  function renderSection() {
+    switch (activeSection) {
+      case "home":
+        return (
+          <>
+            <ReportsPanel status={status} />
+            <PerformancePanel status={status} />
+            <GrowthReport status={status} />
+            <StartupPanel status={status} />
+          </>
+        );
+      case "chat":
+        return (
+          <>
+            <ConversationPanel status={status} liveEvents={liveEvents} onTaskCreated={setStatus} />
+            <TaskQueuePanel tasks={status.tasks ?? []} onRefresh={refreshStatus} />
+          </>
+        );
+      case "models":
+        return (
+          <>
+            <ModelHub status={status} onTaskSelect={selectTask} />
+            <ModelReadinessPanel />
+            <ModelCatalogPanel status={status} onRefresh={refreshStatus} />
+            <FeatureDownloadsPanel />
+            <FutureScalingPanel />
+          </>
+        );
+      case "voice":
+        return (
+          <>
+            <VoicePanel status={status} />
+            <BrainPanel />
+          </>
+        );
+      case "vision":
+        return (
+          <>
+            <VisionPanel status={status} onRefresh={refreshStatus} />
+            <ModalityStudio />
+          </>
+        );
+      case "agents":
+        return (
+          <>
+            <AgentFlow agents={status.agents} />
+            <AgentSoulsPanel status={status} />
+          </>
+        );
+      case "memory":
+        return (
+          <>
+            <MemoryTimeline status={status} />
+            <UndoJournalPanel />
+          </>
+        );
+      case "skills":
+        return (
+          <>
+            <ConnectorsAndSkills status={status} onRefresh={refreshStatus} />
+            <ReferencePanel status={status} />
+          </>
+        );
+      case "devices":
+        return (
+          <>
+            <DevicePanel status={status} onRefresh={refreshStatus} />
+            <ServiceHealthPanel />
+          </>
+        );
+      case "social":
+        return (
+          <>
+            <SocialOutboxPanel status={status} onRefresh={refreshStatus} />
+            <MobilePairingPanel status={status} onRefresh={refreshStatus} />
+          </>
+        );
+      case "maps":
+        return <MapPanel status={status} onRefresh={refreshStatus} />;
+      case "reports":
+        return (
+          <>
+            <ReportsPanel status={status} />
+            <GrowthReport status={status} />
+            <PerformancePanel status={status} />
+          </>
+        );
+      case "security":
+        return (
+          <>
+            <SecurityPanel status={status} />
+            <Approvals status={status} onRefresh={refreshStatus} />
+            <UndoJournalPanel />
+          </>
+        );
+      case "settings":
+        return (
+          <>
+            <SettingsPanel status={status} onRefresh={refreshStatus} />
+            <ServiceHealthPanel />
+            <StartupPanel status={status} />
+          </>
+        );
+      default:
+        return null;
+    }
+  }
+
   return (
     <main className="app-shell">
       <FloatingJarvisOrb status={status} />
       <Header status={status} onEmergencyStop={emergencyStop} />
-      <section className="hero-surface">
-        <div className="hero-copy">
-          <h2>Private intelligence, wired to grow.</h2>
-          <p>
-            Jarvis is awake in strict local mode, routing work through owned agents, guarded connectors,
-            memory timelines, and local model profiles.
-          </p>
-        </div>
-        <div className="hero-telemetry">
-          <span>Gateway {gatewayState}</span>
-          <strong>{currentModel.label}</strong>
-          <em>{currentModel.notes}</em>
-        </div>
-      </section>
+      <CommandDeck status={status} gatewayState={gatewayState} onSectionChange={setActiveSection} />
       <SystemSummary status={status} />
-      <ModeDock status={status} />
-      <section className="dashboard-grid">
-        <ConversationPanel status={status} liveEvents={liveEvents} onTaskCreated={setStatus} />
-        <TaskQueuePanel tasks={status.tasks ?? []} onRefresh={async () => setStatus(await loadStatus())} />
-        <ReportsPanel status={status} />
-        <MapPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <VisionPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <DevicePanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <SecurityPanel status={status} />
-        <PerformancePanel status={status} />
-        <BrainPanel />
-        <SettingsPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <ServiceHealthPanel />
-        <ModelHub status={status} onTaskSelect={selectTask} />
-        <ModelCatalogPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <VoicePanel status={status} />
-        <SocialOutboxPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <MobilePairingPanel status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <StartupPanel status={status} />
-        <ReferencePanel status={status} />
-        <AgentFlow agents={status.agents} />
-        <MemoryTimeline status={status} />
-        <Approvals status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <ConnectorsAndSkills status={status} onRefresh={async () => setStatus(await loadStatus())} />
-        <ModalityStudio />
-        <GrowthReport status={status} />
+      <SectionRail active={activeSection} onChange={setActiveSection} />
+      <section className={`dashboard-grid section-${activeSection}`}>
+        {renderSection()}
       </section>
     </main>
   );

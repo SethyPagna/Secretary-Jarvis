@@ -8,6 +8,7 @@ import type {
   TaskEvent,
   TaskQueueItem,
   TaskRun,
+  UndoJournalEntry,
 } from "@jarvis/core";
 
 const DEFAULT_DB_PATH = join(process.cwd(), "data", "jarvis.sqlite");
@@ -240,6 +241,59 @@ export class JarvisStore {
     return rows.map(memoryWriteFromRow);
   }
 
+  addUndoJournalEntry(entry: UndoJournalEntry): void {
+    this.db
+      .prepare(
+        `INSERT INTO undo_journal (id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           status = excluded.status,
+           rollback_note = excluded.rollback_note,
+           snapshot_summary = excluded.snapshot_summary`,
+      )
+      .run(
+        entry.id,
+        entry.actionId,
+        entry.label,
+        entry.target,
+        entry.reversible ? 1 : 0,
+        entry.status,
+        entry.createdAt,
+        entry.expiresAt,
+        entry.rollbackNote,
+        entry.snapshotSummary,
+      );
+  }
+
+  getUndoJournalEntry(entryId: string): UndoJournalEntry | undefined {
+    const row = this.db
+      .prepare(
+        `SELECT id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary
+         FROM undo_journal WHERE id = ? OR action_id = ?`,
+      )
+      .get(entryId, entryId) as UndoJournalRow | undefined;
+    return row ? undoJournalFromRow(row) : undefined;
+  }
+
+  listUndoJournal(limit = 80): UndoJournalEntry[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, action_id, label, target, reversible, status, created_at, expires_at, rollback_note, snapshot_summary
+         FROM undo_journal ORDER BY created_at DESC LIMIT ?`,
+      )
+      .all(limit) as unknown as UndoJournalRow[];
+    return rows.map(undoJournalFromRow);
+  }
+
+  markUndoJournalEntry(entryId: string, status: UndoJournalEntry["status"]): UndoJournalEntry | undefined {
+    const entry = this.getUndoJournalEntry(entryId);
+    if (!entry) {
+      return undefined;
+    }
+    this.db.prepare("UPDATE undo_journal SET status = ? WHERE id = ?").run(status, entry.id);
+    return { ...entry, status };
+  }
+
   private migrate(): void {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS conversations (
@@ -301,6 +355,19 @@ export class JarvisStore {
         importance REAL NOT NULL,
         created_at TEXT NOT NULL,
         tags_json TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS undo_journal (
+        id TEXT PRIMARY KEY,
+        action_id TEXT NOT NULL,
+        label TEXT NOT NULL,
+        target TEXT NOT NULL,
+        reversible INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        rollback_note TEXT NOT NULL,
+        snapshot_summary TEXT NOT NULL
       );
     `);
   }
@@ -365,6 +432,19 @@ interface MemoryWriteRow {
   importance: number;
   created_at: string;
   tags_json: string;
+}
+
+interface UndoJournalRow {
+  id: string;
+  action_id: string;
+  label: string;
+  target: string;
+  reversible: number;
+  status: UndoJournalEntry["status"];
+  created_at: string;
+  expires_at: string;
+  rollback_note: string;
+  snapshot_summary: string;
 }
 
 function conversationFromRow(row: ConversationRow): Conversation {
@@ -437,5 +517,21 @@ function memoryWriteFromRow(row: MemoryWriteRow): MemoryWrite {
     importance: row.importance,
     createdAt: row.created_at,
     tags: JSON.parse(row.tags_json) as string[],
+  };
+}
+
+function undoJournalFromRow(row: UndoJournalRow): UndoJournalEntry {
+  const expired = row.status === "available" && Date.parse(row.expires_at) < Date.now();
+  return {
+    id: row.id,
+    actionId: row.action_id,
+    label: row.label,
+    target: row.target,
+    reversible: row.reversible === 1,
+    status: expired ? "expired" : row.status,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    rollbackNote: row.rollback_note,
+    snapshotSummary: row.snapshot_summary,
   };
 }

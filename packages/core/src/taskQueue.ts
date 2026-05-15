@@ -6,10 +6,11 @@ export function canTransitionTaskStatus(from: TaskStatus, to: TaskStatus): boole
   }
 
   const allowed: Record<TaskStatus, TaskStatus[]> = {
-    queued: ["running", "cancelled"],
-    running: ["paused", "waiting-approval", "completed", "failed", "cancelled"],
-    paused: ["running", "cancelled"],
-    "waiting-approval": ["running", "cancelled"],
+    queued: ["running", "checkpointed", "cancelled"],
+    running: ["paused", "waiting-approval", "checkpointed", "completed", "failed", "cancelled"],
+    paused: ["running", "checkpointed", "cancelled"],
+    "waiting-approval": ["running", "checkpointed", "cancelled"],
+    checkpointed: ["running", "cancelled", "completed"],
     completed: [],
     failed: [],
     cancelled: [],

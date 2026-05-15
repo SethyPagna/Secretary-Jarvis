@@ -29,8 +29,17 @@ MODEL_SIZE_ESTIMATES_GB = {
     "Qwen/Qwen3.5-9B": 22,
     "Qwen/Qwen3.6-27B": 62,
     "google/gemma-4-E4B-it": 12,
+    "google/gemma-4-26B-A4B-it": 32,
     "openai/whisper-large-v3-turbo": 3.2,
     "deepseek-ai/DeepSeek-V4-Flash": 380,
+}
+
+READY_MODEL_SNAPSHOTS = {
+    "Qwen/Qwen3.5-9B": "Qwen__Qwen3.5-9B",
+    "Qwen/Qwen3.6-27B": "Qwen__Qwen3.6-27B",
+    "google/gemma-4-E4B-it": "gemma-4-E4B-it",
+    "google/gemma-4-26B-A4B-it": "gemma-4-26B-A4B-it",
+    "openai/whisper-large-v3-turbo": "openai__whisper-large-v3-turbo",
 }
 
 
@@ -163,6 +172,42 @@ def capabilities_payload() -> dict[str, Any]:
     }
 
 
+def model_readiness_payload() -> dict[str, Any]:
+    models: list[dict[str, Any]] = []
+    for model_ref, folder_name in READY_MODEL_SNAPSHOTS.items():
+        folder = HF_SNAPSHOT_ROOT / folder_name
+        present = folder.exists()
+        config_present = (folder / "config.json").exists()
+        tokenizer_present = any((folder / name).exists() for name in ["tokenizer.json", "tokenizer.model", "vocab.json"])
+        shard_count = len(list(folder.glob("*.safetensors"))) if present else 0
+        models.append(
+            {
+                "modelRef": model_ref,
+                "folder": str(folder),
+                "downloadState": "complete" if present and config_present and shard_count > 0 else "partial" if present else "missing",
+                "runtimeState": "ready-asset" if present else "missing",
+                "configPresent": config_present,
+                "tokenizerPresent": tokenizer_present,
+                "safetensorShards": shard_count,
+                "estimatedSizeGb": MODEL_SIZE_ESTIMATES_GB.get(model_ref),
+                "message": "Asset detected locally; runtime probe decides whether it can be loaded now."
+                if present
+                else "Expected local snapshot folder is missing.",
+            }
+        )
+    return {
+        "snapshotRoot": str(HF_SNAPSHOT_ROOT),
+        "localOnly": True,
+        "models": models,
+        "runtimePackages": {
+            "transformers": package_available("transformers"),
+            "torch": package_available("torch"),
+            "accelerate": package_available("accelerate"),
+            "sentencepiece": package_available("sentencepiece"),
+        },
+    }
+
+
 def json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict[str, Any]) -> None:
     body = json.dumps(payload, indent=2).encode("utf-8")
     handler.send_response(status)
@@ -231,6 +276,27 @@ class BrainHandler(BaseHTTPRequestHandler):
             )
             return
 
+        if path == "/models/readiness":
+            json_response(self, 200, model_readiness_payload())
+            return
+
+        if path == "/voice/profiles":
+            json_response(
+                self,
+                200,
+                {
+                    "profiles": [
+                        {"id": "voice-profile-jarvis", "agentId": "jarvis", "status": "ready", "engine": "voice-sample"},
+                        {"id": "voice-profile-friday", "agentId": "friday", "status": "staged", "engine": "piper"},
+                        {"id": "voice-profile-daedalus", "agentId": "daedalus", "status": "staged", "engine": "piper"},
+                        {"id": "voice-profile-argus", "agentId": "argus", "status": "staged", "engine": "piper"},
+                        {"id": "voice-profile-sentinel", "agentId": "sentinel", "status": "ready", "engine": "windows-sapi"},
+                    ],
+                    "message": "Agent voice profiles are wired; Piper profiles activate after the feature dependency is installed.",
+                },
+            )
+            return
+
         if path == "/vision/status":
             json_response(
                 self,
@@ -242,6 +308,26 @@ class BrainHandler(BaseHTTPRequestHandler):
                         "pil": package_available("PIL"),
                         "opencv": package_available("cv2"),
                         "tesseract": bool(shutil.which("tesseract")),
+                    },
+                },
+            )
+            return
+
+        if path == "/vision/readiness":
+            json_response(
+                self,
+                200,
+                {
+                    "status": "approval-gated",
+                    "localOnly": True,
+                    "screenCapture": "requires-approval",
+                    "webcamIdentity": "requires-approval",
+                    "staticImage": "ready",
+                    "ocr": "ready" if shutil.which("tesseract") else "missing-dependency",
+                    "packages": {
+                        "PIL": package_available("PIL"),
+                        "opencv": package_available("cv2"),
+                        "ultralytics": package_available("ultralytics"),
                     },
                 },
             )
@@ -303,8 +389,32 @@ class BrainHandler(BaseHTTPRequestHandler):
             self.handle_hf_dry_run(payload)
             return
 
+        if path == "/models/hf/probe":
+            model_ref = str(payload.get("modelRef", "")).strip()
+            readiness = model_readiness_payload()
+            match = next((item for item in readiness["models"] if item["modelRef"] == model_ref), None)
+            json_response(self, 200, {"probe": match, "runtimePackages": readiness["runtimePackages"]})
+            return
+
         if path == "/models/hf/download":
             self.handle_hf_download(payload)
+            return
+
+        if path == "/voice/stt/probe":
+            whisper_snapshot = snapshot_available("openai__whisper-large-v3-turbo")
+            json_response(
+                self,
+                200,
+                {
+                    "primary": "openai/whisper-large-v3-turbo",
+                    "status": "ready" if whisper_snapshot and package_available("transformers") else "ready-asset" if whisper_snapshot else "missing",
+                    "snapshotInstalled": whisper_snapshot,
+                    "transformersInstalled": package_available("transformers"),
+                    "torchInstalled": package_available("torch"),
+                    "whisperCppInstalled": bool(shutil.which("whisper-cli")),
+                    "fallback": "vosk after feature dependency download",
+                },
+            )
             return
 
         if path == "/audio/stt/file":

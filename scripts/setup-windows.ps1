@@ -82,6 +82,7 @@ function Show-Doctor {
     }
   }
   Write-Host "Model directory: $OllamaModels"
+  Write-Host "Jarvis UI: Electron HUD primary; Tauri dashboard fallback."
   Write-Host "Free space on C: $([math]::Round((Get-PSDrive C).Free / 1GB, 1)) GB"
 }
 
