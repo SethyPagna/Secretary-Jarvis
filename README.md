@@ -6,9 +6,10 @@ This repository is intentionally owned by Jarvis. OpenClaw, Ruflo, and additiona
 
 ## Current Foundation
 
-- React/Vite dashboard with floating Jarvis presence and control panels.
+- React/Vite dashboard with grouped control-room sections and a brief-first Jarvis presence.
+- Electron HUD is the primary floating desktop assistant; Tauri remains the full dashboard/fallback shell.
 - Local gateway service exposing model, memory, agent, connector, skill, and policy state.
-- Tauri-first desktop shell scaffold plus a local dashboard and floating Jarvis presence.
+- Ready downloaded models are tracked separately from needed feature downloads and future scaling models.
 - Python Brain and C++ Muscle service boundaries for orchestration and native inference.
 - TypeScript core package with tested policy and routing primitives.
 - Strict local-only defaults. Cloud providers are represented as disabled adapters.
@@ -25,6 +26,7 @@ npm run dev:gateway
 npm run dev:dashboard
 npm run dev:brain
 npm run dev:desktop
+npm run hud -w @jarvis/desktop
 ```
 
 Start local Jarvis services:
@@ -60,6 +62,19 @@ Pull the balanced Ollama model pack after reviewing storage needs:
 ```
 
 The dashboard is designed to consume `http://localhost:4317/api/status`, with seeded local fallback data when the gateway is offline.
+
+## Setup Lists
+
+Jarvis keeps two separate setup lists:
+
+- Needed feature downloads: models/tools the code is already wired to use once you download them.
+- Future scaling models: optional larger models for later switching and benchmarking.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\show-setup-lists.ps1
+```
+
+See `docs/setup-lists.md`.
 
 ## Model Weights
 
