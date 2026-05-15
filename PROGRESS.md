@@ -43,7 +43,7 @@ Protocol:
 - [x] 3.2 Add voice endpoints - commit `709bfaf`
 - [x] 3.3 Wake-word system - commit `3b94bc0`
 - [x] 3.4 Barge-in / interruptible speaking - commit `daa0dfd`
-- [ ] 3.5 Per-agent voice hooks - partial through seeded voice profiles
+- [x] 3.5 Per-agent voice hooks - commit `839cacb`
 
 ## Phase 4 - Vision & Identity
 - [ ] 4.1 Python vision service - partial local file inspector exists
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `3.5 Per-agent voice hooks`.
+Next task: `4.1 Python vision service`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
