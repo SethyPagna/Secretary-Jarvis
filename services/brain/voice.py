@@ -166,7 +166,7 @@ class VoiceService:
             else "STT pipeline accepted the local audio file.",
         }
 
-    def synthesize(self, text: str) -> dict[str, Any]:
+    def synthesize(self, text: str, voice_id: str = "", agent_id: str = "", engine_id: str = "") -> dict[str, Any]:
         piper_ready = bool(shutil.which("piper"))
         if not text:
             return {"status": "needs-input", "error": "text is required"}
@@ -178,7 +178,14 @@ class VoiceService:
         }
         if not piper_ready and os.name == "nt":
             try:
-                result = {**self.synthesize_with_windows_sapi(text), "textPreview": text[:80], "interruptible": True}
+                result = {
+                    **self.synthesize_with_windows_sapi(text),
+                    "textPreview": text[:80],
+                    "interruptible": True,
+                    "voiceId": voice_id,
+                    "agentId": agent_id,
+                    "requestedEngine": engine_id,
+                }
                 self.speaking_state = {
                     "speaking": False,
                     "interruptible": True,
@@ -195,6 +202,9 @@ class VoiceService:
                     "message": f"Windows SAPI fallback failed: {error}",
                     "textPreview": text[:80],
                     "interruptible": True,
+                    "voiceId": voice_id,
+                    "agentId": agent_id,
+                    "requestedEngine": engine_id,
                 }
         result = {
             "status": "ready" if piper_ready else "missing-engine",
@@ -203,6 +213,9 @@ class VoiceService:
             "message": "Piper accepted local synthesis." if piper_ready else "Install Piper before real TTS.",
             "textPreview": text[:80],
             "interruptible": True,
+            "voiceId": voice_id,
+            "agentId": agent_id,
+            "requestedEngine": engine_id,
         }
         self.speaking_state = {
             "speaking": False,

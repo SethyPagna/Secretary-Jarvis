@@ -1324,18 +1324,31 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   }
 
   if (request.method === "POST" && url.pathname === "/api/audio/tts") {
-    const body = (await readBody(request)) as Partial<TtsRequest>;
+    const body = (await readBody(request)) as Partial<TtsRequest> & { agentId?: string; voiceProfileId?: string };
+    const requestedAgent = (status.agentSouls ?? []).find((agent) => agent.id === body.agentId || agent.name.toLowerCase() === body.agentId?.toLowerCase());
+    const voiceProfile =
+      (status.voiceProfiles ?? []).find((profile) => profile.id === body.voiceProfileId || profile.id === body.voiceId) ??
+      (status.voiceProfiles ?? []).find((profile) => profile.id === requestedAgent?.voiceProfileId) ??
+      (status.voiceProfiles ?? [])[0];
     const brainResult = await brainJson<{
       status?: string;
       engine?: string;
       audioPath?: string;
       message?: string;
       interruptible?: boolean;
+      voiceId?: string;
+      agentId?: string;
+      requestedEngine?: string;
     }>(
       "/audio/tts",
       {
         method: "POST",
-        body: JSON.stringify({ text: body.text, voiceId: body.voiceId, engineId: body.engineId }),
+        body: JSON.stringify({
+          text: body.text,
+          voiceId: voiceProfile?.id ?? body.voiceId,
+          agentId: requestedAgent?.id ?? voiceProfile?.agentId,
+          engineId: body.engineId ?? voiceProfile?.enginePreference,
+        }),
       },
       12_000,
     );
@@ -1356,6 +1369,8 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
             : "Piper is not installed or not on PATH. TTS is wired but cannot synthesize yet."),
       engine: brainResult?.engine ?? (piperReady ? "piper" : "voice-sample"),
       interruptible: brainResult?.interruptible ?? true,
+      voiceProfile,
+      agent: requestedAgent ?? (status.agentSouls ?? []).find((agent) => agent.id === voiceProfile?.agentId),
     };
     events.publish("audio", { tts: result });
     sendJson(response, 200, { tts: result });

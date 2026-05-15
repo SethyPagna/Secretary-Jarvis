@@ -449,7 +449,16 @@ class BrainHandler(BaseHTTPRequestHandler):
         if not text:
             json_response(self, 400, {"error": "text is required"})
             return
-        json_response(self, 200, VOICE.synthesize(text))
+        json_response(
+            self,
+            200,
+            VOICE.synthesize(
+                text,
+                voice_id=str(payload.get("voiceId", "")).strip(),
+                agent_id=str(payload.get("agentId", "")).strip(),
+                engine_id=str(payload.get("engineId", "")).strip(),
+            ),
+        )
 
     def handle_vision_analyze(self, payload: dict[str, Any]) -> None:
         file_path = str(payload.get("filePath", "")).strip()
