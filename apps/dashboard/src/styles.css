@@ -417,6 +417,98 @@ h1 {
   gap: 16px;
 }
 
+.section-brief {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 16px 18px;
+  border: 1px solid rgba(72, 217, 255, 0.14);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(72, 217, 255, 0.08), transparent 52%),
+    rgba(5, 10, 12, 0.7);
+}
+
+.section-brief span {
+  color: var(--cyan);
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.section-brief h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.section-brief p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.section-drawer {
+  grid-column: span 12;
+  border: 1px solid rgba(72, 217, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(4, 9, 10, 0.56);
+  overflow: clip;
+}
+
+.section-drawer > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 64px;
+  padding: 0 16px;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+}
+
+.section-drawer > summary::-webkit-details-marker {
+  display: none;
+}
+
+.section-drawer > summary span {
+  display: grid;
+  gap: 5px;
+}
+
+.section-drawer > summary strong {
+  font-size: 16px;
+}
+
+.section-drawer > summary small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.section-drawer > summary svg {
+  color: var(--cyan);
+  transition: transform 160ms ease;
+}
+
+.section-drawer[open] > summary {
+  border-bottom: 1px solid rgba(72, 217, 255, 0.12);
+  background: rgba(72, 217, 255, 0.045);
+}
+
+.section-drawer[open] > summary svg {
+  transform: rotate(90deg);
+}
+
+.drawer-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
+  padding: 14px;
+}
+
 .mode-dock {
   position: sticky;
   top: 0;
@@ -1720,11 +1812,12 @@ h1 {
 .command-deck {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px minmax(190px, 0.34fr);
-  gap: 18px;
-  min-height: 280px;
-  margin: 18px 0;
-  padding: 28px;
+  grid-template-columns: minmax(280px, 1fr) 150px minmax(220px, 0.42fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 154px;
+  margin: 14px 0;
+  padding: 18px;
   overflow: hidden;
   border: 1px solid rgba(72, 217, 255, 0.24);
   border-radius: 8px;
@@ -1759,36 +1852,40 @@ h1 {
 
 .deck-copy span {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: var(--green);
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
   font-size: 12px;
   text-transform: uppercase;
 }
 
 .deck-copy h2 {
-  max-width: 720px;
-  font-size: clamp(44px, 7vw, 86px);
-  line-height: 0.92;
+  max-width: 420px;
+  font-size: clamp(27px, 3.2vw, 42px);
+  line-height: 1;
 }
 
 .deck-copy p {
-  max-width: 720px;
-  margin-top: 18px;
+  max-width: 560px;
+  margin-top: 10px;
   color: var(--muted);
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .deck-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .deck-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   height: 38px;
-  padding: 0 16px;
+  padding: 0 13px;
   border: 1px solid rgba(72, 217, 255, 0.32);
   border-radius: 8px;
   background: rgba(72, 217, 255, 0.12);
@@ -1803,20 +1900,20 @@ h1 {
 .deck-visual {
   display: grid;
   place-items: center;
-  min-height: 220px;
+  min-height: 116px;
 }
 
 .deck-core {
   position: relative;
   z-index: 2;
   display: grid;
-  width: 104px;
-  height: 104px;
+  width: 74px;
+  height: 74px;
   place-items: center;
   border-radius: 50%;
   color: #031211;
   background: radial-gradient(circle, var(--green), var(--cyan) 62%, transparent 64%);
-  box-shadow: 0 0 44px rgba(72, 217, 255, 0.42);
+  box-shadow: 0 0 34px rgba(72, 217, 255, 0.42);
   animation: breathe 2.4s ease-in-out infinite;
 }
 
@@ -1827,14 +1924,14 @@ h1 {
 }
 
 .orbit-a {
-  width: 190px;
-  height: 190px;
+  width: 122px;
+  height: 122px;
   animation: spin 16s linear infinite;
 }
 
 .orbit-b {
-  width: 238px;
-  height: 116px;
+  width: 152px;
+  height: 74px;
   border-color: rgba(255, 0, 127, 0.35);
   transform: rotate(-18deg);
   animation: spin 11s linear infinite reverse;
@@ -1843,11 +1940,17 @@ h1 {
 .deck-metrics {
   display: grid;
   align-content: center;
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .deck-metrics article {
-  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding: 8px 10px;
   border: 1px solid rgba(72, 217, 255, 0.18);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.2);
@@ -1855,18 +1958,18 @@ h1 {
 
 .deck-metrics span,
 .deck-metrics strong {
-  display: block;
+  display: inline;
 }
 
 .deck-metrics span {
   color: var(--muted);
-  font-size: 12px;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 11px;
   text-transform: uppercase;
 }
 
 .deck-metrics strong {
-  margin-top: 4px;
-  font-size: 28px;
+  font-size: 20px;
 }
 
 .section-rail {
@@ -2292,6 +2395,15 @@ h1 {
 }
 
 @media (max-width: 1120px) {
+  .command-deck {
+    grid-template-columns: minmax(0, 1fr) 130px;
+  }
+
+  .deck-metrics {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .hero-surface,
   .summary-grid,
   .asset-strip {
@@ -2356,6 +2468,24 @@ h1 {
 
   .hero-surface {
     padding: 22px;
+  }
+
+  .command-deck {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .deck-visual {
+    order: -1;
+    min-height: 104px;
+  }
+
+  .deck-copy h2 {
+    font-size: clamp(25px, 9vw, 36px);
+  }
+
+  .deck-metrics {
+    grid-template-columns: 1fr;
   }
 
   .hero-copy h2 {

@@ -22,6 +22,7 @@ import {
   Lock,
   Map,
   MapPin,
+  MessageSquare,
   Mic,
   Minimize2,
   Music,
@@ -41,7 +42,7 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   evaluateActionPolicy,
   seededStatus,
@@ -1544,19 +1545,28 @@ function CommandDeck({ status, gatewayState, onSectionChange }: { status: Jarvis
     <section className="command-deck">
       <div className="deck-copy">
         <span>Gateway {gatewayState}</span>
-        <h2>Jarvis is quiet until needed.</h2>
-        <p>{briefText(`Active model: ${current.label}. ${current.notes}`, 150)}</p>
+        <h2>Control room</h2>
+        <p>{briefText(`${current.label}: ${current.notes}`, 104)}</p>
         <div className="deck-actions">
-          <button type="button" onClick={() => onSectionChange("chat")}>Command</button>
-          <button type="button" onClick={() => onSectionChange("models")}>Models</button>
-          <button type="button" onClick={() => onSectionChange("security")}>Approvals</button>
+          <button type="button" onClick={() => onSectionChange("chat")}>
+            <MessageSquare size={15} aria-hidden="true" />
+            <span>Command</span>
+          </button>
+          <button type="button" onClick={() => onSectionChange("models")}>
+            <Cpu size={15} aria-hidden="true" />
+            <span>Models</span>
+          </button>
+          <button type="button" onClick={() => onSectionChange("security")}>
+            <ShieldCheck size={15} aria-hidden="true" />
+            <span>Approvals</span>
+          </button>
         </div>
       </div>
       <div className="deck-visual" aria-hidden="true">
         <div className="deck-orbit orbit-a" />
         <div className="deck-orbit orbit-b" />
         <div className="deck-core">
-          <Brain size={42} />
+          <Brain size={30} />
         </div>
       </div>
       <div className="deck-metrics">
@@ -1581,6 +1591,104 @@ function SectionRail({ active, onChange }: { active: AppSection; onChange: (sect
         );
       })}
     </nav>
+  );
+}
+
+function SectionDrawer({
+  title,
+  summary,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  summary: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details className="section-drawer" open={defaultOpen}>
+      <summary>
+        <span>
+          <strong>{title}</strong>
+          <small>{summary}</small>
+        </span>
+        <ChevronRight size={18} aria-hidden="true" />
+      </summary>
+      <div className="drawer-grid">
+        {children}
+      </div>
+    </details>
+  );
+}
+
+function SectionBrief({ active, status }: { active: AppSection; status: JarvisStatus }) {
+  const activeModelLabel = activeModel(status).label;
+  const brief: Record<AppSection, { title: string; detail: string }> = {
+    home: {
+      title: "Control room",
+      detail: "A quiet operational summary. Open drawers only when you need the deeper readout.",
+    },
+    chat: {
+      title: "Conversation",
+      detail: "Queue work, steer active tasks, and keep the transcript stored locally.",
+    },
+    models: {
+      title: "Model routing",
+      detail: `${activeModelLabel} is active. Ready assets, downloads, and future scaling stay separated.`,
+    },
+    voice: {
+      title: "Voice loop",
+      detail: "Whisper, voice samples, and staged Piper/Vosk paths are grouped here.",
+    },
+    vision: {
+      title: "Vision",
+      detail: "Image, screen, camera, and OCR paths stay approval-gated by default.",
+    },
+    agents: {
+      title: "AgentOS",
+      detail: "Named souls coordinate through planner, executor, memory, and safety roles.",
+    },
+    memory: {
+      title: "MemoryOS",
+      detail: "Recall timelines, remembered facts, and reversible checkpoints.",
+    },
+    skills: {
+      title: "Skills",
+      detail: "Connectors declare permissions, approvals, and rollback behavior.",
+    },
+    devices: {
+      title: "Devices",
+      detail: "Inspect local services and devices without enabling risky control by default.",
+    },
+    social: {
+      title: "Social",
+      detail: "Draft locally first. Sending remains approval-gated.",
+    },
+    maps: {
+      title: "Map room",
+      detail: "Local routes and device topology stay offline-first.",
+    },
+    reports: {
+      title: "Reports",
+      detail: "Live posture, growth, and performance without raw logs on first glance.",
+    },
+    security: {
+      title: "Security",
+      detail: "Approvals, protected core policy, and undo safety stay front and center.",
+    },
+    settings: {
+      title: "Settings",
+      detail: "Startup, services, tools, and local runtime readiness.",
+    },
+  };
+  const item = brief[active];
+
+  return (
+    <section className="section-brief">
+      <span>{active}</span>
+      <h2>{item.title}</h2>
+      <p>{item.detail}</p>
+    </section>
   );
 }
 
@@ -1869,102 +1977,158 @@ export function App() {
       case "home":
         return (
           <>
-            <ReportsPanel status={status} />
-            <PerformancePanel status={status} />
-            <GrowthReport status={status} />
-            <StartupPanel status={status} />
+            <SectionDrawer title="Live posture" summary="Reports and throughput, grouped for a quick scan." defaultOpen>
+              <ReportsPanel status={status} />
+              <PerformancePanel status={status} />
+            </SectionDrawer>
+            <SectionDrawer title="Growth and startup" summary="Open when you want service boot state or evolution notes.">
+              <GrowthReport status={status} />
+              <StartupPanel status={status} />
+            </SectionDrawer>
           </>
         );
       case "chat":
         return (
           <>
-            <ConversationPanel status={status} liveEvents={liveEvents} onTaskCreated={setStatus} />
-            <TaskQueuePanel tasks={status.tasks ?? []} onRefresh={refreshStatus} />
+            <SectionDrawer title="Conversation" summary="Command Jarvis or steer current work." defaultOpen>
+              <ConversationPanel status={status} liveEvents={liveEvents} onTaskCreated={setStatus} />
+            </SectionDrawer>
+            <SectionDrawer title="Queue" summary="Steer, interrupt, cancel, and preserve checkpoints.">
+              <TaskQueuePanel tasks={status.tasks ?? []} onRefresh={refreshStatus} />
+            </SectionDrawer>
           </>
         );
       case "models":
         return (
           <>
-            <ModelHub status={status} onTaskSelect={selectTask} />
-            <ModelReadinessPanel />
-            <ModelCatalogPanel status={status} onRefresh={refreshStatus} />
-            <FeatureDownloadsPanel />
-            <FutureScalingPanel />
+            <SectionDrawer title="Model hub" summary="Switch, benchmark, and route active models." defaultOpen>
+              <ModelHub status={status} onTaskSelect={selectTask} />
+              <ModelReadinessPanel />
+            </SectionDrawer>
+            <SectionDrawer title="Catalog and setup" summary="Feature dependencies and future scaling stay separate.">
+              <ModelCatalogPanel status={status} onRefresh={refreshStatus} />
+              <FeatureDownloadsPanel />
+              <FutureScalingPanel />
+            </SectionDrawer>
           </>
         );
       case "voice":
         return (
           <>
-            <VoicePanel status={status} />
-            <BrainPanel />
+            <SectionDrawer title="Voice loop" summary="STT, TTS, samples, and local fallback status." defaultOpen>
+              <VoicePanel status={status} />
+            </SectionDrawer>
+            <SectionDrawer title="Brain sidecar" summary="Open for Python orchestration and capability detail.">
+              <BrainPanel />
+            </SectionDrawer>
           </>
         );
       case "vision":
         return (
           <>
-            <VisionPanel status={status} onRefresh={refreshStatus} />
-            <ModalityStudio />
+            <SectionDrawer title="Vision controls" summary="Image analysis and sensor capture remain approval-gated." defaultOpen>
+              <VisionPanel status={status} onRefresh={refreshStatus} />
+            </SectionDrawer>
+            <SectionDrawer title="Modality studio" summary="Text, speech, image, video, audio, music, maps.">
+              <ModalityStudio />
+            </SectionDrawer>
           </>
         );
       case "agents":
         return (
           <>
-            <AgentFlow agents={status.agents} />
-            <AgentSoulsPanel status={status} />
+            <SectionDrawer title="Agent flow" summary="Planner, executor, memory, and safety coordination." defaultOpen>
+              <AgentFlow agents={status.agents} />
+            </SectionDrawer>
+            <SectionDrawer title="Souls" summary="Named agent personalities, voices, and model preferences.">
+              <AgentSoulsPanel status={status} />
+            </SectionDrawer>
           </>
         );
       case "memory":
         return (
           <>
-            <MemoryTimeline status={status} />
-            <UndoJournalPanel />
+            <SectionDrawer title="Timeline" summary="Recall conversations, decisions, preferences, and projects." defaultOpen>
+              <MemoryTimeline status={status} />
+            </SectionDrawer>
+            <SectionDrawer title="Time-travel undo" summary="Open for reversible checkpoints and restore state.">
+              <UndoJournalPanel />
+            </SectionDrawer>
           </>
         );
       case "skills":
         return (
           <>
-            <ConnectorsAndSkills status={status} onRefresh={refreshStatus} />
-            <ReferencePanel status={status} />
+            <SectionDrawer title="Connectors" summary="Permissions, data touched, approvals, and dry-runs." defaultOpen>
+              <ConnectorsAndSkills status={status} onRefresh={refreshStatus} />
+            </SectionDrawer>
+            <SectionDrawer title="Reference forge" summary="OpenClaw, Ruflo, and Jarvis references as ingredients.">
+              <ReferencePanel status={status} />
+            </SectionDrawer>
           </>
         );
       case "devices":
         return (
           <>
-            <DevicePanel status={status} onRefresh={refreshStatus} />
-            <ServiceHealthPanel />
+            <SectionDrawer title="Local devices" summary="Inspect state first; control actions remain guarded." defaultOpen>
+              <DevicePanel status={status} onRefresh={refreshStatus} />
+            </SectionDrawer>
+            <SectionDrawer title="Service health" summary="Open for gateway, brain, audio, and vision readiness.">
+              <ServiceHealthPanel />
+            </SectionDrawer>
           </>
         );
       case "social":
         return (
           <>
-            <SocialOutboxPanel status={status} onRefresh={refreshStatus} />
-            <MobilePairingPanel status={status} onRefresh={refreshStatus} />
+            <SectionDrawer title="Social outbox" summary="Draft locally, preview, then request approval." defaultOpen>
+              <SocialOutboxPanel status={status} onRefresh={refreshStatus} />
+            </SectionDrawer>
+            <SectionDrawer title="Mobile pairing" summary="LAN/WireGuard-friendly companion tokens.">
+              <MobilePairingPanel status={status} onRefresh={refreshStatus} />
+            </SectionDrawer>
           </>
         );
       case "maps":
-        return <MapPanel status={status} onRefresh={refreshStatus} />;
+        return (
+          <SectionDrawer title="Local map room" summary="Offline-first routes and local device context." defaultOpen>
+            <MapPanel status={status} onRefresh={refreshStatus} />
+          </SectionDrawer>
+        );
       case "reports":
         return (
           <>
-            <ReportsPanel status={status} />
-            <GrowthReport status={status} />
-            <PerformancePanel status={status} />
+            <SectionDrawer title="Operations" summary="Daily reports and safety posture." defaultOpen>
+              <ReportsPanel status={status} />
+            </SectionDrawer>
+            <SectionDrawer title="Growth and throughput" summary="Evolution notes and synthetic performance baseline.">
+              <GrowthReport status={status} />
+              <PerformancePanel status={status} />
+            </SectionDrawer>
           </>
         );
       case "security":
         return (
           <>
-            <SecurityPanel status={status} />
-            <Approvals status={status} onRefresh={refreshStatus} />
-            <UndoJournalPanel />
+            <SectionDrawer title="Safety kernel" summary="Core protection and blocked action classes." defaultOpen>
+              <SecurityPanel status={status} />
+            </SectionDrawer>
+            <SectionDrawer title="Approvals and undo" summary="Risky actions and reversible checkpoints.">
+              <Approvals status={status} onRefresh={refreshStatus} />
+              <UndoJournalPanel />
+            </SectionDrawer>
           </>
         );
       case "settings":
         return (
           <>
-            <SettingsPanel status={status} onRefresh={refreshStatus} />
-            <ServiceHealthPanel />
-            <StartupPanel status={status} />
+            <SectionDrawer title="Settings" summary="Local-only preferences and runtime configuration." defaultOpen>
+              <SettingsPanel status={status} onRefresh={refreshStatus} />
+            </SectionDrawer>
+            <SectionDrawer title="Startup and health" summary="Boot sequence, service status, and doctor checks.">
+              <ServiceHealthPanel />
+              <StartupPanel status={status} />
+            </SectionDrawer>
           </>
         );
       default:
@@ -1979,6 +2143,7 @@ export function App() {
       <CommandDeck status={status} gatewayState={gatewayState} onSectionChange={setActiveSection} />
       <SystemSummary status={status} />
       <SectionRail active={activeSection} onChange={setActiveSection} />
+      <SectionBrief active={activeSection} status={status} />
       <section className={`dashboard-grid section-${activeSection}`}>
         {renderSection()}
       </section>
