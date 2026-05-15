@@ -1,0 +1,29 @@
+{
+  "name": "@jarvis/hud",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && vite build && tsc -p tsconfig.electron.json",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "dev": "npm run build:electron && vite --host 127.0.0.1 --port 5175",
+    "start": "electron dist-electron/main.js",
+    "electron": "npm run build:electron && electron dist-electron/main.js"
+  },
+  "dependencies": {
+    "@jarvis/core": "0.1.0",
+    "@react-three/fiber": "^9.4.2",
+    "framer-motion": "^12.23.26",
+    "lucide-react": "^0.561.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.181.0",
+    "electron": "^39.2.7"
+  }
+}

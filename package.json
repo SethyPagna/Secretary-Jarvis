@@ -9,12 +9,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @jarvis/core && npm run build -w @jarvis/gateway && npm run build -w @jarvis/dashboard && npm run build -w @jarvis/desktop",
+    "build": "npm run build -w @jarvis/core && npm run build -w @jarvis/gateway && npm run build -w @jarvis/dashboard && npm run build -w @jarvis/hud && npm run build -w @jarvis/desktop",
     "test": "npm run test -w @jarvis/core",
     "dev:dashboard": "npm run dev -w @jarvis/dashboard",
     "dev:gateway": "npm run dev -w @jarvis/gateway",
     "dev:brain": "python services/brain/brain_server.py",
+    "dev:hud": "npm run dev -w @jarvis/hud",
     "dev:desktop": "npm run dev -w @jarvis/desktop",
+    "start:hud": "npm run start -w @jarvis/hud",
     "dev:tauri": "npm run tauri:dev -w @jarvis/desktop",
     "start:gateway": "npm run start -w @jarvis/gateway",
     "doctor": "npm run doctor -w @jarvis/desktop && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",
