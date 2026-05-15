@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Settings } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
 import { Orb } from "./components/Orb";
@@ -24,6 +24,20 @@ function HudSurface() {
   const [hoveringOrb, setHoveringOrb] = useState(false);
   const [panel, setPanel] = useState<HudPanelName | null>(null);
   const active = state !== "idle";
+
+  useEffect(() => {
+    return window.jarvisDesktop?.onTrayAction((action) => {
+      setMenuOpen(false);
+      if (action.type === "open-dashboard") {
+        setPanel("dashboard");
+      } else if (action.type === "mute-mic") {
+        setPanel("settings");
+      } else if (action.type === "pause-agents" || action.type === "emergency-stop") {
+        setPanel("dashboard");
+      }
+      setHudState(action.state, action.message);
+    });
+  }, [setHudState]);
 
   function openPanel(nextPanel: HudPanelName) {
     setPanel(nextPanel);
@@ -88,7 +102,7 @@ function HudSurface() {
           </motion.div>
         )}
       </AnimatePresence>
-      <button className="hud-corner-control" type="button" aria-label="Jarvis settings">
+      <button className="hud-corner-control" type="button" aria-label="Jarvis settings" onClick={() => openPanel("settings")}>
         <Settings size={18} aria-hidden="true" />
       </button>
     </main>

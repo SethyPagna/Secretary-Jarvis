@@ -910,6 +910,39 @@ function cancelActiveTasks(reason: string): { cancelled: TaskRun[]; eventCount: 
   return { cancelled, eventCount: cancelled.length };
 }
 
+function pauseActiveTasks(reason: string): { paused: TaskRun[]; eventCount: number } {
+  const timestamp = now();
+  const candidates = store.listTasks().filter((task) => task.status === "running");
+  const paused: TaskRun[] = [];
+
+  candidates.forEach((task) => {
+    const next = {
+      ...applyTaskStatus(task, "paused", timestamp),
+      checkpoint: task.checkpoint ?? reason,
+    };
+    store.upsertTask(next);
+    store.upsertQueueItem({
+      taskId: next.id,
+      status: "paused",
+      priority: 1,
+      enqueuedAt: task.createdAt,
+      startedAt: task.createdAt,
+    });
+    const event = taskEvent({
+      id: id("task-event"),
+      taskId: task.id,
+      kind: "checkpoint",
+      message: reason,
+      createdAt: timestamp,
+    });
+    store.addTaskEvent(event);
+    events.publish("task", { task: next, event });
+    paused.push(next);
+  });
+
+  return { paused, eventCount: paused.length };
+}
+
 async function routeRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
   if (request.method === "OPTIONS") {
     response.writeHead(204, JSON_HEADERS);
@@ -1013,6 +1046,30 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     store.addMemoryWrite(memoryWrite);
     events.publish("security", { emergencyStop: true, reason, cancelled: result.cancelled.length });
     events.publish("memory", { memoryWrite });
+    sendJson(response, 200, { ...result, memoryWrite });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/agents/pause") {
+    const body = (await readBody(request)) as { reason?: string };
+    const reason = body.reason?.trim() || "Pause requested by the owner.";
+    const result = pauseActiveTasks(reason);
+    status = {
+      ...status,
+      agents: status.agents.map((agent) => ({ ...agent, status: agent.id === "safety" ? "reviewing" : "idle" })),
+    };
+    const memoryWrite: MemoryWrite = {
+      id: id("memory"),
+      kind: "decision",
+      content: `Agents paused: ${reason}. Checkpointed ${result.paused.length} active task(s).`,
+      importance: 0.82,
+      createdAt: now(),
+      tags: ["pause", "checkpoint", "safety"],
+    };
+    store.addMemoryWrite(memoryWrite);
+    events.publish("security", { pauseAgents: true, reason, paused: result.paused.length });
+    events.publish("memory", { memoryWrite });
+    events.publish("status", { status: statusWithRuntimeState() });
     sendJson(response, 200, { ...result, memoryWrite });
     return;
   }
