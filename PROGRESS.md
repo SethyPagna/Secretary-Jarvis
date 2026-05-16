@@ -91,7 +91,7 @@ Protocol:
 - [x] 10.1 Update startup script for HUD and current service paths - commit `f1b4cb8`
 - [x] 10.2 Add Windows startup registration - commit `7579cb1`
 - [x] 10.3 Electron packaging - commit `1bd5015`
-- [ ] 10.4 Graceful tray/service stop - partial
+- [x] 10.4 Graceful tray/service stop - commit `d511c60`
 
 ## Phase 11 - Full Test Suite & Polish
 - [ ] 11.1 Model tests - partial
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `10.4 Graceful tray/service stop`.
+Next task: `11.1 Model tests`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
