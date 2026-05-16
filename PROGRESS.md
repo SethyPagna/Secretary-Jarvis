@@ -196,13 +196,13 @@ Protocol:
 - [x] 24.4 Add verification docs for startup/background/admin readiness - commit `a99c790`
 
 ## Phase 25 - Runtime Installer And Packaging Readiness
-- [ ] 25.1 Add packaging readiness endpoint for Electron installer, Tauri fallback, and production startup commands
+- [x] 25.1 Add packaging readiness endpoint for Electron installer, Tauri fallback, production startup commands, and run/wake docs - commit `83fafaa`
 - [ ] 25.2 Add install/start/stop dry-run controls in HUD Settings
 - [ ] 25.3 Verify package/startup readiness with builds, tests, and smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 25.1 packaging readiness endpoint.
+Next task: Implement Phase 25.2 install/start/stop dry-run controls in HUD Settings.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
