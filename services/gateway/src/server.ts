@@ -64,6 +64,7 @@ import { EventHub } from "./eventHub.js";
 import { buildRuntimeEventHealth } from "./eventHealth.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
+import { createLiveVisionRequest, type LiveVisionMode } from "./liveVision.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
@@ -2794,6 +2795,51 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       localOnly: true,
       locks: buildSensorPrivacyLocks(),
       brain: brainLocks ?? { status: "offline", message: "Python Brain sensor privacy service is not reachable." },
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/vision/requests") {
+    sendJson(response, 200, {
+      requests: status.visionInsights ?? [],
+      note: "These are local vision request records. Screen and camera captures remain approval-gated.",
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/vision/live-request") {
+    const body = (await readBody(request)) as {
+      mode?: LiveVisionMode;
+      target?: string;
+      filePath?: string;
+      prompt?: string;
+    };
+    const mode = ["screen", "camera", "image"].includes(String(body.mode)) ? (body.mode as LiveVisionMode) : body.filePath ? "image" : "screen";
+    const requestRecord = createLiveVisionRequest({
+      id: id("vision-request"),
+      actionId: id("vision-action"),
+      mode,
+      target: body.filePath ?? body.target,
+      prompt: body.prompt,
+      createdAt: now(),
+      evaluate: (action) =>
+        evaluateActionPolicy({
+          action,
+          privacyMode: status.privacyMode,
+          allowedConnectors: action.connectorId ? [...getEnabledConnectorIds(), action.connectorId] : getEnabledConnectorIds(),
+        }),
+    });
+    if (requestRecord.decision.decision === "requires_approval") {
+      recordPendingApproval(requestRecord.action);
+    }
+    status = {
+      ...status,
+      visionInsights: [requestRecord.insight, ...(status.visionInsights ?? []).slice(0, 9)],
+    };
+    events.publish("vision", { kind: "live-vision-request", request: requestRecord });
+    sendJson(response, requestRecord.decision.decision === "deny" ? 403 : 202, {
+      request: requestRecord,
+      message: "Vision request recorded. No pixels, frames, or OCR text were captured.",
     });
     return;
   }
