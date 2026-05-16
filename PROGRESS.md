@@ -89,7 +89,7 @@ Protocol:
 
 ## Phase 10 - Startup Sync & Packaging
 - [x] 10.1 Update startup script for HUD and current service paths - commit `f1b4cb8`
-- [ ] 10.2 Add Windows startup registration - partial script exists
+- [x] 10.2 Add Windows startup registration - commit `7579cb1`
 - [ ] 10.3 Electron packaging
 - [ ] 10.4 Graceful tray/service stop - partial
 
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `10.2 Add Windows startup registration`.
+Next task: `10.3 Electron packaging`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
