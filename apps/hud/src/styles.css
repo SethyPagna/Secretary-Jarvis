@@ -489,6 +489,80 @@ button {
   box-shadow: 0 0 14px rgba(255, 0, 127, 0.18);
 }
 
+.command-capsule {
+  position: fixed;
+  top: calc(50% + 132px);
+  left: 50%;
+  z-index: 10;
+  width: min(280px, 78vw);
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.09), rgba(255, 255, 255, 0.04)),
+    rgba(0, 0, 0, 0.52);
+  box-shadow:
+    0 0 28px rgba(0, 229, 255, 0.13),
+    inset 0 0 24px rgba(0, 229, 255, 0.035);
+  transform: translateX(-50%);
+  backdrop-filter: blur(18px);
+}
+
+.command-capsule i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--hud-cyan);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.8);
+  animation: command-dot 1.4s ease-in-out infinite;
+}
+
+.command-capsule span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.command-capsule b,
+.command-capsule small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-capsule b {
+  color: var(--hud-cyan);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.command-capsule small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
+.command-capsule.state-running i {
+  background: var(--hud-green);
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.75);
+}
+
+.command-capsule.state-completed i {
+  background: var(--hud-green);
+  animation: none;
+}
+
+.command-capsule.state-failed i,
+.command-capsule.state-cancelled i {
+  background: var(--hud-magenta);
+  box-shadow: 0 0 14px rgba(255, 0, 127, 0.75);
+  animation: none;
+}
+
 .metrics-card {
   position: absolute;
   bottom: calc(100% + 18px);
@@ -1808,6 +1882,18 @@ button {
   }
 }
 
+@keyframes command-dot {
+  0%,
+  100% {
+    transform: scale(0.72);
+    opacity: 0.62;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 767px) {
   .orb-button,
   .orb-canvas {
@@ -1877,6 +1963,7 @@ button {
   .orb-data-arcs,
   .orb-kinetic-frame,
   .orb-particle-field,
+  .command-capsule i,
   .radial-item,
   .radial-close,
   .metrics-card,

@@ -9,6 +9,15 @@ import { useJarvisStatus } from "./hooks/useJarvisStatus";
 import { HudStateProvider, useHudState } from "./state/hudState";
 import type { HudPanel as HudPanelName } from "./types";
 
+type CommandCapsuleState = "queued" | "running" | "completed" | "failed" | "cancelled";
+
+interface CommandCapsule {
+  taskId?: string;
+  state: CommandCapsuleState;
+  title: string;
+  detail: string;
+}
+
 export function HudApp() {
   return (
     <HudStateProvider>
@@ -23,6 +32,7 @@ function HudSurface() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveringOrb, setHoveringOrb] = useState(false);
   const [panel, setPanel] = useState<HudPanelName | null>(null);
+  const [commandCapsule, setCommandCapsule] = useState<CommandCapsule | null>(null);
   const pendingApproval = status?.pendingApprovals?.[0];
   const workflowApproval = pendingApproval?.connectorId === "workflow-engine" ? pendingApproval : undefined;
   const visualState = pendingApproval ? "approval" : state;
@@ -108,6 +118,25 @@ function HudSurface() {
         )}
       </AnimatePresence>
       <AnimatePresence>
+        {commandCapsule && !panel && (
+          <motion.div
+            className={`command-capsule state-${commandCapsule.state}`}
+            role="status"
+            aria-label="Jarvis command capsule"
+            initial={{ opacity: 0, y: 12, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <i aria-hidden="true" />
+            <span>
+              <b>{labelForCapsule(commandCapsule.state)}</b>
+              <small>{commandCapsule.detail || commandCapsule.title}</small>
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
         {pendingApproval && !panel && (
           <motion.div
             className={workflowApproval ? "workflow-approval-popup" : "approval-chip"}
@@ -174,6 +203,7 @@ function HudSurface() {
                 panel={panel}
                 status={status}
                 apiBaseUrl={apiBaseUrl}
+                onCommandQueued={(capsule) => setCommandCapsule(capsule)}
                 onRecognizing={(message) => setHudState("recognizing", message)}
                 onClose={closeAll}
               />
@@ -186,4 +216,14 @@ function HudSurface() {
       </button>
     </main>
   );
+}
+
+function labelForCapsule(state: CommandCapsuleState): string {
+  return {
+    queued: "Queued",
+    running: "Running",
+    completed: "Done",
+    failed: "Needs review",
+    cancelled: "Cancelled",
+  }[state];
 }

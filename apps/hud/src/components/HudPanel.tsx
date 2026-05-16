@@ -16,12 +16,14 @@ export function HudPanel({
   panel,
   status,
   apiBaseUrl,
+  onCommandQueued,
   onRecognizing,
   onClose
 }: {
   panel: HudPanelName;
   status: JarvisStatus | null;
   apiBaseUrl: string;
+  onCommandQueued?: (capsule: { taskId?: string; state: "queued" | "running" | "completed" | "failed" | "cancelled"; title: string; detail: string }) => void;
   onRecognizing?: (message: string) => void;
   onClose: () => void;
 }) {
