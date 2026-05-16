@@ -122,11 +122,11 @@ Protocol:
 - [x] 14.2 Surface live service heartbeats in the HUD without clutter - commit `e2bbe78`
 - [x] 14.3 Add approval-gated runtime control dry-runs for start, stop, restart, and emergency stop - commit `faec9e4`
 - [x] 14.4 Add live event health summary for queue, approvals, and recent errors - commit `a5c147f`
-- [ ] 14.5 Verify live runtime operation across tests and smoke checks
+- [x] 14.5 Verify live runtime operation across tests and smoke checks - commit `1293149`
 
 ## Current Priority
 
-Next task: `14.5 Verify live runtime operation across tests and smoke checks`.
+Next task: Define Phase 15 for deeper live voice/vision operation, or continue with the next requested Jarvis refinement.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
