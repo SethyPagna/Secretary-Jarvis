@@ -85,7 +85,7 @@ Protocol:
 - [x] 9.4 Implement workflow approval pop-ups - commit `951fc0c`
 - [x] 9.5 Implement LLM-driven workflow generation - commit `5077a8b`
 - [x] 9.6 Implement native step executor - commit `dbb62a6`
-- [ ] 9.7 Implement multi-agent workflow manager
+- [x] 9.7 Implement multi-agent workflow manager - commit `2f3cb28`
 
 ## Phase 10 - Startup Sync & Packaging
 - [ ] 10.1 Update startup script for HUD and current service paths - partial script exists
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `9.7 Implement multi-agent workflow manager`.
+Next task: `10.1 Update startup script for HUD and current service paths`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
