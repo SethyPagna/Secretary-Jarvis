@@ -1,5 +1,5 @@
 import { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, shell } from "electron";
-import { existsSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -7,12 +7,24 @@ import { fileURLToPath } from "node:url";
 const DEV_HUD_URL = "http://127.0.0.1:5175";
 const HUD_URL = process.env.JARVIS_HUD_URL;
 const HUD_MODE = process.env.JARVIS_HUD_MODE ?? "dev";
+const WINDOW_MODE = process.env.JARVIS_WINDOW_MODE ?? (HUD_MODE === "app" ? "desktop" : "overlay");
 const DASHBOARD_URL = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:5174";
 const GATEWAY_URL = process.env.JARVIS_GATEWAY_URL ?? "http://127.0.0.1:4317";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = path.resolve(__dirname, "../../..");
+const ELECTRON_DEBUG_LOG = path.join(ROOT_DIR, "data", "logs", "electron-main.debug.log");
 
 let hudWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+
+function logElectron(message: string): void {
+  try {
+    mkdirSync(path.dirname(ELECTRON_DEBUG_LOG), { recursive: true });
+    appendFileSync(ELECTRON_DEBUG_LOG, `${new Date().toISOString()} ${message}\n`, "utf8");
+  } catch {
+    // Best-effort diagnostics only.
+  }
+}
 
 type TrayActionType = "open-hud" | "open-dashboard" | "mute-mic" | "pause-agents" | "emergency-stop" | "stop-services";
 
@@ -24,15 +36,22 @@ interface TrayAction {
 }
 
 function createHudWindow(): BrowserWindow {
+  const desktopMode = WINDOW_MODE === "desktop";
+  logElectron(`creating-window mode=${WINDOW_MODE} hudMode=${HUD_MODE} cwd=${process.cwd()}`);
   const window = new BrowserWindow({
-    fullscreen: true,
-    frame: false,
-    transparent: true,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    hasShadow: false,
-    title: "Jarvis HUD",
-    backgroundColor: "#00000000",
+    width: desktopMode ? 1180 : undefined,
+    height: desktopMode ? 760 : undefined,
+    minWidth: 900,
+    minHeight: 620,
+    center: true,
+    fullscreen: !desktopMode,
+    frame: desktopMode,
+    transparent: !desktopMode,
+    alwaysOnTop: !desktopMode,
+    skipTaskbar: false,
+    hasShadow: desktopMode,
+    title: "Secretary Jarvis",
+    backgroundColor: desktopMode ? "#02070a" : "#00000000",
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -41,17 +60,31 @@ function createHudWindow(): BrowserWindow {
     }
   });
 
-  window.setAlwaysOnTop(true, "screen-saver");
-  if (HUD_URL) {
-    void window.loadURL(HUD_URL);
-  } else if (HUD_MODE === "app") {
-    void window.loadFile(path.join(__dirname, "../dist/index.html"));
-  } else if (app.isPackaged) {
-    void window.loadFile(path.join(__dirname, "../dist/index.html"));
+  if (desktopMode) {
+    window.setMenuBarVisibility(false);
   } else {
-    void window.loadURL(DEV_HUD_URL);
+    window.setAlwaysOnTop(true, "screen-saver");
   }
+  if (HUD_URL) {
+    void window.loadURL(HUD_URL).then(() => logElectron(`loaded-url ${HUD_URL}`)).catch((error) => logElectron(`load-url-error ${String(error)}`));
+  } else if (HUD_MODE === "app") {
+    const rendererPath = path.join(__dirname, "../dist/index.html");
+    void window.loadFile(rendererPath, { query: { shell: WINDOW_MODE } }).then(() => logElectron(`loaded-file ${rendererPath}`)).catch((error) => logElectron(`load-file-error ${String(error)}`));
+  } else if (app.isPackaged) {
+    const rendererPath = path.join(__dirname, "../dist/index.html");
+    void window.loadFile(rendererPath, { query: { shell: WINDOW_MODE } }).then(() => logElectron(`loaded-packaged-file ${rendererPath}`)).catch((error) => logElectron(`load-packaged-error ${String(error)}`));
+  } else {
+    void window.loadURL(DEV_HUD_URL).then(() => logElectron(`loaded-dev-url ${DEV_HUD_URL}`)).catch((error) => logElectron(`load-dev-error ${String(error)}`));
+  }
+  window.once("ready-to-show", () => {
+    logElectron("ready-to-show");
+    window.show();
+    window.focus();
+  });
+  window.webContents.on("render-process-gone", (_event, details) => logElectron(`render-process-gone ${details.reason}`));
+  window.webContents.on("did-fail-load", (_event, code, description) => logElectron(`did-fail-load ${code} ${description}`));
   window.on("closed", () => {
+    logElectron("window-closed");
     hudWindow = null;
   });
   return window;
@@ -183,7 +216,7 @@ async function stopLocalServices(): Promise<boolean> {
 }
 
 function createTray(): void {
-  tray = new Tray(nativeImage.createEmpty());
+  tray = new Tray(createTrayImage());
   tray.setToolTip("Jarvis HUD");
   tray.setContextMenu(
     Menu.buildFromTemplate([
@@ -201,13 +234,30 @@ function createTray(): void {
   tray.on("click", () => void runTrayAction("open-hud"));
 }
 
+function createTrayImage(): Electron.NativeImage {
+  const svg = Buffer.from(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#02070a"/>
+      <circle cx="16" cy="16" r="9" fill="#00e5ff" opacity="0.16"/>
+      <circle cx="16" cy="16" r="6" fill="#00e5ff"/>
+      <path d="M16 5v5M16 22v5M5 16h5M22 16h5" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+  `);
+  const image = nativeImage.createFromBuffer(svg);
+  image.setTemplateImage(false);
+  return image;
+}
+
 ipcMain.handle("jarvis:tray-command", async (_event, type: TrayActionType) => {
   await runTrayAction(type);
 });
 
-await app.whenReady();
-createTray();
-showHud();
+logElectron(`main-start electron=${process.versions.electron ?? "unknown"} mode=${HUD_MODE}/${WINDOW_MODE}`);
+void app.whenReady().then(() => {
+  logElectron("app-ready");
+  createTray();
+  showHud();
+}).catch((error) => logElectron(`app-ready-error ${String(error)}`));
 
 app.on("activate", showHud);
 app.on("window-all-closed", () => {

@@ -36,7 +36,8 @@ function Start-JarvisProcess {
     [string]$Name,
     [string]$FilePath,
     [string]$Arguments,
-    [string]$WorkingDirectory
+    [string]$WorkingDirectory,
+    [switch]$Visible
   )
 
   if ($CheckOnly) {
@@ -63,9 +64,55 @@ function Start-JarvisProcess {
 
   $stdout = Join-Path $LogRoot "$safeName.out.log"
   $stderr = Join-Path $LogRoot "$safeName.err.log"
-  $process = Start-Process -FilePath $FilePath -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
+  $startParams = @{
+    FilePath = $FilePath
+    ArgumentList = $Arguments
+    WorkingDirectory = $WorkingDirectory
+    RedirectStandardOutput = $stdout
+    RedirectStandardError = $stderr
+    PassThru = $true
+  }
+  if (-not $Visible) {
+    $startParams.WindowStyle = "Hidden"
+  }
+  $process = Start-Process @startParams
   Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $process.Id
   Write-Host "Started $Name (PID $($process.Id))."
+}
+
+function Start-JarvisElectronApp {
+  if ($CheckOnly) {
+    Write-Host "Would start Electron HUD app visibly with: electron dist-electron/main.js"
+    return
+  }
+
+  $safeName = "electron-hud"
+  $existing = Get-CimInstance Win32_Process | Where-Object {
+    $_.CommandLine -and $_.CommandLine.Contains("dist-electron/main.js") -and $_.CommandLine.Contains("electron")
+  } | Select-Object -First 1
+  if ($existing -and $ReuseExisting) {
+    Write-Host "Electron HUD already running (PID $($existing.ProcessId))."
+    Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $existing.ProcessId
+    return
+  }
+  if ($existing) {
+    Write-Host "Stopping existing Electron HUD process tree (PID $($existing.ProcessId)) for clean app start..."
+    Stop-ProcessTree -ProcessId $existing.ProcessId
+    Start-Sleep -Milliseconds 500
+  }
+
+  $electronExe = Join-Path $Root "node_modules\electron\dist\electron.exe"
+  if (-not (Test-Path -LiteralPath $electronExe)) {
+    throw "Electron binary is missing at $electronExe. Run npm install before starting Jarvis."
+  }
+
+  $env:JARVIS_HUD_MODE = "app"
+  $env:JARVIS_WINDOW_MODE = "desktop"
+  $env:JARVIS_GATEWAY_URL = "http://127.0.0.1:$GatewayPort"
+  $env:JARVIS_DASHBOARD_URL = "http://127.0.0.1:$DashboardPort"
+  $process = Start-Process -FilePath $electronExe -ArgumentList "dist-electron/main.js" -WorkingDirectory (Join-Path $Root "apps\hud") -PassThru
+  Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $process.Id
+  Write-Host "Started Electron HUD app (PID $($process.Id))."
 }
 
 function Stop-ProcessTree {
@@ -216,7 +263,7 @@ if (-not $NoHud) {
     Start-Sleep -Seconds 2
     Start-JarvisProcess -Name "Electron HUD" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_HUD_URL=http://127.0.0.1:$HudPort&& set JARVIS_GATEWAY_URL=http://127.0.0.1:$GatewayPort&& set JARVIS_DASHBOARD_URL=http://127.0.0.1:$DashboardPort&& npm.cmd run electron -w @jarvis/hud" -WorkingDirectory $Root
   } else {
-    Start-JarvisProcess -Name "Electron HUD" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_HUD_MODE=app&& set JARVIS_GATEWAY_URL=http://127.0.0.1:$GatewayPort&& set JARVIS_DASHBOARD_URL=http://127.0.0.1:$DashboardPort&& npm.cmd run start -w @jarvis/hud" -WorkingDirectory $Root
+    Start-JarvisElectronApp
   }
 }
 

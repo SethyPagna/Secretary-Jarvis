@@ -60,14 +60,7 @@ function Stop-PidFile {
   }
 
   try {
-    if ($process.MainWindowHandle -ne 0) {
-      $null = $process.CloseMainWindow()
-      Start-Sleep -Milliseconds 900
-      $process.Refresh()
-    }
-    if (-not $process.HasExited) {
-      Stop-Process -Id $processId -Force
-    }
+    Stop-ProcessTree -ProcessId $processId
     Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
     Write-Host "Stopped $Name."
   } catch {
@@ -157,7 +150,36 @@ Stop-CommandLineMatch -Name "Brain" -Patterns @(
 
 Stop-CommandLineMatch -Name "Gateway" -Patterns @(
   "*services\gateway\dist\server.js*",
-  "*services/gateway/dist/server.js*"
+  "*services/gateway/dist/server.js*",
+  "*npm*run dev -w @jarvis/gateway*",
+  "*npm*run dev:gateway*",
+  "*tsx*services\gateway\src\server.ts*",
+  "*tsx*services/gateway/src/server.ts*"
+)
+
+Stop-CommandLineMatch -Name "Dashboard" -Patterns @(
+  "*npm*run dev -w @jarvis/dashboard*",
+  "*npm*run dev:dashboard*",
+  "*vite*--host 127.0.0.1*--port 5174*",
+  "*vite*--host*127.0.0.1*5174*"
+)
+
+Stop-CommandLineMatch -Name "HUD" -Patterns @(
+  "*npm*run start -w @jarvis/hud*",
+  "*npm*run electron -w @jarvis/hud*",
+  "*npm*run dev -w @jarvis/hud*",
+  "*electron dist-electron/main.js*",
+  "*node_modules\.bin*electron*cli.js*dist-electron/main.js*",
+  "*node_modules\electron\dist\electron.exe*dist-electron/main.js*",
+  "*vite*--host 127.0.0.1*--port 5175*",
+  "*vite*--host 127.0.0.1*--port 518*"
+)
+
+Stop-CommandLineMatch -Name "Launcher" -Patterns @(
+  "*Start Jarvis.cmd*",
+  "*Stop Jarvis.cmd*",
+  "*Restart Jarvis.cmd*",
+  "*Verify Jarvis.cmd*"
 )
 
 $ordered = @(

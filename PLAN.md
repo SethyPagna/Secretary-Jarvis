@@ -889,6 +889,20 @@ Goal: make the owner-facing launcher behave like one coherent app instead of reu
 
 35.6 Verify clean app startup, live text, HF snapshot readiness, voice profiles, tests, builds, and push.
 
+## Extension Phase 36 - Mature Desktop App Shell And Run Cleanup
+
+Goal: make Jarvis open as visible, coherent desktop software instead of a transparent or stale background shell. The app should combine a persistent desktop window, centered orb, sidebar controls, workflow/model/system status, tray presence, and clean process lifecycle.
+
+36.1 Harden stop/start cleanup so old HUD npm, Vite, node, Electron CLI, and `electron.exe` children are stopped instead of accumulating invisible stale windows.
+
+36.2 Change default Electron app mode from transparent fullscreen overlay to a visible desktop Jarvis shell with taskbar presence, tray icon, normal window bounds, and app background.
+
+36.3 Add a desktop sidebar/rail around the orb for Home, Terminal, Voice, Flows, Devices, System, live model state, task count, approval count, and emergency stop.
+
+36.4 Keep the centered orb and radial controls as the primary command focal point inside the desktop shell, while preserving overlay styling for future minimized/HUD modes.
+
+36.5 Verify builds, tests, clean stop/start behavior, live text, and push.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

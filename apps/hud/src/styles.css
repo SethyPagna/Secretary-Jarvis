@@ -22,6 +22,15 @@ body,
   background: transparent;
 }
 
+html[data-shell="desktop"],
+html[data-shell="desktop"] body,
+html[data-shell="desktop"] #root {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.1), transparent 28%),
+    linear-gradient(135deg, rgba(0, 229, 255, 0.08), transparent 36%),
+    #02070a;
+}
+
 button {
   font: inherit;
 }
@@ -33,6 +42,207 @@ button {
   place-items: center;
   color: var(--hud-text);
   pointer-events: none;
+}
+
+html[data-shell="desktop"] .hud-stage {
+  overflow: hidden;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  background:
+    linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+html[data-shell="desktop"] .hud-stage::before {
+  content: "";
+  position: fixed;
+  inset: 16px;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 40px rgba(0, 229, 255, 0.04),
+    0 0 60px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.desktop-app-chrome {
+  display: none;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome {
+  position: fixed;
+  left: 18px;
+  top: 18px;
+  bottom: 18px;
+  z-index: 20;
+  width: 176px;
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.12), transparent 42%),
+    rgba(2, 8, 11, 0.78);
+  box-shadow:
+    0 0 42px rgba(0, 229, 255, 0.1),
+    inset 0 0 32px rgba(0, 229, 255, 0.035);
+  backdrop-filter: blur(22px);
+  pointer-events: auto;
+}
+
+.desktop-brand {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+}
+
+.desktop-brand span {
+  grid-row: span 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0, 229, 255, 0.34);
+  border-radius: 12px;
+  color: var(--hud-cyan);
+  background: rgba(0, 229, 255, 0.08);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.14);
+}
+
+.desktop-brand b,
+.desktop-brand small,
+.desktop-status-card b,
+.desktop-status-card small,
+.desktop-status-grid b,
+.desktop-status-grid small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-brand b {
+  font-size: 15px;
+}
+
+.desktop-brand small,
+.desktop-status-card small,
+.desktop-status-grid small {
+  color: rgba(255, 255, 255, 0.56);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.desktop-rail {
+  display: grid;
+  gap: 8px;
+}
+
+.desktop-rail button,
+.desktop-stop {
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(0, 229, 255, 0.13);
+  border-radius: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.desktop-rail button:hover {
+  border-color: rgba(0, 229, 255, 0.44);
+  color: var(--hud-cyan);
+  box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.06);
+}
+
+.desktop-rail span {
+  overflow: hidden;
+  font-size: 12px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktop-status-card {
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid rgba(0, 255, 136, 0.16);
+  border-radius: 16px;
+  background: rgba(0, 255, 136, 0.045);
+}
+
+.desktop-status-card svg {
+  color: var(--hud-green);
+}
+
+.desktop-status-card span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.desktop-status-card b {
+  color: white;
+  font-size: 12px;
+}
+
+.desktop-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.desktop-status-grid span {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.desktop-status-grid b {
+  color: var(--hud-cyan);
+  font: 800 16px/1 "JetBrains Mono", Consolas, monospace;
+}
+
+.desktop-stop {
+  align-self: end;
+  border-color: rgba(255, 0, 127, 0.24);
+  color: white;
+  background: rgba(255, 0, 127, 0.08);
+}
+
+.desktop-stop:hover {
+  border-color: rgba(255, 0, 127, 0.52);
+  color: var(--hud-magenta);
+}
+
+html[data-shell="desktop"] .orb-interaction-zone {
+  left: calc(50% + 88px);
+}
+
+html[data-shell="desktop"] .hud-activation-line,
+html[data-shell="desktop"] .command-capsule,
+html[data-shell="desktop"] .approval-chip,
+html[data-shell="desktop"] .workflow-approval-popup {
+  left: calc(50% + 88px);
+}
+
+html[data-shell="desktop"] .hud-corner-control {
+  right: 28px;
+  top: 28px;
+  bottom: auto;
 }
 
 .hud-stage.panel-open {

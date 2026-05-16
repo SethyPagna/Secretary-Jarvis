@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Route, Settings, ShieldAlert, X } from "lucide-react";
+import { Activity, Bot, Check, CircleStop, Cpu, LayoutDashboard, Mic, Route, Settings, ShieldAlert, TerminalSquare, Waypoints, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
@@ -124,6 +124,20 @@ function HudSurface() {
 
   return (
     <main className={`hud-stage hud-state-${visualState} ${panel ? "panel-open" : ""}`} aria-label="Jarvis centered HUD">
+      <DesktopAppChrome
+        online={online}
+        activeModel={status?.models?.find((model) => model.id === status?.activeModelId)?.label ?? "Local model"}
+        runningTasks={(status?.tasks ?? []).filter((task) => task.status === "running").length}
+        pendingApprovals={status?.pendingApprovals?.length ?? 0}
+        onOpenPanel={openPanel}
+        onEmergencyStop={() => {
+          void fetch(`${apiBaseUrl}/api/emergency-stop`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ reason: "Desktop app emergency stop" })
+          }).finally(() => setHudState("error", "Emergency stop sent."));
+        }}
+      />
       <div className="orb-interaction-zone" onMouseEnter={() => setHoveringOrb(true)} onMouseLeave={() => setHoveringOrb(false)}>
         <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} />
         <Suspense
@@ -267,6 +281,78 @@ function HudSurface() {
         <Settings size={18} aria-hidden="true" />
       </button>
     </main>
+  );
+}
+
+function DesktopAppChrome({
+  online,
+  activeModel,
+  runningTasks,
+  pendingApprovals,
+  onOpenPanel,
+  onEmergencyStop
+}: {
+  online: boolean;
+  activeModel: string;
+  runningTasks: number;
+  pendingApprovals: number;
+  onOpenPanel: (panel: HudPanelName) => void;
+  onEmergencyStop: () => void;
+}) {
+  const controls: Array<{ panel: HudPanelName; label: string; icon: typeof LayoutDashboard }> = [
+    { panel: "dashboard", label: "Home", icon: LayoutDashboard },
+    { panel: "text", label: "Terminal", icon: TerminalSquare },
+    { panel: "voice", label: "Voice", icon: Mic },
+    { panel: "workflows", label: "Flows", icon: Waypoints },
+    { panel: "devices", label: "Devices", icon: Cpu },
+    { panel: "settings", label: "System", icon: Settings },
+  ];
+
+  return (
+    <aside className="desktop-app-chrome" aria-label="Jarvis desktop shell">
+      <div className="desktop-brand">
+        <span><Bot size={18} aria-hidden="true" /></span>
+        <b>Jarvis</b>
+        <small>{online ? "online" : "offline"}</small>
+      </div>
+      <nav className="desktop-rail" aria-label="Jarvis sections">
+        {controls.map((control) => {
+          const Icon = control.icon;
+          return (
+            <button
+              key={control.panel}
+              type="button"
+              onClick={() => onOpenPanel(control.panel)}
+              aria-label={`Open ${control.label} panel`}
+            >
+              <Icon size={18} aria-hidden="true" />
+              <span>{control.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+      <div className="desktop-status-card">
+        <Activity size={16} aria-hidden="true" />
+        <span>
+          <small>Model</small>
+          <b>{activeModel}</b>
+        </span>
+      </div>
+      <div className="desktop-status-grid">
+        <span>
+          <small>Tasks</small>
+          <b>{runningTasks}</b>
+        </span>
+        <span>
+          <small>Gates</small>
+          <b>{pendingApprovals}</b>
+        </span>
+      </div>
+      <button className="desktop-stop" type="button" onClick={onEmergencyStop}>
+        <CircleStop size={17} aria-hidden="true" />
+        Stop
+      </button>
+    </aside>
   );
 }
 
