@@ -146,7 +146,7 @@ Protocol:
 - [x] 17.5 Verify model runtime activation plans with unit tests, HUD tests, and runtime smoke checks - commit `41ff415`
 
 ## Phase 18 - Approved Feature Setup Install Plans
-- [ ] 18.1 Add feature setup install plans with command previews, manual steps, expected folders, validation checks, rollback/uninstall notes, and no execution
+- [x] 18.1 Add feature setup install plans with command previews, manual steps, expected folders, validation checks, rollback/uninstall notes, and no execution - commit `b5600d9`
 - [ ] 18.2 Add approval-gated install dry-runs that create policy-reviewed action requests
 - [ ] 18.3 Surface setup install plans in the HUD settings panel without text stuffing
 - [ ] 18.4 Add user-facing approved setup documentation
@@ -154,7 +154,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Implement Phase 18.1 feature setup install plans.
+Next task: Implement Phase 18.2 approval-gated setup install dry-runs.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
