@@ -213,7 +213,7 @@ Protocol:
 - [x] 27.4 Verify runtime repair dry-runs with tests, builds, startup check-only scripts, and runtime smoke - commit `1b90f7f`
 
 ## Phase 28 - Agent Manager, Voices, And Workflow Autonomy
-- [ ] 28.1 Add distinct voice profiles for all eight named souls
+- [x] 28.1 Add distinct voice profiles for all eight named souls - commit `ab1b94a`
 - [ ] 28.2 Add Agent Manager readiness endpoint
 - [ ] 28.3 Surface Agent Manager readiness in HUD
 - [ ] 28.4 Add Agent Manager and workflow autonomy documentation
@@ -221,7 +221,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Implement Phase 28.1 distinct voice profiles for all eight named souls.
+Next task: Implement Phase 28.2 Agent Manager readiness endpoint.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
