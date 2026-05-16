@@ -118,7 +118,7 @@ Protocol:
 - [x] 13.5 Verify the constellation UI across desktop and mobile - commit `ff3ca07`
 
 ## Phase 14 - Live Runtime Operation
-- [ ] 14.1 Add read-only live service heartbeat endpoint for Brain, Gateway, HUD, Dashboard, and Ollama
+- [x] 14.1 Add read-only live service heartbeat endpoint for Brain, Gateway, HUD, Dashboard, and Ollama - commit `0f231a1`
 - [ ] 14.2 Surface live service heartbeats in the HUD without clutter
 - [ ] 14.3 Add approval-gated runtime control dry-runs for start, stop, restart, and emergency stop
 - [ ] 14.4 Add live event health summary for queue, approvals, and recent errors
@@ -126,7 +126,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `14.1 Add read-only live service heartbeat endpoint for Brain, Gateway, HUD, Dashboard, and Ollama`.
+Next task: `14.2 Surface live service heartbeats in the HUD without clutter`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
