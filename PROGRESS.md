@@ -193,11 +193,16 @@ Protocol:
 - [x] 24.1 Add read-only Windows Task Manager/process visibility summary - commit `e0cb5dc`
 - [x] 24.2 Add startup registration dry-run preview for standard and elevated modes - commit `e632e03`
 - [x] 24.3 Add HUD Settings controls for startup readiness, service status, and approved-admin explanation - commit `4e2e0c9`
-- [ ] 24.4 Add verification docs for startup/background/admin readiness
+- [x] 24.4 Add verification docs for startup/background/admin readiness - commit `a99c790`
+
+## Phase 25 - Runtime Installer And Packaging Readiness
+- [ ] 25.1 Add packaging readiness endpoint for Electron installer, Tauri fallback, and production startup commands
+- [ ] 25.2 Add install/start/stop dry-run controls in HUD Settings
+- [ ] 25.3 Verify package/startup readiness with builds, tests, and smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 24.4 startup/background/admin readiness verification.
+Next task: Implement Phase 25.1 packaging readiness endpoint.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

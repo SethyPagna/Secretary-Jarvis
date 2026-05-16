@@ -747,6 +747,16 @@ Goal: make everyday background operation clearer to the owner: Jarvis should be 
 
 24.4 Verify startup/background/admin readiness with gateway tests, HUD tests, startup script check-only mode, and runtime smoke checks.
 
+## Extension Phase 25 - Runtime Installer And Packaging Readiness
+
+Goal: move Jarvis from dev-process startup toward everyday install/start/stop confidence while keeping all install and elevation actions approval-gated.
+
+25.1 Add a packaging readiness endpoint for Electron installer status, Tauri fallback status, production startup command availability, local logs, and data/runtime folders.
+
+25.2 Add install/start/stop dry-run controls in HUD Settings. They must preview commands and create approval requests before touching startup tasks, services, files, or elevated mode.
+
+25.3 Verify packaging/startup readiness with gateway tests, HUD tests, Electron/HUD build checks, startup check-only scripts, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
