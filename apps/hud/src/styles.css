@@ -196,36 +196,79 @@ button {
   backdrop-filter: blur(18px);
 }
 
+.workflow-approval-popup {
+  position: fixed;
+  top: calc(50% + 126px);
+  left: 50%;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 52px 34px 34px;
+  align-items: center;
+  width: min(560px, 92vw);
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 209, 102, 0.34);
+  border-radius: 24px;
+  color: white;
+  background:
+    linear-gradient(110deg, rgba(255, 209, 102, 0.15), rgba(0, 229, 255, 0.07) 58%, rgba(255, 0, 127, 0.08)),
+    rgba(4, 12, 15, 0.72);
+  transform: translateX(-50%);
+  pointer-events: auto;
+  box-shadow:
+    0 0 34px rgba(255, 209, 102, 0.12),
+    inset 0 0 22px rgba(255, 209, 102, 0.07);
+  backdrop-filter: blur(20px);
+}
+
+.workflow-approval-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 209, 102, 0.28);
+  border-radius: 50%;
+  color: #ffd166;
+  background: rgba(255, 209, 102, 0.08);
+  box-shadow: inset 0 0 18px rgba(255, 209, 102, 0.08);
+}
+
 .approval-chip > svg {
   color: #ffd166;
   filter: drop-shadow(0 0 8px rgba(255, 209, 102, 0.42));
 }
 
-.approval-chip span {
+.approval-chip span,
+.workflow-approval-popup span {
   min-width: 0;
   display: grid;
   gap: 2px;
 }
 
 .approval-chip b,
-.approval-chip small {
+.approval-chip small,
+.workflow-approval-popup b,
+.workflow-approval-popup small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.approval-chip b {
+.approval-chip b,
+.workflow-approval-popup b {
   font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
   color: #ffd166;
   text-transform: uppercase;
 }
 
-.approval-chip small {
+.approval-chip small,
+.workflow-approval-popup small {
   color: rgba(255, 255, 255, 0.72);
   font-size: 12px;
 }
 
-.approval-chip button {
+.approval-chip button,
+.workflow-approval-popup button {
   width: 34px;
   height: 34px;
   display: grid;
@@ -235,20 +278,37 @@ button {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.approval-chip .approve {
+.workflow-approval-popup .details {
+  width: 52px;
+  border: 1px solid rgba(0, 229, 255, 0.26);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.84);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+}
+
+.workflow-approval-popup .details:hover {
+  color: var(--hud-cyan);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.16);
+}
+
+.approval-chip .approve,
+.workflow-approval-popup .approve {
   border: 1px solid rgba(0, 255, 136, 0.36);
 }
 
-.approval-chip .approve:hover {
+.approval-chip .approve:hover,
+.workflow-approval-popup .approve:hover {
   color: var(--hud-green);
   box-shadow: 0 0 14px rgba(0, 255, 136, 0.18);
 }
 
-.approval-chip .deny {
+.approval-chip .deny,
+.workflow-approval-popup .deny {
   border: 1px solid rgba(255, 0, 127, 0.34);
 }
 
-.approval-chip .deny:hover {
+.approval-chip .deny:hover,
+.workflow-approval-popup .deny:hover {
   color: var(--hud-magenta);
   box-shadow: 0 0 14px rgba(255, 0, 127, 0.18);
 }

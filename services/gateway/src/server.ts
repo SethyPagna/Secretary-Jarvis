@@ -53,6 +53,8 @@ import {
   type UndoJournalEntry,
   type VisionInsight,
   type WorkflowDefinition,
+  type WorkflowRun,
+  type WorkflowRunEvent,
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
@@ -891,6 +893,8 @@ function recordPendingApproval(action: ActionRequest): ActionRequest {
 function completeApproval(approvalId: string, outcome: "approved" | "denied"): {
   approval?: ActionRequest;
   memoryWrite?: MemoryWrite;
+  workflowRun?: WorkflowRun;
+  workflowRunEvent?: WorkflowRunEvent;
 } {
   const approval = status.pendingApprovals.find((candidate) => candidate.id === approvalId);
   if (!approval) {
@@ -946,7 +950,42 @@ function completeApproval(approvalId: string, outcome: "approved" | "denied"): {
     tags: ["approval", outcome, approval.category],
   };
   store.addMemoryWrite(memoryWrite);
-  return { approval, memoryWrite };
+  const workflowResult =
+    approval.connectorId === "workflow-engine" ? completeWorkflowApproval(approval, outcome, timestamp) : {};
+  return { approval, memoryWrite, ...workflowResult };
+}
+
+function completeWorkflowApproval(
+  approval: ActionRequest,
+  outcome: "approved" | "denied",
+  timestamp: string,
+): { workflowRun?: WorkflowRun; workflowRunEvent?: WorkflowRunEvent } {
+  const existingRun = store.getWorkflowRun(approval.id);
+  if (!existingRun) {
+    return {};
+  }
+  const workflowRun: WorkflowRun = {
+    ...existingRun,
+    status: outcome === "approved" ? "queued" : "cancelled",
+    updatedAt: timestamp,
+    result: outcome === "denied" ? "Workflow approval denied by owner." : existingRun.result,
+  };
+  store.upsertWorkflowRun(workflowRun);
+  const workflowRunEvent = createWorkflowRunEvent({
+    id: id("workflow-event"),
+    workflowRunId: workflowRun.id,
+    workflowId: workflowRun.workflowId,
+    kind: outcome === "approved" ? "queued" : "cancelled",
+    message:
+      outcome === "approved"
+        ? `Workflow ${approval.target} approved and queued for local execution.`
+        : `Workflow ${approval.target} cancelled after owner denied approval.`,
+    stepId: workflowRun.currentStepId,
+    createdAt: timestamp,
+    payload: { approvalId: approval.id, outcome },
+  });
+  store.addWorkflowRunEvent(workflowRunEvent);
+  return { workflowRun, workflowRunEvent };
 }
 
 function cancelActiveTasks(reason: string): { cancelled: TaskRun[]; eventCount: number } {
@@ -1166,9 +1205,28 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       sendJson(response, 404, { error: "Approval not found", approvalId });
       return;
     }
-    events.publish("approval", { approval: result.approval, outcome: action, memoryWrite: result.memoryWrite });
+    events.publish("approval", {
+      approval: result.approval,
+      outcome: action,
+      memoryWrite: result.memoryWrite,
+      workflowRun: result.workflowRun,
+      workflowRunEvent: result.workflowRunEvent,
+    });
     events.publish("memory", { memoryWrite: result.memoryWrite });
-    sendJson(response, 200, { approval: result.approval, outcome: action, memoryWrite: result.memoryWrite });
+    if (result.workflowRun && result.workflowRunEvent) {
+      events.publish("task", {
+        workflowRun: result.workflowRun,
+        workflowRunEvent: result.workflowRunEvent,
+        kind: "workflow-approval-completed",
+      });
+    }
+    sendJson(response, 200, {
+      approval: result.approval,
+      outcome: action,
+      memoryWrite: result.memoryWrite,
+      workflowRun: result.workflowRun,
+      workflowRunEvent: result.workflowRunEvent,
+    });
     return;
   }
 

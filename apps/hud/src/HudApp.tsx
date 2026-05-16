@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Settings, ShieldAlert, X } from "lucide-react";
+import { Check, Route, Settings, ShieldAlert, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
@@ -24,6 +24,7 @@ function HudSurface() {
   const [hoveringOrb, setHoveringOrb] = useState(false);
   const [panel, setPanel] = useState<HudPanelName | null>(null);
   const pendingApproval = status?.pendingApprovals?.[0];
+  const workflowApproval = pendingApproval?.connectorId === "workflow-engine" ? pendingApproval : undefined;
   const visualState = pendingApproval ? "approval" : state;
   const active = visualState !== "idle";
   const activeCaption = pendingApproval ? "Approval required." : caption;
@@ -106,23 +107,46 @@ function HudSurface() {
       <AnimatePresence>
         {pendingApproval && !panel && (
           <motion.div
-            className="approval-chip"
+            className={workflowApproval ? "workflow-approval-popup" : "approval-chip"}
             initial={{ opacity: 0, y: 14, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.96 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            <ShieldAlert size={17} aria-hidden="true" />
-            <span>
-              <b>{pendingApproval.category}</b>
-              <small>{pendingApproval.target}</small>
-            </span>
-            <button className="approve" type="button" onClick={() => void decideApproval("approve")} aria-label="Approve action">
-              <Check size={15} aria-hidden="true" />
-            </button>
-            <button className="deny" type="button" onClick={() => void decideApproval("deny")} aria-label="Deny action">
-              <X size={15} aria-hidden="true" />
-            </button>
+            {workflowApproval ? (
+              <>
+                <div className="workflow-approval-icon">
+                  <Route size={18} aria-hidden="true" />
+                </div>
+                <span>
+                  <b>{workflowApproval.target}</b>
+                  <small>{workflowApproval.reason}</small>
+                </span>
+                <button className="details" type="button" onClick={() => setPanel("workflows")} aria-label="Open workflow details">
+                  Flow
+                </button>
+                <button className="approve" type="button" onClick={() => void decideApproval("approve")} aria-label="Approve workflow">
+                  <Check size={15} aria-hidden="true" />
+                </button>
+                <button className="deny" type="button" onClick={() => void decideApproval("deny")} aria-label="Deny workflow">
+                  <X size={15} aria-hidden="true" />
+                </button>
+              </>
+            ) : (
+              <>
+                <ShieldAlert size={17} aria-hidden="true" />
+                <span>
+                  <b>{pendingApproval.category}</b>
+                  <small>{pendingApproval.target}</small>
+                </span>
+                <button className="approve" type="button" onClick={() => void decideApproval("approve")} aria-label="Approve action">
+                  <Check size={15} aria-hidden="true" />
+                </button>
+                <button className="deny" type="button" onClick={() => void decideApproval("deny")} aria-label="Deny action">
+                  <X size={15} aria-hidden="true" />
+                </button>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
