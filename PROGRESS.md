@@ -274,15 +274,15 @@ Protocol:
 - [x] 36.5 Verify builds, tests, clean stop/start behavior, live text, and push - commit `107df2e`
 
 ## Phase 37 - Production Runtime Supervisor, Live Test, And App-Controlled Shutdown
-- [ ] 37.1 Add canonical `scripts/jarvis-runtime.ps1` supervisor and wrapper launchers
-- [ ] 37.2 Add production live-test Gateway endpoint and latest-result persistence
-- [ ] 37.3 Wire Electron IPC/HUD controls for Stop Jarvis, Restart, Emergency, and Live Test
-- [ ] 37.4 Update startup registration to use silent approved-admin supervisor mode
-- [ ] 37.5 Verify tests, builds, live start/test/stop behavior, commit, and push
+- [x] 37.1 Add canonical `scripts/jarvis-runtime.ps1` supervisor and wrapper launchers - commit `29096a3`
+- [x] 37.2 Add production live-test Gateway endpoint and latest-result persistence - commit `29096a3`
+- [x] 37.3 Wire Electron IPC/HUD controls for Stop Jarvis, Restart, Emergency, and Live Test - commit `29096a3`
+- [x] 37.4 Update startup registration to use silent approved-admin supervisor mode - commit `29096a3`
+- [x] 37.5 Verify tests, builds, live start/test/stop behavior, commit, and push - commit `29096a3`
 
 ## Current Priority
 
-Next task: Complete Phase 37 verification and push.
+Next task: Confirm Phase 37 is pushed, then continue with the next requested runtime/app polish slice.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
