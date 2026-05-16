@@ -170,12 +170,12 @@ Protocol:
 - [x] 21.1 Add compact HUD command capsule state - commit `0f320e9`
 - [x] 21.2 Wire text and voice command submissions into the command capsule - commit `6897c7c`
 - [x] 21.3 Subscribe HUD to task stream events for capsule updates - commit `a84a9b4`
-- [ ] 21.4 Add HUD tests for command capsule submission and task-event updates
+- [x] 21.4 Add HUD tests for command capsule submission and task-event updates - commit `85b217c`
 - [ ] 21.5 Verify command capsule behavior with builds, UI tests, and runtime smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 21.4 command capsule HUD tests.
+Next task: Implement Phase 21.5 command capsule verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
