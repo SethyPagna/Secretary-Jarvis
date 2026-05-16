@@ -12,3 +12,4 @@ export * from "./systemActions.js";
 export * from "./taskQueue.js";
 export * from "./toolDoctor.js";
 export * from "./voice.js";
+export * from "./workflows.js";
