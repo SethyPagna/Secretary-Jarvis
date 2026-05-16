@@ -62,7 +62,7 @@ Protocol:
 - [x] 6.1 Define `packages/core/src/agents.ts` - commit `4a7c615`
 - [x] 6.2 Task queue types - implemented before tracker
 - [x] 6.3 Task queue endpoints - implemented before tracker
-- [ ] 6.4 Sentinel safety agent - partial policy engine exists
+- [x] 6.4 Sentinel safety agent - commit `0dd257a`
 
 ## Phase 7 - Skills, Connectors, Devices & Social
 - [x] 7.1 Define connector manifest type - implemented before tracker
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `6.4 Sentinel safety agent`.
+Next task: `8.1 Define complete allowed local actions`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
