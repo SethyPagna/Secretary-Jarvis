@@ -72,6 +72,7 @@ import { buildProcessVisibilityStatus } from "./processVisibility.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
+import { buildStartupRegistrationPlans } from "./startupRegistrationPlans.js";
 import { tryHandleCatalogRoute } from "./routes/catalogRoutes.js";
 import { tryHandleRuntimeSummaryRoute } from "./routes/runtimeSummaryRoutes.js";
 import { tryHandleSecurityCatalogRoute } from "./routes/securityCatalogRoutes.js";
@@ -2068,6 +2069,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     runtimeSmokeStatus: readRuntimeSmokeStatus,
     runtimeServicesStatus: buildRuntimeServicesStatus,
     processVisibilityStatus: () => buildProcessVisibilityStatus({ generatedAt: now() }),
+    startupRegistrationPlans: () => buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
     store,
     approvals: status.pendingApprovals,
   });
