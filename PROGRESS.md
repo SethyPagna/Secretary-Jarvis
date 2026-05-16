@@ -159,9 +159,16 @@ Protocol:
 - [x] 19.4 Add documentation for the HUD setup approval flow - commit `1d01498`
 - [x] 19.5 Verify setup approval UI with builds, tests, and runtime smoke checks - commit `250c34a`
 
+## Phase 20 - HUD Presence Polish
+- [ ] 20.1 Make the orb state-aware for all HUD states and offline mode
+- [ ] 20.2 Add non-text visual layers around the orb
+- [ ] 20.3 Add reduced-motion and small-screen behavior
+- [ ] 20.4 Add HUD tests for state-aware orb visuals and no-text idle behavior
+- [ ] 20.5 Verify HUD presence polish with builds, UI tests, and runtime smoke checks
+
 ## Current Priority
 
-Next task: Define Phase 20 for the next Jarvis refinement slice.
+Next task: Implement Phase 20.1 state-aware orb visuals.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

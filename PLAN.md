@@ -675,6 +675,20 @@ Goal: let the HUD safely stage setup approvals from compact cards. The user shou
 
 19.5 Verify the setup approval UI with builds, unit tests, HUD UI tests, and runtime smoke checks.
 
+## Extension Phase 20 - HUD Presence Polish
+
+Goal: make the centered orb feel more like Jarvis' living presence and less like a generic launcher. State should be communicated through motion, color, rings, and tiny symbols before text appears.
+
+20.1 Make the orb state-aware for idle, wake, listening, recognizing, thinking, planning, executing, speaking, approval, error, and offline states.
+
+20.2 Add non-text visual layers around the orb: scan ring, breathing halo, state glyph, and subtle data arcs.
+
+20.3 Add reduced-motion and small-screen behavior so the orb remains smooth and never causes horizontal overflow.
+
+20.4 Add HUD tests for state-aware orb visuals and no-text idle behavior.
+
+20.5 Verify HUD presence polish with builds, UI tests, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
