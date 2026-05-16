@@ -203,12 +203,12 @@ Protocol:
 ## Phase 26 - Wake And Runtime Adapter Activation
 - [x] 26.1 Add wake/runtime activation readiness endpoint - commit `90f22e1`
 - [x] 26.2 Surface wake/runtime activation readiness in HUD Settings and Voice - commit `114b2eb`
-- [ ] 26.3 Add run/wake/runtime repair documentation
+- [x] 26.3 Add run/wake/runtime repair documentation - commit `aedc7fc`
 - [ ] 26.4 Verify wake/runtime activation with tests, builds, startup check-only scripts, and runtime smoke
 
 ## Current Priority
 
-Next task: Implement Phase 26.3 run/wake/runtime repair documentation.
+Next task: Implement Phase 26.4 wake/runtime activation verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
