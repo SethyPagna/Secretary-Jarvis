@@ -353,6 +353,67 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/agents/manager-readiness")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          manager: {
+            manager: {
+              connected: true,
+              managerAgentId: "jarvis",
+              workflowId: "workflow-cto-orchestrator",
+            },
+            agents: [
+              { id: "jarvis", name: "Jarvis", voiceStatus: "ready", voiceStyle: "calm cinematic command voice" },
+              { id: "friday", name: "Friday", voiceStatus: "ready", voiceStyle: "warm operations secretary" },
+              { id: "daedalus", name: "Daedalus", voiceStatus: "ready", voiceStyle: "precise technical architect" },
+              { id: "argus", name: "Argus", voiceStatus: "staged", voiceStyle: "quiet visual observer" },
+              { id: "mnemosyne", name: "Mnemosyne", voiceStatus: "staged", voiceStyle: "soft archivist cadence" },
+              { id: "sentinel", name: "Sentinel", voiceStatus: "ready", voiceStyle: "firm safety reviewer" },
+              { id: "vulcan", name: "Vulcan", voiceStatus: "ready", voiceStyle: "grounded system operator" },
+              { id: "hermes", name: "Hermes", voiceStatus: "staged", voiceStyle: "smooth diplomatic messenger" },
+            ],
+            voices: {
+              totalAgents: 8,
+              profiles: 8,
+              coveredAgents: 8,
+              distinctProfileCount: 8,
+              ready: 5,
+              staged: 3,
+              missing: 0,
+            },
+            routing: [],
+            workflowAutonomy: {
+              workflows: 4,
+              generatedWorkflows: 1,
+              enabledWorkflows: 3,
+              approvalGatedSteps: 3,
+              blockedSteps: 0,
+              managerWorkflowReady: true,
+              automationNote: "Generated workflows remain approval-gated before execution.",
+            },
+            responseHealth: {
+              runningTasks: 0,
+              queuedItems: 0,
+              waitingApprovals: 0,
+              activeWorkflowRuns: 0,
+              freezeRisk: "low",
+              note: "Queue and workflow response paths are ready.",
+            },
+            summary: {
+              agentsReady: 8,
+              voicesCovered: true,
+              managerConnected: true,
+              workflowsApprovalGated: true,
+              responsePathHealthy: true,
+            },
+            recommendations: [],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().endsWith("/api/runtime/control/dry-run")) {
       const payload = route.request().postDataJSON() as { control?: string };
       await route.fulfill({
@@ -652,6 +713,8 @@ test("settings shows compact architecture and authority hardening summaries", as
 
   const panel = page.getByRole("dialog", { name: "Jarvis settings panel" });
   const hardening = page.getByLabel("Architecture and runtime hardening");
+  await expect(hardening).toContainText("Manager");
+  await expect(hardening).toContainText("online");
   await expect(hardening).toContainText("Stack");
   await expect(hardening).toContainText("4");
   await expect(hardening).toContainText("Startup");
@@ -674,6 +737,11 @@ test("settings shows compact architecture and authority hardening summaries", as
   await page.getByRole("button", { name: "Ollama PATH dry-run", exact: true }).click();
   await expect(panel.getByLabel("Runtime adapter repair dry-runs")).toContainText("requires_approval");
   await expect(panel.getByLabel("Wake and runtime activation")).toContainText("SetEnvironmentVariable");
+  await expect(panel.getByLabel("Agent manager readiness")).toContainText("8/8");
+  await expect(panel.getByLabel("Agent manager readiness")).toContainText("low");
+  await expect(panel.getByLabel("Agent voice personalities")).toContainText("Jarvis");
+  await expect(panel.getByLabel("Agent voice personalities")).toContainText("Friday");
+  await expect(panel.getByLabel("Agent voice personalities")).toContainText("ready");
   await hardening.locator(".hardening-card", { hasText: "Authority" }).locator("summary").click();
   await expect(hardening).toContainText("9 gated");
   await hardening.locator(".hardening-card", { hasText: "Code health" }).locator("summary").click();

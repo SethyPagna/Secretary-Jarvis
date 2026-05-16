@@ -1006,6 +1006,54 @@ button {
   color: var(--hud-magenta);
 }
 
+.agent-manager-strip,
+.agent-voice-strip {
+  width: min(560px, 100%);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px auto 0;
+}
+
+.agent-manager-strip span,
+.agent-voice-strip span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 24% 0%, rgba(0, 229, 255, 0.08), transparent 42%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.agent-manager-strip small,
+.agent-manager-strip strong,
+.agent-voice-strip small,
+.agent-voice-strip strong,
+.agent-voice-strip em {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-manager-strip small,
+.agent-voice-strip small,
+.agent-voice-strip em {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.agent-manager-strip strong,
+.agent-voice-strip strong {
+  color: var(--hud-green);
+  font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
 .setup-groups span {
   display: grid;
   gap: 8px;
@@ -2175,6 +2223,8 @@ button {
   .startup-control-strip,
   .runtime-command-grid,
   .adapter-repair-grid,
+  .agent-manager-strip,
+  .agent-voice-strip,
   .setup-groups,
   .setup-approval-summary,
   .setup-install-strip,

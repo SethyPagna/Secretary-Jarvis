@@ -50,6 +50,7 @@ export function HudPanel({
   const [startupPlans, setStartupPlans] = useState<StartupPlanSummary[]>([]);
   const [packagingReadiness, setPackagingReadiness] = useState<PackagingReadinessSummary | null>(null);
   const [activationReadiness, setActivationReadiness] = useState<WakeRuntimeActivationSummary | null>(null);
+  const [agentManagerReadiness, setAgentManagerReadiness] = useState<AgentManagerReadinessSummary | null>(null);
   const [adapterRepairDryRuns, setAdapterRepairDryRuns] = useState<Record<string, AdapterRepairDryRunSummary>>({});
   const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
   const models = status?.models ?? [];
@@ -286,6 +287,33 @@ export function HudPanel({
             wakeReady: payload.packaging.backgroundRuntime.wakeMethods.filter((method) => method.status === "ready").length,
             wakeStaged: payload.packaging.backgroundRuntime.wakeMethods.filter((method) => method.status === "staged").length,
             packageCommand: payload.packaging.electron.commands.at(-1) ?? "npm.cmd run dist:hud"
+          });
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/agents/manager-readiness`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: AgentManagerReadinessResponse | undefined) => {
+        if (!cancelled && payload?.manager) {
+          setAgentManagerReadiness({
+            connected: payload.manager.manager.connected,
+            agentCount: payload.manager.summary.agentsReady,
+            voicesCovered: payload.manager.summary.voicesCovered,
+            coveredVoices: payload.manager.voices.coveredAgents,
+            totalVoices: payload.manager.voices.totalAgents,
+            distinctVoices: payload.manager.voices.distinctProfileCount,
+            approvalGatedSteps: payload.manager.workflowAutonomy.approvalGatedSteps,
+            workflows: payload.manager.workflowAutonomy.workflows,
+            managerWorkflowReady: payload.manager.workflowAutonomy.managerWorkflowReady,
+            freezeRisk: payload.manager.responseHealth.freezeRisk,
+            waitingApprovals: payload.manager.responseHealth.waitingApprovals,
+            responseNote: payload.manager.responseHealth.note,
+            agents: payload.manager.agents.slice(0, 8).map((agent) => ({
+              id: agent.id,
+              name: agent.name,
+              voiceStatus: agent.voiceStatus,
+              voiceStyle: agent.voiceStyle
+            }))
           });
         }
       })
@@ -609,6 +637,19 @@ export function HudPanel({
           <div className="hardening-grid" aria-label="Architecture and runtime hardening">
             <details className="hardening-card compact-card">
               <summary>
+                <UserCheck size={15} aria-hidden="true" />
+                <span>Manager</span>
+                <b>{agentManagerReadiness?.connected ? "online" : "check"}</b>
+              </summary>
+              <small>
+                {agentManagerReadiness
+                  ? `${agentManagerReadiness.coveredVoices}/${agentManagerReadiness.totalVoices} voices / ${agentManagerReadiness.workflows} workflows`
+                  : "Loading agent manager."}
+              </small>
+              <em>{agentManagerReadiness?.responseNote ?? "Jarvis routes work through specialist agents and Sentinel review."}</em>
+            </details>
+            <details className="hardening-card compact-card">
+              <summary>
                 <Cpu size={15} aria-hidden="true" />
                 <span>Stack</span>
                 <b>{architectureSummary?.subsystemCount ?? "--"}</b>
@@ -709,6 +750,35 @@ export function HudPanel({
               </code>
             ))}
           </details>
+          <div className="agent-manager-strip" aria-label="Agent manager readiness">
+            <span>
+              <small>Agents</small>
+              <strong>{agentManagerReadiness?.agentCount ?? "--"}</strong>
+            </span>
+            <span>
+              <small>Voices</small>
+              <strong>
+                {agentManagerReadiness ? `${agentManagerReadiness.distinctVoices}/${agentManagerReadiness.totalVoices}` : "--"}
+              </strong>
+            </span>
+            <span>
+              <small>Approvals</small>
+              <strong>{agentManagerReadiness?.approvalGatedSteps ?? "--"}</strong>
+            </span>
+            <span>
+              <small>Flow</small>
+              <strong>{agentManagerReadiness?.freezeRisk ?? "--"}</strong>
+            </span>
+          </div>
+          <div className="agent-voice-strip" aria-label="Agent voice personalities">
+            {(agentManagerReadiness?.agents ?? []).slice(0, 4).map((agent) => (
+              <span key={agent.id}>
+                <small>{agent.name}</small>
+                <strong>{agent.voiceStatus}</strong>
+                <em>{agent.voiceStyle}</em>
+              </span>
+            ))}
+          </div>
           <div className="setup-groups" aria-label="Setup action groups">
             {setupGroups.map((group) => (
               <span key={group.id}>
@@ -1081,6 +1151,60 @@ interface WakeRuntimeActivationSummary {
   adapterReady: number;
   repairCommand: string;
   recommendation: string;
+}
+
+interface AgentManagerReadinessResponse {
+  manager?: {
+    manager: {
+      connected: boolean;
+    };
+    agents: Array<{
+      id: string;
+      name: string;
+      voiceStatus: "ready" | "staged" | "missing";
+      voiceStyle: string;
+    }>;
+    voices: {
+      totalAgents: number;
+      coveredAgents: number;
+      distinctProfileCount: number;
+    };
+    workflowAutonomy: {
+      workflows: number;
+      approvalGatedSteps: number;
+      managerWorkflowReady: boolean;
+    };
+    responseHealth: {
+      freezeRisk: "low" | "attention";
+      waitingApprovals: number;
+      note: string;
+    };
+    summary: {
+      agentsReady: number;
+      voicesCovered: boolean;
+    };
+  };
+}
+
+interface AgentManagerReadinessSummary {
+  connected: boolean;
+  agentCount: number;
+  voicesCovered: boolean;
+  coveredVoices: number;
+  totalVoices: number;
+  distinctVoices: number;
+  approvalGatedSteps: number;
+  workflows: number;
+  managerWorkflowReady: boolean;
+  freezeRisk: "low" | "attention";
+  waitingApprovals: number;
+  responseNote: string;
+  agents: Array<{
+    id: string;
+    name: string;
+    voiceStatus: "ready" | "staged" | "missing";
+    voiceStyle: string;
+  }>;
 }
 
 function Widget({ label, value }: { label: string; value: string }) {
