@@ -241,7 +241,7 @@ Protocol:
 ## Phase 32 - Runtime Self-Test And Actionable Fixes
 - [x] 32.1 Add runtime self-test endpoint - commit `29181ab`
 - [x] 32.2 Surface runtime self-test in HUD Settings - commit `e212338`
-- [x] 32.3 Add runtime self-test documentation - commit `pending`
+- [x] 32.3 Add runtime self-test documentation - commit `6196d73`
 - [ ] 32.4 Verify runtime self-test with tests, builds, startup check-only scripts, and runtime smoke
 
 ## Current Priority
