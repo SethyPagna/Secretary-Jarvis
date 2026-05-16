@@ -166,9 +166,16 @@ Protocol:
 - [x] 20.4 Add HUD tests for state-aware orb visuals and no-text idle behavior - commit `609535f`
 - [x] 20.5 Verify HUD presence polish with builds, UI tests, and runtime smoke checks - commit `304e9f9`
 
+## Phase 21 - HUD Command Capsule
+- [ ] 21.1 Add compact HUD command capsule state
+- [ ] 21.2 Wire text and voice command submissions into the command capsule
+- [ ] 21.3 Subscribe HUD to task stream events for capsule updates
+- [ ] 21.4 Add HUD tests for command capsule submission and task-event updates
+- [ ] 21.5 Verify command capsule behavior with builds, UI tests, and runtime smoke checks
+
 ## Current Priority
 
-Next task: Define Phase 21 for the next Jarvis refinement slice.
+Next task: Implement Phase 21.1 command capsule state.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

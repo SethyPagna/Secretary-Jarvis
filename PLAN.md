@@ -689,6 +689,20 @@ Goal: make the centered orb feel more like Jarvis' living presence and less like
 
 20.5 Verify HUD presence polish with builds, UI tests, and runtime smoke checks.
 
+## Extension Phase 21 - HUD Command Capsule
+
+Goal: make text and voice commands feel alive after submission. Jarvis should close the input panel, keep the orb centered, and show one compact command capsule with queued/running/completed state instead of dumping long responses.
+
+21.1 Add a compact HUD command capsule state for queued, running, completed, failed, and cancelled tasks.
+
+21.2 Wire text and voice command submissions into the command capsule.
+
+21.3 Subscribe the HUD to task stream events so the capsule updates from queued to running to completed.
+
+21.4 Add HUD tests for command capsule submission and task-event updates.
+
+21.5 Verify command capsule behavior with HUD build, UI tests, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
