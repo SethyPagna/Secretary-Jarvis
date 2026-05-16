@@ -152,9 +152,16 @@ Protocol:
 - [x] 18.4 Add user-facing approved setup documentation - commit `1230cdf`
 - [x] 18.5 Verify setup install plans with tests, builds, and runtime smoke checks - commit `52a16f7`
 
+## Phase 19 - HUD Setup Approval Actions
+- [ ] 19.1 Add HUD setup dry-run buttons and compact result chips
+- [ ] 19.2 Add compact setup approval summary in HUD Settings
+- [ ] 19.3 Add gateway/HUD tests for setup dry-run action routing and no-execution messaging
+- [ ] 19.4 Add documentation for the HUD setup approval flow
+- [ ] 19.5 Verify setup approval UI with builds, tests, and runtime smoke checks
+
 ## Current Priority
 
-Next task: Define Phase 19 for the next Jarvis refinement slice.
+Next task: Implement Phase 19.1 HUD setup dry-run buttons.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

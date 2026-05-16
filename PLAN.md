@@ -661,6 +661,20 @@ Goal: turn missing feature dependencies into safe, owner-approved setup cards. J
 
 18.5 Verify setup install plans with gateway tests, HUD tests, build checks, and runtime smoke checks.
 
+## Extension Phase 19 - HUD Setup Approval Actions
+
+Goal: let the HUD safely stage setup approvals from compact cards. The user should be able to expand a setup card, trigger a dry-run, see the policy decision, and keep every risky setup action approval-gated.
+
+19.1 Add HUD setup dry-run buttons that call `POST /api/setup/install-plans/:id/dry-run` and show a compact result chip.
+
+19.2 Add a compact setup approval summary in HUD Settings so pending setup approvals are visible without opening the full dashboard.
+
+19.3 Add gateway/HUD tests for setup dry-run action routing, approval decisions, and no-execution messaging.
+
+19.4 Add documentation for the HUD setup approval flow.
+
+19.5 Verify the setup approval UI with builds, unit tests, HUD UI tests, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
