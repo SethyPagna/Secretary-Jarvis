@@ -63,6 +63,7 @@ import { commandVersion, detectToolStatuses } from "./doctor.js";
 import { buildAgentManagerReadiness } from "./agentManagerReadiness.js";
 import { EventHub } from "./eventHub.js";
 import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
+import { buildInteractionHealth } from "./interactionHealth.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
 import { createLiveVisionRequest, type LiveVisionMode } from "./liveVision.js";
@@ -2094,6 +2095,17 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         tasks: store.listTasks(),
         queue: store.listQueue(),
         approvals: status.pendingApprovals,
+      }),
+    interactionHealth: () =>
+      buildInteractionHealth({
+        generatedAt: now(),
+        status,
+        workflows: store.listWorkflows(),
+        workflowRuns: store.listWorkflowRuns(80),
+        tasks: store.listTasks(),
+        queue: store.listQueue(),
+        approvals: status.pendingApprovals,
+        undoJournal: store.listUndoJournal(),
       }),
     store,
     approvals: status.pendingApprovals,

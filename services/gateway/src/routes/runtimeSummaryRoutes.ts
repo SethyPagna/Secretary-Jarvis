@@ -1,6 +1,7 @@
 import type { ActionRequest, RuntimeConstellation, RuntimeSmokeStatus, RuntimeServicesStatus } from "@jarvis/core";
 import type { AgentManagerReadiness } from "../agentManagerReadiness.js";
 import { buildRuntimeEventHealth } from "../eventHealth.js";
+import type { InteractionHealth } from "../interactionHealth.js";
 import type { PackagingReadiness } from "../packagingReadiness.js";
 import type { ProcessVisibilityStatus } from "../processVisibility.js";
 import type { StartupRegistrationPlansManifest } from "../startupRegistrationPlans.js";
@@ -22,6 +23,7 @@ export function tryHandleRuntimeSummaryRoute(params: {
   startupRegistrationPlans?: () => StartupRegistrationPlansManifest;
   wakeRuntimeActivation?: () => WakeRuntimeActivationReadiness;
   agentManagerReadiness?: () => AgentManagerReadiness;
+  interactionHealth?: () => InteractionHealth;
   store: JarvisStore;
   approvals: ActionRequest[];
 }): Promise<boolean> | boolean {
@@ -63,6 +65,11 @@ export function tryHandleRuntimeSummaryRoute(params: {
 
   if (params.pathname === "/api/agents/manager-readiness" && params.agentManagerReadiness) {
     params.sendJson(200, { manager: params.agentManagerReadiness() });
+    return true;
+  }
+
+  if (params.pathname === "/api/runtime/interaction-health" && params.interactionHealth) {
+    params.sendJson(200, { interaction: params.interactionHealth() });
     return true;
   }
 

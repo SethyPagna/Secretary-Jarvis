@@ -174,6 +174,37 @@ describe("runtime summary routes", () => {
         },
         recommendations: [],
       }),
+      interactionHealth: () => ({
+        generatedAt: "2026-05-16T00:00:00.000Z",
+        localOnly: true,
+        surfaces: [
+          { id: "text", label: "Text", status: "ready", detail: "ready" },
+          { id: "voice", label: "Voice", status: "ready", detail: "ready" },
+          { id: "workflow-generate", label: "Generate", status: "ready", detail: "approval gated" },
+          { id: "workflow-execute", label: "Execute", status: "ready", detail: "ready" },
+          { id: "editing", label: "Editing", status: "ready", detail: "undo gated" },
+          { id: "undo", label: "Undo", status: "ready", detail: "ready" },
+          { id: "approvals", label: "Approvals", status: "ready", detail: "quiet" },
+          { id: "emergency-stop", label: "Stop", status: "ready", detail: "ready" },
+        ],
+        metrics: {
+          runningTasks: 0,
+          queuedItems: 0,
+          waitingApprovals: 0,
+          activeWorkflowRuns: 0,
+          generatedWorkflows: 1,
+          enabledWorkflows: 4,
+          availableUndos: 0,
+        },
+        summary: {
+          responsive: true,
+          canTalkWhileWorking: true,
+          workflowAutonomyApprovalGated: true,
+          editingUndoReady: true,
+          freezeRisk: "low",
+        },
+        recommendations: ["Generated workflows remain drafts until approved."],
+      }),
       store: emptyStore(),
       approvals: [],
     };
@@ -185,10 +216,11 @@ describe("runtime summary routes", () => {
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/packaging-readiness" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/activation-readiness" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/agents/manager-readiness" })).toBe(true);
+    expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/interaction-health" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/startup-registration-plans" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, method: "POST", pathname: "/api/runtime/services" })).toBe(false);
 
-    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200, 200, 200]);
+    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200, 200, 200, 200]);
     expect(JSON.stringify(sent[0]?.body)).toContain("runtime-constellation");
     expect(JSON.stringify(sent[1]?.body)).toContain("passed");
     expect(JSON.stringify(sent[2]?.body)).toContain("read only");
@@ -196,7 +228,8 @@ describe("runtime summary routes", () => {
     expect(JSON.stringify(sent[4]?.body)).toContain("electronShellReady");
     expect(JSON.stringify(sent[5]?.body)).toContain("ollamaUsable");
     expect(JSON.stringify(sent[6]?.body)).toContain("voicesCovered");
-    expect(JSON.stringify(sent[7]?.body)).toContain("Dry-run registration");
+    expect(JSON.stringify(sent[7]?.body)).toContain("canTalkWhileWorking");
+    expect(JSON.stringify(sent[8]?.body)).toContain("Dry-run registration");
   });
 });
 
