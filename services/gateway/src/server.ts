@@ -7,7 +7,6 @@ import { URL } from "node:url";
 import {
   appendTranscriptChunk,
   applyTaskStatus,
-  allowedLocalActions,
   futureScalingModels,
   createModelDryRun,
   createOutboundMessageDraft,
@@ -74,6 +73,7 @@ import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { tryHandleCatalogRoute } from "./routes/catalogRoutes.js";
 import { tryHandleRuntimeSummaryRoute } from "./routes/runtimeSummaryRoutes.js";
+import { tryHandleSecurityCatalogRoute } from "./routes/securityCatalogRoutes.js";
 import { buildSetupInstallPlanManifest, createSetupInstallDryRun } from "./setupInstallPlans.js";
 import { tryHandleReadinessRoute } from "./routes/readinessRoutes.js";
 import { JarvisStore } from "./store.js";
@@ -3079,24 +3079,14 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
-  if (request.method === "GET" && url.pathname === "/api/security/status") {
-    sendJson(response, 200, {
-      protectedCore: status.protectedCore,
-      privacyMode: status.privacyMode,
-      sentinel: status.agentSouls?.find((soul) => soul.id === "sentinel"),
-      blockedCategories: ["network", "protected-core-access"],
-      approvalCategories: [
-        "delete-local",
-        "send-message",
-        "post-social",
-        "purchase",
-        "credential-access",
-        "device-control",
-        "model-download",
-        "sensor-capture",
-        "irreversible-edit",
-      ],
-    });
+  if (
+    tryHandleSecurityCatalogRoute({
+      method: request.method,
+      pathname: url.pathname,
+      status,
+      sendJson: (statusCode, body) => sendJson(response, statusCode, body),
+    })
+  ) {
     return;
   }
 
@@ -3119,21 +3109,6 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         });
     events.publish("security", { sentinelReview: review });
     sendJson(response, 200, { review });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/system/actions") {
-    sendJson(response, 200, {
-      actions: allowedLocalActions,
-      count: allowedLocalActions.length,
-      privacyMode: status.privacyMode,
-      mode: "approved-admin",
-      defaults: {
-        approvalRequired: allowedLocalActions.filter((action) => action.approval === "requires_approval").map((action) => action.id),
-        localOnly: true,
-        undoWindowMinutes: 20,
-      },
-    });
     return;
   }
 
