@@ -1,6 +1,6 @@
 import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { JarvisStatus, ModelAssetManifest, VoiceRuntimeReadiness } from "@jarvis/core";
+import type { JarvisStatus, RuntimeConstellation, VoiceRuntimeReadiness } from "@jarvis/core";
 import { WorkflowConsole } from "./WorkflowConsole";
 import type { HudPanel as HudPanelName } from "../types";
 
@@ -18,7 +18,7 @@ export function HudPanel({
   onClose: () => void;
 }) {
   const [text, setText] = useState("");
-  const [assetSummary, setAssetSummary] = useState<ModelAssetSummary | null>(null);
+  const [constellation, setConstellation] = useState<RuntimeConstellation | null>(null);
   const [voiceReadiness, setVoiceReadiness] = useState<VoiceRuntimeReadiness | null>(null);
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
@@ -29,17 +29,11 @@ export function HudPanel({
       return;
     }
     let cancelled = false;
-    fetch(`${apiBaseUrl}/api/models/local-assets`)
+    fetch(`${apiBaseUrl}/api/runtime/constellation`)
       .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: LocalAssetResponse | undefined) => {
-        if (!cancelled && payload?.summary) {
-          setAssetSummary({
-            readyComplete: payload.summary.readyComplete,
-            futureScalingComplete: payload.summary.futureScalingComplete,
-            missingOrPartial: payload.summary.missingOrPartial,
-            totalReady: payload.ready?.length ?? 0,
-            totalFuture: payload.futureScaling?.length ?? 0,
-          });
+      .then((payload: RuntimeConstellationResponse | undefined) => {
+        if (!cancelled && payload?.constellation) {
+          setConstellation(payload.constellation);
         }
       })
       .catch(() => undefined);
@@ -111,10 +105,21 @@ export function HudPanel({
             <Widget label="Tasks" value={`${tasks.length}`} />
             <Widget label="TPS" value={`${status?.performance?.tokensPerSecond ?? "--"}`} />
           </div>
-          <div className="model-manifest-strip" aria-label="Local model asset manifests">
-            <span><small>Ready</small><strong>{assetSummary ? `${assetSummary.readyComplete}/${assetSummary.totalReady}` : "--"}</strong></span>
-            <span><small>Future</small><strong>{assetSummary ? `${assetSummary.futureScalingComplete}/${assetSummary.totalFuture}` : "--"}</strong></span>
-            <span><small>Needs</small><strong>{assetSummary?.missingOrPartial ?? "--"}</strong></span>
+          <div className="constellation-grid" aria-label="Runtime constellation">
+            {(constellation?.nodes ?? []).map((node) => (
+              <span key={node.id} className={`constellation-node tone-${node.tone}`} title={node.detail}>
+                <i />
+                <small>{node.label}</small>
+                <strong>{node.value}</strong>
+              </span>
+            ))}
+            {!constellation?.nodes?.length && ["Models", "Voice", "Vision", "Privacy", "Setup"].map((label) => (
+              <span key={label} className="constellation-node">
+                <i />
+                <small>{label}</small>
+                <strong>--</strong>
+              </span>
+            ))}
           </div>
           <div className="tiny-feed">
             {tasks.length ? tasks.map((task) => <span key={task.id}>{task.status} / {task.title}</span>) : <span>Quiet. Ready.</span>}
@@ -174,22 +179,8 @@ export function HudPanel({
   );
 }
 
-interface LocalAssetResponse {
-  ready?: ModelAssetManifest[];
-  futureScaling?: ModelAssetManifest[];
-  summary?: {
-    readyComplete: number;
-    futureScalingComplete: number;
-    missingOrPartial: number;
-  };
-}
-
-interface ModelAssetSummary {
-  readyComplete: number;
-  futureScalingComplete: number;
-  missingOrPartial: number;
-  totalReady: number;
-  totalFuture: number;
+interface RuntimeConstellationResponse {
+  constellation?: RuntimeConstellation;
 }
 
 interface VoiceReadinessResponse {

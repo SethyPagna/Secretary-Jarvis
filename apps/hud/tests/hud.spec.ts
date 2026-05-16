@@ -10,20 +10,24 @@ async function mockGateway(page: import("playwright/test").Page) {
     });
   });
   await page.route("http://127.0.0.1:4317/api/**", async (route) => {
-    if (route.request().url().endsWith("/api/models/local-assets")) {
+    if (route.request().url().endsWith("/api/runtime/constellation")) {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          ready: Array.from({ length: 5 }, (_, index) => ({ id: `ready-${index}`, status: "complete" })),
-          futureScaling: [
-            { id: "scale-deepseek", status: "complete" },
-            { id: "scale-placeholder", status: "missing" },
-          ],
-          summary: {
-            readyComplete: 5,
-            futureScalingComplete: 1,
-            missingOrPartial: 1,
+          constellation: {
+            id: "runtime-constellation",
+            localOnly: true,
+            updatedAt: "2026-05-16T00:00:00.000Z",
+            nodes: [
+              { id: "models", label: "Models", kind: "models", status: "ready", value: "5/5", detail: "ready", tone: "cyan" },
+              { id: "voice", label: "Voice", kind: "voice", status: "ready", value: "4 samples", detail: "ready", tone: "green" },
+              { id: "vision", label: "Vision", kind: "vision", status: "ready-asset", value: "3 assets", detail: "ready", tone: "cyan" },
+              { id: "privacy", label: "Privacy", kind: "privacy", status: "locked", value: "sealed", detail: "locked", tone: "magenta" },
+              { id: "setup", label: "Setup", kind: "setup", status: "attention", value: "4 needed", detail: "needed", tone: "amber" },
+            ],
+            summary: { ready: 3, staged: 0, attention: 1, locked: 1 },
+            note: "compact",
           },
         }),
       });
@@ -104,11 +108,12 @@ test("orb click opens radial controls and dashboard stays grouped", async ({ pag
   const panel = page.getByRole("dialog", { name: "Jarvis dashboard panel" });
   await expect(panel).toBeVisible();
   await expect(panel.getByText("Dashboard")).toBeVisible();
-  await expect(panel.getByText("Model")).toBeVisible();
+  await expect(panel.getByText("Model", { exact: true })).toBeVisible();
   await expect(panel.getByText("Tasks")).toBeVisible();
   await expect(panel.locator(".widget-grid")).toBeVisible();
-  await expect(panel.getByLabel("Local model asset manifests")).toContainText("5/5");
-  await expect(panel.getByLabel("Local model asset manifests")).toContainText("1/2");
+  await expect(panel.getByLabel("Runtime constellation")).toContainText("5/5");
+  await expect(panel.getByLabel("Runtime constellation")).toContainText("sealed");
+  await expect(panel.getByLabel("Runtime constellation")).toContainText("4 needed");
 });
 
 test("voice and text panels expose compact interaction states", async ({ page }) => {

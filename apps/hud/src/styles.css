@@ -549,6 +549,82 @@ button {
   white-space: nowrap;
 }
 
+.constellation-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.constellation-node {
+  position: relative;
+  min-height: 62px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.11), transparent 54%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.constellation-node::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.42;
+  background: linear-gradient(110deg, transparent 22%, rgba(255, 255, 255, 0.12), transparent 54%);
+  transform: translateX(-120%);
+  animation: line-scan 4.8s ease-in-out infinite;
+}
+
+.constellation-node i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hud-cyan);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.8);
+}
+
+.constellation-node small,
+.constellation-node strong {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.constellation-node small {
+  color: rgba(255, 255, 255, 0.58);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.constellation-node strong {
+  color: white;
+  font: 700 13px/1 "Inter", system-ui, sans-serif;
+}
+
+.constellation-node.tone-green i {
+  background: var(--hud-green);
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.72);
+}
+
+.constellation-node.tone-amber i {
+  background: #ffd45a;
+  box-shadow: 0 0 14px rgba(255, 212, 90, 0.72);
+}
+
+.constellation-node.tone-magenta i {
+  background: var(--hud-magenta);
+  box-shadow: 0 0 14px rgba(255, 0, 127, 0.72);
+}
+
 .mic-pulse {
   width: 92px;
   height: 92px;
@@ -1014,6 +1090,7 @@ button {
   .widget-grid,
   .model-manifest-strip,
   .voice-readiness-strip,
+  .constellation-grid,
   .device-grid,
   .setting-list,
   .workflow-layout {
