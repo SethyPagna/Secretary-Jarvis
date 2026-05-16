@@ -26,7 +26,12 @@
     "setup:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",
     "stop:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-jarvis.ps1",
     "verify:jarvis": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-jarvis.ps1 -CheckOnlyServices",
-    "smoke:runtime": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-runtime.ps1"
+    "smoke:runtime": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-runtime.ps1",
+    "jarvis": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/jarvis-control.ps1",
+    "jarvis:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/jarvis-control.ps1 -Action Start",
+    "jarvis:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/jarvis-control.ps1 -Action Stop",
+    "jarvis:shortcuts": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-shortcuts.ps1 -All",
+    "jarvis:startup:check": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/jarvis-control.ps1 -Action RegisterStartup -CheckOnly"
   },
   "engines": {
     "node": ">=22.16"

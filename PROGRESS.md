@@ -245,10 +245,10 @@ Protocol:
 - [x] 32.4 Verify runtime self-test with tests, builds, startup check-only scripts, and runtime smoke - commit `2ec3c28`
 
 ## Phase 33 - Friendly Launch And Automation
-- [ ] 33.1 Add root-level Windows launchers for Start, Stop, Verify, and Shortcut Setup
-- [ ] 33.2 Add smart `scripts/jarvis-control.ps1` menu
-- [ ] 33.3 Add `scripts/install-shortcuts.ps1`
-- [ ] 33.4 Document the user-friendly run flow
+- [x] 33.1 Add root-level Windows launchers for Start, Stop, Verify, and Shortcut Setup - commit `pending`
+- [x] 33.2 Add smart `scripts/jarvis-control.ps1` menu - commit `pending`
+- [x] 33.3 Add `scripts/install-shortcuts.ps1` - commit `pending`
+- [x] 33.4 Document the user-friendly run flow - commit `pending`
 - [ ] 33.5 Verify friendly launch automation with check-only commands, tests, builds, and git push
 
 ## Current Priority
