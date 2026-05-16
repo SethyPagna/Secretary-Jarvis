@@ -164,11 +164,11 @@ Protocol:
 - [x] 20.2 Add non-text visual layers around the orb - commit `6144ef1`
 - [x] 20.3 Add reduced-motion and small-screen behavior - commit `dea10c5`
 - [x] 20.4 Add HUD tests for state-aware orb visuals and no-text idle behavior - commit `609535f`
-- [ ] 20.5 Verify HUD presence polish with builds, UI tests, and runtime smoke checks
+- [x] 20.5 Verify HUD presence polish with builds, UI tests, and runtime smoke checks - commit `304e9f9`
 
 ## Current Priority
 
-Next task: Implement Phase 20.5 HUD presence polish verification.
+Next task: Define Phase 21 for the next Jarvis refinement slice.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
