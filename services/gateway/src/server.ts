@@ -82,6 +82,7 @@ import { tryHandleReadinessRoute } from "./routes/readinessRoutes.js";
 import { JarvisStore } from "./store.js";
 import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
 import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
+import { buildWakeRuntimeActivationReadiness } from "./wakeRuntimeActivation.js";
 
 const DEFAULT_PORT = 4317;
 const HF_SNAPSHOT_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\models\\huggingface\\snapshots";
@@ -2072,6 +2073,13 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     packagingReadiness: () => buildPackagingReadiness({ root: process.cwd(), generatedAt: now() }),
     processVisibilityStatus: () => buildProcessVisibilityStatus({ generatedAt: now() }),
     startupRegistrationPlans: () => buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
+    wakeRuntimeActivation: () =>
+      buildWakeRuntimeActivationReadiness({
+        root: process.cwd(),
+        generatedAt: now(),
+        voiceReadiness: buildVoiceRuntimeReadiness({ voiceAssets: status.voiceAssets ?? [], voiceAssetRoot: VOICE_ASSET_ROOT }),
+        ollamaEndpoint: OLLAMA_URL,
+      }),
     store,
     approvals: status.pendingApprovals,
   });

@@ -92,6 +92,41 @@ describe("runtime summary routes", () => {
         plans: [],
         note: "Dry-run registration plans only.",
       }),
+      wakeRuntimeActivation: () => ({
+        generatedAt: "2026-05-16T00:00:00.000Z",
+        root: "C:/jarvis",
+        localOnly: true,
+        wake: {
+          methods: [],
+          summary: { ready: 2, staged: 1, approvalGated: 1 },
+          privacyNote: "mic locked",
+        },
+        voice: {
+          primaryStt: "ready",
+          vad: "staged",
+          wakeWord: "missing",
+          ttsReady: true,
+          sampleCount: 4,
+          note: "manual voice ready",
+        },
+        ollama: {
+          status: "found-off-path",
+          command: "ollama",
+          detectedPath: "C:/Ollama/ollama.exe",
+          endpoint: "http://127.0.0.1:11434",
+          repairCommands: ["Add Ollama to PATH"],
+          note: "found",
+        },
+        adapters: [],
+        safeActions: [],
+        summary: {
+          reliableWakeMethods: 2,
+          stagedWakeMethods: 1,
+          ollamaUsable: true,
+          localModelAdaptersReady: 1,
+        },
+        recommendations: ["Use tray/orb wake."],
+      }),
       store: emptyStore(),
       approvals: [],
     };
@@ -101,16 +136,18 @@ describe("runtime summary routes", () => {
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/services" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/process-visibility" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/packaging-readiness" })).toBe(true);
+    expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/activation-readiness" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/startup-registration-plans" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, method: "POST", pathname: "/api/runtime/services" })).toBe(false);
 
-    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200]);
+    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200, 200]);
     expect(JSON.stringify(sent[0]?.body)).toContain("runtime-constellation");
     expect(JSON.stringify(sent[1]?.body)).toContain("passed");
     expect(JSON.stringify(sent[2]?.body)).toContain("read only");
     expect(JSON.stringify(sent[3]?.body)).toContain("visibleInTaskManager");
     expect(JSON.stringify(sent[4]?.body)).toContain("electronShellReady");
-    expect(JSON.stringify(sent[5]?.body)).toContain("Dry-run registration");
+    expect(JSON.stringify(sent[5]?.body)).toContain("ollamaUsable");
+    expect(JSON.stringify(sent[6]?.body)).toContain("Dry-run registration");
   });
 });
 

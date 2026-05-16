@@ -4,6 +4,7 @@ import type { PackagingReadiness } from "../packagingReadiness.js";
 import type { ProcessVisibilityStatus } from "../processVisibility.js";
 import type { StartupRegistrationPlansManifest } from "../startupRegistrationPlans.js";
 import type { JarvisStore } from "../store.js";
+import type { WakeRuntimeActivationReadiness } from "../wakeRuntimeActivation.js";
 
 type SendJson = (statusCode: number, body: unknown) => void;
 
@@ -18,6 +19,7 @@ export function tryHandleRuntimeSummaryRoute(params: {
   packagingReadiness?: () => PackagingReadiness;
   processVisibilityStatus?: () => ProcessVisibilityStatus;
   startupRegistrationPlans?: () => StartupRegistrationPlansManifest;
+  wakeRuntimeActivation?: () => WakeRuntimeActivationReadiness;
   store: JarvisStore;
   approvals: ActionRequest[];
 }): Promise<boolean> | boolean {
@@ -49,6 +51,11 @@ export function tryHandleRuntimeSummaryRoute(params: {
 
   if (params.pathname === "/api/runtime/packaging-readiness" && params.packagingReadiness) {
     params.sendJson(200, { packaging: params.packagingReadiness() });
+    return true;
+  }
+
+  if (params.pathname === "/api/runtime/activation-readiness" && params.wakeRuntimeActivation) {
+    params.sendJson(200, { activation: params.wakeRuntimeActivation() });
     return true;
   }
 
