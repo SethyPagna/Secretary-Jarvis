@@ -72,8 +72,8 @@ import { probeModelRuntime } from "./modelProbe.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
+import { tryHandleCatalogRoute } from "./routes/catalogRoutes.js";
 import { tryHandleRuntimeSummaryRoute } from "./routes/runtimeSummaryRoutes.js";
-import { buildSetupActionGroups } from "./setupActions.js";
 import { buildSetupInstallPlanManifest, createSetupInstallDryRun } from "./setupInstallPlans.js";
 import { tryHandleReadinessRoute } from "./routes/readinessRoutes.js";
 import { JarvisStore } from "./store.js";
@@ -2041,19 +2041,20 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     }
   }
 
-  if (request.method === "GET" && url.pathname === "/api/models") {
-    const runtimeStatus = statusWithRuntimeState();
-    const assetManifests = localModelAssetManifests();
-    sendJson(response, 200, {
-      models: runtimeStatus.models,
-      readyModelAssets: runtimeStatus.readyModelAssets,
-      assetManifests,
-      modelReadiness: runtimeStatus.modelReadiness,
-      futureScalingModels: runtimeStatus.futureScalingModels,
-      runtimeAdapters: runtimeStatus.runtimeAdapters ?? [],
-      hardwareProfile: runtimeStatus.hardwareProfile,
-      toolStatuses: detectToolStatuses(),
-    });
+  if (
+    tryHandleCatalogRoute({
+      method: request.method,
+      pathname: url.pathname,
+      now,
+      sendJson: (statusCode, body) => sendJson(response, statusCode, body),
+      statusWithRuntimeState,
+      localModelAssetManifests,
+      modelActivationPlans,
+      hydrateFeatureDownloads,
+      futureScalingModels,
+      detectToolStatuses,
+    })
+  ) {
     return;
   }
 
@@ -2100,34 +2101,6 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     }
     events.publish("security", { runtimeControl: dryRun });
     sendJson(response, dryRun.decision.decision === "deny" ? 403 : 200, { dryRun });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/models/readiness") {
-    const runtimeStatus = statusWithRuntimeState();
-    const assetManifests = localModelAssetManifests();
-    sendJson(response, 200, {
-      readyModelAssets: runtimeStatus.readyModelAssets ?? [],
-      assetManifests,
-      readiness: runtimeStatus.modelReadiness ?? [],
-      activeModelId: runtimeStatus.activeModelId,
-      hardwareProfile: runtimeStatus.hardwareProfile,
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/models/activation-plans") {
-    const plans = modelActivationPlans();
-    sendJson(response, 200, {
-      plans,
-      summary: {
-        readyToUse: plans.filter((plan) => plan.status === "ready-to-use").length,
-        assetReady: plans.filter((plan) => plan.status === "asset-ready").length,
-        needsRuntime: plans.filter((plan) => plan.status === "needs-runtime" || plan.status === "too-heavy").length,
-        missingAsset: plans.filter((plan) => plan.status === "missing-asset").length,
-      },
-      note: "Activation plans are safe-mode only. They do not load model weights or start runtime servers.",
-    });
     return;
   }
 
@@ -2181,22 +2154,6 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
-  if (request.method === "GET" && url.pathname === "/api/models/local-assets") {
-    const assetManifests = localModelAssetManifests();
-    sendJson(response, 200, {
-      ...assetManifests,
-      summary: {
-        readyComplete: assetManifests.ready.filter((manifest) => manifest.status === "complete").length,
-        futureScalingComplete: assetManifests.futureScaling.filter((manifest) => manifest.status === "complete").length,
-        missingOrPartial: [...assetManifests.ready, ...assetManifests.futureScaling].filter(
-          (manifest) => manifest.status !== "complete",
-        ).length,
-      },
-      note: "Safe local manifest scan only. No model weights were loaded and no downloads were attempted.",
-    });
-    return;
-  }
-
   if (request.method === "POST" && url.pathname.startsWith("/api/models/") && url.pathname.endsWith("/probe")) {
     const parts = url.pathname.split("/").filter(Boolean);
     const modelId = decodeURIComponent(parts[2] ?? "");
@@ -2219,49 +2176,6 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       readiness: probedReadiness,
       runtimeProbe,
       note: "Runtime probe is safe by default: local file and endpoint checks only; no large weight load is attempted.",
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/setup/needed-feature-downloads") {
-    sendJson(response, 200, {
-      downloads: hydrateFeatureDownloads(),
-      note: "These are feature dependencies Jarvis is wired to use after you download/install them. They are separate from future scaling models.",
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/setup/action-groups") {
-    sendJson(response, 200, {
-      groups: buildSetupActionGroups({
-        neededFeatureDownloads: hydrateFeatureDownloads(),
-        futureScalingModels,
-      }),
-      note: "Feature dependencies are actionable setup items. Future scaling models are optional later switch targets.",
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/setup/plugin-slots") {
-    sendJson(response, 200, {
-      manifest: buildFeaturePluginSlotManifest({
-        downloads: hydrateFeatureDownloads(),
-        generatedAt: now(),
-      }),
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/setup/install-plans") {
-    const generatedAt = now();
-    sendJson(response, 200, {
-      manifest: buildSetupInstallPlanManifest({
-        generatedAt,
-        slotManifest: buildFeaturePluginSlotManifest({
-          downloads: hydrateFeatureDownloads(),
-          generatedAt,
-        }),
-      }),
     });
     return;
   }
@@ -2297,14 +2211,6 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     }
     events.publish("setup", { kind: "setup-install-dry-run", dryRun });
     sendJson(response, dryRun.decision.decision === "deny" ? 403 : 202, { dryRun });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/models/future-scaling") {
-    sendJson(response, 200, {
-      models: futureScalingModels,
-      note: "These are optional future scale-up targets for model switching and benchmarking, not feature dependency downloads.",
-    });
     return;
   }
 
