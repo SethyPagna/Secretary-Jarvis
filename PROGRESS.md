@@ -227,7 +227,7 @@ Protocol:
 - [x] 29.5 Verify interaction health with tests, builds, startup check-only scripts, and runtime smoke - commit `abff4e4`
 
 ## Phase 30 - Per-Agent Voice Matrix And Playback Readiness
-- [ ] 30.1 Add per-agent voice matrix endpoint
+- [x] 30.1 Add per-agent voice matrix endpoint - commit `bb4a38f`
 - [ ] 30.2 Surface voice matrix and test actions in HUD Voice panel
 - [ ] 30.3 Add per-agent voice matrix and HUD tests
 - [ ] 30.4 Add per-agent voice behavior documentation
@@ -235,7 +235,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Implement Phase 30.1 per-agent voice matrix endpoint.
+Next task: Implement Phase 30.2 HUD voice matrix and test actions.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
