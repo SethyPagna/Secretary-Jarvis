@@ -49,6 +49,7 @@ import {
   type ScaleProfile,
   type TaskRun,
   type TaskProfile,
+  type TimelineEvent,
   type RuntimeKind,
   type SystemAction,
   type TtsRequest,
@@ -452,6 +453,33 @@ function addTurn(params: {
   };
   store.addTurn(turn);
   return turn;
+}
+
+function recordMultimodalTimeline(params: {
+  title: string;
+  summary: string;
+  timestamp: string;
+  source?: TimelineEvent["source"];
+  status?: TimelineEvent["status"];
+  tags: string[];
+  relatedConversationId?: string;
+  relatedTaskId?: string;
+}): TimelineEvent {
+  const event: TimelineEvent = {
+    id: id("timeline-multimodal"),
+    kind: "sensor-event",
+    title: params.title,
+    summary: params.summary.slice(0, 260),
+    occurredAt: params.timestamp,
+    source: params.source ?? "system",
+    reversible: false,
+    relatedConversationId: params.relatedConversationId,
+    relatedTaskId: params.relatedTaskId,
+    status: params.status,
+    tags: ["multimodal", ...params.tags],
+  };
+  store.addTimelineEvent(event);
+  return event;
 }
 
 function queueChatMessage(params: {
@@ -2396,11 +2424,12 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       endMs?: number;
       engineId?: string;
     };
+    const timestamp = now();
     const transcript = appendLiveTranscriptChunk({
       existing: status.voiceSession,
       id: id("voice-session"),
       chunkId: id("transcript"),
-      now: now(),
+      now: timestamp,
       toolsReady: voiceRuntimeReadiness().summary.sttReady,
       text: body.text ?? "",
       final: body.final,
@@ -2410,17 +2439,29 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       engineId: body.engineId,
     });
     status = { ...status, voiceSession: transcript.voiceSession };
+    const timelineEvent =
+      body.final && transcript.voiceSession.state !== "error"
+        ? recordMultimodalTimeline({
+            title: "Voice transcript captured",
+            summary: body.text ?? "",
+            timestamp,
+            source: "owner",
+            status: "remembered",
+            tags: ["voice", "transcript"],
+          })
+        : undefined;
     events.publish("audio", { kind: "voice-transcript", ...transcript });
-    sendJson(response, transcript.voiceSession.state === "error" ? 400 : 200, transcript);
+    sendJson(response, transcript.voiceSession.state === "error" ? 400 : 200, { ...transcript, timelineEvent });
     return;
   }
 
   if (request.method === "POST" && url.pathname === "/api/voice/transcript/commit") {
     const body = (await readBody(request)) as { conversationId?: string; taskProfile?: TaskProfile };
+    const timestamp = now();
     const committed = commitLiveTranscript({
       existing: status.voiceSession,
       id: id("voice-session"),
-      now: now(),
+      now: timestamp,
       toolsReady: voiceRuntimeReadiness().summary.sttReady,
     });
     status = { ...status, voiceSession: committed.voiceSession };
@@ -2434,7 +2475,17 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       conversationId: body.conversationId,
       message: committed.text,
       taskProfile: body.taskProfile ?? "daily-assistant",
-      timestamp: now(),
+      timestamp,
+    });
+    const timelineEvent = recordMultimodalTimeline({
+      title: "Voice transcript queued",
+      summary: committed.text,
+      timestamp,
+      source: "owner",
+      status: "remembered",
+      tags: ["voice", "queue"],
+      relatedConversationId: queued.conversation.id,
+      relatedTaskId: queued.task.id,
     });
     events.publish("audio", { kind: "voice-transcript-committed", ...committed, taskId: queued.task.id });
     sendJson(response, 202, {
@@ -2442,6 +2493,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       conversation: queued.conversation,
       task: queued.task,
       queued: queued.queued,
+      timelineEvent,
     });
     return;
   }
@@ -2458,6 +2510,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "POST" && url.pathname === "/api/identity/recognize/dry-run") {
     const body = (await readBody(request)) as { factors?: string[]; mode?: "voice" | "face" | "combined" };
+    const timestamp = now();
     const requestedFactors = body.factors ?? (body.mode === "voice" ? ["voice"] : body.mode === "face" ? ["face"] : ["voice", "face"]);
     const brainIdentity = await brainJson<Record<string, unknown>>(
       "/identity/recognize/dry-run",
@@ -2485,18 +2538,27 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     if (decision.decision === "requires_approval") {
       recordPendingApproval(action);
     }
+    const timelineEvent = recordMultimodalTimeline({
+      title: "Identity recognition dry-run",
+      summary: `Factors: ${requestedFactors.join(", ")}. No biometric capture was performed.`,
+      timestamp,
+      source: "system",
+      status: decision.decision === "deny" ? "blocked" : "remembered",
+      tags: ["identity", "recognition", ...requestedFactors],
+    });
     const hudEvent = {
       id: id("hud"),
       state: "recognizing",
       title: "Recognizing owner",
       summary: "Dry-run only. No biometric capture was performed.",
-      createdAt: now(),
+      createdAt: timestamp,
     };
-    events.publish("identity", { action, decision, hudEvent, brain: brainIdentity });
+    events.publish("identity", { action, decision, hudEvent, timelineEvent, brain: brainIdentity });
     sendJson(response, 200, {
       action,
       decision,
       hudEvent,
+      timelineEvent,
       captured: false,
       brain: brainIdentity,
     });
@@ -2566,7 +2628,17 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         )
       : session;
     status = { ...status, voiceSession: nextSession };
-    events.publish("audio", { voiceSession: nextSession });
+    const timelineEvent = toolsReady
+      ? recordMultimodalTimeline({
+          title: "Audio file transcribed",
+          summary: nextSession.transcript.at(-1)?.text ?? `STT accepted ${body.filePath ?? "local audio"}.`,
+          timestamp,
+          source: "system",
+          status: "remembered",
+          tags: ["voice", "stt", "file"],
+        })
+      : undefined;
+    events.publish("audio", { voiceSession: nextSession, timelineEvent });
     sendJson(response, 200, {
       voiceSession: nextSession,
       result: toolsReady
@@ -2575,6 +2647,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
             status: "missing-engine",
             message: brainResult?.message ?? "No local Whisper snapshot or whisper.cpp binary was found for transcription.",
           },
+      timelineEvent,
       brain: brainResult,
     });
     return;
@@ -2582,6 +2655,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "POST" && url.pathname === "/api/audio/tts") {
     const body = (await readBody(request)) as Partial<TtsRequest> & { agentId?: string; voiceProfileId?: string };
+    const timestamp = now();
     const requestedAgent = (status.agentSouls ?? []).find((agent) => agent.id === body.agentId || agent.name.toLowerCase() === body.agentId?.toLowerCase());
     const voiceProfile =
       (status.voiceProfiles ?? []).find((profile) => profile.id === body.voiceProfileId || profile.id === body.voiceId) ??
@@ -2629,8 +2703,16 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       voiceProfile,
       agent: requestedAgent ?? (status.agentSouls ?? []).find((agent) => agent.id === voiceProfile?.agentId),
     };
-    events.publish("audio", { tts: result });
-    sendJson(response, 200, { tts: result });
+    const timelineEvent = recordMultimodalTimeline({
+      title: "TTS request",
+      summary: `${result.engine}: ${String(body.text ?? "").slice(0, 180)}`,
+      timestamp,
+      source: "system",
+      status: result.status === "ready" ? "remembered" : "blocked",
+      tags: ["voice", "tts", result.engine],
+    });
+    events.publish("audio", { tts: result, timelineEvent });
+    sendJson(response, 200, { tts: result, timelineEvent });
     return;
   }
 
@@ -2832,13 +2914,22 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     if (requestRecord.decision.decision === "requires_approval") {
       recordPendingApproval(requestRecord.action);
     }
+    const timelineEvent = recordMultimodalTimeline({
+      title: "Vision request staged",
+      summary: `${requestRecord.mode}: ${requestRecord.target}. ${requestRecord.prompt}`,
+      timestamp: requestRecord.insight.createdAt,
+      source: "system",
+      status: requestRecord.decision.decision === "deny" ? "blocked" : "remembered",
+      tags: ["vision", requestRecord.mode],
+    });
     status = {
       ...status,
       visionInsights: [requestRecord.insight, ...(status.visionInsights ?? []).slice(0, 9)],
     };
-    events.publish("vision", { kind: "live-vision-request", request: requestRecord });
+    events.publish("vision", { kind: "live-vision-request", request: requestRecord, timelineEvent });
     sendJson(response, requestRecord.decision.decision === "deny" ? 403 : 202, {
       request: requestRecord,
+      timelineEvent,
       message: "Vision request recorded. No pixels, frames, or OCR text were captured.",
     });
     return;
