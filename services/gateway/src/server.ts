@@ -45,6 +45,7 @@ import {
   type PerformanceSnapshot,
   type PrivacyMode,
   type ReportSnapshot,
+  type RuntimeServiceId,
   type ScaleProfile,
   type TaskRun,
   type TaskProfile,
@@ -63,6 +64,7 @@ import { EventHub } from "./eventHub.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
+import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { buildSetupActionGroups } from "./setupActions.js";
@@ -1975,6 +1977,37 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/runtime/services") {
     sendJson(response, 200, { runtime: await buildRuntimeServicesStatus() });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/runtime/control/dry-run") {
+    const body = (await readBody(request)) as { control?: string; target?: string };
+    const control = String(body.control ?? "").trim();
+    if (!isRuntimeControlKind(control)) {
+      sendJson(response, 400, { error: "control must be start, stop, restart, or emergency-stop" });
+      return;
+    }
+    const rawTarget = String(body.target ?? "all").trim();
+    const target = (["all", "brain", "gateway", "dashboard", "hud-renderer", "electron-hud", "ollama"].includes(rawTarget)
+      ? rawTarget
+      : "all") as "all" | RuntimeServiceId;
+    const dryRun = createRuntimeControlDryRun({
+      id: id("runtime-control"),
+      control,
+      target,
+      createdAt: now(),
+      evaluate: (action) =>
+        evaluateActionPolicy({
+          action,
+          privacyMode: status.privacyMode,
+          allowedConnectors: getEnabledConnectorIds(),
+        }),
+    });
+    if (dryRun.decision.decision === "requires_approval") {
+      recordPendingApproval(dryRun.action);
+    }
+    events.publish("security", { runtimeControl: dryRun });
+    sendJson(response, dryRun.decision.decision === "deny" ? 403 : 200, { dryRun });
     return;
   }
 

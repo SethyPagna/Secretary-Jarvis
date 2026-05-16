@@ -809,6 +809,20 @@ export interface RuntimeServicesStatus {
   note: string;
 }
 
+export type RuntimeControlKind = "start" | "stop" | "restart" | "emergency-stop";
+
+export interface RuntimeControlDryRun {
+  id: string;
+  control: RuntimeControlKind;
+  target: "all" | RuntimeServiceId;
+  commandPreview: string;
+  reversible: boolean;
+  action: ActionRequest;
+  decision: PolicyDecision;
+  dataTouched: string[];
+  message: string;
+}
+
 export interface SystemAction {
   id: string;
   label: string;
