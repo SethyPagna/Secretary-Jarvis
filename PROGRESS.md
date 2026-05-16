@@ -174,7 +174,7 @@ Protocol:
 - [x] 21.5 Verify command capsule behavior with builds, UI tests, and runtime smoke checks - commit `40ef810`
 
 ## Phase 22 - Architecture And Runtime Hardening
-- [ ] 22.1 Add local architecture map endpoint
+- [x] 22.1 Add local architecture map endpoint - commit `fcb9e17`
 - [ ] 22.2 Add code health scanner
 - [ ] 22.3 Add startup/background readiness checks
 - [ ] 22.4 Add high-trust authority readiness notes
@@ -184,7 +184,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Implement Phase 22.1 local architecture map endpoint.
+Next task: Implement Phase 22.2 code health scanner.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
