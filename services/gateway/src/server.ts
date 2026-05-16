@@ -2885,6 +2885,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         category: connector.permissions.includes("post-social") ? "post-social" : "send-message",
         target: body.recipient ?? "unconfigured recipient",
         reason: "Social connector dry-run creates a draft only. Live sending remains approval-gated.",
+        connectorId,
         dataTouched: ["message draft", "recipient", "channel"],
       };
       const decision = evaluateActionPolicy({

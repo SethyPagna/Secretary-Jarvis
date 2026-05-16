@@ -491,7 +491,7 @@ export const seededStatus: JarvisStatus = {
       permissions: ["send-message", "post-social", "network"],
       dataTouched: ["messages", "contacts", "social posts"],
       approvalRequired: ["send-message", "post-social", "network"],
-      enabled: false,
+      enabled: true,
       kind: "social-outbox",
       credentialStatus: "not-required",
       rollback: "none",
