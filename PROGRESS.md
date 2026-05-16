@@ -59,7 +59,7 @@ Protocol:
 - [x] 5.5 Add go-back-in-time views - commit `049d3be`
 
 ## Phase 6 - AgentOS, Souls & Task Queue
-- [ ] 6.1 Define `packages/core/src/agents.ts` - soul files commit `fa6656f`, agents module missing
+- [x] 6.1 Define `packages/core/src/agents.ts` - commit `4a7c615`
 - [x] 6.2 Task queue types - implemented before tracker
 - [x] 6.3 Task queue endpoints - implemented before tracker
 - [ ] 6.4 Sentinel safety agent - partial policy engine exists
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `6.1 Define packages/core/src/agents.ts`.
+Next task: `6.4 Sentinel safety agent`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
