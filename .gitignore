@@ -17,5 +17,6 @@ vendor/reference/jarvis-opensource/
 *.sqlite-wal
 target/
 output/
+apps/hud/release/
 __pycache__/
 *.pyc

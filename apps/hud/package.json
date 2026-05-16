@@ -1,6 +1,8 @@
 {
   "name": "@jarvis/hud",
   "version": "0.1.0",
+  "description": "Secretary Jarvis local-first cinematic HUD shell.",
+  "author": "Secretary Jarvis",
   "private": true,
   "type": "module",
   "main": "dist-electron/main.js",
@@ -9,7 +11,40 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "dev": "npm run build:electron && vite --host 127.0.0.1 --port 5175",
     "start": "electron dist-electron/main.js",
-    "electron": "npm run build:electron && electron dist-electron/main.js"
+    "electron": "npm run build:electron && electron dist-electron/main.js",
+    "package": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder --win portable nsis"
+  },
+  "build": {
+    "appId": "com.secretaryjarvis.hud",
+    "productName": "Secretary Jarvis HUD",
+    "electronVersion": "39.2.7",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "dist-electron/main.js"
+    },
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Secretary Jarvis HUD"
+    }
   },
   "dependencies": {
     "@jarvis/core": "0.1.0",
@@ -24,6 +59,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.181.0",
-    "electron": "^39.2.7"
+    "electron": "^39.2.7",
+    "electron-builder": "^26.8.1"
   }
 }

@@ -17,6 +17,8 @@
     "dev:hud": "npm run dev -w @jarvis/hud",
     "dev:desktop": "npm run dev -w @jarvis/desktop",
     "start:hud": "npm run start -w @jarvis/hud",
+    "package:hud": "npm run package -w @jarvis/hud",
+    "dist:hud": "npm run dist -w @jarvis/hud",
     "dev:tauri": "npm run tauri:dev -w @jarvis/desktop",
     "start:gateway": "npm run start -w @jarvis/gateway",
     "doctor": "npm run doctor -w @jarvis/desktop && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",

@@ -2,7 +2,8 @@ import { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, shell } from "ele
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const HUD_URL = process.env.JARVIS_HUD_URL ?? "http://127.0.0.1:5175";
+const DEV_HUD_URL = "http://127.0.0.1:5175";
+const HUD_URL = process.env.JARVIS_HUD_URL;
 const DASHBOARD_URL = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:5174";
 const GATEWAY_URL = process.env.JARVIS_GATEWAY_URL ?? "http://127.0.0.1:4317";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -38,7 +39,13 @@ function createHudWindow(): BrowserWindow {
   });
 
   window.setAlwaysOnTop(true, "screen-saver");
-  void window.loadURL(HUD_URL);
+  if (HUD_URL) {
+    void window.loadURL(HUD_URL);
+  } else if (app.isPackaged) {
+    void window.loadFile(path.join(__dirname, "../dist/index.html"));
+  } else {
+    void window.loadURL(DEV_HUD_URL);
+  }
   window.on("closed", () => {
     hudWindow = null;
   });
