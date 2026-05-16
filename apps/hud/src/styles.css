@@ -1834,7 +1834,7 @@ button {
 }
 
 .workflow-generated-card {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   padding: 12px;
   border-color: rgba(0, 255, 136, 0.26);
@@ -1859,6 +1859,20 @@ button {
 .workflow-generated-card small {
   color: rgba(255, 255, 255, 0.58);
   font-size: 12px;
+}
+
+.workflow-proposal-lock {
+  min-width: 92px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 212, 90, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 212, 90, 0.055);
+}
+
+.workflow-proposal-lock b {
+  color: #ffd45a;
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
 }
 
 .workflow-card {
@@ -1927,6 +1941,40 @@ button {
 
 .workflow-title-row button:disabled {
   opacity: 0.56;
+}
+
+.workflow-manager-note {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.workflow-manager-note span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(0, 229, 255, 0.13);
+  border-radius: 12px;
+  background: rgba(0, 229, 255, 0.04);
+}
+
+.workflow-manager-note small,
+.workflow-manager-note strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-manager-note small {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+}
+
+.workflow-manager-note strong {
+  color: var(--hud-cyan);
+  font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
 }
 
 .workflow-risk-strip {
@@ -2246,6 +2294,11 @@ button {
   .device-grid,
   .setting-list,
   .workflow-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-generated-card,
+  .workflow-manager-note {
     grid-template-columns: 1fr;
   }
 }

@@ -454,6 +454,124 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().method() === "GET" && route.request().url().endsWith("/api/workflows")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          workflows: [
+            {
+              id: "workflow-generated-ui",
+              name: "Generated inbox triage",
+              description: "Drafted automation proposal for local review.",
+              version: 1,
+              owner: "generated",
+              enabled: false,
+              taskProfile: "daily-assistant",
+              tags: ["generated", "approval"],
+              steps: [
+                {
+                  id: "step-review",
+                  kind: "approval",
+                  title: "Owner approval",
+                  summary: "Review generated workflow before enabling.",
+                  requiresApproval: true,
+                  reversible: false,
+                  expectedInputs: [],
+                  expectedOutputs: ["approval"],
+                },
+              ],
+            },
+          ],
+          runs: [],
+          dryRuns: [
+            {
+              workflowId: "workflow-generated-ui",
+              risk: "approval-required",
+              runnable: true,
+              approvalStepIds: ["step-review"],
+              blockedStepIds: [],
+              validationIssues: [],
+              steps: [
+                {
+                  stepId: "step-review",
+                  title: "Owner approval",
+                  kind: "approval",
+                  risk: "approval-required",
+                  decision: "requires_approval",
+                  note: "Owner approval required.",
+                },
+              ],
+            },
+          ],
+        }),
+      });
+      return;
+    }
+    if (route.request().method() === "POST" && route.request().url().endsWith("/api/workflows/generate")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          workflow: {
+            id: "workflow-generated-proposal",
+            name: "Generated morning brief",
+            description: "Jarvis drafted a brief workflow for approval.",
+            version: 1,
+            owner: "generated",
+            enabled: false,
+            taskProfile: "daily-assistant",
+            tags: ["generated", "brief"],
+            steps: [
+              {
+                id: "step-owner-approval",
+                kind: "approval",
+                title: "Owner approval",
+                summary: "Owner reviews this automation before enabling.",
+                requiresApproval: true,
+                reversible: false,
+                expectedInputs: [],
+                expectedOutputs: ["approval"],
+              },
+            ],
+          },
+          dryRun: {
+            workflowId: "workflow-generated-proposal",
+            risk: "approval-required",
+            runnable: true,
+            approvalStepIds: ["step-owner-approval"],
+            blockedStepIds: [],
+            validationIssues: [],
+            steps: [
+              {
+                stepId: "step-owner-approval",
+                title: "Owner approval",
+                kind: "approval",
+                risk: "approval-required",
+                decision: "requires_approval",
+                note: "Owner approval required.",
+              },
+            ],
+          },
+          note: "Generated locally as a disabled draft until approved.",
+        }),
+      });
+      return;
+    }
+    if (route.request().method() === "POST" && route.request().url().endsWith("/api/workflows")) {
+      const payload = route.request().postDataJSON() as { workflow?: { enabled?: boolean; owner?: string } };
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: true,
+          saved: true,
+          workflow: payload.workflow,
+          approvalGated: payload.workflow?.owner === "generated" && payload.workflow.enabled === false,
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().endsWith("/api/runtime/control/dry-run")) {
       const payload = route.request().postDataJSON() as { control?: string };
       await route.fulfill({
@@ -711,6 +829,26 @@ test("text command closes into a compact command capsule", async ({ page }) => {
   await expect(capsule).toContainText("Queued");
   await expect(capsule).toContainText("Check status");
   await expect(page.getByRole("dialog", { name: "Jarvis text panel" })).toHaveCount(0);
+});
+
+test("workflow console keeps generated automations approval-gated", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Jarvis controls" }).click();
+  await page.getByTitle("Workflows").click();
+
+  const panel = page.getByRole("dialog", { name: "Jarvis workflows panel" });
+  await expect(panel.getByLabel("Workflow list")).toContainText("Generated inbox triage");
+  await expect(panel.getByLabel("Workflow manager delegation")).toContainText("Jarvis");
+  await expect(panel.getByLabel("Workflow manager delegation")).toContainText("Sentinel");
+  await expect(panel.getByRole("button", { name: "Approval needed", exact: true })).toBeDisabled();
+
+  await panel.getByLabel("Describe a workflow").fill("Create my morning brief");
+  await panel.getByRole("button", { name: "Generate", exact: true }).click();
+  await expect(panel.getByLabel("Generated workflow proposal")).toContainText("Generated morning brief");
+  await expect(panel.getByLabel("Generated workflow approval state")).toContainText("owner approval");
+  await expect(panel.getByLabel("Generated workflow approval state")).toContainText("1 gated");
+  await panel.getByRole("button", { name: "Save draft" }).click();
+  await expect(panel.getByLabel("Workflow list")).toContainText("Generated inbox triage");
 });
 
 test("mobile HUD avoids horizontal overflow with open radial menu and panel", async ({ page }) => {

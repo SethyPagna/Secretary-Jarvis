@@ -77,7 +77,7 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
     const response = await fetch(`${apiBaseUrl}/api/workflows`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ workflow: { ...generated.workflow, enabled: true } }),
+      body: JSON.stringify({ workflow: { ...generated.workflow, owner: "generated", enabled: false } }),
     });
     if (response.ok) {
       setActiveId(generated.workflow.id);
@@ -124,9 +124,13 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
             <small>{generated.note}</small>
           </span>
           <Chip label={generated.dryRun.risk} tone={generated.dryRun.risk} />
+          <span className="workflow-proposal-lock" aria-label="Generated workflow approval state">
+            <small>owner approval</small>
+            <b>{generated.dryRun.approvalStepIds.length} gated</b>
+          </span>
           <button type="button" onClick={() => void saveGeneratedWorkflow()} disabled={savingGenerated}>
             <Save size={14} aria-hidden="true" />
-            {savingGenerated ? "Saving" : "Save"}
+            {savingGenerated ? "Saving" : "Save draft"}
           </button>
         </div>
       )}
@@ -143,7 +147,7 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
               >
                 <span>
                   <b>{workflow.name}</b>
-                  <small>{workflow.steps.length} steps</small>
+                  <small>{workflow.enabled ? `${workflow.steps.length} steps` : "approval needed"}</small>
                 </span>
                 <RiskIcon risk={dryRun?.risk ?? "safe"} />
               </button>
@@ -158,10 +162,24 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
                   <b>{activeWorkflow.name}</b>
                   <small>{activeWorkflow.tags.join(" / ")}</small>
                 </span>
-                <button type="button" onClick={() => void startWorkflow(activeWorkflow.id)} disabled={busyId === activeWorkflow.id}>
+                <button type="button" onClick={() => void startWorkflow(activeWorkflow.id)} disabled={busyId === activeWorkflow.id || !activeWorkflow.enabled}>
                   <Play size={15} />
-                  {busyId === activeWorkflow.id ? "Queueing" : "Queue"}
+                  {activeWorkflow.enabled ? (busyId === activeWorkflow.id ? "Queueing" : "Queue") : "Approval needed"}
                 </button>
+              </div>
+              <div className="workflow-manager-note" aria-label="Workflow manager delegation">
+                <span>
+                  <small>Manager</small>
+                  <strong>Jarvis</strong>
+                </span>
+                <span>
+                  <small>Reviewer</small>
+                  <strong>Sentinel</strong>
+                </span>
+                <span>
+                  <small>State</small>
+                  <strong>{activeWorkflow.enabled ? "enabled" : "draft"}</strong>
+                </span>
               </div>
               <div className="workflow-risk-strip">
                 <Chip label={activeDryRun?.risk ?? "safe"} tone={activeDryRun?.risk ?? "safe"} />
