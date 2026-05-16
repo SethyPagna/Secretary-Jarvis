@@ -1,6 +1,7 @@
 export * from "./types.js";
 export * from "./modelRegistry.js";
 export * from "./modelInstall.js";
+export * from "./memory.js";
 export * from "./policy.js";
 export * from "./seed.js";
 export * from "./social.js";
