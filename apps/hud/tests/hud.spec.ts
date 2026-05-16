@@ -59,6 +59,38 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/setup/action-groups")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          groups: [
+            {
+              id: "setup-needed-feature-downloads",
+              label: "Needed Feature Downloads",
+              kind: "needed-feature-downloads",
+              summary: "3 needed",
+              items: [
+                { id: "piper", label: "Piper", status: "needed" },
+                { id: "ocr", label: "OCR", status: "needed" },
+                { id: "maps", label: "Maps", status: "optional" },
+              ],
+            },
+            {
+              id: "setup-future-scaling-models",
+              label: "Future Scaling Models",
+              kind: "future-scaling-models",
+              summary: "2 future",
+              items: [
+                { id: "deepseek", label: "DeepSeek", status: "future" },
+                { id: "media", label: "Media Scale", status: "future" },
+              ],
+            },
+          ],
+        }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -146,4 +178,14 @@ test("mobile HUD avoids horizontal overflow with open radial menu and panel", as
   await expect(page.getByRole("dialog", { name: "Jarvis devices panel" })).toBeVisible();
   const panelOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(panelOverflow).toBeLessThanOrEqual(1);
+});
+
+test("settings separates feature downloads from future scaling", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Jarvis controls" }).click();
+  await page.getByTitle("Settings").click();
+
+  const panel = page.getByRole("dialog", { name: "Jarvis settings panel" });
+  await expect(panel.getByLabel("Setup action groups")).toContainText("2 needed");
+  await expect(panel.getByLabel("Setup action groups")).toContainText("2 future");
 });

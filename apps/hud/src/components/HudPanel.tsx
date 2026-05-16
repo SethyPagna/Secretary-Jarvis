@@ -1,6 +1,6 @@
 import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { JarvisStatus, RuntimeConstellation, VoiceRuntimeReadiness } from "@jarvis/core";
+import type { JarvisStatus, RuntimeConstellation, SetupActionGroup, VoiceRuntimeReadiness } from "@jarvis/core";
 import { WorkflowConsole } from "./WorkflowConsole";
 import type { HudPanel as HudPanelName } from "../types";
 
@@ -20,6 +20,7 @@ export function HudPanel({
   const [text, setText] = useState("");
   const [constellation, setConstellation] = useState<RuntimeConstellation | null>(null);
   const [voiceReadiness, setVoiceReadiness] = useState<VoiceRuntimeReadiness | null>(null);
+  const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
@@ -52,6 +53,24 @@ export function HudPanel({
       .then((payload: VoiceReadinessResponse | undefined) => {
         if (!cancelled && payload?.readiness) {
           setVoiceReadiness(payload.readiness);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, panel]);
+
+  useEffect(() => {
+    if (panel !== "settings") {
+      return;
+    }
+    let cancelled = false;
+    fetch(`${apiBaseUrl}/api/setup/action-groups`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: SetupActionGroupsResponse | undefined) => {
+        if (!cancelled) {
+          setSetupGroups(payload?.groups ?? []);
         }
       })
       .catch(() => undefined);
@@ -173,6 +192,14 @@ export function HudPanel({
             <span>Audio <b>local</b></span>
             <span>Theme <b>dark</b></span>
           </div>
+          <div className="setup-groups" aria-label="Setup action groups">
+            {setupGroups.map((group) => (
+              <span key={group.id}>
+                <small>{group.label}</small>
+                <strong>{group.kind === "needed-feature-downloads" ? `${group.items.filter((item) => item.status === "needed").length} needed` : `${group.items.length} future`}</strong>
+              </span>
+            ))}
+          </div>
         </>
       )}
     </section>
@@ -185,6 +212,10 @@ interface RuntimeConstellationResponse {
 
 interface VoiceReadinessResponse {
   readiness?: VoiceRuntimeReadiness;
+}
+
+interface SetupActionGroupsResponse {
+  groups?: SetupActionGroup[];
 }
 
 function Widget({ label, value }: { label: string; value: string }) {

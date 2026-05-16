@@ -63,6 +63,7 @@ import { EventHub } from "./eventHub.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
+import { buildSetupActionGroups } from "./setupActions.js";
 import { JarvisStore } from "./store.js";
 import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
 import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
@@ -2041,6 +2042,17 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     sendJson(response, 200, {
       downloads: hydrateFeatureDownloads(),
       note: "These are feature dependencies Jarvis is wired to use after you download/install them. They are separate from future scaling models.",
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/setup/action-groups") {
+    sendJson(response, 200, {
+      groups: buildSetupActionGroups({
+        neededFeatureDownloads: hydrateFeatureDownloads(),
+        futureScalingModels,
+      }),
+      note: "Feature dependencies are actionable setup items. Future scaling models are optional later switch targets.",
     });
     return;
   }

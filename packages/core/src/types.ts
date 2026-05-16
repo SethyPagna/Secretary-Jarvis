@@ -749,6 +749,24 @@ export interface RuntimeConstellation {
   note: string;
 }
 
+export interface SetupActionItem {
+  id: string;
+  label: string;
+  status: "detected" | "needed" | "optional" | "future" | "disabled";
+  purpose: string;
+  expectedPath?: string;
+  actionLabel: string;
+  approvalRequired: boolean;
+}
+
+export interface SetupActionGroup {
+  id: string;
+  label: string;
+  kind: "needed-feature-downloads" | "future-scaling-models";
+  summary: string;
+  items: SetupActionItem[];
+}
+
 export interface SystemAction {
   id: string;
   label: string;
