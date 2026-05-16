@@ -184,7 +184,7 @@ Protocol:
 
 ## Phase 23 - Route And UI Code Health Refactor
 - [x] 23.1 Extract health/architecture/setup route handlers from the gateway server - commit `b38476d`
-- [ ] 23.2 Extract model/runtime/security route handlers from the gateway server - in progress; runtime summary routes extracted in commit `54ccab3`
+- [ ] 23.2 Extract model/runtime/security route handlers from the gateway server - in progress; runtime summary routes extracted in commit `54ccab3`; model/setup catalog routes extracted in commit `0cc2135`
 - [ ] 23.3 Consolidate repeated HUD compact-card styles
 - [ ] 23.4 Add HUD route-level code splitting for heavy panels
 - [ ] 23.5 Verify refactor with gateway tests, HUD tests, builds, and runtime smoke checks
