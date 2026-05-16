@@ -94,7 +94,7 @@ Protocol:
 - [x] 10.4 Graceful tray/service stop - commit `d511c60`
 
 ## Phase 11 - Full Test Suite & Polish
-- [ ] 11.1 Model tests - partial
+- [x] 11.1 Model tests - commit `8e51ea9`
 - [ ] 11.2 Voice tests - partial
 - [ ] 11.3 Vision tests
 - [ ] 11.4 Memory/undo tests - partial
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `11.1 Model tests`.
+Next task: `11.2 Voice tests`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
