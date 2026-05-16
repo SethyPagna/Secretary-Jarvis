@@ -1,5 +1,7 @@
 import { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, shell } from "electron";
+import { existsSync } from "node:fs";
 import path from "node:path";
+import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const DEV_HUD_URL = "http://127.0.0.1:5175";
@@ -11,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let hudWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 
-type TrayActionType = "open-hud" | "open-dashboard" | "mute-mic" | "pause-agents" | "emergency-stop";
+type TrayActionType = "open-hud" | "open-dashboard" | "mute-mic" | "pause-agents" | "emergency-stop" | "stop-services";
 
 interface TrayAction {
   type: TrayActionType;
@@ -106,6 +108,12 @@ async function runTrayAction(type: TrayActionType): Promise<void> {
       label: "Emergency Stop",
       state: "error",
       message: "Emergency stop sent. Queue and capture are being halted."
+    },
+    "stop-services": {
+      type,
+      label: "Stop Services",
+      state: "approval",
+      message: "Stopping local Jarvis services gracefully."
     }
   };
 
@@ -141,7 +149,34 @@ async function runTrayAction(type: TrayActionType): Promise<void> {
       reason: "Emergency stop from HUD tray."
     });
     emitTrayAction({ ...action, message: ok ? "Emergency stop complete. Logs and checkpoints preserved." : "Gateway offline. Use local controls to stop services." });
+    return;
   }
+
+  if (type === "stop-services") {
+    const ok = await stopLocalServices();
+    emitTrayAction({ ...action, message: ok ? "Stop request sent to local services." : "Stop script was unavailable; gateway emergency stop was attempted." });
+  }
+}
+
+async function stopLocalServices(): Promise<boolean> {
+  await postGateway("/api/emergency-stop", {
+    reason: "Graceful shutdown from HUD tray."
+  });
+  const stopScript = path.resolve(__dirname, "../../../scripts/stop-jarvis.ps1");
+  if (!existsSync(stopScript)) {
+    return false;
+  }
+  const child = spawn(
+    "powershell.exe",
+    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", stopScript],
+    {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true
+    }
+  );
+  child.unref();
+  return true;
 }
 
 function createTray(): void {
@@ -155,8 +190,9 @@ function createTray(): void {
       { label: "Mute Mic", click: () => void runTrayAction("mute-mic") },
       { label: "Pause Agents", click: () => void runTrayAction("pause-agents") },
       { label: "Emergency Stop", click: () => void runTrayAction("emergency-stop") },
+      { label: "Stop Local Services", click: () => void runTrayAction("stop-services") },
       { type: "separator" },
-      { label: "Quit", click: () => app.quit() }
+      { label: "Quit", click: () => void stopLocalServices().finally(() => app.quit()) }
     ])
   );
   tray.on("click", () => void runTrayAction("open-hud"));

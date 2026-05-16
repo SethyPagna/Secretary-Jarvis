@@ -13,7 +13,9 @@ $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $PSScriptRoot
 $LogRoot = Join-Path $Root "data\logs"
+$RuntimeRoot = Join-Path $Root "data\runtime"
 New-Item -ItemType Directory -Force -Path $LogRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $RuntimeRoot | Out-Null
 
 function Add-SessionPath {
   $paths = @(
@@ -37,20 +39,22 @@ function Start-JarvisProcess {
     return
   }
 
+  $safeName = $Name.ToLowerInvariant().Replace(" ", "-")
   $existing = Get-CimInstance Win32_Process | Where-Object {
     $_.CommandLine -and $_.CommandLine.Contains($Arguments)
   } | Select-Object -First 1
 
   if ($existing) {
     Write-Host "$Name already running (PID $($existing.ProcessId))."
+    Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $existing.ProcessId
     return
   }
 
-  $safeName = $Name.ToLowerInvariant().Replace(" ", "-")
   $stdout = Join-Path $LogRoot "$safeName.out.log"
   $stderr = Join-Path $LogRoot "$safeName.err.log"
-  Start-Process -FilePath $FilePath -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
-  Write-Host "Started $Name."
+  $process = Start-Process -FilePath $FilePath -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
+  Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $process.Id
+  Write-Host "Started $Name (PID $($process.Id))."
 }
 
 Add-SessionPath
@@ -61,11 +65,13 @@ if (Get-Command ollama -ErrorAction SilentlyContinue) {
     if ($CheckOnly) {
       Write-Host "Would start Ollama service."
     } else {
-      Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
-      Write-Host "Started Ollama service."
+      $ollamaProcess = Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden -PassThru
+      Set-Content -LiteralPath (Join-Path $RuntimeRoot "ollama.pid") -Value $ollamaProcess.Id
+      Write-Host "Started Ollama service (PID $($ollamaProcess.Id))."
     }
   } else {
     Write-Host "Ollama already running."
+    Set-Content -LiteralPath (Join-Path $RuntimeRoot "ollama.pid") -Value $ollama.ProcessId
   }
 } else {
   Write-Host "Ollama is not on PATH. Install/open Ollama before local LLM calls."
