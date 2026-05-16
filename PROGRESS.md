@@ -117,9 +117,16 @@ Protocol:
 - [x] 13.4 Show latest runtime smoke status in the HUD/dashboard - commit `075043f`
 - [x] 13.5 Verify the constellation UI across desktop and mobile - commit `ff3ca07`
 
+## Phase 14 - Live Runtime Operation
+- [ ] 14.1 Add read-only live service heartbeat endpoint for Brain, Gateway, HUD, Dashboard, and Ollama
+- [ ] 14.2 Surface live service heartbeats in the HUD without clutter
+- [ ] 14.3 Add approval-gated runtime control dry-runs for start, stop, restart, and emergency stop
+- [ ] 14.4 Add live event health summary for queue, approvals, and recent errors
+- [ ] 14.5 Verify live runtime operation across tests and smoke checks
+
 ## Current Priority
 
-Next task: Define Phase 14 for deeper live runtime operation, or continue with the next requested Jarvis refinement.
+Next task: `14.1 Add read-only live service heartbeat endpoint for Brain, Gateway, HUD, Dashboard, and Ollama`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
