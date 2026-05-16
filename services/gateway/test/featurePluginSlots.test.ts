@@ -14,11 +14,15 @@ describe("feature plugin slot manifest", () => {
       downloads,
       generatedAt: "2026-05-16T00:00:00.000Z",
       pathExists: (path) => path.includes("piper") || path.includes("yolo"),
-      listFiles: (path) => (path.includes("piper") ? ["C:/jarvis/tools/piper/piper.exe"] : []),
+      listFiles: (path) =>
+        path.includes("piper")
+          ? ["C:/jarvis/tools/piper/piper.exe", "C:/jarvis/tools/piper/voices/jarvis.onnx", "C:/jarvis/tools/piper/voices/jarvis.json"]
+          : [],
     });
 
     expect(manifest.summary).toEqual({ ready: 1, partial: 1, missing: 0, optional: 1 });
     expect(manifest.slots.find((slot) => slot.id === "feature-piper")?.validationHint).toContain("piper.exe");
+    expect(manifest.slots.find((slot) => slot.id === "feature-piper")?.checks.every((check) => check.passed)).toBe(true);
     expect(manifest.slots.find((slot) => slot.id === "feature-yolo")?.status).toBe("partial");
     expect(manifest.slots.find((slot) => slot.id === "feature-map-data")?.status).toBe("optional");
     expect(manifest.note).toContain("does not download");
