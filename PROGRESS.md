@@ -224,7 +224,7 @@ Protocol:
 - [x] 29.2 Surface interaction health in HUD Settings - commit `1ac3bda`
 - [x] 29.3 Polish workflow console owner-approved automation state - commit `216ccb0`
 - [x] 29.4 Add run/wake/use flow documentation - commit `70e52f8`
-- [x] 29.5 Verify interaction health with tests, builds, startup check-only scripts, and runtime smoke - pending verification doc commit
+- [x] 29.5 Verify interaction health with tests, builds, startup check-only scripts, and runtime smoke - commit `abff4e4`
 
 ## Current Priority
 
