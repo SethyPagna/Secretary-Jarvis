@@ -178,13 +178,13 @@ Protocol:
 - [x] 22.2 Add code health scanner - commit `fefeda3`
 - [x] 22.3 Add startup/background readiness checks - commit `99adf3d`
 - [x] 22.4 Add high-trust authority readiness notes - commit `efc99ca`
-- [ ] 22.5 Surface architecture/startup/code-health summaries in HUD Settings
+- [x] 22.5 Surface architecture/startup/code-health summaries in HUD Settings - commit `5c07652`
 - [ ] 22.6 Add architecture review and optimization documentation
 - [ ] 22.7 Verify architecture hardening with tests, builds, and runtime smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 22.5 HUD Settings summaries for architecture, startup, authority, and code health.
+Next task: Implement Phase 22.6 architecture review and optimization documentation.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
