@@ -49,11 +49,10 @@ export async function buildRuntimeServicesStatus(options: RuntimeServicesOptions
 }
 
 function defaultServices(): ServiceDefinition[] {
-  const gatewayPort = process.env.JARVIS_GATEWAY_PORT ?? "4317";
   const brainPort = process.env.JARVIS_BRAIN_PORT ?? "5000";
   return [
     { id: "brain", label: "Python Brain", pidFile: "python-brain.pid", url: `http://127.0.0.1:${brainPort}/health` },
-    { id: "gateway", label: "TypeScript Gateway", pidFile: "typescript-gateway.pid", url: `http://127.0.0.1:${gatewayPort}/api/status` },
+    { id: "gateway", label: "TypeScript Gateway", pidFile: "typescript-gateway.pid" },
     { id: "dashboard", label: "Dashboard", pidFile: "dashboard.pid", url: "http://127.0.0.1:5174/" },
     { id: "hud-renderer", label: "HUD Renderer", pidFile: "hud-renderer.pid", url: "http://127.0.0.1:5175/" },
     { id: "electron-hud", label: "Electron HUD", pidFile: "electron-hud.pid" },
@@ -74,7 +73,7 @@ async function heartbeatForService(
   const pid = service.pidFile ? options.readPid(join(options.runtimeRoot, service.pidFile)) : undefined;
   const pidAlive = pid ? options.pidAlive(pid) : false;
   const httpOk = service.url ? await options.httpProbe(service.url) : false;
-  const status = httpOk ? "online" : pidAlive ? "degraded" : service.pidFile || service.url ? "offline" : "unknown";
+  const status = httpOk ? "online" : pidAlive && !service.url ? "online" : pidAlive ? "degraded" : service.pidFile || service.url ? "offline" : "unknown";
   return {
     id: service.id,
     label: service.label,
@@ -84,8 +83,10 @@ async function heartbeatForService(
     url: service.url,
     httpOk,
     checkedAt: options.checkedAt,
-    detail: httpOk
+  detail: httpOk
       ? "HTTP heartbeat responded."
+      : pidAlive && !service.url
+        ? "Process heartbeat is alive."
       : pidAlive
         ? "Process is present, but the HTTP heartbeat did not respond."
         : "No live heartbeat detected.",

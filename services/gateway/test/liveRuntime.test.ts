@@ -36,4 +36,24 @@ describe("live runtime service heartbeats", () => {
     expect(status.services.map((service) => service.status)).toEqual(["online", "degraded", "offline"]);
     expect(status.note).toContain("Read-only");
   });
+
+  it("treats non-HTTP desktop app processes as online when their PID is alive", async () => {
+    mkdirSync(tempRoot, { recursive: true });
+    writeFileSync(join(tempRoot, "electron.pid"), "303");
+
+    const status = await buildRuntimeServicesStatus({
+      runtimeRoot: tempRoot,
+      now: () => "2026-05-16T00:00:00.000Z",
+      pidAlive: (pid) => pid === 303,
+      services: [
+        { id: "electron-hud", label: "Electron HUD", pidFile: "electron.pid" },
+      ],
+    });
+
+    expect(status.summary).toMatchObject({ online: 1, degraded: 0, offline: 0, unknown: 0 });
+    expect(status.services[0]).toMatchObject({
+      status: "online",
+      detail: "Process heartbeat is alive.",
+    });
+  });
 });

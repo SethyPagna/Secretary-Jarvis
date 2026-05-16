@@ -46,6 +46,7 @@ interface TrayAction {
 
 function createHudWindow(): BrowserWindow {
   const desktopMode = WINDOW_MODE === "desktop";
+  let revealed = false;
   logElectron(`creating-window mode=${WINDOW_MODE} hudMode=${HUD_MODE} cwd=${process.cwd()}`);
   const window = new BrowserWindow({
     width: desktopMode ? 1180 : undefined,
@@ -76,6 +77,19 @@ function createHudWindow(): BrowserWindow {
       preload: path.join(__dirname, "preload.js")
     }
   });
+  const revealWindow = (reason: string) => {
+    if (revealed) {
+      return;
+    }
+    revealed = true;
+    logElectron(reason);
+    if (START_MINIMIZED) {
+      window.hide();
+      return;
+    }
+    window.show();
+    window.focus();
+  };
 
   if (desktopMode) {
     window.setMenuBarVisibility(false);
@@ -94,13 +108,11 @@ function createHudWindow(): BrowserWindow {
     void window.loadURL(DEV_HUD_URL).then(() => logElectron(`loaded-dev-url ${DEV_HUD_URL}`)).catch((error) => logElectron(`load-dev-error ${String(error)}`));
   }
   window.once("ready-to-show", () => {
-    logElectron("ready-to-show");
-    if (START_MINIMIZED) {
-      window.hide();
-      return;
-    }
-    window.show();
-    window.focus();
+    revealWindow("ready-to-show");
+  });
+  window.webContents.on("did-finish-load", () => {
+    logElectron("did-finish-load");
+    setTimeout(() => revealWindow("did-finish-load-fallback"), 250);
   });
   window.webContents.on("render-process-gone", (_event, details) => logElectron(`render-process-gone ${details.reason}`));
   window.webContents.on("did-fail-load", (_event, code, description) => logElectron(`did-fail-load ${code} ${description}`));

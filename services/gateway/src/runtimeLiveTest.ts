@@ -305,7 +305,7 @@ function electronHeartbeatCheck(checks: RuntimeLiveTestCheck[], root: string): s
   try {
     const log = readFileSync(logPath, "utf8");
     const lines = log.trim().split(/\r?\n/).slice(-30);
-    const readyLine = [...lines].reverse().find((line) => line.includes("ready-to-show"));
+    const readyLine = [...lines].reverse().find((line) => line.includes("ready-to-show") || line.includes("did-finish-load-fallback"));
     const crashedAfterReady = readyLine ? lines.slice(lines.indexOf(readyLine) + 1).some((line) => line.includes("render-process-gone crashed")) : false;
     const ok = Boolean(readyLine) && !crashedAfterReady;
     checks.push({
