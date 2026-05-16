@@ -115,11 +115,11 @@ Protocol:
 - [x] 13.2 Surface the runtime constellation in the HUD dashboard without text stuffing - commit `a8e57cd`
 - [x] 13.3 Add grouped setup actions that separate needed feature downloads from future scaling models - commit `d2fde5a`
 - [x] 13.4 Show latest runtime smoke status in the HUD/dashboard - commit `075043f`
-- [ ] 13.5 Verify the constellation UI across desktop and mobile
+- [x] 13.5 Verify the constellation UI across desktop and mobile - commit `ff3ca07`
 
 ## Current Priority
 
-Next task: `13.5 Verify the constellation UI across desktop and mobile`.
+Next task: Define Phase 14 for deeper live runtime operation, or continue with the next requested Jarvis refinement.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
