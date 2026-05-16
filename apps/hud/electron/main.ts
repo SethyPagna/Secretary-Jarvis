@@ -8,6 +8,7 @@ const DEV_HUD_URL = "http://127.0.0.1:5175";
 const HUD_URL = process.env.JARVIS_HUD_URL;
 const HUD_MODE = process.env.JARVIS_HUD_MODE ?? "dev";
 const WINDOW_MODE = process.env.JARVIS_WINDOW_MODE ?? (HUD_MODE === "app" ? "desktop" : "overlay");
+const START_MINIMIZED = process.env.JARVIS_START_MINIMIZED === "1";
 const DASHBOARD_URL = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:5174";
 const GATEWAY_URL = process.env.JARVIS_GATEWAY_URL ?? "http://127.0.0.1:4317";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -26,12 +27,20 @@ function logElectron(message: string): void {
   }
 }
 
-type TrayActionType = "open-hud" | "open-dashboard" | "mute-mic" | "pause-agents" | "emergency-stop" | "stop-services";
+type TrayActionType =
+  | "open-hud"
+  | "open-dashboard"
+  | "mute-mic"
+  | "pause-agents"
+  | "emergency-stop"
+  | "stop-services"
+  | "restart-services"
+  | "live-test";
 
 interface TrayAction {
   type: TrayActionType;
   label: string;
-  state: "wake" | "approval" | "error";
+  state: "wake" | "planning" | "approval" | "error";
   message: string;
 }
 
@@ -78,6 +87,10 @@ function createHudWindow(): BrowserWindow {
   }
   window.once("ready-to-show", () => {
     logElectron("ready-to-show");
+    if (START_MINIMIZED) {
+      window.hide();
+      return;
+    }
     window.show();
     window.focus();
   });
@@ -149,7 +162,19 @@ async function runTrayAction(type: TrayActionType): Promise<void> {
       type,
       label: "Stop Services",
       state: "approval",
-      message: "Stopping local Jarvis services gracefully."
+      message: "Stopping Jarvis services. Ollama stays available."
+    },
+    "restart-services": {
+      type,
+      label: "Restart Services",
+      state: "approval",
+      message: "Restarting Jarvis services with a clean supervisor pass."
+    },
+    "live-test": {
+      type,
+      label: "Live Test",
+      state: "planning",
+      message: "Running production live test."
     }
   };
 
@@ -189,22 +214,35 @@ async function runTrayAction(type: TrayActionType): Promise<void> {
   }
 
   if (type === "stop-services") {
-    const ok = await stopLocalServices();
-    emitTrayAction({ ...action, message: ok ? "Stop request sent to local services." : "Stop script was unavailable; gateway emergency stop was attempted." });
+    const ok = await runRuntimeSupervisor("Stop");
+    emitTrayAction({ ...action, message: ok ? "Stop request sent to local services." : "Runtime supervisor was unavailable." });
+  }
+
+  if (type === "restart-services") {
+    const ok = await runRuntimeSupervisor("Restart");
+    emitTrayAction({ ...action, message: ok ? "Restart request sent to local services." : "Restart script was unavailable." });
+  }
+
+  if (type === "live-test") {
+    const ok = await postGateway("/api/runtime/live-test", {
+      source: "electron-tray"
+    });
+    emitTrayAction({ ...action, message: ok ? "Production live test completed." : "Live test could not complete." });
   }
 }
 
 async function stopLocalServices(): Promise<boolean> {
-  await postGateway("/api/emergency-stop", {
-    reason: "Graceful shutdown from HUD tray."
-  });
-  const stopScript = path.resolve(__dirname, "../../../scripts/stop-jarvis.ps1");
-  if (!existsSync(stopScript)) {
+  return runRuntimeSupervisor("Stop");
+}
+
+async function runRuntimeSupervisor(action: "Stop" | "Restart"): Promise<boolean> {
+  const supervisor = path.resolve(__dirname, "../../../scripts/jarvis-runtime.ps1");
+  if (!existsSync(supervisor)) {
     return false;
   }
   const child = spawn(
     "powershell.exe",
-    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", stopScript],
+    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", supervisor, "-Action", action],
     {
       detached: true,
       stdio: "ignore",
@@ -225,6 +263,7 @@ function createTray(): void {
       { type: "separator" },
       { label: "Mute Mic", click: () => void runTrayAction("mute-mic") },
       { label: "Pause Agents", click: () => void runTrayAction("pause-agents") },
+      { label: "Run Live Test", click: () => void runTrayAction("live-test") },
       { label: "Emergency Stop", click: () => void runTrayAction("emergency-stop") },
       { label: "Stop Local Services", click: () => void runTrayAction("stop-services") },
       { type: "separator" },

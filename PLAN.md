@@ -1008,3 +1008,16 @@ Smartphone, under 768px:
 - Thin neon borders for active elements.
 - Dark monospace font for data.
 - Orb is always visible and acts as Jarvis' face and launcher.
+
+## Extension Phase 37 - Production Runtime Supervisor, Live Test, And App-Controlled Shutdown
+
+Goal: Make Jarvis operate as one mature Windows app rather than separate run scripts and localhost pages.
+
+Tasks:
+- 37.1 Add canonical `scripts/jarvis-runtime.ps1` with `Start`, `Stop`, `Restart`, `Verify`, `LiveTest`, `RegisterStartup`, `UnregisterStartup`, and `Status`.
+- 37.2 Keep legacy `.cmd` launchers and `jarvis-control.ps1` as thin compatibility wrappers around the supervisor.
+- 37.3 Add `POST /api/runtime/live-test` and `GET /api/runtime/live-test/latest`; persist results to `data/smoke/runtime-live-latest.json`.
+- 37.4 Wire Electron IPC and HUD controls for `Stop Jarvis`, `Restart`, `Emergency Stop`, and `Live Test`.
+- 37.5 Default normal app shutdown to Jarvis-only services while keeping Ollama running.
+- 37.6 Update startup registration to use the supervisor in silent tray/orb mode, with approved-admin scheduled task as the default plan.
+- 37.7 Verify with unit tests, HUD UI tests, builds, clean start, live test, stop, commits, and push.

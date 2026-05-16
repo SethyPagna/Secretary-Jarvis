@@ -273,9 +273,16 @@ Protocol:
 - [x] 36.4 Preserve centered orb/radial controls inside the desktop shell - commit `107df2e`
 - [x] 36.5 Verify builds, tests, clean stop/start behavior, live text, and push - commit `107df2e`
 
+## Phase 37 - Production Runtime Supervisor, Live Test, And App-Controlled Shutdown
+- [ ] 37.1 Add canonical `scripts/jarvis-runtime.ps1` supervisor and wrapper launchers
+- [ ] 37.2 Add production live-test Gateway endpoint and latest-result persistence
+- [ ] 37.3 Wire Electron IPC/HUD controls for Stop Jarvis, Restart, Emergency, and Live Test
+- [ ] 37.4 Update startup registration to use silent approved-admin supervisor mode
+- [ ] 37.5 Verify tests, builds, live start/test/stop behavior, commit, and push
+
 ## Current Priority
 
-Next task: Continue production hardening from Phase 37 after confirming the visible Electron app on the user's desktop.
+Next task: Complete Phase 37 verification and push.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

@@ -16,6 +16,7 @@ describe("packaging readiness", () => {
       expect(report.summary.startupScriptsReady).toBe(true);
       expect(report.summary.productionCommandsReady).toBe(true);
       expect(report.electron.commands).toContain("npm.cmd run dist:hud");
+      expect(report.startup.startScript).toContain("jarvis-runtime.ps1");
       expect(report.startup.checkOnlyCommand).toContain("-CheckOnly");
       expect(report.backgroundRuntime.expectedProcesses).toContain("electron.exe");
       expect(report.backgroundRuntime.wakeMethods.some((method) => method.id === "hotword" && method.status === "staged")).toBe(true);
@@ -31,7 +32,7 @@ function withPackagingFixture(callback: (root: string) => void): void {
     mkdirSync(join(root, "scripts"), { recursive: true });
     writeFileSync(join(root, "apps", "hud", "package.json"), "{}");
     writeFileSync(join(root, "apps", "hud", "electron", "main.ts"), "export {};\n");
-    for (const script of ["start-jarvis.ps1", "stop-jarvis.ps1", "register-startup-task.ps1"]) {
+    for (const script of ["jarvis-runtime.ps1"]) {
       writeFileSync(join(root, "scripts", script), "# test\n");
     }
     callback(root);

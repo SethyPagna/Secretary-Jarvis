@@ -53,9 +53,10 @@ export function buildStartupReadiness(params: {
 }): StartupReadiness {
   const taskName = params.taskName ?? DEFAULT_TASK_NAME;
   const scripts = [
-    script("start", params.root, "scripts/start-jarvis.ps1", "Launch background Jarvis services."),
-    script("stop", params.root, "scripts/stop-jarvis.ps1", "Stop Jarvis services while preserving logs/checkpoints."),
-    script("register", params.root, "scripts/register-startup-task.ps1", "Register Windows logon startup task or shortcut fallback."),
+    script("supervisor", params.root, "scripts/jarvis-runtime.ps1", "Canonical start, stop, restart, live test, and startup supervisor."),
+    script("start-worker", params.root, "scripts/start-jarvis.ps1", "Lower-level launch worker used by the supervisor."),
+    script("stop-worker", params.root, "scripts/stop-jarvis.ps1", "Lower-level stop worker used by the supervisor."),
+    script("register-worker", params.root, "scripts/register-startup-task.ps1", "Register Windows logon startup task or shortcut fallback."),
     script("verify", params.root, "scripts/verify-jarvis.ps1", "Run integration verification and startup check-only flow."),
   ];
   const scheduledTask = scheduledTaskStatus(taskName, params.commandRunner ?? defaultCommandRunner);
@@ -103,7 +104,7 @@ export function withTempStartupFixture(callback: (root: string, startupFolder: s
     mkdirSync(join(root, "scripts"), { recursive: true });
     mkdirSync(join(root, "data", "runtime"), { recursive: true });
     mkdirSync(startupFolder, { recursive: true });
-    for (const file of ["start-jarvis.ps1", "stop-jarvis.ps1", "register-startup-task.ps1", "verify-jarvis.ps1"]) {
+    for (const file of ["jarvis-runtime.ps1", "start-jarvis.ps1", "stop-jarvis.ps1", "register-startup-task.ps1", "verify-jarvis.ps1"]) {
       writeFileSync(join(root, "scripts", file), "# test\n");
     }
     writeFileSync(join(root, "data", "runtime", "typescript-gateway.pid"), `${process.pid}`);
@@ -186,10 +187,10 @@ function recommendationsFor(startupConfigured: boolean, elevatedRequested: boole
     recommendations.push("Restore missing startup/stop/verify scripts before enabling background startup.");
   }
   if (!startupConfigured) {
-    recommendations.push("Run scripts/register-startup-task.ps1 after review to start Jarvis at Windows logon.");
+    recommendations.push("Run scripts/jarvis-runtime.ps1 -Action RegisterStartup after review to start Jarvis at Windows logon.");
   }
   if (!elevatedRequested) {
-    recommendations.push("Use scripts/register-startup-task.ps1 -Elevated only when you want approved-admin mode.");
+    recommendations.push("Use scripts/jarvis-runtime.ps1 -Action RegisterStartup for approved-admin mode, or add -StandardStartup for limited mode.");
   }
   recommendations.push("Sensitive actions still require Jarvis policy approval even in approved-admin mode.");
   return recommendations;

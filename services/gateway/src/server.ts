@@ -76,6 +76,7 @@ import { buildProcessVisibilityStatus } from "./processVisibility.js";
 import { createRuntimeAdapterRepairDryRun, isRuntimeAdapterRepairKind } from "./runtimeAdapterRepair.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
+import { readRuntimeLiveTestStatus, runRuntimeLiveTest } from "./runtimeLiveTest.js";
 import { buildRuntimeSelfTest } from "./runtimeSelfTest.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { buildStartupRegistrationPlans } from "./startupRegistrationPlans.js";
@@ -2202,6 +2203,23 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     approvals: status.pendingApprovals,
   });
   if (runtimeSummaryHandled) {
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/runtime/live-test/latest") {
+    sendJson(response, 200, { liveTest: readRuntimeLiveTestStatus() });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/runtime/live-test") {
+    const liveTest = await runRuntimeLiveTest({
+      gatewayUrl: `http://127.0.0.1:${process.env.JARVIS_GATEWAY_PORT ?? "4317"}`,
+      brainUrl: process.env.JARVIS_BRAIN_URL ?? "http://127.0.0.1:5000",
+      root: process.cwd(),
+      now,
+    });
+    events.publish("status", { kind: "production-live-test", liveTest });
+    sendJson(response, liveTest.ok ? 200 : 503, { liveTest });
     return;
   }
 

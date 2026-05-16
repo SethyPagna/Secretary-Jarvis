@@ -28,7 +28,7 @@ export function buildStartupRegistrationPlans(params: {
   taskName?: string;
 }): StartupRegistrationPlansManifest {
   const taskName = params.taskName ?? "Secretary Jarvis Local Runtime";
-  const scriptPath = join(params.root, "scripts", "register-startup-task.ps1");
+  const scriptPath = join(params.root, "scripts", "jarvis-runtime.ps1");
   const scriptExists = existsSync(scriptPath);
 
   return {
@@ -41,10 +41,10 @@ export function buildStartupRegistrationPlans(params: {
         mode: "standard",
         runLevel: "limited",
         scriptPath,
-        commandPreview: `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -TaskName "${taskName}"`,
+        commandPreview: `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -Action RegisterStartup -TaskName "${taskName}" -StandardStartup`,
         approvalRequired: true,
         reversible: true,
-        rollbackCommand: `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -Remove -TaskName "${taskName}"`,
+        rollbackCommand: `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -Action UnregisterStartup -TaskName "${taskName}"`,
         status: scriptExists ? "ready" : "missing-script",
         notes: [
           "Registers Jarvis to start at Windows logon without requesting highest privileges.",
@@ -57,10 +57,10 @@ export function buildStartupRegistrationPlans(params: {
         mode: "approved-admin",
         runLevel: "highest",
         scriptPath,
-        commandPreview: `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -Elevated -TaskName "${taskName}"`,
+        commandPreview: `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -Action RegisterStartup -TaskName "${taskName}"`,
         approvalRequired: true,
         reversible: true,
-        rollbackCommand: `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -Remove -TaskName "${taskName}"`,
+        rollbackCommand: `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}" -Action UnregisterStartup -TaskName "${taskName}"`,
         status: scriptExists ? "ready" : "missing-script",
         notes: [
           "Requests Windows highest run level at logon so approved local automation can perform admin-class work.",

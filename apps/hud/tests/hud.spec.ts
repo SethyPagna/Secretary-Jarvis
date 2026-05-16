@@ -530,6 +530,48 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().method() === "GET" && route.request().url().endsWith("/api/runtime/live-test/latest")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          liveTest: {
+            ok: true,
+            status: "ready",
+            summaryPath: "data/smoke/runtime-live-latest.json",
+            createdAt: "2026-05-16T00:00:00.000Z",
+            completedAt: "2026-05-16T00:00:04.000Z",
+            checks: [
+              { name: "Python Brain root", ok: true, detail: "HTTP heartbeat responded." },
+              { name: "Gateway root", ok: true, detail: "HTTP heartbeat responded." },
+              { name: "Live text chat", ok: true, detail: "Jarvis app connected." },
+            ],
+            message: "Jarvis production live test passed.",
+          },
+        }),
+      });
+      return;
+    }
+    if (route.request().method() === "POST" && route.request().url().endsWith("/api/runtime/live-test")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          liveTest: {
+            ok: true,
+            status: "ready",
+            summaryPath: "data/smoke/runtime-live-latest.json",
+            checks: [
+              { name: "Python Brain root", ok: true, detail: "HTTP heartbeat responded." },
+              { name: "Gateway root", ok: true, detail: "HTTP heartbeat responded." },
+              { name: "Live text chat", ok: true, detail: "Jarvis app connected." },
+            ],
+            message: "Jarvis production live test passed.",
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "GET" && route.request().url().endsWith("/api/workflows")) {
       await route.fulfill({
         status: 200,
@@ -1006,6 +1048,12 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(panel.getByLabel("Runtime install start stop dry-run controls")).toContainText("Start");
   await page.getByRole("button", { name: "Start dry-run", exact: true }).click();
   await expect(panel.getByLabel("Runtime install start stop dry-run controls")).toContainText("requires_approval");
+  const liveTest = panel.getByRole("group", { name: "Production live test" });
+  await expect(liveTest).toContainText("ready");
+  await liveTest.locator("summary").click();
+  await expect(liveTest.getByLabel("Production live test checks")).toContainText("Live text chat");
+  await liveTest.getByRole("button", { name: "Run live test" }).click();
+  await expect(liveTest).toContainText("Jarvis production live test passed.");
   const selfTest = panel.getByRole("group", { name: "Runtime self-test" });
   await expect(selfTest).toContainText("attention");
   await selfTest.locator("summary").click();

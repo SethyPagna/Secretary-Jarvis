@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, Bot, Check, CircleStop, Cpu, LayoutDashboard, Mic, Route, Settings, ShieldAlert, TerminalSquare, Waypoints, X } from "lucide-react";
+import { Activity, Bot, Check, CircleStop, Cpu, FlaskConical, LayoutDashboard, Mic, Power, RefreshCw, Route, Settings, ShieldAlert, TerminalSquare, Waypoints, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
@@ -35,6 +35,7 @@ function HudSurface() {
   const [hoveringOrb, setHoveringOrb] = useState(false);
   const [panel, setPanel] = useState<HudPanelName | null>(null);
   const [commandCapsule, setCommandCapsule] = useState<CommandCapsule | null>(null);
+  const [serviceIntent, setServiceIntent] = useState<"stop-services" | "restart-services" | null>(null);
   const pendingApproval = status?.pendingApprovals?.[0];
   const workflowApproval = pendingApproval?.connectorId === "workflow-engine" ? pendingApproval : undefined;
   const visualState = pendingApproval ? "approval" : state;
@@ -50,6 +51,8 @@ function HudSurface() {
         setPanel("settings");
       } else if (action.type === "pause-agents" || action.type === "emergency-stop") {
         setPanel("dashboard");
+      } else if (action.type === "live-test") {
+        setPanel("settings");
       }
       setHudState(action.state, action.message);
     });
@@ -122,6 +125,21 @@ function HudSurface() {
     }).catch(() => setHudState("error", "Approval action failed."));
   }
 
+  function requestServiceAction(intent: "stop-services" | "restart-services") {
+    setServiceIntent(intent);
+    setHudState("approval", intent === "stop-services" ? "Stop Jarvis services?" : "Restart Jarvis services?");
+  }
+
+  async function confirmServiceAction() {
+    if (!serviceIntent) {
+      return;
+    }
+    const action = serviceIntent;
+    setServiceIntent(null);
+    setHudState(action === "stop-services" ? "approval" : "planning", action === "stop-services" ? "Stopping Jarvis. Ollama stays running." : "Restarting Jarvis.");
+    await window.jarvisDesktop?.runTrayCommand(action);
+  }
+
   return (
     <main className={`hud-stage hud-state-${visualState} ${panel ? "panel-open" : ""}`} aria-label="Jarvis centered HUD">
       <DesktopAppChrome
@@ -130,6 +148,13 @@ function HudSurface() {
         runningTasks={(status?.tasks ?? []).filter((task) => task.status === "running").length}
         pendingApprovals={status?.pendingApprovals?.length ?? 0}
         onOpenPanel={openPanel}
+        onStopJarvis={() => requestServiceAction("stop-services")}
+        onRestartJarvis={() => requestServiceAction("restart-services")}
+        onLiveTest={() => {
+          setPanel("settings");
+          setHudState("planning", "Running production live test.");
+          void window.jarvisDesktop?.runTrayCommand("live-test");
+        }}
         onEmergencyStop={() => {
           void fetch(`${apiBaseUrl}/api/emergency-stop`, {
             method: "POST",
@@ -249,6 +274,30 @@ function HudSurface() {
         )}
       </AnimatePresence>
       <AnimatePresence>
+        {serviceIntent && (
+          <motion.div
+            className="service-confirmation"
+            role="dialog"
+            aria-label="Confirm Jarvis service control"
+            initial={{ opacity: 0, y: 14, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <span>
+              <b>{serviceIntent === "stop-services" ? "Stop Jarvis" : "Restart Jarvis"}</b>
+              <small>Scope: Jarvis services only. Ollama is left running.</small>
+            </span>
+            <button type="button" className="approve" onClick={() => void confirmServiceAction()}>
+              Confirm
+            </button>
+            <button type="button" className="deny" onClick={() => setServiceIntent(null)} aria-label="Cancel service control">
+              <X size={15} aria-hidden="true" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
         {panel && (
           <motion.div
             className="panel-backdrop"
@@ -290,6 +339,9 @@ function DesktopAppChrome({
   runningTasks,
   pendingApprovals,
   onOpenPanel,
+  onStopJarvis,
+  onRestartJarvis,
+  onLiveTest,
   onEmergencyStop
 }: {
   online: boolean;
@@ -297,6 +349,9 @@ function DesktopAppChrome({
   runningTasks: number;
   pendingApprovals: number;
   onOpenPanel: (panel: HudPanelName) => void;
+  onStopJarvis: () => void;
+  onRestartJarvis: () => void;
+  onLiveTest: () => void;
   onEmergencyStop: () => void;
 }) {
   const controls: Array<{ panel: HudPanelName; label: string; icon: typeof LayoutDashboard }> = [
@@ -348,9 +403,21 @@ function DesktopAppChrome({
           <b>{pendingApprovals}</b>
         </span>
       </div>
+      <button className="desktop-action" type="button" onClick={onLiveTest}>
+        <FlaskConical size={17} aria-hidden="true" />
+        Live
+      </button>
+      <button className="desktop-action" type="button" onClick={onRestartJarvis}>
+        <RefreshCw size={17} aria-hidden="true" />
+        Restart
+      </button>
+      <button className="desktop-action" type="button" onClick={onStopJarvis}>
+        <Power size={17} aria-hidden="true" />
+        Stop Jarvis
+      </button>
       <button className="desktop-stop" type="button" onClick={onEmergencyStop}>
         <CircleStop size={17} aria-hidden="true" />
-        Stop
+        Emergency
       </button>
     </aside>
   );

@@ -137,18 +137,16 @@ function tauriReadiness(root: string): PackagingReadiness["tauriFallback"] {
 }
 
 function startupCommands(root: string): PackagingReadiness["startup"] {
-  const startScript = join(root, "scripts", "start-jarvis.ps1");
-  const stopScript = join(root, "scripts", "stop-jarvis.ps1");
-  const registerScript = join(root, "scripts", "register-startup-task.ps1");
+  const runtimeScript = join(root, "scripts", "jarvis-runtime.ps1");
 
   return {
-    startScript,
-    stopScript,
-    registerScript,
-    checkOnlyCommand: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\register-startup-task.ps1 -CheckOnly",
-    standardRegisterCommand: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\register-startup-task.ps1",
-    elevatedRegisterCommand: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\register-startup-task.ps1 -Elevated",
-    note: "Registration commands are shown for owner review. This endpoint never registers startup tasks or elevates privileges.",
+    startScript: runtimeScript,
+    stopScript: runtimeScript,
+    registerScript: runtimeScript,
+    checkOnlyCommand: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\jarvis-runtime.ps1 -Action RegisterStartup -CheckOnly",
+    standardRegisterCommand: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\jarvis-runtime.ps1 -Action RegisterStartup -StandardStartup",
+    elevatedRegisterCommand: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\jarvis-runtime.ps1 -Action RegisterStartup",
+    note: "The canonical supervisor owns start, stop, live test, and startup registration previews. This endpoint never registers startup tasks or elevates privileges.",
   };
 }
 

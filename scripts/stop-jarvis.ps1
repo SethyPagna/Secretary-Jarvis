@@ -1,6 +1,7 @@
 param(
   [switch]$CheckOnly,
   [switch]$KeepOllama,
+  [switch]$SkipEmergencyStop,
   [int]$GatewayPort = 4317
 )
 
@@ -141,7 +142,9 @@ function Stop-PortOwner {
   }
 }
 
-Invoke-EmergencyStop
+if (-not $SkipEmergencyStop) {
+  Invoke-EmergencyStop
+}
 
 Stop-CommandLineMatch -Name "Brain" -Patterns @(
   "*services\brain\brain_server.py*",

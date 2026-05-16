@@ -1,11 +1,19 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-type TrayActionType = "open-hud" | "open-dashboard" | "mute-mic" | "pause-agents" | "emergency-stop";
+type TrayActionType =
+  | "open-hud"
+  | "open-dashboard"
+  | "mute-mic"
+  | "pause-agents"
+  | "emergency-stop"
+  | "stop-services"
+  | "restart-services"
+  | "live-test";
 
 interface TrayAction {
   type: TrayActionType;
   label: string;
-  state: "wake" | "approval" | "error";
+  state: "wake" | "planning" | "approval" | "error";
   message: string;
 }
 

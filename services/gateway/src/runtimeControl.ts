@@ -1,10 +1,10 @@
 import type { ActionRequest, PolicyDecision, RuntimeControlDryRun, RuntimeControlKind, RuntimeServiceId } from "@jarvis/core";
 
 const CONTROL_COMMANDS: Record<RuntimeControlKind, string> = {
-  start: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-jarvis.ps1",
-  stop: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-jarvis.ps1 -KeepOllama",
+  start: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/jarvis-runtime.ps1 -Action Start",
+  stop: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/jarvis-runtime.ps1 -Action Stop",
   restart:
-    "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-jarvis.ps1 -KeepOllama; powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-jarvis.ps1",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/jarvis-runtime.ps1 -Action Restart",
   "emergency-stop": "POST /api/emergency-stop",
 };
 

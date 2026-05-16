@@ -836,6 +836,30 @@ export interface RuntimeSmokeStatus {
   message: string;
 }
 
+export interface RuntimeLiveTestCheck {
+  name: string;
+  ok: boolean;
+  detail: string;
+  url?: string;
+  statusCode?: number;
+  durationMs?: number;
+  error?: string;
+}
+
+export interface RuntimeLiveTestStatus {
+  ok: boolean;
+  status: "ready" | "attention" | "failed" | "missing";
+  summaryPath: string;
+  createdAt?: string;
+  completedAt?: string;
+  durationMs?: number;
+  checks: RuntimeLiveTestCheck[];
+  chatResult?: string;
+  selfTestStatus?: string;
+  electronHeartbeat?: string;
+  message: string;
+}
+
 export type RuntimeServiceId = "brain" | "gateway" | "dashboard" | "hud-renderer" | "electron-hud" | "ollama";
 
 export interface RuntimeServiceHeartbeat {

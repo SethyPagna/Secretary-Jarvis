@@ -141,6 +141,7 @@ html[data-shell="desktop"] .desktop-app-chrome {
 }
 
 .desktop-rail button,
+.desktop-action,
 .desktop-stop {
   min-height: 38px;
   display: grid;
@@ -216,6 +217,16 @@ html[data-shell="desktop"] .desktop-app-chrome {
   font: 800 16px/1 "JetBrains Mono", Consolas, monospace;
 }
 
+.desktop-action {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.desktop-action:hover {
+  border-color: rgba(0, 229, 255, 0.44);
+  color: var(--hud-cyan);
+  box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.06);
+}
+
 .desktop-stop {
   align-self: end;
   border-color: rgba(255, 0, 127, 0.24);
@@ -235,7 +246,8 @@ html[data-shell="desktop"] .orb-interaction-zone {
 html[data-shell="desktop"] .hud-activation-line,
 html[data-shell="desktop"] .command-capsule,
 html[data-shell="desktop"] .approval-chip,
-html[data-shell="desktop"] .workflow-approval-popup {
+html[data-shell="desktop"] .workflow-approval-popup,
+html[data-shell="desktop"] .service-confirmation {
   left: calc(50% + 88px);
 }
 
@@ -624,6 +636,73 @@ html[data-shell="desktop"] .hud-corner-control {
     0 0 34px rgba(255, 209, 102, 0.12),
     inset 0 0 22px rgba(255, 209, 102, 0.07);
   backdrop-filter: blur(20px);
+}
+
+.service-confirmation {
+  position: fixed;
+  top: calc(50% + 126px);
+  left: 50%;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 82px 34px;
+  align-items: center;
+  width: min(500px, 92vw);
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 209, 102, 0.34);
+  border-radius: 24px;
+  color: white;
+  background:
+    linear-gradient(110deg, rgba(255, 209, 102, 0.16), rgba(0, 229, 255, 0.06)),
+    rgba(4, 12, 15, 0.78);
+  transform: translateX(-50%);
+  pointer-events: auto;
+  box-shadow: 0 0 34px rgba(255, 209, 102, 0.13);
+  backdrop-filter: blur(20px);
+}
+
+.service-confirmation span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.service-confirmation b,
+.service-confirmation small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-confirmation b {
+  color: #ffd166;
+  font: 800 12px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.service-confirmation small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
+.service-confirmation button {
+  min-height: 34px;
+  border-radius: 999px;
+}
+
+.service-confirmation .approve {
+  border: 1px solid rgba(0, 255, 136, 0.34);
+  color: var(--hud-green);
+  background: rgba(0, 255, 136, 0.08);
+}
+
+.service-confirmation .deny {
+  width: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 0, 127, 0.34);
+  color: var(--hud-magenta);
+  background: rgba(255, 0, 127, 0.07);
 }
 
 .workflow-approval-icon {
@@ -1235,17 +1314,40 @@ html[data-shell="desktop"] .hud-corner-control {
   color: var(--hud-magenta);
 }
 
-.runtime-self-test-card {
+.runtime-self-test-card,
+.runtime-live-test-card {
   width: min(560px, 100%);
   margin-top: 10px;
   border-color: rgba(0, 229, 255, 0.18);
 }
 
-.runtime-self-test-card.status-attention {
+.runtime-live-test-card button {
+  width: max-content;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  border-radius: 999px;
+  color: white;
+  background: rgba(0, 229, 255, 0.06);
+}
+
+.runtime-live-test-card button:hover:not(:disabled) {
+  color: var(--hud-cyan);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.14);
+}
+
+.runtime-live-test-card button:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
+.runtime-self-test-card.status-attention,
+.runtime-live-test-card.status-attention {
   border-color: rgba(255, 212, 90, 0.24);
 }
 
-.runtime-self-test-card.status-blocked {
+.runtime-self-test-card.status-blocked,
+.runtime-live-test-card.status-failed {
   border-color: rgba(255, 0, 127, 0.28);
 }
 

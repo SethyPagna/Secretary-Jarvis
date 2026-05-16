@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $PSScriptRoot
-$StartScript = Join-Path $Root "scripts\start-jarvis.ps1"
+$StartScript = Join-Path $Root "scripts\jarvis-runtime.ps1"
 
 if ($Unregister) {
   if ($CheckOnly) {
@@ -29,7 +29,7 @@ if (-not (Test-Path -LiteralPath $StartScript)) {
   throw "Missing startup script: $StartScript"
 }
 
-$startArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$StartScript`"")
+$startArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$StartScript`"", "-Action", "Start", "-Silent")
 if ($NoDashboard) {
   $startArgs += "-NoDashboard"
 }

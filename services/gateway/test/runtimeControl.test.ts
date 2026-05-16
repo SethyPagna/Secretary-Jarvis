@@ -20,7 +20,7 @@ describe("runtime control dry-runs", () => {
     });
 
     expect(dryRun.control).toBe("restart");
-    expect(dryRun.commandPreview).toContain("start-jarvis.ps1");
+    expect(dryRun.commandPreview).toContain("jarvis-runtime.ps1");
     expect(dryRun.decision.decision).toBe("requires_approval");
     expect(dryRun.message).toContain("Dry-run only");
     expect(dryRun.action.category).toBe("run-script");

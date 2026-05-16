@@ -61,8 +61,8 @@ try {
   }
 
   if ($CheckOnlyServices) {
-    Invoke-Step "Startup script check-only" { powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-jarvis.ps1 -CheckOnly }
-    Invoke-Step "Shutdown script check-only" { powershell -NoProfile -ExecutionPolicy Bypass -File scripts\stop-jarvis.ps1 -CheckOnly -KeepOllama }
+    Invoke-Step "Startup script check-only" { powershell -NoProfile -ExecutionPolicy Bypass -File scripts\jarvis-runtime.ps1 -Action Start -CheckOnly }
+    Invoke-Step "Shutdown script check-only" { powershell -NoProfile -ExecutionPolicy Bypass -File scripts\jarvis-runtime.ps1 -Action Stop -CheckOnly }
   }
 
   Write-Host ""

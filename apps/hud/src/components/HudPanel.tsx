@@ -5,6 +5,7 @@ import type {
   RuntimeConstellation,
   RuntimeControlDryRun,
   RuntimeControlKind,
+  RuntimeLiveTestStatus,
   RuntimeServicesStatus,
   RuntimeSmokeStatus,
   SetupActionGroup,
@@ -55,6 +56,8 @@ export function HudPanel({
   const [agentManagerReadiness, setAgentManagerReadiness] = useState<AgentManagerReadinessSummary | null>(null);
   const [interactionHealth, setInteractionHealth] = useState<InteractionHealthSummary | null>(null);
   const [runtimeSelfTest, setRuntimeSelfTest] = useState<RuntimeSelfTestSummary | null>(null);
+  const [runtimeLiveTest, setRuntimeLiveTest] = useState<RuntimeLiveTestStatus | null>(null);
+  const [liveTestRunning, setLiveTestRunning] = useState(false);
   const [runtimeSelfTestFixes, setRuntimeSelfTestFixes] = useState<Record<string, string>>({});
   const [adapterRepairDryRuns, setAdapterRepairDryRuns] = useState<Record<string, AdapterRepairDryRunSummary>>({});
   const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
@@ -375,6 +378,14 @@ export function HudPanel({
         }
       })
       .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/live-test/latest`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: RuntimeLiveTestResponse | undefined) => {
+        if (!cancelled && payload?.liveTest) {
+          setRuntimeLiveTest(payload.liveTest);
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -550,6 +561,21 @@ export function HudPanel({
             message: "Gateway did not return a runtime control preview."
           }
     }));
+  }
+
+  async function runProductionLiveTest() {
+    setLiveTestRunning(true);
+    const payload = await fetch(`${apiBaseUrl}/api/runtime/live-test`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ source: "hud-settings" })
+    })
+      .then((response) => response.json())
+      .catch(() => undefined) as RuntimeLiveTestResponse | undefined;
+    if (payload?.liveTest) {
+      setRuntimeLiveTest(payload.liveTest);
+    }
+    setLiveTestRunning(false);
   }
 
   async function triggerSelfTestFix(fix: RuntimeSelfTestFixSummary) {
@@ -811,6 +837,30 @@ export function HudPanel({
               </button>
             ))}
           </div>
+          <details className={`runtime-live-test-card compact-card status-${runtimeLiveTest?.status ?? "missing"}`} aria-label="Production live test">
+            <summary>
+              <Play size={15} aria-hidden="true" />
+              <span>Live test</span>
+              <b>{liveTestRunning ? "running" : runtimeLiveTest?.status ?? "missing"}</b>
+            </summary>
+            <small>
+              {runtimeLiveTest
+                ? `${runtimeLiveTest.checks.filter((check) => check.ok).length}/${runtimeLiveTest.checks.length} checks`
+                : "Run a production live test from the app."}
+            </small>
+            <em>{runtimeLiveTest?.message ?? "Checks Brain, Gateway, live text, self-test, and Electron heartbeat."}</em>
+            <button type="button" onClick={() => void runProductionLiveTest()} disabled={liveTestRunning}>
+              {liveTestRunning ? "Running" : "Run live test"}
+            </button>
+            <div className="runtime-self-test-checks" aria-label="Production live test checks">
+              {(runtimeLiveTest?.checks ?? []).slice(0, 6).map((check) => (
+                <span key={check.name} className={check.ok ? "status-ready" : "status-blocked"}>
+                  <small>{check.name}</small>
+                  <strong>{check.ok ? "pass" : "fail"}</strong>
+                </span>
+              ))}
+            </div>
+          </details>
           <details className={`runtime-self-test-card compact-card status-${runtimeSelfTest?.topStatus ?? "staged"}`} aria-label="Runtime self-test">
             <summary>
               <CheckCircle2 size={15} aria-hidden="true" />
@@ -1003,6 +1053,10 @@ interface RuntimeConstellationResponse {
 
 interface RuntimeSmokeResponse {
   smoke?: RuntimeSmokeStatus;
+}
+
+interface RuntimeLiveTestResponse {
+  liveTest?: RuntimeLiveTestStatus;
 }
 
 interface RuntimeServicesResponse {

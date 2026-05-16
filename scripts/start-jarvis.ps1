@@ -8,6 +8,7 @@ param(
   [switch]$SkipBuild,
   [switch]$ReuseExisting,
   [switch]$SkipLiveProbe,
+  [switch]$Silent,
   [int]$GatewayPort = 4317,
   [int]$DashboardPort = 5174,
   [int]$HudPort = 5175,
@@ -108,6 +109,7 @@ function Start-JarvisElectronApp {
 
   $env:JARVIS_HUD_MODE = "app"
   $env:JARVIS_WINDOW_MODE = "desktop"
+  $env:JARVIS_START_MINIMIZED = if ($Silent) { "1" } else { "0" }
   $env:JARVIS_GATEWAY_URL = "http://127.0.0.1:$GatewayPort"
   $env:JARVIS_DASHBOARD_URL = "http://127.0.0.1:$DashboardPort"
   $process = Start-Process -FilePath $electronExe -ArgumentList "dist-electron/main.js" -WorkingDirectory (Join-Path $Root "apps\hud") -PassThru

@@ -1,9 +1,17 @@
-type JarvisTrayActionType = "open-hud" | "open-dashboard" | "mute-mic" | "pause-agents" | "emergency-stop";
+type JarvisTrayActionType =
+  | "open-hud"
+  | "open-dashboard"
+  | "mute-mic"
+  | "pause-agents"
+  | "emergency-stop"
+  | "stop-services"
+  | "restart-services"
+  | "live-test";
 
 interface JarvisTrayAction {
   type: JarvisTrayActionType;
   label: string;
-  state: "wake" | "approval" | "error";
+  state: "wake" | "planning" | "approval" | "error";
   message: string;
 }
 

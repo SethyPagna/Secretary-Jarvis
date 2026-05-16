@@ -67,12 +67,12 @@ if ($StartMenu) {
 }
 
 if ($Startup) {
-  $registerScript = Join-Path $PSScriptRoot "register-startup-task.ps1"
-  $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$registerScript`"")
+  $runtimeScript = Join-Path $PSScriptRoot "jarvis-runtime.ps1"
+  $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$runtimeScript`"", "-Action", "RegisterStartup")
   if ($CheckOnly) {
     $arguments += "-CheckOnly"
   }
-  Write-Host "Configuring Windows startup through register-startup-task.ps1..."
+  Write-Host "Configuring Windows startup through jarvis-runtime.ps1..."
   & powershell.exe @arguments
 }
 
