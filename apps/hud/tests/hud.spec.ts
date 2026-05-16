@@ -479,6 +479,57 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/runtime/self-test")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          selfTest: {
+            generatedAt: "2026-05-16T00:00:00.000Z",
+            localOnly: true,
+            summary: { ready: 5, attention: 2, blocked: 0, staged: 0, connected: true, topStatus: "attention" },
+            checks: [
+              { id: "model-adapters", label: "Models", status: "attention", value: "1 adapter", detail: "Ollama found off PATH.", fixIds: ["fix-ollama-path"] },
+              { id: "wake-voice", label: "Voice", status: "attention", value: "3/1 wake", detail: "Hotword staged.", fixIds: ["fix-hotword-enable"] },
+              { id: "agent-manager", label: "Agents", status: "ready", value: "8 agents", detail: "Manager connected.", fixIds: [] },
+              { id: "workflow-interaction", label: "Workflow", status: "ready", value: "0/1 queue", detail: "Queue responsive.", fixIds: [] },
+              { id: "background-services", label: "Services", status: "attention", value: "3/5 online", detail: "Some services are offline.", fixIds: ["fix-start-runtime"] },
+            ],
+            fixes: [
+              {
+                id: "fix-ollama-path",
+                label: "Ollama PATH",
+                category: "models",
+                status: "dry-run",
+                detail: "Preview adding Ollama to User PATH.",
+                dryRunEndpoint: "/api/runtime/adapter-repair/dry-run",
+                dryRunPayload: { repair: "ollama-path" },
+              },
+              {
+                id: "fix-hotword-enable",
+                label: "Wake word",
+                category: "voice",
+                status: "approval-required",
+                detail: "Enable continuous wake after assets validate.",
+                dryRunEndpoint: "/api/runtime/adapter-repair/dry-run",
+                dryRunPayload: { repair: "hotword-enable" },
+              },
+              {
+                id: "fix-start-runtime",
+                label: "Start runtime",
+                category: "startup",
+                status: "dry-run",
+                detail: "Preview starting all runtime services.",
+                dryRunEndpoint: "/api/runtime/control/dry-run",
+                dryRunPayload: { control: "start", target: "all" },
+              },
+            ],
+            recommendations: ["Review 2 attention item(s) from the compact fix strip."],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "GET" && route.request().url().endsWith("/api/workflows")) {
       await route.fulfill({
         status: 200,
@@ -951,6 +1002,14 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(panel.getByLabel("Runtime install start stop dry-run controls")).toContainText("Start");
   await page.getByRole("button", { name: "Start dry-run", exact: true }).click();
   await expect(panel.getByLabel("Runtime install start stop dry-run controls")).toContainText("requires_approval");
+  const selfTest = panel.getByRole("group", { name: "Runtime self-test" });
+  await expect(selfTest).toContainText("attention");
+  await selfTest.locator("summary").click();
+  await expect(selfTest.getByLabel("Runtime self-test checks")).toContainText("Models");
+  await expect(selfTest.getByLabel("Runtime self-test checks")).toContainText("Services");
+  await expect(selfTest.getByLabel("Runtime self-test fixes")).toContainText("Ollama PATH");
+  await selfTest.getByLabel("Runtime self-test fixes").getByRole("button", { name: "Ollama PATH dry-run", exact: true }).click();
+  await expect(selfTest.getByLabel("Runtime self-test fixes")).toContainText("requires_approval");
   await expect(panel.getByLabel("Packaging and wake readiness")).toContainText("ready");
   await panel.getByLabel("Packaging and wake readiness").locator("summary").click();
   await expect(panel.getByLabel("Packaging and wake readiness")).toContainText("2 wake ready / 1 staged");

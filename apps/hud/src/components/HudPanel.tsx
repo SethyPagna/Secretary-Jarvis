@@ -54,6 +54,8 @@ export function HudPanel({
   const [activationReadiness, setActivationReadiness] = useState<WakeRuntimeActivationSummary | null>(null);
   const [agentManagerReadiness, setAgentManagerReadiness] = useState<AgentManagerReadinessSummary | null>(null);
   const [interactionHealth, setInteractionHealth] = useState<InteractionHealthSummary | null>(null);
+  const [runtimeSelfTest, setRuntimeSelfTest] = useState<RuntimeSelfTestSummary | null>(null);
+  const [runtimeSelfTestFixes, setRuntimeSelfTestFixes] = useState<Record<string, string>>({});
   const [adapterRepairDryRuns, setAdapterRepairDryRuns] = useState<Record<string, AdapterRepairDryRunSummary>>({});
   const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
   const models = status?.models ?? [];
@@ -355,6 +357,24 @@ export function HudPanel({
         }
       })
       .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/self-test`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: RuntimeSelfTestResponse | undefined) => {
+        if (!cancelled && payload?.selfTest) {
+          setRuntimeSelfTest({
+            topStatus: payload.selfTest.summary.topStatus,
+            connected: payload.selfTest.summary.connected,
+            ready: payload.selfTest.summary.ready,
+            attention: payload.selfTest.summary.attention,
+            blocked: payload.selfTest.summary.blocked,
+            staged: payload.selfTest.summary.staged,
+            checks: payload.selfTest.checks.slice(0, 7),
+            fixes: payload.selfTest.fixes.slice(0, 4),
+            recommendation: payload.selfTest.recommendations[0] ?? "Runtime self-test keeps fixes dry-run or approval-gated."
+          });
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -529,6 +549,26 @@ export function HudPanel({
             commandPreview: "runtime dry-run unavailable",
             message: "Gateway did not return a runtime control preview."
           }
+    }));
+  }
+
+  async function triggerSelfTestFix(fix: RuntimeSelfTestFixSummary) {
+    setRuntimeSelfTestFixes((current) => ({ ...current, [fix.id]: "checking" }));
+    if (!fix.dryRunEndpoint) {
+      setRuntimeSelfTestFixes((current) => ({ ...current, [fix.id]: "manual" }));
+      return;
+    }
+    const isGet = !fix.dryRunPayload;
+    const payload = await fetch(`${apiBaseUrl}${fix.dryRunEndpoint}`, {
+      method: isGet ? "GET" : "POST",
+      headers: { "content-type": "application/json" },
+      body: isGet ? undefined : JSON.stringify(fix.dryRunPayload)
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as { dryRun?: { decision?: { decision?: string } }; manifest?: unknown } | undefined;
+    setRuntimeSelfTestFixes((current) => ({
+      ...current,
+      [fix.id]: payload?.dryRun?.decision?.decision ?? (payload?.manifest ? "preview" : "unavailable")
     }));
   }
 
@@ -771,6 +811,35 @@ export function HudPanel({
               </button>
             ))}
           </div>
+          <details className={`runtime-self-test-card compact-card status-${runtimeSelfTest?.topStatus ?? "staged"}`} aria-label="Runtime self-test">
+            <summary>
+              <CheckCircle2 size={15} aria-hidden="true" />
+              <span>Self-test</span>
+              <b>{runtimeSelfTest?.topStatus ?? "checking"}</b>
+            </summary>
+            <small>
+              {runtimeSelfTest
+                ? `${runtimeSelfTest.ready} ready / ${runtimeSelfTest.attention} attention / ${runtimeSelfTest.blocked} blocked`
+                : "Checking connected runtime surfaces."}
+            </small>
+            <em>{runtimeSelfTest?.recommendation ?? "Fixes stay dry-run or approval-gated."}</em>
+            <div className="runtime-self-test-checks" aria-label="Runtime self-test checks">
+              {(runtimeSelfTest?.checks ?? []).map((check) => (
+                <span key={check.id} className={`status-${check.status}`}>
+                  <small>{check.label}</small>
+                  <strong>{check.value}</strong>
+                </span>
+              ))}
+            </div>
+            <div className="runtime-self-test-fixes" aria-label="Runtime self-test fixes">
+              {(runtimeSelfTest?.fixes ?? []).map((fix) => (
+                <button key={fix.id} type="button" onClick={() => void triggerSelfTestFix(fix)}>
+                  <small>{fix.label}</small>
+                  <strong>{runtimeSelfTestFixes[fix.id] ?? fix.status}</strong>
+                </button>
+              ))}
+            </div>
+          </details>
           <details className="packaging-readiness-card compact-card" aria-label="Packaging and wake readiness">
             <summary>
               <Play size={15} aria-hidden="true" />
@@ -1369,6 +1438,55 @@ interface InteractionHealthSummary {
   workflowAutonomyApprovalGated: boolean;
   editingUndoReady: boolean;
   freezeRisk: "low" | "attention";
+}
+
+type RuntimeSelfTestStatus = "ready" | "attention" | "blocked" | "staged";
+
+interface RuntimeSelfTestResponse {
+  selfTest?: {
+    summary: {
+      ready: number;
+      attention: number;
+      blocked: number;
+      staged: number;
+      connected: boolean;
+      topStatus: RuntimeSelfTestStatus;
+    };
+    checks: RuntimeSelfTestCheckSummary[];
+    fixes: RuntimeSelfTestFixSummary[];
+    recommendations: string[];
+  };
+}
+
+interface RuntimeSelfTestCheckSummary {
+  id: string;
+  label: string;
+  status: RuntimeSelfTestStatus;
+  value: string;
+  detail: string;
+  fixIds: string[];
+}
+
+interface RuntimeSelfTestFixSummary {
+  id: string;
+  label: string;
+  category: string;
+  status: "dry-run" | "manual" | "approval-required";
+  detail: string;
+  dryRunEndpoint?: string;
+  dryRunPayload?: Record<string, unknown>;
+}
+
+interface RuntimeSelfTestSummary {
+  topStatus: RuntimeSelfTestStatus;
+  connected: boolean;
+  ready: number;
+  attention: number;
+  blocked: number;
+  staged: number;
+  checks: RuntimeSelfTestCheckSummary[];
+  fixes: RuntimeSelfTestFixSummary[];
+  recommendation: string;
 }
 
 function Widget({ label, value }: { label: string; value: string }) {

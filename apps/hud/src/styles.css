@@ -1025,6 +1025,84 @@ button {
   color: var(--hud-magenta);
 }
 
+.runtime-self-test-card {
+  width: min(560px, 100%);
+  margin-top: 10px;
+  border-color: rgba(0, 229, 255, 0.18);
+}
+
+.runtime-self-test-card.status-attention {
+  border-color: rgba(255, 212, 90, 0.24);
+}
+
+.runtime-self-test-card.status-blocked {
+  border-color: rgba(255, 0, 127, 0.28);
+}
+
+.runtime-self-test-checks,
+.runtime-self-test-fixes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.runtime-self-test-checks span,
+.runtime-self-test-fixes button {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(0, 229, 255, 0.08), transparent 42%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.runtime-self-test-fixes button {
+  cursor: pointer;
+  color: white;
+  text-align: left;
+}
+
+.runtime-self-test-fixes button:hover {
+  border-color: rgba(0, 229, 255, 0.42);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.12);
+}
+
+.runtime-self-test-checks small,
+.runtime-self-test-fixes small,
+.runtime-self-test-checks strong,
+.runtime-self-test-fixes strong {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runtime-self-test-checks small,
+.runtime-self-test-fixes small {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+}
+
+.runtime-self-test-checks strong,
+.runtime-self-test-fixes strong {
+  color: var(--hud-green);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.runtime-self-test-checks .status-attention strong,
+.runtime-self-test-fixes strong {
+  color: #ffd45a;
+}
+
+.runtime-self-test-checks .status-blocked strong {
+  color: var(--hud-magenta);
+}
+
 .agent-manager-strip,
 .agent-voice-strip,
 .interaction-health-strip,
@@ -2353,6 +2431,8 @@ button {
   .hardening-grid,
   .startup-control-strip,
   .runtime-command-grid,
+  .runtime-self-test-checks,
+  .runtime-self-test-fixes,
   .adapter-repair-grid,
   .agent-manager-strip,
   .agent-voice-strip,
