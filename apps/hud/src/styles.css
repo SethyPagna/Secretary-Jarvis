@@ -516,6 +516,78 @@ button {
   font: 700 14px/1 "JetBrains Mono", Consolas, monospace;
 }
 
+.plugin-slot-grid {
+  width: min(560px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px auto 0;
+}
+
+.plugin-slot {
+  overflow: hidden;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.plugin-slot summary {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.plugin-slot summary::-webkit-details-marker {
+  display: none;
+}
+
+.plugin-slot i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hud-cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.62);
+}
+
+.plugin-slot.status-missing i {
+  background: var(--hud-magenta);
+  box-shadow: 0 0 12px rgba(255, 0, 127, 0.58);
+}
+
+.plugin-slot.status-partial i,
+.plugin-slot.status-optional i {
+  background: #ffd45a;
+  box-shadow: 0 0 12px rgba(255, 212, 90, 0.54);
+}
+
+.plugin-slot span {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plugin-slot b {
+  color: var(--hud-cyan);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+}
+
+.plugin-slot small,
+.plugin-slot em {
+  display: block;
+  padding: 0 12px 8px;
+  overflow-wrap: anywhere;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-style: normal;
+}
+
 .tiny-feed {
   display: grid;
   gap: 6px;

@@ -120,6 +120,33 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/setup/plugin-slots")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          manifest: {
+            slots: [
+              {
+                id: "feature-piper",
+                label: "Piper executable and one voice",
+                status: "missing",
+                expectedPath: "C:/Users/user/Downloads/Secretary Jarvis/tools/piper",
+                validationHint: "Expected: piper.exe plus at least one voice.",
+              },
+              {
+                id: "feature-vosk",
+                label: "Vosk streaming STT model",
+                status: "optional",
+                expectedPath: "C:/Users/user/Downloads/Secretary Jarvis/models/vosk",
+                validationHint: "Expected: extracted Vosk model files.",
+              },
+            ],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/runtime/smoke-status")) {
       await route.fulfill({
         status: 200,
@@ -267,4 +294,6 @@ test("settings separates feature downloads from future scaling", async ({ page }
   const panel = page.getByRole("dialog", { name: "Jarvis settings panel" });
   await expect(panel.getByLabel("Setup action groups")).toContainText("2 needed");
   await expect(panel.getByLabel("Setup action groups")).toContainText("2 future");
+  await expect(panel.getByLabel("Feature plug-in slots")).toContainText("Piper");
+  await expect(panel.getByLabel("Feature plug-in slots")).toContainText("missing");
 });

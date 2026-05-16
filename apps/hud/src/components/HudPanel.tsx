@@ -31,6 +31,7 @@ export function HudPanel({
   const [voiceSession, setVoiceSession] = useState<VoiceSession | null>(status?.voiceSession ?? null);
   const [voiceDraft, setVoiceDraft] = useState("");
   const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
+  const [pluginSlots, setPluginSlots] = useState<FeaturePluginSlot[]>([]);
   const [smokeStatus, setSmokeStatus] = useState<RuntimeSmokeStatus | null>(null);
   const [runtimeServices, setRuntimeServices] = useState<RuntimeServicesStatus | null>(null);
   const models = status?.models ?? [];
@@ -107,6 +108,14 @@ export function HudPanel({
       .then((payload: SetupActionGroupsResponse | undefined) => {
         if (!cancelled) {
           setSetupGroups(payload?.groups ?? []);
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/setup/plugin-slots`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: FeaturePluginSlotsResponse | undefined) => {
+        if (!cancelled) {
+          setPluginSlots(payload?.manifest?.slots ?? []);
         }
       })
       .catch(() => undefined);
@@ -322,6 +331,19 @@ export function HudPanel({
               </span>
             ))}
           </div>
+          <div className="plugin-slot-grid" aria-label="Feature plug-in slots">
+            {pluginSlots.slice(0, 6).map((slot) => (
+              <details key={slot.id} className={`plugin-slot status-${slot.status}`}>
+                <summary>
+                  <i />
+                  <span>{slot.label}</span>
+                  <b>{slot.status}</b>
+                </summary>
+                <small>{slot.expectedPath}</small>
+                <em>{slot.validationHint}</em>
+              </details>
+            ))}
+          </div>
         </>
       )}
     </section>
@@ -350,6 +372,20 @@ interface VoiceSessionResponse {
 
 interface SetupActionGroupsResponse {
   groups?: SetupActionGroup[];
+}
+
+interface FeaturePluginSlot {
+  id: string;
+  label: string;
+  status: "ready" | "partial" | "missing" | "optional";
+  expectedPath: string;
+  validationHint: string;
+}
+
+interface FeaturePluginSlotsResponse {
+  manifest?: {
+    slots?: FeaturePluginSlot[];
+  };
 }
 
 function Widget({ label, value }: { label: string; value: string }) {
