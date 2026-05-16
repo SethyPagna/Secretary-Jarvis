@@ -60,6 +60,7 @@ import {
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
+import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
@@ -1969,6 +1970,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/runtime/smoke-status") {
     sendJson(response, 200, { smoke: readRuntimeSmokeStatus() });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/runtime/services") {
+    sendJson(response, 200, { runtime: await buildRuntimeServicesStatus() });
     return;
   }
 

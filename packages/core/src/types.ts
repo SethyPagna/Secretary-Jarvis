@@ -782,6 +782,33 @@ export interface RuntimeSmokeStatus {
   message: string;
 }
 
+export type RuntimeServiceId = "brain" | "gateway" | "dashboard" | "hud-renderer" | "electron-hud" | "ollama";
+
+export interface RuntimeServiceHeartbeat {
+  id: RuntimeServiceId;
+  label: string;
+  status: "online" | "degraded" | "offline" | "unknown";
+  pid?: number;
+  pidAlive: boolean;
+  url?: string;
+  httpOk: boolean;
+  checkedAt: string;
+  detail: string;
+}
+
+export interface RuntimeServicesStatus {
+  localOnly: boolean;
+  checkedAt: string;
+  services: RuntimeServiceHeartbeat[];
+  summary: {
+    online: number;
+    degraded: number;
+    offline: number;
+    unknown: number;
+  };
+  note: string;
+}
+
 export interface SystemAction {
   id: string;
   label: string;
