@@ -103,9 +103,16 @@ Protocol:
 - [x] 11.7 UI tests - commit `3e00003`
 - [x] 11.8 Final integration walkthrough - commit `582a2b5`
 
+## Phase 12 - Runtime Readiness Polish
+- [x] 12.1 Safe local model asset manifests and scan endpoint - commit `0cad90e`
+- [ ] 12.2 Surface model asset manifests in the HUD/dashboard without text stuffing
+- [ ] 12.3 Add real voice asset/runtime readiness probes for Whisper/Piper/Vosk/SAPI
+- [ ] 12.4 Add real vision dependency probes for OCR/YOLO/LLaVA and approval-gated actions
+- [ ] 12.5 Add one-command local runtime smoke for gateway, brain, and HUD
+
 ## Current Priority
 
-Next task: all tracked phases are complete. Continue with targeted polish, real device/model runtime probes, or new feature phases.
+Next task: `12.2 Surface model asset manifests in the HUD/dashboard without text stuffing`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
