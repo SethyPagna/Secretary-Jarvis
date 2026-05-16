@@ -150,11 +150,11 @@ Protocol:
 - [x] 18.2 Add approval-gated install dry-runs that create policy-reviewed action requests - commit `0aa8f64`
 - [x] 18.3 Surface setup install plans in the HUD settings panel without text stuffing - commit `86be06d`
 - [x] 18.4 Add user-facing approved setup documentation - commit `1230cdf`
-- [ ] 18.5 Verify setup install plans with tests, builds, and runtime smoke checks
+- [x] 18.5 Verify setup install plans with tests, builds, and runtime smoke checks - commit `52a16f7`
 
 ## Current Priority
 
-Next task: Implement Phase 18.5 verification for approved setup install plans.
+Next task: Define Phase 19 for the next Jarvis refinement slice.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
