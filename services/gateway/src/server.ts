@@ -74,7 +74,7 @@ import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeContr
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { buildSetupActionGroups } from "./setupActions.js";
-import { buildSetupInstallPlanManifest } from "./setupInstallPlans.js";
+import { buildSetupInstallPlanManifest, createSetupInstallDryRun } from "./setupInstallPlans.js";
 import { JarvisStore } from "./store.js";
 import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
 import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
@@ -2278,6 +2278,40 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         }),
       }),
     });
+    return;
+  }
+
+  if (request.method === "POST" && /^\/api\/setup\/install-plans\/[^/]+\/dry-run$/.test(url.pathname)) {
+    const planId = decodeURIComponent(url.pathname.split("/")[4] ?? "");
+    const generatedAt = now();
+    const manifest = buildSetupInstallPlanManifest({
+      generatedAt,
+      slotManifest: buildFeaturePluginSlotManifest({
+        downloads: hydrateFeatureDownloads(),
+        generatedAt,
+      }),
+    });
+    const plan = manifest.plans.find((candidate) => candidate.id === planId || candidate.slotId === planId);
+    if (!plan) {
+      sendJson(response, 404, { error: "Setup install plan not found", planId });
+      return;
+    }
+    const dryRun = createSetupInstallDryRun({
+      id: id("setup-install"),
+      plan,
+      createdAt: generatedAt,
+      evaluate: (action) =>
+        evaluateActionPolicy({
+          action,
+          privacyMode: status.privacyMode,
+          allowedConnectors: getEnabledConnectorIds(),
+        }),
+    });
+    if (dryRun.decision.decision === "requires_approval") {
+      recordPendingApproval(dryRun.action);
+    }
+    events.publish("setup", { kind: "setup-install-dry-run", dryRun });
+    sendJson(response, dryRun.decision.decision === "deny" ? 403 : 202, { dryRun });
     return;
   }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { NeededFeatureDownload } from "@jarvis/core";
 import { buildFeaturePluginSlotManifest } from "../src/featurePluginSlots.js";
-import { buildSetupInstallPlanManifest } from "../src/setupInstallPlans.js";
+import { buildSetupInstallPlanManifest, createSetupInstallDryRun } from "../src/setupInstallPlans.js";
 
 describe("setup install plans", () => {
   it("creates dry-run-only plans with manual steps and approval flags", () => {
@@ -36,6 +36,37 @@ describe("setup install plans", () => {
     expect(vault?.approvalRequired).toBe(true);
     expect(vault?.commandPreview).toContain("Vault");
     expect(vault?.detailsHiddenByDefault).toBe(true);
+  });
+
+  it("creates approval-gated setup dry-runs without executing installers", () => {
+    const generatedAt = "2026-05-16T00:00:00.000Z";
+    const slotManifest = buildFeaturePluginSlotManifest({
+      downloads: [download("feature-yolo", "vision", "needed", "C:/jarvis/models/yolo")],
+      generatedAt,
+      pathExists: () => false,
+      listFiles: () => [],
+    });
+    const manifest = buildSetupInstallPlanManifest({ slotManifest, generatedAt });
+    const plan = manifest.plans[0];
+
+    const dryRun = createSetupInstallDryRun({
+      id: "setup-install-test",
+      plan,
+      createdAt: generatedAt,
+      evaluate: (action) => ({
+        actionId: action.id,
+        decision: "requires_approval",
+        risk: "approval-required",
+        reasons: [`${action.category} is configured as an approval-gated action.`],
+      }),
+    });
+
+    expect(dryRun.safeMode).toBe(true);
+    expect(dryRun.executed).toBe(false);
+    expect(dryRun.action.category).toBe("model-download");
+    expect(dryRun.decision.decision).toBe("requires_approval");
+    expect(dryRun.notes.join(" ")).toContain("no installer was launched");
+    expect(dryRun.blockers).toContain("Folder");
   });
 });
 

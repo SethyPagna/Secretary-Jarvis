@@ -1,4 +1,4 @@
-import type { ActionCategory, NeededFeatureDownload } from "@jarvis/core";
+import type { ActionCategory, ActionRequest, NeededFeatureDownload, PolicyDecision } from "@jarvis/core";
 import type { FeaturePluginSlot, FeaturePluginSlotManifest } from "./featurePluginSlots.js";
 
 export interface SetupInstallPlan {
@@ -37,6 +37,24 @@ export interface SetupInstallPlanManifest {
   note: string;
 }
 
+export interface SetupInstallDryRun {
+  id: string;
+  planId: string;
+  slotId: string;
+  label: string;
+  action: ActionRequest;
+  decision: PolicyDecision;
+  commandPreview: string;
+  manualSteps: string[];
+  validationChecks: string[];
+  rollbackNote: string;
+  uninstallPreview: string;
+  blockers: string[];
+  safeMode: true;
+  executed: false;
+  notes: string[];
+}
+
 export function buildSetupInstallPlanManifest(params: {
   slotManifest: FeaturePluginSlotManifest;
   generatedAt: string;
@@ -54,6 +72,47 @@ export function buildSetupInstallPlanManifest(params: {
       approvalRequired: plans.filter((plan) => plan.approvalRequired).length,
     },
     note: "Install plans are previews only. Jarvis never downloads, installs, or writes credentials from this endpoint.",
+  };
+}
+
+export function createSetupInstallDryRun(params: {
+  id: string;
+  plan: SetupInstallPlan;
+  createdAt: string;
+  evaluate: (action: ActionRequest) => PolicyDecision;
+}): SetupInstallDryRun {
+  const action: ActionRequest = {
+    id: params.id,
+    title: `Prepare feature setup: ${params.plan.label}`,
+    category: params.plan.actionCategory,
+    target: params.plan.expectedPath,
+    reason: `Feature setup for ${params.plan.label} can add local tools, models, runtime config, or connector-scoped credentials.`,
+    agentId: "sentinel",
+    dataTouched: dataTouchedFor(params.plan),
+  };
+  const decision = params.evaluate(action);
+  return {
+    id: params.id,
+    planId: params.plan.id,
+    slotId: params.plan.slotId,
+    label: params.plan.label,
+    action,
+    decision,
+    commandPreview: params.plan.commandPreview,
+    manualSteps: params.plan.manualSteps,
+    validationChecks: params.plan.validationChecks,
+    rollbackNote: params.plan.rollbackNote,
+    uninstallPreview: params.plan.uninstallPreview,
+    blockers: params.plan.blockers,
+    safeMode: true,
+    executed: false,
+    notes: [
+      "Dry-run only: no installer was launched, no model was downloaded, no files were changed, and no credentials were read.",
+      params.plan.detailsHiddenByDefault
+        ? "HUD should show this as a compact setup card with details collapsed by default."
+        : "Details may be shown directly.",
+      `Created at ${params.createdAt}.`,
+    ],
   };
 }
 
@@ -95,6 +154,25 @@ function actionCategoryFor(slot: FeaturePluginSlot): ActionCategory {
     return "model-download";
   }
   return "write-local";
+}
+
+function dataTouchedFor(plan: SetupInstallPlan): string[] {
+  if (plan.actionCategory === "credential-access") {
+    return ["connector credential metadata", "local vault status", "approval audit log"];
+  }
+  if (plan.category === "voice") {
+    return ["local voice tools", "speech model files", "setup audit log"];
+  }
+  if (plan.category === "vision") {
+    return ["local vision tools", "vision model files", "setup audit log"];
+  }
+  if (plan.category === "media") {
+    return ["local media model files", "media runtime config", "setup audit log"];
+  }
+  if (plan.category === "maps") {
+    return ["offline map data", "local routing config", "setup audit log"];
+  }
+  return ["local dependency files", "setup audit log"];
 }
 
 function profileFor(slot: FeaturePluginSlot): {

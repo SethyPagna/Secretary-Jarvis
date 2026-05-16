@@ -803,6 +803,24 @@ export interface SetupInstallPlanManifest {
   note: string;
 }
 
+export interface SetupInstallDryRun {
+  id: string;
+  planId: string;
+  slotId: string;
+  label: string;
+  action: ActionRequest;
+  decision: PolicyDecision;
+  commandPreview: string;
+  manualSteps: string[];
+  validationChecks: string[];
+  rollbackNote: string;
+  uninstallPreview: string;
+  blockers: string[];
+  safeMode: true;
+  executed: false;
+  notes: string[];
+}
+
 export interface RuntimeSmokeStatus {
   ok: boolean;
   status: "passed" | "failed" | "missing";
