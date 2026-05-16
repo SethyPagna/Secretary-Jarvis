@@ -1014,6 +1014,20 @@ button {
   font-size: 12px;
 }
 
+.panel-loading {
+  width: min(420px, 100%);
+  margin: 16px auto 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(0, 229, 255, 0.045);
+  color: rgba(255, 255, 255, 0.72);
+  font: 700 11px/1.2 "JetBrains Mono", Consolas, monospace;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
 .model-manifest-strip,
 .voice-readiness-strip {
   display: grid;

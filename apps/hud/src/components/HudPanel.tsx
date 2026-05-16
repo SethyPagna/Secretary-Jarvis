@@ -1,5 +1,5 @@
 import { Cable, CheckCircle2, Cpu, Mic, Play, Send, Settings, Square, UserCheck, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type {
   JarvisStatus,
   RuntimeConstellation,
@@ -9,8 +9,9 @@ import type {
   VoiceSession,
   VoiceRuntimeReadiness
 } from "@jarvis/core";
-import { WorkflowConsole } from "./WorkflowConsole";
 import type { HudPanel as HudPanelName } from "../types";
+
+const WorkflowConsole = lazy(() => import("./WorkflowConsole").then((module) => ({ default: module.WorkflowConsole })));
 
 export function HudPanel({
   panel,
@@ -449,7 +450,11 @@ export function HudPanel({
           </div>
         </>
       )}
-      {panel === "workflows" && <WorkflowConsole apiBaseUrl={apiBaseUrl} />}
+      {panel === "workflows" && (
+        <Suspense fallback={<div className="panel-loading" aria-label="Loading workflow console">Loading workflow console...</div>}>
+          <WorkflowConsole apiBaseUrl={apiBaseUrl} />
+        </Suspense>
+      )}
       {panel === "settings" && (
         <>
           <header><Settings size={18} /><strong>Settings</strong></header>
