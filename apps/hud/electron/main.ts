@@ -73,8 +73,8 @@ function createHudWindow(): BrowserWindow {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
-      preload: path.join(__dirname, "preload.js")
+      sandbox: false,
+      preload: path.join(__dirname, "preload.cjs")
     }
   });
   const revealWindow = (reason: string) => {
