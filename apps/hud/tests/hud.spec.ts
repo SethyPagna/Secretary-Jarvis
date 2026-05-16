@@ -191,6 +191,20 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/models/activation-plans")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          plans: [
+            { id: "activation-whisper", label: "Whisper", recommendedRuntime: "huggingface-local", status: "asset-ready" },
+            { id: "activation-qwen", label: "Qwen 3.5", recommendedRuntime: "lmstudio", status: "needs-runtime" },
+            { id: "activation-gemma", label: "Gemma", recommendedRuntime: "vllm", status: "too-heavy" },
+          ],
+        }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -249,6 +263,8 @@ test("orb click opens radial controls and dashboard stays grouped", async ({ pag
   await expect(panel.getByLabel("Runtime smoke status")).toContainText("passed");
   await expect(panel.getByLabel("Live service heartbeats")).toContainText("Python Brain");
   await expect(panel.getByLabel("Live service heartbeats")).toContainText("Ollama");
+  await expect(panel.getByLabel("Model activation plans")).toContainText("Whisper");
+  await expect(panel.getByLabel("Model activation plans")).toContainText("asset-ready");
 });
 
 test("voice and text panels expose compact interaction states", async ({ page }) => {

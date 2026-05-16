@@ -801,6 +801,58 @@ button {
   white-space: nowrap;
 }
 
+.activation-plan-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.activation-plan-strip span {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: center;
+  gap: 4px 8px;
+  padding: 0 11px;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.activation-plan-strip small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activation-plan-strip strong {
+  color: var(--hud-cyan);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+}
+
+.activation-plan-strip b {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.56);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.activation-ready-to-use {
+  border-color: rgba(0, 255, 136, 0.3) !important;
+  box-shadow: inset 0 0 18px rgba(0, 255, 136, 0.06);
+}
+
+.activation-too-heavy,
+.activation-needs-runtime {
+  border-color: rgba(255, 212, 90, 0.24) !important;
+}
+
 .service-online i {
   background: var(--hud-green);
   box-shadow: 0 0 12px rgba(0, 255, 136, 0.7);

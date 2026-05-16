@@ -32,6 +32,7 @@ export function HudPanel({
   const [voiceDraft, setVoiceDraft] = useState("");
   const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
   const [pluginSlots, setPluginSlots] = useState<FeaturePluginSlot[]>([]);
+  const [activationPlans, setActivationPlans] = useState<ModelActivationPlan[]>([]);
   const [smokeStatus, setSmokeStatus] = useState<RuntimeSmokeStatus | null>(null);
   const [runtimeServices, setRuntimeServices] = useState<RuntimeServicesStatus | null>(null);
   const models = status?.models ?? [];
@@ -64,6 +65,14 @@ export function HudPanel({
       .then((payload: RuntimeServicesResponse | undefined) => {
         if (!cancelled && payload?.runtime) {
           setRuntimeServices(payload.runtime);
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/models/activation-plans`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: ModelActivationPlansResponse | undefined) => {
+        if (!cancelled) {
+          setActivationPlans(payload?.plans ?? []);
         }
       })
       .catch(() => undefined);
@@ -256,6 +265,15 @@ export function HudPanel({
               </span>
             ))}
           </div>
+          <div className="activation-plan-strip" aria-label="Model activation plans">
+            {activationPlans.slice(0, 3).map((plan) => (
+              <span key={plan.id} className={`activation-${plan.status}`}>
+                <small>{plan.label}</small>
+                <strong>{plan.recommendedRuntime}</strong>
+                <b>{plan.status}</b>
+              </span>
+            ))}
+          </div>
           <div className="tiny-feed">
             {tasks.length ? tasks.map((task) => <span key={task.id}>{task.status} / {task.title}</span>) : <span>Quiet. Ready.</span>}
           </div>
@@ -360,6 +378,17 @@ interface RuntimeSmokeResponse {
 
 interface RuntimeServicesResponse {
   runtime?: RuntimeServicesStatus;
+}
+
+interface ModelActivationPlan {
+  id: string;
+  label: string;
+  recommendedRuntime: string;
+  status: "ready-to-use" | "asset-ready" | "needs-runtime" | "too-heavy" | "missing-asset" | "disabled";
+}
+
+interface ModelActivationPlansResponse {
+  plans?: ModelActivationPlan[];
 }
 
 interface VoiceReadinessResponse {
