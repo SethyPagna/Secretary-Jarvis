@@ -79,7 +79,7 @@ Protocol:
 - [x] 8.5 HUD approval-required action display - commit `00edb18`
 
 ## Phase 9 - Workflow Engine & Self-Expanding Automation
-- [ ] 9.1 Add workflow core domain
+- [x] 9.1 Add workflow core domain - commit `034f8f6`
 - [ ] 9.2 Add workflow persistence and gateway API
 - [ ] 9.3 Create HUD Workflow Console
 - [ ] 9.4 Implement workflow approval pop-ups
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `9.1 Add workflow core domain`.
+Next task: `9.2 Add workflow persistence and gateway API`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
