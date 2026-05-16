@@ -84,7 +84,7 @@ Protocol:
 - [x] 9.3 Create HUD Workflow Console - commit `9417632`
 - [x] 9.4 Implement workflow approval pop-ups - commit `951fc0c`
 - [x] 9.5 Implement LLM-driven workflow generation - commit `5077a8b`
-- [ ] 9.6 Implement native step executor
+- [x] 9.6 Implement native step executor - commit `dbb62a6`
 - [ ] 9.7 Implement multi-agent workflow manager
 
 ## Phase 10 - Startup Sync & Packaging
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `9.6 Implement native step executor`.
+Next task: `9.7 Implement multi-agent workflow manager`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
