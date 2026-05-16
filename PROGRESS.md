@@ -53,7 +53,7 @@ Protocol:
 
 ## Phase 5 - MemoryOS & 20-Minute Time-Travel Undo
 - [x] 5.1 Define dedicated memory types in `memory.ts` - commit `dac0794`
-- [ ] 5.2 Implement full memory/vector/timeline storage - partial SQLite storage exists
+- [x] 5.2 Implement full memory/vector/timeline storage - commit `31f7caf`
 - [ ] 5.3 Add conversations and vector memory endpoints - partial
 - [ ] 5.4 Implement full 20-minute undo with file checkpoints - metadata commit `1cf355b`, full restore missing
 - [ ] 5.5 Add go-back-in-time views - partial panels exist
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `5.2 Implement full memory/vector/timeline storage`.
+Next task: `5.3 Add conversations and vector memory endpoints`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
