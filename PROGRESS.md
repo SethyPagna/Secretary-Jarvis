@@ -135,12 +135,12 @@ Protocol:
 - [x] 16.1 Add a feature plug-in slot manifest endpoint with expected folders, detected files, validation hints, and plug-in status - commit `b186653`
 - [x] 16.2 Surface plug-in slots in the HUD settings panel as compact setup cards with paths hidden until expanded - commit `7c8356c`
 - [x] 16.3 Add local validation probes for Piper voices, Vosk models, wake-word profiles, OCR tools, YOLO weights, media runtimes, map data, and connector vaults - commit `e5c5ed5`
-- [ ] 16.4 Add user-facing setup documentation that separates ready model assets, feature dependencies, and future scaling models
+- [x] 16.4 Add user-facing setup documentation that separates ready model assets, feature dependencies, and future scaling models - commit `99dfd97`
 - [ ] 16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks
 
 ## Current Priority
 
-Next task: 16.4 Add user-facing setup documentation that separates ready model assets, feature dependencies, and future scaling models.
+Next task: 16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
