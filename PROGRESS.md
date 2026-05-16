@@ -125,7 +125,7 @@ Protocol:
 - [x] 14.5 Verify live runtime operation across tests and smoke checks - commit `1293149`
 
 ## Phase 15 - Live Voice And Vision Bridge
-- [ ] 15.1 Add live voice session endpoints for start, stop, transcript chunk ingest, and transcript commit-to-chat
+- [x] 15.1 Add live voice session endpoints for start, stop, transcript chunk ingest, and transcript commit-to-chat - commit `4aed52f`
 - [ ] 15.2 Surface live voice session state in the HUD voice panel without text stuffing
 - [ ] 15.3 Add approval-gated live vision request records for screen, camera, and selected-image analysis
 - [ ] 15.4 Add multimodal activity timeline entries for voice transcripts, vision requests, identity dry-runs, and TTS actions
@@ -133,7 +133,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: 15.1 Add live voice session endpoints for start, stop, transcript chunk ingest, and transcript commit-to-chat.
+Next task: 15.2 Surface live voice session state in the HUD voice panel without text stuffing.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
