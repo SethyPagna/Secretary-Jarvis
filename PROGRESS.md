@@ -171,11 +171,11 @@ Protocol:
 - [x] 21.2 Wire text and voice command submissions into the command capsule - commit `6897c7c`
 - [x] 21.3 Subscribe HUD to task stream events for capsule updates - commit `a84a9b4`
 - [x] 21.4 Add HUD tests for command capsule submission and task-event updates - commit `85b217c`
-- [ ] 21.5 Verify command capsule behavior with builds, UI tests, and runtime smoke checks
+- [x] 21.5 Verify command capsule behavior with builds, UI tests, and runtime smoke checks - commit `40ef810`
 
 ## Current Priority
 
-Next task: Implement Phase 21.5 command capsule verification.
+Next task: Define Phase 22 for the next Jarvis refinement slice.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
