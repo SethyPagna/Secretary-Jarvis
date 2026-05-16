@@ -156,12 +156,12 @@ Protocol:
 - [x] 19.1 Add HUD setup dry-run buttons and compact result chips - commit `41e75fd`
 - [x] 19.2 Add compact setup approval summary in HUD Settings - commit `d376622`
 - [x] 19.3 Add gateway/HUD tests for setup dry-run action routing and no-execution messaging - commit `1261ba4`
-- [ ] 19.4 Add documentation for the HUD setup approval flow
+- [x] 19.4 Add documentation for the HUD setup approval flow - commit `1d01498`
 - [ ] 19.5 Verify setup approval UI with builds, tests, and runtime smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 19.4 HUD setup approval documentation.
+Next task: Implement Phase 19.5 final setup approval UI verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
