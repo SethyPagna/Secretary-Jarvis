@@ -4,10 +4,12 @@ import { DatabaseSync } from "node:sqlite";
 import type {
   Conversation,
   ConversationTurn,
+  MemoryRecord,
   MemoryWrite,
   TaskEvent,
   TaskQueueItem,
   TaskRun,
+  TimelineEvent,
   UndoJournalEntry,
 } from "@jarvis/core";
 
@@ -94,6 +96,19 @@ export class JarvisStore {
         turn.taskId ?? null,
         turn.tokenEstimate,
       );
+    this.addTimelineEvent({
+      id: `timeline-turn-${turn.id}`,
+      kind: "conversation",
+      title: `${turn.role} turn`,
+      summary: turn.content.slice(0, 220),
+      occurredAt: turn.createdAt,
+      source: turn.role === "user" ? "owner" : "conversation",
+      reversible: false,
+      relatedConversationId: turn.conversationId,
+      relatedTaskId: turn.taskId,
+      status: "remembered",
+      tags: ["conversation", turn.role],
+    });
   }
 
   listTurns(conversationId: string): ConversationTurn[] {
@@ -190,6 +205,18 @@ export class JarvisStore {
          VALUES (?, ?, ?, ?, ?, ?)`,
       )
       .run(event.id, event.taskId, event.kind, event.message, event.createdAt, JSON.stringify(event.payload ?? {}));
+    this.addTimelineEvent({
+      id: `timeline-task-${event.id}`,
+      kind: event.kind === "checkpoint" ? "task-checkpoint" : "decision",
+      title: `Task ${event.kind}`,
+      summary: event.message,
+      occurredAt: event.createdAt,
+      source: "agent",
+      reversible: event.kind === "checkpoint",
+      relatedTaskId: event.taskId,
+      status: event.kind === "checkpoint" ? "checkpointed" : undefined,
+      tags: ["task", event.kind],
+    });
   }
 
   listTaskEvents(taskId: string): TaskEvent[] {
@@ -215,6 +242,157 @@ export class JarvisStore {
         write.createdAt,
         JSON.stringify(write.tags),
       );
+    const layer = memoryLayerForKind(write.kind);
+    const title = write.content.split(/[.\n]/)[0]?.trim().slice(0, 96) || `${write.kind} memory`;
+    this.upsertMemoryRecord({
+      id: `record-${write.id}`,
+      layer,
+      kind: write.kind,
+      title,
+      content: write.content,
+      source: write.conversationId ? "conversation" : write.taskId ? "agent-task" : "gateway",
+      confidence: Math.min(0.98, Math.max(0.5, write.importance)),
+      importance: write.importance,
+      tags: write.tags,
+      createdAt: write.createdAt,
+    });
+    this.addTimelineEvent({
+      id: `timeline-memory-${write.id}`,
+      kind: "memory-write",
+      title,
+      summary: write.content.slice(0, 260),
+      occurredAt: write.createdAt,
+      source: "memory",
+      reversible: false,
+      relatedConversationId: write.conversationId,
+      relatedTaskId: write.taskId,
+      status: "remembered",
+      tags: write.tags,
+    });
+  }
+
+  upsertMemoryRecord(record: MemoryRecord): void {
+    this.db
+      .prepare(
+        `INSERT INTO memory_records (
+           id, layer, kind, title, content, source, confidence, importance, tags_json, created_at,
+           last_accessed_at, expires_at, supersedes_memory_id, embedding_json
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           layer = excluded.layer,
+           kind = excluded.kind,
+           title = excluded.title,
+           content = excluded.content,
+           source = excluded.source,
+           confidence = excluded.confidence,
+           importance = excluded.importance,
+           tags_json = excluded.tags_json,
+           last_accessed_at = excluded.last_accessed_at,
+           expires_at = excluded.expires_at,
+           supersedes_memory_id = excluded.supersedes_memory_id,
+           embedding_json = excluded.embedding_json`,
+      )
+      .run(
+        record.id,
+        record.layer,
+        record.kind,
+        record.title,
+        record.content,
+        record.source,
+        record.confidence,
+        record.importance,
+        JSON.stringify(record.tags),
+        record.createdAt,
+        record.lastAccessedAt ?? null,
+        record.expiresAt ?? null,
+        record.supersedesMemoryId ?? null,
+        JSON.stringify(localTextEmbedding(`${record.title} ${record.content} ${record.tags.join(" ")}`)),
+      );
+  }
+
+  listMemoryRecords(limit = 100): MemoryRecord[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, layer, kind, title, content, source, confidence, importance, tags_json, created_at,
+         last_accessed_at, expires_at, supersedes_memory_id, embedding_json
+         FROM memory_records ORDER BY importance DESC, created_at DESC LIMIT ?`,
+      )
+      .all(limit) as unknown as MemoryRecordRow[];
+    return rows.map(memoryRecordFromRow);
+  }
+
+  searchMemoryRecords(query: string, limit = 40): MemoryRecord[] {
+    const queryVector = localTextEmbedding(query);
+    return this.listMemoryRecords(500)
+      .map((record) => ({
+        record,
+        score:
+          cosineSimilarity(queryVector, localTextEmbedding(`${record.title} ${record.content} ${record.tags.join(" ")}`)) +
+          (record.content.toLowerCase().includes(query.toLowerCase()) ? 0.35 : 0) +
+          record.importance * 0.1,
+      }))
+      .sort((left, right) => right.score - left.score)
+      .slice(0, limit)
+      .map((item) => item.record);
+  }
+
+  addTimelineEvent(event: TimelineEvent): void {
+    this.db
+      .prepare(
+        `INSERT INTO timeline_events (
+           id, kind, title, summary, occurred_at, source, reversible, undo_entry_id,
+           related_conversation_id, related_task_id, status, tags_json
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           title = excluded.title,
+           summary = excluded.summary,
+           source = excluded.source,
+           reversible = excluded.reversible,
+           undo_entry_id = excluded.undo_entry_id,
+           status = excluded.status,
+           tags_json = excluded.tags_json`,
+      )
+      .run(
+        event.id,
+        event.kind,
+        event.title,
+        event.summary,
+        event.occurredAt,
+        event.source,
+        event.reversible ? 1 : 0,
+        event.undoEntryId ?? null,
+        event.relatedConversationId ?? null,
+        event.relatedTaskId ?? null,
+        event.status ?? null,
+        JSON.stringify(event.tags),
+      );
+  }
+
+  listTimelineEvents(limit = 120): TimelineEvent[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, kind, title, summary, occurred_at, source, reversible, undo_entry_id,
+         related_conversation_id, related_task_id, status, tags_json
+         FROM timeline_events ORDER BY occurred_at DESC LIMIT ?`,
+      )
+      .all(limit) as unknown as TimelineEventRow[];
+    return rows.map(timelineEventFromRow);
+  }
+
+  searchTimelineEvents(query: string, limit = 80): TimelineEvent[] {
+    const pattern = `%${query}%`;
+    const rows = this.db
+      .prepare(
+        `SELECT id, kind, title, summary, occurred_at, source, reversible, undo_entry_id,
+         related_conversation_id, related_task_id, status, tags_json
+         FROM timeline_events
+         WHERE title LIKE ? OR summary LIKE ? OR tags_json LIKE ? OR kind LIKE ?
+         ORDER BY occurred_at DESC LIMIT ?`,
+      )
+      .all(pattern, pattern, pattern, pattern, limit) as unknown as TimelineEventRow[];
+    return rows.map(timelineEventFromRow);
   }
 
   listMemoryWrites(limit = 100): MemoryWrite[] {
@@ -361,6 +539,38 @@ export class JarvisStore {
         tags_json TEXT NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS memory_records (
+        id TEXT PRIMARY KEY,
+        layer TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        source TEXT NOT NULL,
+        confidence REAL NOT NULL,
+        importance REAL NOT NULL,
+        tags_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        last_accessed_at TEXT,
+        expires_at TEXT,
+        supersedes_memory_id TEXT,
+        embedding_json TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS timeline_events (
+        id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        title TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        occurred_at TEXT NOT NULL,
+        source TEXT NOT NULL,
+        reversible INTEGER NOT NULL,
+        undo_entry_id TEXT,
+        related_conversation_id TEXT,
+        related_task_id TEXT,
+        status TEXT,
+        tags_json TEXT NOT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS undo_journal (
         id TEXT PRIMARY KEY,
         action_id TEXT NOT NULL,
@@ -454,6 +664,38 @@ interface MemoryWriteRow {
   tags_json: string;
 }
 
+interface MemoryRecordRow {
+  id: string;
+  layer: MemoryRecord["layer"];
+  kind: MemoryRecord["kind"];
+  title: string;
+  content: string;
+  source: string;
+  confidence: number;
+  importance: number;
+  tags_json: string;
+  created_at: string;
+  last_accessed_at: string | null;
+  expires_at: string | null;
+  supersedes_memory_id: string | null;
+  embedding_json: string;
+}
+
+interface TimelineEventRow {
+  id: string;
+  kind: TimelineEvent["kind"];
+  title: string;
+  summary: string;
+  occurred_at: string;
+  source: TimelineEvent["source"];
+  reversible: number;
+  undo_entry_id: string | null;
+  related_conversation_id: string | null;
+  related_task_id: string | null;
+  status: TimelineEvent["status"] | null;
+  tags_json: string;
+}
+
 interface UndoJournalRow {
   id: string;
   action_id: string;
@@ -541,6 +783,41 @@ function memoryWriteFromRow(row: MemoryWriteRow): MemoryWrite {
   };
 }
 
+function memoryRecordFromRow(row: MemoryRecordRow): MemoryRecord {
+  return {
+    id: row.id,
+    layer: row.layer,
+    kind: row.kind,
+    title: row.title,
+    content: row.content,
+    source: row.source,
+    confidence: row.confidence,
+    importance: row.importance,
+    tags: JSON.parse(row.tags_json) as string[],
+    createdAt: row.created_at,
+    lastAccessedAt: row.last_accessed_at ?? undefined,
+    expiresAt: row.expires_at ?? undefined,
+    supersedesMemoryId: row.supersedes_memory_id ?? undefined,
+  };
+}
+
+function timelineEventFromRow(row: TimelineEventRow): TimelineEvent {
+  return {
+    id: row.id,
+    kind: row.kind,
+    title: row.title,
+    summary: row.summary,
+    occurredAt: row.occurred_at,
+    source: row.source,
+    reversible: row.reversible === 1,
+    undoEntryId: row.undo_entry_id ?? undefined,
+    relatedConversationId: row.related_conversation_id ?? undefined,
+    relatedTaskId: row.related_task_id ?? undefined,
+    status: row.status ?? undefined,
+    tags: JSON.parse(row.tags_json) as string[],
+  };
+}
+
 function undoJournalFromRow(row: UndoJournalRow): UndoJournalEntry {
   const expired = row.status === "available" && Date.parse(row.expires_at) < Date.now();
   return {
@@ -556,4 +833,43 @@ function undoJournalFromRow(row: UndoJournalRow): UndoJournalEntry {
     snapshotSummary: row.snapshot_summary,
     operation: JSON.parse(row.operation_json) as UndoJournalEntry["operation"],
   };
+}
+
+function memoryLayerForKind(kind: MemoryWrite["kind"]): MemoryRecord["layer"] {
+  if (kind === "session") {
+    return "short-term";
+  }
+  if (kind === "daily-note" || kind === "timeline" || kind === "screen-event" || kind === "device-event") {
+    return "episodic";
+  }
+  if (kind === "identity") {
+    return "identity";
+  }
+  if (kind === "skill" || kind === "soul") {
+    return "project";
+  }
+  return "semantic";
+}
+
+function localTextEmbedding(text: string, dimensions = 32): number[] {
+  const vector = new Array<number>(dimensions).fill(0);
+  for (const token of text.toLowerCase().match(/[a-z0-9_:-]+/g) ?? []) {
+    let hash = 2166136261;
+    for (let index = 0; index < token.length; index += 1) {
+      hash ^= token.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    vector[Math.abs(hash) % dimensions] += 1;
+  }
+  const magnitude = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0)) || 1;
+  return vector.map((value) => Number((value / magnitude).toFixed(6)));
+}
+
+function cosineSimilarity(left: number[], right: number[]): number {
+  const length = Math.min(left.length, right.length);
+  let score = 0;
+  for (let index = 0; index < length; index += 1) {
+    score += left[index] * right[index];
+  }
+  return score;
 }

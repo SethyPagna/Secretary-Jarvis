@@ -564,6 +564,10 @@ function buildMemoryContext(conversationId: string): string {
     .listMemoryWrites(12)
     .map((memory) => `- ${memory.kind}: ${memory.content}`)
     .join("\n");
+  const promotedMemory = store
+    .listMemoryRecords(8)
+    .map((memory) => `- ${memory.layer}/${memory.kind}: ${memory.title} (${memory.tags.join(", ")})`)
+    .join("\n");
   const recentTurns = store
     .listTurns(conversationId)
     .slice(-8)
@@ -574,6 +578,7 @@ function buildMemoryContext(conversationId: string): string {
     "MemoryOS context:",
     seedMemory || "- No seeded memory.",
     durableMemory ? `Durable writes:\n${durableMemory}` : "Durable writes: none yet.",
+    promotedMemory ? `Promoted memory records:\n${promotedMemory}` : "Promoted memory records: none yet.",
     recentTurns ? `Recent conversation:\n${recentTurns}` : "Recent conversation: none.",
   ].join("\n");
 }
@@ -1937,7 +1942,19 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         )
       : status.memories;
     const writes = query ? store.searchMemoryWrites(query) : store.listMemoryWrites(40);
-    sendJson(response, 200, { query, memories: seedResults, writes });
+    const records = query ? store.searchMemoryRecords(query) : store.listMemoryRecords(40);
+    const timeline = query ? store.searchTimelineEvents(query) : store.listTimelineEvents(80);
+    sendJson(response, 200, { query, memories: seedResults, writes, records, timeline });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/timeline") {
+    const query = (url.searchParams.get("q") ?? "").trim();
+    sendJson(response, 200, {
+      query,
+      timeline: query ? store.searchTimelineEvents(query, 120) : store.listTimelineEvents(120),
+      undoJournal: store.listUndoJournal(),
+    });
     return;
   }
 
