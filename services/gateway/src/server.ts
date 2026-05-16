@@ -63,6 +63,7 @@ import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
 import { buildRuntimeEventHealth } from "./eventHealth.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
+import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
@@ -450,6 +451,54 @@ function addTurn(params: {
   };
   store.addTurn(turn);
   return turn;
+}
+
+function queueChatMessage(params: {
+  message: string;
+  conversationId?: string;
+  taskProfile?: TaskProfile;
+  timestamp: string;
+}): { conversation: Conversation; task: TaskRun; queued: ReturnType<typeof taskEvent> } {
+  const conversation =
+    (params.conversationId ? store.getConversation(params.conversationId) : undefined) ??
+    createConversationFromPrompt(params.message, params.timestamp);
+  store.upsertConversation({
+    ...conversation,
+    updatedAt: params.timestamp,
+    title: conversation.title || params.message.slice(0, 72),
+  });
+  addTurn({
+    conversationId: conversation.id,
+    role: "user",
+    content: params.message,
+    timestamp: params.timestamp,
+  });
+
+  const task = createTaskForTurn({
+    conversationId: conversation.id,
+    prompt: params.message,
+    taskProfile: params.taskProfile ?? "daily-assistant",
+    timestamp: params.timestamp,
+  });
+  store.upsertTask(task);
+  store.upsertQueueItem({
+    taskId: task.id,
+    status: "queued",
+    priority: 10,
+    enqueuedAt: params.timestamp,
+  });
+  const queued = taskEvent({
+    id: id("task-event"),
+    taskId: task.id,
+    kind: "queued",
+    message: "Task queued and ready for local execution.",
+    createdAt: params.timestamp,
+  });
+  store.addTaskEvent(queued);
+  events.publish("conversation", { conversation, task });
+  events.publish("task", { task, event: queued });
+  void runAssistantTask(task, params.message);
+  return { conversation, task, queued };
 }
 
 async function runAssistantTask(task: TaskRun, prompt: string): Promise<void> {
@@ -2291,6 +2340,111 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/voice/session") {
+    const voiceSession =
+      status.voiceSession ??
+      createVoiceSession({
+        id: id("voice-session"),
+        now: now(),
+        toolsReady: voiceRuntimeReadiness().summary.sttReady,
+      });
+    sendJson(response, 200, {
+      voiceSession,
+      readiness: voiceRuntimeReadiness(),
+      note: "Live microphone capture is not opened by this endpoint. It reports the current voice-session contract.",
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/voice/listening/start") {
+    const body = (await readBody(request)) as { resetTranscript?: boolean };
+    const started = startLiveVoiceSession({
+      existing: status.voiceSession,
+      id: id("voice-session"),
+      now: now(),
+      toolsReady: voiceRuntimeReadiness().summary.sttReady,
+      resetTranscript: body.resetTranscript ?? true,
+    });
+    status = { ...status, voiceSession: started.voiceSession };
+    events.publish("audio", { kind: "voice-listening-started", ...started });
+    sendJson(response, 200, started);
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/voice/listening/stop") {
+    const body = (await readBody(request)) as { reason?: string };
+    const stopped = stopLiveVoiceSession({
+      existing: status.voiceSession,
+      id: id("voice-session"),
+      now: now(),
+      toolsReady: voiceRuntimeReadiness().summary.sttReady,
+      reason: body.reason,
+    });
+    status = { ...status, voiceSession: stopped.voiceSession };
+    events.publish("audio", { kind: "voice-listening-stopped", ...stopped });
+    sendJson(response, 200, stopped);
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/voice/transcript") {
+    const body = (await readBody(request)) as {
+      text?: string;
+      final?: boolean;
+      confidence?: number;
+      startMs?: number;
+      endMs?: number;
+      engineId?: string;
+    };
+    const transcript = appendLiveTranscriptChunk({
+      existing: status.voiceSession,
+      id: id("voice-session"),
+      chunkId: id("transcript"),
+      now: now(),
+      toolsReady: voiceRuntimeReadiness().summary.sttReady,
+      text: body.text ?? "",
+      final: body.final,
+      confidence: body.confidence,
+      startMs: body.startMs,
+      endMs: body.endMs,
+      engineId: body.engineId,
+    });
+    status = { ...status, voiceSession: transcript.voiceSession };
+    events.publish("audio", { kind: "voice-transcript", ...transcript });
+    sendJson(response, transcript.voiceSession.state === "error" ? 400 : 200, transcript);
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/voice/transcript/commit") {
+    const body = (await readBody(request)) as { conversationId?: string; taskProfile?: TaskProfile };
+    const committed = commitLiveTranscript({
+      existing: status.voiceSession,
+      id: id("voice-session"),
+      now: now(),
+      toolsReady: voiceRuntimeReadiness().summary.sttReady,
+    });
+    status = { ...status, voiceSession: committed.voiceSession };
+    if (!committed.committable) {
+      events.publish("audio", { kind: "voice-transcript-commit-empty", ...committed });
+      sendJson(response, 400, committed);
+      return;
+    }
+
+    const queued = queueChatMessage({
+      conversationId: body.conversationId,
+      message: committed.text,
+      taskProfile: body.taskProfile ?? "daily-assistant",
+      timestamp: now(),
+    });
+    events.publish("audio", { kind: "voice-transcript-committed", ...committed, taskId: queued.task.id });
+    sendJson(response, 202, {
+      ...committed,
+      conversation: queued.conversation,
+      task: queued.task,
+      queued: queued.queued,
+    });
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/api/identity/readiness") {
     const brainIdentity = await brainJson<Record<string, unknown>>("/identity/readiness");
     sendJson(response, 200, {
@@ -3107,47 +3261,13 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       return;
     }
 
-    const timestamp = now();
-    const conversation =
-      (body.conversationId ? store.getConversation(body.conversationId) : undefined) ??
-      createConversationFromPrompt(message, timestamp);
-    store.upsertConversation({
-      ...conversation,
-      updatedAt: timestamp,
-      title: conversation.title || message.slice(0, 72),
+    const result = queueChatMessage({
+      conversationId: body.conversationId,
+      message,
+      taskProfile: body.taskProfile,
+      timestamp: now(),
     });
-    addTurn({
-      conversationId: conversation.id,
-      role: "user",
-      content: message,
-      timestamp,
-    });
-
-    const task = createTaskForTurn({
-      conversationId: conversation.id,
-      prompt: message,
-      taskProfile: body.taskProfile ?? "daily-assistant",
-      timestamp,
-    });
-    store.upsertTask(task);
-    store.upsertQueueItem({
-      taskId: task.id,
-      status: "queued",
-      priority: 10,
-      enqueuedAt: timestamp,
-    });
-    const queued = taskEvent({
-      id: id("task-event"),
-      taskId: task.id,
-      kind: "queued",
-      message: "Task queued and ready for local execution.",
-      createdAt: timestamp,
-    });
-    store.addTaskEvent(queued);
-    events.publish("conversation", { conversation, task });
-    events.publish("task", { task, event: queued });
-    void runAssistantTask(task, message);
-    sendJson(response, 202, { conversation, task, queued });
+    sendJson(response, 202, result);
     return;
   }
 
