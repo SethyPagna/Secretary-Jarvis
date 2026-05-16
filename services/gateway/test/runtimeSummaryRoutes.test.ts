@@ -37,6 +37,13 @@ describe("runtime summary routes", () => {
       runtimeConstellation: () => constellation,
       runtimeSmokeStatus: () => smoke,
       runtimeServicesStatus: () => Promise.resolve(services),
+      processVisibilityStatus: () => ({
+        generatedAt: "2026-05-16T00:00:00.000Z",
+        runtimeRoot: "data/runtime",
+        services: [],
+        summary: { tracked: 5, pidFilesPresent: 1, alive: 1, visibleInTaskManager: 1 },
+        note: "read only",
+      }),
       store: emptyStore(),
       approvals: [],
     };
@@ -44,12 +51,14 @@ describe("runtime summary routes", () => {
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/constellation" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/smoke-status" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/services" })).toBe(true);
+    expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/process-visibility" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, method: "POST", pathname: "/api/runtime/services" })).toBe(false);
 
-    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200]);
+    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200]);
     expect(JSON.stringify(sent[0]?.body)).toContain("runtime-constellation");
     expect(JSON.stringify(sent[1]?.body)).toContain("passed");
     expect(JSON.stringify(sent[2]?.body)).toContain("read only");
+    expect(JSON.stringify(sent[3]?.body)).toContain("visibleInTaskManager");
   });
 });
 

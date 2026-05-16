@@ -1,5 +1,6 @@
 import type { ActionRequest, RuntimeConstellation, RuntimeSmokeStatus, RuntimeServicesStatus } from "@jarvis/core";
 import { buildRuntimeEventHealth } from "../eventHealth.js";
+import type { ProcessVisibilityStatus } from "../processVisibility.js";
 import type { JarvisStore } from "../store.js";
 
 type SendJson = (statusCode: number, body: unknown) => void;
@@ -12,6 +13,7 @@ export function tryHandleRuntimeSummaryRoute(params: {
   runtimeConstellation: () => RuntimeConstellation;
   runtimeSmokeStatus: () => RuntimeSmokeStatus | null;
   runtimeServicesStatus: () => Promise<RuntimeServicesStatus>;
+  processVisibilityStatus?: () => ProcessVisibilityStatus;
   store: JarvisStore;
   approvals: ActionRequest[];
 }): Promise<boolean> | boolean {
@@ -34,6 +36,11 @@ export function tryHandleRuntimeSummaryRoute(params: {
       params.sendJson(200, { runtime });
       return true;
     });
+  }
+
+  if (params.pathname === "/api/runtime/process-visibility" && params.processVisibilityStatus) {
+    params.sendJson(200, { visibility: params.processVisibilityStatus() });
+    return true;
   }
 
   if (params.pathname === "/api/runtime/event-health") {
