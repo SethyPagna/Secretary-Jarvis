@@ -14,9 +14,15 @@ import {
 describe("workflow core domain", () => {
   it("seeds safe, coding, and social workflow definitions", () => {
     expect(seedWorkflows.map((workflow) => workflow.id)).toEqual(
-      expect.arrayContaining(["workflow-daily-brief", "workflow-code-review", "workflow-social-draft"]),
+      expect.arrayContaining(["workflow-daily-brief", "workflow-code-review", "workflow-social-draft", "workflow-cto-orchestrator"]),
     );
     expect(findSeedWorkflow("workflow-daily-brief")?.enabled).toBe(true);
+  });
+
+  it("seeds a CTO orchestrator with sub-workflow steps", () => {
+    const workflow = findSeedWorkflow("workflow-cto-orchestrator");
+    expect(workflow?.steps.some((step) => step.kind === "sub-workflow" && step.subWorkflowId === "workflow-code-review")).toBe(true);
+    expect(dryRunWorkflow(workflow!).runnable).toBe(true);
   });
 
   it("marks approval-gated workflow steps before execution", () => {

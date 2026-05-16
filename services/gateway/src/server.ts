@@ -1188,10 +1188,72 @@ async function executeWorkflowStep(
   }
 
   if (step.kind === "sub-workflow") {
-    return { ok: true, message: `Sub-workflow staged: ${step.subWorkflowId ?? step.title}.`, payload: { subWorkflowId: step.subWorkflowId } };
+    return queueWorkflowSubRun(run, step);
   }
 
   return executeWorkflowNativeStep(run, step);
+}
+
+function queueWorkflowSubRun(
+  parentRun: WorkflowRun,
+  step: WorkflowStep,
+): { ok: boolean; message: string; payload?: Record<string, unknown> } {
+  if (!step.subWorkflowId) {
+    return { ok: false, message: `Sub-workflow step has no target: ${step.title}.` };
+  }
+  const childWorkflow = store.getWorkflow(step.subWorkflowId);
+  if (!childWorkflow) {
+    return { ok: false, message: `Sub-workflow not found: ${step.subWorkflowId}.` };
+  }
+
+  const timestamp = now();
+  const dryRun = dryRunWorkflow(childWorkflow);
+  const childRun = createWorkflowRun({
+    id: id("workflow-run"),
+    workflowId: childWorkflow.id,
+    input: {
+      parentRunId: parentRun.id,
+      parentStepId: step.id,
+      source: "workflow-manager",
+    },
+    status: dryRun.approvalStepIds.length > 0 ? "waiting-approval" : "queued",
+    currentStepId: childWorkflow.steps[0]?.id,
+    createdAt: timestamp,
+  });
+  store.upsertWorkflowRun(childRun);
+  const childEvent = createWorkflowRunEvent({
+    id: id("workflow-event"),
+    workflowRunId: childRun.id,
+    workflowId: childWorkflow.id,
+    kind: dryRun.approvalStepIds.length > 0 ? "approval-requested" : "queued",
+    message:
+      dryRun.approvalStepIds.length > 0
+        ? `Sub-workflow ${childWorkflow.name} is waiting for owner approval.`
+        : `Sub-workflow ${childWorkflow.name} queued by workflow manager.`,
+    stepId: childWorkflow.steps[0]?.id,
+    createdAt: timestamp,
+    payload: { parentRunId: parentRun.id, parentStepId: step.id, dryRun },
+  });
+  store.addWorkflowRunEvent(childEvent);
+  if (dryRun.approvalStepIds.length > 0) {
+    const approval: ActionRequest = {
+      id: childRun.id,
+      title: `Approve sub-workflow: ${childWorkflow.name}`,
+      category: childWorkflow.steps.find((candidate) => dryRun.approvalStepIds.includes(candidate.id))?.actionCategory ?? "run-script",
+      target: childWorkflow.name,
+      reason: "A parent workflow queued this approval-gated specialist workflow.",
+      connectorId: "workflow-engine",
+      agentId: "sentinel",
+      dataTouched: ["workflow definition", "workflow run input", "approval-gated steps"],
+    };
+    recordPendingApproval(approval);
+  }
+  events.publish("task", { kind: "sub-workflow-queued", childWorkflow, childRun, childEvent });
+  return {
+    ok: true,
+    message: `Queued sub-workflow ${childWorkflow.name} as ${childRun.status}.`,
+    payload: { childWorkflowId: childWorkflow.id, childRun, childEvent },
+  };
 }
 
 async function runWorkflowAgentStep(
@@ -1698,6 +1760,28 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     };
     events.publish("task", { kind: "workflow-generated", result });
     sendJson(response, 200, result);
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/workflows/manager") {
+    const runs = store.listWorkflowRuns(80);
+    const workflows = store.listWorkflows();
+    const activeRuns = runs.filter((run) => ["queued", "running", "waiting-approval"].includes(run.status)).slice(0, 12);
+    const agentLoad = workflows
+      .flatMap((workflow) => workflow.steps)
+      .filter((step) => step.kind === "agent" && step.agentId)
+      .reduce<Record<string, number>>((counts, step) => {
+        counts[step.agentId!] = (counts[step.agentId!] ?? 0) + 1;
+        return counts;
+      }, {});
+    sendJson(response, 200, {
+      manager: "cto-orchestrator",
+      ctoWorkflow: workflows.find((workflow) => workflow.id === "workflow-cto-orchestrator"),
+      activeRuns,
+      recentRuns: runs.slice(0, 12),
+      agentLoad,
+      note: "Workflow manager coordinates parent and child runs locally; approval-gated sub-workflows remain owner-gated.",
+    });
     return;
   }
 

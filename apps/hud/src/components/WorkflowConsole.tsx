@@ -38,6 +38,7 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
     [activeWorkflow?.id, payload.dryRuns],
   );
   const recentRuns = payload.runs.filter((run) => run.workflowId === activeWorkflow?.id).slice(0, 3);
+  const activityRuns = payload.runs.slice(0, 5);
 
   async function startWorkflow(workflowId: string) {
     setBusyId(workflowId);
@@ -201,6 +202,26 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
             <span className="workflow-empty">Workflow engine is waiting for the gateway.</span>
           )}
         </div>
+      </div>
+      <div className="workflow-activity-log" aria-label="Workflow activity log">
+        {activityRuns.length ? (
+          activityRuns.map((run) => {
+            const workflow = payload.workflows.find((candidate) => candidate.id === run.workflowId);
+            return (
+              <span key={run.id}>
+                <i className={`workflow-status-dot workflow-status-${run.status}`} />
+                <b>{workflow?.name ?? run.workflowId}</b>
+                <small>{run.status}</small>
+              </span>
+            );
+          })
+        ) : (
+          <span>
+            <i className="workflow-status-dot" />
+            <b>Activity Log</b>
+            <small>Waiting</small>
+          </span>
+        )}
       </div>
     </div>
   );

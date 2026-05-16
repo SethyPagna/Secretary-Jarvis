@@ -846,6 +846,59 @@ button {
   background: rgba(0, 255, 136, 0.08);
 }
 
+.workflow-activity-log {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.workflow-activity-log span {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.workflow-activity-log b,
+.workflow-activity-log small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-activity-log small {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+}
+
+.workflow-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.workflow-status-queued,
+.workflow-status-running {
+  background: var(--hud-cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.42);
+}
+
+.workflow-status-completed {
+  background: var(--hud-green);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.42);
+}
+
+.workflow-status-waiting-approval {
+  background: #ffd166;
+  box-shadow: 0 0 12px rgba(255, 209, 102, 0.36);
+}
+
 @keyframes orb-breathe {
   0%,
   100% {
