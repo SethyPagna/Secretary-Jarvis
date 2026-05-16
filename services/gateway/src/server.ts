@@ -61,6 +61,7 @@ import {
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
+import { buildRuntimeEventHealth } from "./eventHealth.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
@@ -2008,6 +2009,20 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     }
     events.publish("security", { runtimeControl: dryRun });
     sendJson(response, dryRun.decision.decision === "deny" ? 403 : 200, { dryRun });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/runtime/event-health") {
+    sendJson(response, 200, {
+      health: buildRuntimeEventHealth({
+        checkedAt: now(),
+        tasks: store.listTasks(),
+        queue: store.listQueue(),
+        approvals: status.pendingApprovals,
+        timeline: store.listTimelineEvents(40),
+        workflowRuns: store.listWorkflowRuns(40),
+      }),
+    });
     return;
   }
 

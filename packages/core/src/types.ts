@@ -823,6 +823,34 @@ export interface RuntimeControlDryRun {
   message: string;
 }
 
+export interface RuntimeEventHealth {
+  checkedAt: string;
+  status: "quiet" | "active" | "attention";
+  queue: {
+    total: number;
+    running: number;
+    queued: number;
+    waitingApproval: number;
+    failed: number;
+  };
+  approvals: {
+    pending: number;
+    categories: ActionCategory[];
+  };
+  recentFailures: Array<{
+    id: string;
+    label: string;
+    kind: "task" | "workflow" | "timeline";
+    status?: string;
+  }>;
+  timeline: {
+    recent: number;
+    reversible: number;
+    remembered: number;
+  };
+  message: string;
+}
+
 export interface SystemAction {
   id: string;
   label: string;
