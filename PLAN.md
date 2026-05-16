@@ -823,6 +823,16 @@ Goal: make every named soul visibly and testably wired to a distinct voice/perso
 
 30.5 Verify per-agent voice matrix with core/gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke.
 
+## Extension Phase 31 - HUD Bundle And Startup Responsiveness
+
+Goal: reduce HUD startup/render pressure so Jarvis feels lighter in background mode. The default centered orb should load without dragging the whole animation/UI dependency graph into one oversized chunk.
+
+31.1 Add Vite manual chunking for React, Three.js, animation, icon, workflow, and shared Jarvis code.
+
+31.2 Add build-output documentation that records the new chunk layout and remaining optimization notes.
+
+31.3 Verify HUD bundle splitting with HUD build, HUD UI tests, gateway/core tests, startup check-only scripts, and runtime smoke.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
