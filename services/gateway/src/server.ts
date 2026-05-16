@@ -62,7 +62,6 @@ import {
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
-import { buildRuntimeEventHealth } from "./eventHealth.js";
 import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
@@ -73,6 +72,7 @@ import { probeModelRuntime } from "./modelProbe.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
+import { tryHandleRuntimeSummaryRoute } from "./routes/runtimeSummaryRoutes.js";
 import { buildSetupActionGroups } from "./setupActions.js";
 import { buildSetupInstallPlanManifest, createSetupInstallDryRun } from "./setupInstallPlans.js";
 import { tryHandleReadinessRoute } from "./routes/readinessRoutes.js";
@@ -2057,18 +2057,18 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
-  if (request.method === "GET" && url.pathname === "/api/runtime/constellation") {
-    sendJson(response, 200, { constellation: runtimeConstellation() });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/runtime/smoke-status") {
-    sendJson(response, 200, { smoke: readRuntimeSmokeStatus() });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/runtime/services") {
-    sendJson(response, 200, { runtime: await buildRuntimeServicesStatus() });
+  const runtimeSummaryHandled = await tryHandleRuntimeSummaryRoute({
+    method: request.method,
+    pathname: url.pathname,
+    now,
+    sendJson: (statusCode, body) => sendJson(response, statusCode, body),
+    runtimeConstellation,
+    runtimeSmokeStatus: readRuntimeSmokeStatus,
+    runtimeServicesStatus: buildRuntimeServicesStatus,
+    store,
+    approvals: status.pendingApprovals,
+  });
+  if (runtimeSummaryHandled) {
     return;
   }
 
@@ -2100,20 +2100,6 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     }
     events.publish("security", { runtimeControl: dryRun });
     sendJson(response, dryRun.decision.decision === "deny" ? 403 : 200, { dryRun });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/runtime/event-health") {
-    sendJson(response, 200, {
-      health: buildRuntimeEventHealth({
-        checkedAt: now(),
-        tasks: store.listTasks(),
-        queue: store.listQueue(),
-        approvals: status.pendingApprovals,
-        timeline: store.listTimelineEvents(40),
-        workflowRuns: store.listWorkflowRuns(40),
-      }),
-    });
     return;
   }
 
