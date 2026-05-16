@@ -146,6 +146,27 @@ export interface ModelReadiness {
   runtimeProbe?: RuntimeProbe;
 }
 
+export interface ModelAssetManifest {
+  id: string;
+  catalog: "ready" | "future-scaling";
+  label: string;
+  modelRef: string;
+  localPath?: string;
+  exists: boolean;
+  status: "complete" | "partial" | "missing" | "metadata-only";
+  fileCount: number;
+  sizeBytes: number;
+  hasConfig: boolean;
+  hasTokenizer: boolean;
+  hasProcessor: boolean;
+  weightFileCount: number;
+  indexFileCount: number;
+  indexedShardCount: number;
+  missingIndexedShards: string[];
+  requiredFilesMissing: string[];
+  notes: string[];
+}
+
 export type RuntimeProbeStatus =
   | "ready"
   | "served"

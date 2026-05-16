@@ -60,6 +60,7 @@ import {
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
+import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { JarvisStore } from "./store.js";
 
@@ -181,6 +182,14 @@ function statusWithRuntimeState(): JarvisStatus {
     visionInsights: status.visionInsights ?? [],
     devices: hydrateDevices(),
     performance: buildPerformanceSnapshot(),
+  };
+}
+
+function localModelAssetManifests() {
+  const hydratedReadyAssets = hydrateReadyModelAssets(existsSync);
+  return {
+    ready: hydratedReadyAssets.map(inspectReadyModelAsset),
+    futureScaling: futureScalingModels.map(inspectFutureScalingModel),
   };
 }
 
@@ -1905,9 +1914,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/models") {
     const runtimeStatus = statusWithRuntimeState();
+    const assetManifests = localModelAssetManifests();
     sendJson(response, 200, {
       models: runtimeStatus.models,
       readyModelAssets: runtimeStatus.readyModelAssets,
+      assetManifests,
       modelReadiness: runtimeStatus.modelReadiness,
       futureScalingModels: runtimeStatus.futureScalingModels,
       runtimeAdapters: runtimeStatus.runtimeAdapters ?? [],
@@ -1919,8 +1930,10 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/models/readiness") {
     const runtimeStatus = statusWithRuntimeState();
+    const assetManifests = localModelAssetManifests();
     sendJson(response, 200, {
       readyModelAssets: runtimeStatus.readyModelAssets ?? [],
+      assetManifests,
       readiness: runtimeStatus.modelReadiness ?? [],
       activeModelId: runtimeStatus.activeModelId,
       hardwareProfile: runtimeStatus.hardwareProfile,
@@ -1930,14 +1943,33 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "POST" && url.pathname === "/api/models/scan") {
     const runtimeStatus = statusWithRuntimeState();
+    const assetManifests = localModelAssetManifests();
     events.publish("model", {
       readiness: runtimeStatus.modelReadiness ?? [],
       readyModelAssets: runtimeStatus.readyModelAssets ?? [],
+      assetManifests,
     });
     sendJson(response, 200, {
       readyModelAssets: runtimeStatus.readyModelAssets ?? [],
+      assetManifests,
       readiness: runtimeStatus.modelReadiness ?? [],
       note: "Local scan checked expected folders and runtime hints without downloading anything.",
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/models/local-assets") {
+    const assetManifests = localModelAssetManifests();
+    sendJson(response, 200, {
+      ...assetManifests,
+      summary: {
+        readyComplete: assetManifests.ready.filter((manifest) => manifest.status === "complete").length,
+        futureScalingComplete: assetManifests.futureScaling.filter((manifest) => manifest.status === "complete").length,
+        missingOrPartial: [...assetManifests.ready, ...assetManifests.futureScaling].filter(
+          (manifest) => manifest.status !== "complete",
+        ).length,
+      },
+      note: "Safe local manifest scan only. No model weights were loaded and no downloads were attempted.",
     });
     return;
   }
