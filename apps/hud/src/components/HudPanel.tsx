@@ -1,6 +1,7 @@
 import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
 import { useState } from "react";
 import type { JarvisStatus } from "@jarvis/core";
+import { WorkflowConsole } from "./WorkflowConsole";
 import type { HudPanel as HudPanelName } from "../types";
 
 export function HudPanel({
@@ -102,6 +103,7 @@ export function HudPanel({
           </div>
         </>
       )}
+      {panel === "workflows" && <WorkflowConsole apiBaseUrl={apiBaseUrl} />}
       {panel === "settings" && (
         <>
           <header><Settings size={18} /><strong>Settings</strong></header>

@@ -1,18 +1,22 @@
 import { useEffect, useState } from "react";
 import type { JarvisStatus } from "@jarvis/core";
 
-const API_BASE_URL = import.meta.env.VITE_JARVIS_GATEWAY_URL ?? "http://127.0.0.1:4317";
+function resolveApiBaseUrl() {
+  const queryValue = new URLSearchParams(window.location.search).get("api");
+  return queryValue || import.meta.env.VITE_JARVIS_GATEWAY_URL || "http://127.0.0.1:4317";
+}
 
 export function useJarvisStatus() {
   const [status, setStatus] = useState<JarvisStatus | null>(null);
   const [online, setOnline] = useState(false);
+  const [apiBaseUrl] = useState(resolveApiBaseUrl);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/status`);
+        const response = await fetch(`${apiBaseUrl}/api/status`);
         if (!response.ok) {
           throw new Error(`Gateway ${response.status}`);
         }
@@ -34,7 +38,7 @@ export function useJarvisStatus() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [apiBaseUrl]);
 
-  return { status, online, apiBaseUrl: API_BASE_URL };
+  return { status, online, apiBaseUrl };
 }

@@ -1,1 +1,1 @@
-export type HudPanel = "dashboard" | "voice" | "text" | "devices" | "settings";
+export type HudPanel = "dashboard" | "voice" | "text" | "workflows" | "devices" | "settings";

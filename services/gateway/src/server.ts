@@ -171,7 +171,7 @@ function statusWithRuntimeState(): JarvisStatus {
     mobilePairings,
     socialDrafts,
     undoJournal: store.listUndoJournal(),
-    toolStatuses: detectToolStatuses(),
+    toolStatuses: status.toolStatuses ?? [],
     reports: buildReports(),
     mapOverlays: status.mapOverlays ?? [],
     visionInsights: status.visionInsights ?? [],
@@ -275,23 +275,12 @@ function hydrateFeatureDownloads(): NonNullable<JarvisStatus["neededFeatureDownl
     const detected =
       download.expectedPath.includes("vault") || download.expectedPath.includes("data/maps")
         ? existsSync(download.expectedPath)
-        : existsSync(download.expectedPath) || toolDetectedForFeature(download.id);
+        : existsSync(download.expectedPath);
     return {
       ...download,
       status: detected ? "detected" : download.status,
     };
   });
-}
-
-function toolDetectedForFeature(featureId: string): boolean {
-  const tools = detectToolStatuses();
-  if (featureId === "feature-piper") {
-    return tools.some((tool) => tool.id === "piper" && tool.installed);
-  }
-  if (featureId === "feature-ocr") {
-    return commandVersion("tesseract", ["--version"]).ok;
-  }
-  return false;
 }
 
 function buildReports(): ReportSnapshot[] {

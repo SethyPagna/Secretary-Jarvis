@@ -1,0 +1,129 @@
+import { AlertTriangle, CheckCircle2, Play, Route, ShieldAlert } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import type { WorkflowDefinition, WorkflowDryRun, WorkflowRun } from "@jarvis/core";
+
+interface WorkflowPayload {
+  workflows: WorkflowDefinition[];
+  runs: WorkflowRun[];
+  dryRuns: WorkflowDryRun[];
+}
+
+export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
+  const [payload, setPayload] = useState<WorkflowPayload>({ workflows: [], runs: [], dryRuns: [] });
+  const [activeId, setActiveId] = useState<string>("");
+  const [busyId, setBusyId] = useState<string>("");
+
+  async function load() {
+    const response = await fetch(`${apiBaseUrl}/api/workflows`);
+    if (!response.ok) {
+      throw new Error(`Workflow API ${response.status}`);
+    }
+    const next = (await response.json()) as WorkflowPayload;
+    setPayload(next);
+    setActiveId((current) => current || next.workflows[0]?.id || "");
+  }
+
+  useEffect(() => {
+    void load().catch(() => undefined);
+  }, [apiBaseUrl]);
+
+  const activeWorkflow = payload.workflows.find((workflow) => workflow.id === activeId) ?? payload.workflows[0];
+  const activeDryRun = useMemo(
+    () => payload.dryRuns.find((dryRun) => dryRun.workflowId === activeWorkflow?.id),
+    [activeWorkflow?.id, payload.dryRuns],
+  );
+  const recentRuns = payload.runs.filter((run) => run.workflowId === activeWorkflow?.id).slice(0, 3);
+
+  async function startWorkflow(workflowId: string) {
+    setBusyId(workflowId);
+    await fetch(`${apiBaseUrl}/api/workflows/${encodeURIComponent(workflowId)}/runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ input: { source: "hud-workflow-console" } }),
+    }).catch(() => undefined);
+    await load().catch(() => undefined);
+    setBusyId("");
+  }
+
+  return (
+    <div className="workflow-console">
+      <header>
+        <Route size={18} />
+        <strong>Workflows</strong>
+      </header>
+      <div className="workflow-layout">
+        <div className="workflow-list" aria-label="Workflow list">
+          {payload.workflows.map((workflow) => {
+            const dryRun = payload.dryRuns.find((candidate) => candidate.workflowId === workflow.id);
+            return (
+              <button
+                key={workflow.id}
+                type="button"
+                className={workflow.id === activeWorkflow?.id ? "workflow-card selected" : "workflow-card"}
+                onClick={() => setActiveId(workflow.id)}
+              >
+                <span>
+                  <b>{workflow.name}</b>
+                  <small>{workflow.steps.length} steps</small>
+                </span>
+                <RiskIcon risk={dryRun?.risk ?? "safe"} />
+              </button>
+            );
+          })}
+        </div>
+        <div className="workflow-detail">
+          {activeWorkflow ? (
+            <>
+              <div className="workflow-title-row">
+                <span>
+                  <b>{activeWorkflow.name}</b>
+                  <small>{activeWorkflow.tags.join(" / ")}</small>
+                </span>
+                <button type="button" onClick={() => void startWorkflow(activeWorkflow.id)} disabled={busyId === activeWorkflow.id}>
+                  <Play size={15} />
+                  {busyId === activeWorkflow.id ? "Queueing" : "Queue"}
+                </button>
+              </div>
+              <div className="workflow-risk-strip">
+                <Chip label={activeDryRun?.risk ?? "safe"} tone={activeDryRun?.risk ?? "safe"} />
+                <Chip label={`${activeDryRun?.approvalStepIds.length ?? 0} approvals`} tone="approval-required" />
+                <Chip label={`${activeDryRun?.blockedStepIds.length ?? 0} blocked`} tone="blocked" />
+              </div>
+              <div className="workflow-step-map">
+                {activeWorkflow.steps.map((step) => {
+                  const dryStep = activeDryRun?.steps.find((candidate) => candidate.stepId === step.id);
+                  return (
+                    <span key={step.id} className={`workflow-step workflow-step-${dryStep?.risk ?? "safe"}`}>
+                      <i />
+                      <b>{step.title}</b>
+                      <small>{dryStep?.decision ?? "allow"}</small>
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="workflow-runs">
+                {recentRuns.length ? recentRuns.map((run) => <span key={run.id}>{run.status} / {run.currentStepId ?? "ready"}</span>) : <span>No recent runs.</span>}
+              </div>
+            </>
+          ) : (
+            <span className="workflow-empty">Workflow engine is waiting for the gateway.</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RiskIcon({ risk }: { risk: WorkflowDryRun["risk"] }) {
+  if (risk === "blocked") {
+    return <AlertTriangle size={17} className="risk-blocked" aria-label="blocked" />;
+  }
+  if (risk === "approval-required") {
+    return <ShieldAlert size={17} className="risk-approval" aria-label="approval required" />;
+  }
+  return <CheckCircle2 size={17} className="risk-safe" aria-label="safe" />;
+}
+
+function Chip({ label, tone }: { label: string; tone: WorkflowDryRun["risk"] }) {
+  return <span className={`workflow-chip workflow-chip-${tone}`}>{label}</span>;
+}
