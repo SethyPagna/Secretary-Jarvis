@@ -48,7 +48,7 @@ Protocol:
 ## Phase 4 - Vision & Identity
 - [x] 4.1 Python vision service - commit `499b09a`
 - [x] 4.2 Add vision readiness/analyze/capture dry-run endpoints - implemented before tracker
-- [ ] 4.3 Identity scaffolding - partial only
+- [x] 4.3 Identity scaffolding - commit `3213b81`
 - [ ] 4.4 Privacy locks - partial policy gating exists
 
 ## Phase 5 - MemoryOS & 20-Minute Time-Travel Undo
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `4.3 Identity scaffolding`.
+Next task: `4.4 Privacy locks`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
