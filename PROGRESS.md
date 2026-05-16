@@ -143,11 +143,11 @@ Protocol:
 - [x] 17.2 Add approval-gated model activation dry-runs with command previews, expected memory, runtime endpoint hints, and unload guidance - commit `8fa1a40`
 - [x] 17.3 Surface model activation plans in the HUD dashboard/model area without text stuffing - commit `3bf9f21`
 - [x] 17.4 Add user-facing runtime activation documentation for laptop, workstation, and homelab profiles - commit `590d5c0`
-- [ ] 17.5 Verify model runtime activation plans with unit tests, HUD tests, and runtime smoke checks
+- [x] 17.5 Verify model runtime activation plans with unit tests, HUD tests, and runtime smoke checks - commit `41ff415`
 
 ## Current Priority
 
-Next task: 17.5 Verify model runtime activation plans with unit tests, HUD tests, and runtime smoke checks.
+Next task: Define Phase 18 for live dependency installer approvals, deeper model runtime execution, or the next requested Jarvis refinement.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
