@@ -183,7 +183,7 @@ Protocol:
 - [x] 22.7 Verify architecture hardening with tests, builds, and runtime smoke checks - commit `d51effc`
 
 ## Phase 23 - Route And UI Code Health Refactor
-- [ ] 23.1 Extract health/architecture/setup route handlers from the gateway server
+- [x] 23.1 Extract health/architecture/setup route handlers from the gateway server - commit `b38476d`
 - [ ] 23.2 Extract model/runtime/security route handlers from the gateway server
 - [ ] 23.3 Consolidate repeated HUD compact-card styles
 - [ ] 23.4 Add HUD route-level code splitting for heavy panels
@@ -191,7 +191,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Implement Phase 23.1 gateway health/architecture/setup route extraction.
+Next task: Implement Phase 23.2 model/runtime/security route extraction.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
