@@ -83,7 +83,7 @@ Protocol:
 - [x] 9.2 Add workflow persistence and gateway API - commit `67e3527`
 - [x] 9.3 Create HUD Workflow Console - commit `9417632`
 - [x] 9.4 Implement workflow approval pop-ups - commit `951fc0c`
-- [ ] 9.5 Implement LLM-driven workflow generation
+- [x] 9.5 Implement LLM-driven workflow generation - commit `5077a8b`
 - [ ] 9.6 Implement native step executor
 - [ ] 9.7 Implement multi-agent workflow manager
 
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `9.5 Implement LLM-driven workflow generation`.
+Next task: `9.6 Implement native step executor`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
