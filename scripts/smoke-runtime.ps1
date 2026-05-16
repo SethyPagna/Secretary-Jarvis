@@ -135,7 +135,7 @@ function Invoke-JsonPost {
 function Wait-GatewayTask {
   param(
     [string]$TaskId,
-    [int]$TimeoutSeconds = 20
+    [int]$TimeoutSeconds = 90
   )
 
   $deadline = (Get-Date).AddSeconds($TimeoutSeconds)

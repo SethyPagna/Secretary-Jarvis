@@ -256,11 +256,11 @@ Protocol:
 - [x] 34.2 Add Electron app-mode local renderer loading - commit `10e623c`
 - [x] 34.3 Update default launcher to start app mode, with browser preview optional - commit `af344d2`
 - [x] 34.4 Extend runtime smoke for live text and root responses - commit `322f820`
-- [ ] 34.5 Document and verify app-mode runtime
+- [x] 34.5 Document and verify app-mode runtime - commit `pending`
 
 ## Current Priority
 
-Next task: Phase 34 app-mode runtime and live text.
+Next task: Continue with the next owner-requested refinement.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
