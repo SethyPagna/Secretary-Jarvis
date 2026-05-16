@@ -833,6 +833,18 @@ Goal: reduce HUD startup/render pressure so Jarvis feels lighter in background m
 
 31.3 Verify HUD bundle splitting with HUD build, HUD UI tests, gateway/core tests, startup check-only scripts, and runtime smoke.
 
+## Extension Phase 32 - Runtime Self-Test And Actionable Fixes
+
+Goal: make Jarvis prove that the runtime is connected end-to-end without flooding the owner with logs. Settings should show one compact self-test summary and a small set of safe dry-run fixes.
+
+32.1 Add a runtime self-test endpoint that aggregates wake/model activation, agent manager, interaction health, startup visibility, packaging, and service readiness.
+
+32.2 Surface the self-test in HUD Settings as concise status chips and top fix buttons, with details collapsed.
+
+32.3 Document how the runtime self-test maps blocked/attention states to dry-run fixes.
+
+32.4 Verify runtime self-test with gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

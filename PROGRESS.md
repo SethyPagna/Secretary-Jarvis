@@ -238,9 +238,15 @@ Protocol:
 - [x] 31.2 Add HUD build-output documentation - commit `f7f6760`
 - [x] 31.3 Verify HUD bundle splitting with tests, builds, startup check-only scripts, and runtime smoke - commit `3f007e0`
 
+## Phase 32 - Runtime Self-Test And Actionable Fixes
+- [ ] 32.1 Add runtime self-test endpoint
+- [ ] 32.2 Surface runtime self-test in HUD Settings
+- [ ] 32.3 Add runtime self-test documentation
+- [ ] 32.4 Verify runtime self-test with tests, builds, startup check-only scripts, and runtime smoke
+
 ## Current Priority
 
-Next task: Continue with the next owner-requested refinement.
+Next task: Phase 32 runtime self-test and compact actionable fixes.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
