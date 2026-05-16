@@ -867,6 +867,64 @@ button {
   white-space: nowrap;
 }
 
+.runtime-command-grid {
+  width: min(560px, 100%);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px auto 0;
+}
+
+.runtime-command-grid button {
+  min-height: 48px;
+  display: grid;
+  gap: 5px;
+  justify-items: start;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 13px;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.065), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+}
+
+.runtime-command-grid button:hover {
+  border-color: rgba(0, 229, 255, 0.42);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.12);
+}
+
+.runtime-command-grid small {
+  overflow: hidden;
+  max-width: 100%;
+  color: rgba(255, 255, 255, 0.62);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.runtime-command-grid strong {
+  overflow: hidden;
+  max-width: 100%;
+  color: #ffd45a;
+  font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.packaging-readiness-card {
+  width: min(560px, 100%);
+  margin: 10px auto 0;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(0, 229, 255, 0.08), transparent 40%),
+    rgba(0, 0, 0, 0.2);
+}
+
+.packaging-readiness-card summary {
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+}
+
 .setup-groups span {
   display: grid;
   gap: 8px;
@@ -2016,6 +2074,7 @@ button {
   .constellation-grid,
   .hardening-grid,
   .startup-control-strip,
+  .runtime-command-grid,
   .setup-groups,
   .setup-approval-summary,
   .setup-install-strip,

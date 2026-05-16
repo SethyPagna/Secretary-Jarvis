@@ -3,6 +3,8 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import type {
   JarvisStatus,
   RuntimeConstellation,
+  RuntimeControlDryRun,
+  RuntimeControlKind,
   RuntimeServicesStatus,
   RuntimeSmokeStatus,
   SetupActionGroup,
@@ -46,6 +48,8 @@ export function HudPanel({
   const [authorityReadiness, setAuthorityReadiness] = useState<AuthorityReadinessSummary | null>(null);
   const [processVisibility, setProcessVisibility] = useState<ProcessVisibilitySummary | null>(null);
   const [startupPlans, setStartupPlans] = useState<StartupPlanSummary[]>([]);
+  const [packagingReadiness, setPackagingReadiness] = useState<PackagingReadinessSummary | null>(null);
+  const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
@@ -239,6 +243,21 @@ export function HudPanel({
         }
       })
       .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/packaging-readiness`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: PackagingReadinessResponse | undefined) => {
+        if (!cancelled && payload?.packaging) {
+          setPackagingReadiness({
+            electronShellReady: payload.packaging.summary.electronShellReady,
+            startupScriptsReady: payload.packaging.summary.startupScriptsReady,
+            productionCommandsReady: payload.packaging.summary.productionCommandsReady,
+            wakeReady: payload.packaging.backgroundRuntime.wakeMethods.filter((method) => method.status === "ready").length,
+            wakeStaged: payload.packaging.backgroundRuntime.wakeMethods.filter((method) => method.status === "staged").length,
+            packageCommand: payload.packaging.electron.commands.at(-1) ?? "npm.cmd run dist:hud"
+          });
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -371,6 +390,32 @@ export function HudPanel({
             decision: "unavailable",
             risk: "blocked",
             note: "Dry-run endpoint did not return a setup preview."
+          }
+    }));
+  }
+
+  async function dryRunRuntimeControl(control: RuntimeControlKind) {
+    const payload = await fetch(`${apiBaseUrl}/api/runtime/control/dry-run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ control, target: "all" })
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as RuntimeControlDryRunResponse | undefined;
+    setRuntimeDryRuns((current) => ({
+      ...current,
+      [control]: payload?.dryRun
+        ? {
+            decision: payload.dryRun.decision.decision,
+            risk: payload.dryRun.decision.risk,
+            commandPreview: payload.dryRun.commandPreview,
+            message: payload.dryRun.message
+          }
+        : {
+            decision: "unavailable",
+            risk: "blocked",
+            commandPreview: "runtime dry-run unavailable",
+            message: "Gateway did not return a runtime control preview."
           }
     }));
   }
@@ -553,6 +598,27 @@ export function HudPanel({
               <em>approval still required</em>
             </span>
           </div>
+          <div className="runtime-command-grid" aria-label="Runtime install start stop dry-run controls">
+            {(["start", "stop", "restart", "emergency-stop"] as RuntimeControlKind[]).map((control) => (
+              <button key={control} type="button" onClick={() => void dryRunRuntimeControl(control)}>
+                <small>{controlLabel(control)}</small>
+                <strong>{runtimeDryRuns[control]?.decision ?? "dry-run"}</strong>
+              </button>
+            ))}
+          </div>
+          <details className="packaging-readiness-card compact-card" aria-label="Packaging and wake readiness">
+            <summary>
+              <Play size={15} aria-hidden="true" />
+              <span>Package</span>
+              <b>{packagingReadiness?.productionCommandsReady ? "ready" : "check"}</b>
+            </summary>
+            <small>
+              {packagingReadiness
+                ? `${packagingReadiness.wakeReady} wake ready / ${packagingReadiness.wakeStaged} staged`
+                : "Loading wake methods."}
+            </small>
+            <em>{packagingReadiness?.packageCommand ?? "Checking Electron HUD package command."}</em>
+          </details>
           <div className="setup-groups" aria-label="Setup action groups">
             {setupGroups.map((group) => (
               <span key={group.id}>
@@ -622,6 +688,17 @@ interface RuntimeSmokeResponse {
 
 interface RuntimeServicesResponse {
   runtime?: RuntimeServicesStatus;
+}
+
+interface RuntimeControlDryRunResponse {
+  dryRun?: RuntimeControlDryRun;
+}
+
+interface RuntimeDryRunSummary {
+  decision: "allow" | "deny" | "requires_approval" | "unavailable";
+  risk: "safe" | "approval-required" | "blocked";
+  commandPreview: string;
+  message: string;
 }
 
 interface ModelActivationPlan {
@@ -831,6 +908,31 @@ interface StartupPlanSummary {
   approvalRequired: boolean;
 }
 
+interface PackagingReadinessResponse {
+  packaging?: {
+    electron: {
+      commands: string[];
+    };
+    backgroundRuntime: {
+      wakeMethods: Array<{ status: "ready" | "staged" }>;
+    };
+    summary: {
+      electronShellReady: boolean;
+      startupScriptsReady: boolean;
+      productionCommandsReady: boolean;
+    };
+  };
+}
+
+interface PackagingReadinessSummary {
+  electronShellReady: boolean;
+  startupScriptsReady: boolean;
+  productionCommandsReady: boolean;
+  wakeReady: number;
+  wakeStaged: number;
+  packageCommand: string;
+}
+
 function Widget({ label, value }: { label: string; value: string }) {
   return (
     <span className="hud-widget">
@@ -842,4 +944,11 @@ function Widget({ label, value }: { label: string; value: string }) {
 
 function compactDetail(value: string): string {
   return value.length > 64 ? `${value.slice(0, 61)}...` : value;
+}
+
+function controlLabel(control: RuntimeControlKind): string {
+  if (control === "emergency-stop") {
+    return "Emergency";
+  }
+  return `${control[0]?.toUpperCase() ?? ""}${control.slice(1)}`;
 }

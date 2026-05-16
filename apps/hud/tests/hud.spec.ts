@@ -299,6 +299,57 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/runtime/packaging-readiness")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          packaging: {
+            electron: {
+              commands: ["npm.cmd run dev:hud", "npm.cmd run start:hud", "npm.cmd run package:hud", "npm.cmd run dist:hud"],
+            },
+            backgroundRuntime: {
+              wakeMethods: [
+                { id: "tray-open-hud", label: "Tray", status: "ready" },
+                { id: "orb-click", label: "Orb", status: "ready" },
+                { id: "hotword", label: "Hotword", status: "staged" },
+              ],
+            },
+            summary: {
+              electronShellReady: true,
+              startupScriptsReady: true,
+              productionCommandsReady: true,
+            },
+          },
+        }),
+      });
+      return;
+    }
+    if (route.request().method() === "POST" && route.request().url().endsWith("/api/runtime/control/dry-run")) {
+      const payload = route.request().postDataJSON() as { control?: string };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          dryRun: {
+            id: "runtime-control-ui",
+            control: payload.control ?? "start",
+            target: "all",
+            commandPreview: "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-jarvis.ps1",
+            reversible: true,
+            action: { id: "approval-runtime", title: "Start Jarvis runtime" },
+            decision: {
+              decision: "requires_approval",
+              risk: "approval-required",
+              reasons: ["Runtime controls are approval-gated."],
+            },
+            dataTouched: ["local runtime process state"],
+            message: "Dry-run only. Owner approval is required before changing runtime services.",
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().includes("/api/setup/install-plans/install-feature-piper/dry-run")) {
       await route.fulfill({
         status: 202,
@@ -554,6 +605,12 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(hardening).toContainText("Code health");
   await expect(panel.getByLabel("Startup and service manager")).toContainText("3/5");
   await expect(panel.getByLabel("Startup and service manager")).toContainText("highest");
+  await expect(panel.getByLabel("Runtime install start stop dry-run controls")).toContainText("Start");
+  await page.getByRole("button", { name: "Start dry-run", exact: true }).click();
+  await expect(panel.getByLabel("Runtime install start stop dry-run controls")).toContainText("requires_approval");
+  await expect(panel.getByLabel("Packaging and wake readiness")).toContainText("ready");
+  await panel.getByLabel("Packaging and wake readiness").locator("summary").click();
+  await expect(panel.getByLabel("Packaging and wake readiness")).toContainText("2 wake ready / 1 staged");
   await hardening.locator(".hardening-card", { hasText: "Authority" }).locator("summary").click();
   await expect(hardening).toContainText("9 gated");
   await hardening.locator(".hardening-card", { hasText: "Code health" }).locator("summary").click();
