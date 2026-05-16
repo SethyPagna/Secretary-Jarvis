@@ -74,7 +74,7 @@ Protocol:
 ## Phase 8 - High-Trust System Control
 - [x] 8.1 Define complete allowed local actions - commit `a0f43af`
 - [x] 8.2 Implement `POST /api/system/actions/dry-run` - implemented before tracker
-- [ ] 8.3 Implement approved execution through privileged Python subprocess
+- [x] 8.3 Implement approved execution through privileged Python subprocess - commit `a3b7ab9`
 - [x] 8.4 Emergency stop mechanism - implemented before tracker
 - [ ] 8.5 HUD approval-required action display
 
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `8.3 Implement approved execution through privileged Python subprocess`.
+Next task: `8.5 HUD approval-required action display`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
