@@ -845,6 +845,20 @@ Goal: make Jarvis prove that the runtime is connected end-to-end without floodin
 
 32.4 Verify runtime self-test with gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke.
 
+## Extension Phase 33 - Friendly Launch And Automation
+
+Goal: make Jarvis feel like software, not a pile of scripts. The scripts stay as the reliable engine, but the owner should use double-click launchers, shortcuts, and a small control menu.
+
+33.1 Add root-level Windows launchers for Start, Stop, Verify, and Shortcut Setup.
+
+33.2 Add a smart `scripts/jarvis-control.ps1` command menu that wraps start, stop, restart, verify, self-test, startup registration, and shortcut installation.
+
+33.3 Add `scripts/install-shortcuts.ps1` to create Desktop and Start Menu shortcuts, with check-only preview and optional startup registration.
+
+33.4 Document the user-friendly run flow: double-click, tray/orb wake, background startup, stop, verify, and self-test.
+
+33.5 Verify friendly launch automation with check-only commands, tests, builds, and git push.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
