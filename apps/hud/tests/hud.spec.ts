@@ -6,10 +6,44 @@ async function mockGateway(page: import("playwright/test").Page) {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(seededStatus),
+      body: JSON.stringify({
+        ...seededStatus,
+        pendingApprovals: [
+          ...seededStatus.pendingApprovals,
+          {
+            id: "setup-install-ui",
+            title: "Prepare feature setup: Piper executable and one voice",
+            category: "model-download",
+            target: "C:/Users/user/Downloads/Secretary Jarvis/tools/piper",
+            reason: "UI test setup approval.",
+            dataTouched: ["local voice tools"],
+          },
+        ],
+      }),
     });
   });
   await page.route("http://127.0.0.1:4317/api/**", async (route) => {
+    if (route.request().url().endsWith("/api/status")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...seededStatus,
+          pendingApprovals: [
+            ...seededStatus.pendingApprovals,
+            {
+              id: "setup-install-ui",
+              title: "Prepare feature setup: Piper executable and one voice",
+              category: "model-download",
+              target: "C:/Users/user/Downloads/Secretary Jarvis/tools/piper",
+              reason: "UI test setup approval.",
+              dataTouched: ["local voice tools"],
+            },
+          ],
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/runtime/constellation")) {
       await route.fulfill({
         status: 200,
@@ -356,6 +390,8 @@ test("settings separates feature downloads from future scaling", async ({ page }
   const panel = page.getByRole("dialog", { name: "Jarvis settings panel" });
   await expect(panel.getByLabel("Setup action groups")).toContainText("2 needed");
   await expect(panel.getByLabel("Setup action groups")).toContainText("2 future");
+  await expect(panel.getByLabel("Setup approval summary")).toContainText("1");
+  await expect(panel.getByLabel("Setup approval summary")).toContainText("gated");
   await expect(panel.getByLabel("Feature plug-in slots")).toContainText("Piper");
   await expect(panel.getByLabel("Feature plug-in slots")).toContainText("missing");
   await expect(panel.getByLabel("Approved setup install plans")).toContainText("Piper");

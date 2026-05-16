@@ -40,6 +40,9 @@ export function HudPanel({
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
+  const setupApprovals = (status?.pendingApprovals ?? []).filter(
+    (approval) => approval.title.toLowerCase().includes("feature setup") || approval.target.includes("Secretary Jarvis")
+  );
 
   useEffect(() => {
     if (panel !== "dashboard") {
@@ -382,6 +385,17 @@ export function HudPanel({
                 <strong>{group.kind === "needed-feature-downloads" ? `${group.items.filter((item) => item.status === "needed").length} needed` : `${group.items.length} future`}</strong>
               </span>
             ))}
+          </div>
+          <div className="setup-approval-summary" aria-label="Setup approval summary">
+            <span>
+              <small>Setup approvals</small>
+              <strong>{setupApprovals.length}</strong>
+            </span>
+            <span>
+              <small>Risk</small>
+              <strong>{setupApprovals.length ? "gated" : "quiet"}</strong>
+            </span>
+            <em>{setupApprovals[0]?.title ?? "No setup approval waiting."}</em>
           </div>
           <div className="plugin-slot-grid" aria-label="Feature plug-in slots">
             {pluginSlots.slice(0, 6).map((slot) => (

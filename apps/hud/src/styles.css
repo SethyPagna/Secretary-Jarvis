@@ -516,6 +516,49 @@ button {
   font: 700 14px/1 "JetBrains Mono", Consolas, monospace;
 }
 
+.setup-approval-summary {
+  width: min(560px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(255, 212, 90, 0.18);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 212, 90, 0.06), rgba(0, 229, 255, 0.035)),
+    rgba(0, 0, 0, 0.18);
+}
+
+.setup-approval-summary span {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.setup-approval-summary small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setup-approval-summary strong {
+  color: #ffd45a;
+  font: 700 14px/1 "JetBrains Mono", Consolas, monospace;
+}
+
+.setup-approval-summary em {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 11px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .plugin-slot-grid {
   width: min(560px, 100%);
   display: grid;
@@ -1573,6 +1616,7 @@ button {
   .voice-readiness-strip,
   .constellation-grid,
   .setup-groups,
+  .setup-approval-summary,
   .setup-install-strip,
   .service-pulses,
   .device-grid,
