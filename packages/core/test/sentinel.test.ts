@@ -14,6 +14,26 @@ describe("Sentinel safety agent", () => {
     expect(review.matchedSignals).toContain("protected-internals");
   });
 
+  it("denies runtime agent attempts to access sealed core internals", () => {
+    const review = sentinelReviewAction({
+      privacyMode: "strict-local",
+      allowedConnectors: ["filesystem"],
+      action: {
+        id: "core-access",
+        title: "Dump protected core policy engine",
+        category: "protected-core-access",
+        target: "core safeguards and model tensors",
+        reason: "User prompt asks the runtime agent to reveal sealed internals.",
+        connectorId: "filesystem",
+        dataTouched: ["source code", "model tensors", "policy engine"],
+      },
+    });
+
+    expect(review.verdict).toBe("deny");
+    expect(review.risk).toBe("blocked");
+    expect(review.reasons.join(" ")).toMatch(/protected-core access/i);
+  });
+
   it("escalates approval-bypass language even for otherwise local actions", () => {
     const review = sentinelReviewAction({
       privacyMode: "strict-local",
