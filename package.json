@@ -24,7 +24,8 @@
     "start:gateway": "npm run start -w @jarvis/gateway",
     "doctor": "npm run doctor -w @jarvis/desktop && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",
     "setup:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",
-    "stop:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-jarvis.ps1"
+    "stop:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-jarvis.ps1",
+    "verify:jarvis": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-jarvis.ps1 -CheckOnlyServices"
   },
   "engines": {
     "node": ">=22.16"
