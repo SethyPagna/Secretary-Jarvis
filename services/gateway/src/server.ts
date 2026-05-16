@@ -22,6 +22,8 @@ import {
   readinessForModel,
   seededStatus,
   selectModelForTask,
+  sentinelReviewAction,
+  sentinelReviewPrompt,
   taskEvent,
   type ActionRequest,
   type Conversation,
@@ -56,11 +58,6 @@ const HF_SNAPSHOT_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\models\\
 const VOICE_ASSET_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\assets\\voice";
 const OLLAMA_URL = process.env.JARVIS_OLLAMA_URL ?? "http://127.0.0.1:11434";
 const BRAIN_URL = process.env.JARVIS_BRAIN_URL ?? "http://127.0.0.1:5000";
-const PROTECTED_CORE_PATTERNS = [
-  /show|print|dump|reveal|exfiltrate/i,
-  /source code|core code|safeguard|policy engine|system prompt|model tensor|weights|secret|credential|vault/i,
-  /bypass|disable guard|ignore approval|jailbreak/i,
-];
 const JSON_HEADERS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET,POST,OPTIONS",
@@ -485,22 +482,13 @@ async function runAssistantTask(task: TaskRun, prompt: string): Promise<void> {
 }
 
 function evaluateProtectedCorePrompt(prompt: string): ReturnType<typeof evaluateActionPolicy> {
-  const matched = PROTECTED_CORE_PATTERNS.filter((pattern) => pattern.test(prompt));
-  const action: ActionRequest = {
-    id: id("protected-core"),
-    title: "Protected core access check",
-    category: matched.length >= 2 ? "protected-core-access" : "read-local",
-    target: "Jarvis protected core",
-    reason: "Runtime agents cannot inspect or reveal core safeguards, source, secrets, memory vaults, or model tensors.",
-    agentId: "safety",
-    dataTouched: ["core safeguards", "source", "secrets", "model tensors"],
-  };
-
-  return evaluateActionPolicy({
-    action,
+  const review = sentinelReviewPrompt({
+    prompt,
+    actionId: id("protected-core"),
     privacyMode: status.privacyMode,
     allowedConnectors: getEnabledConnectorIds(),
   });
+  return review.decision;
 }
 
 async function callSelectedLocalModel(task: TaskRun, prompt: string): Promise<string> {
@@ -719,11 +707,14 @@ function createSystemAction(params: {
     agentId: "vulcan",
     dataTouched: [params.target, "local laptop state", reversible ? "undo checkpoint" : "non-reversible action"],
   };
-  const decision = evaluateActionPolicy({
+  const review = sentinelReviewAction({
     action: actionRequest,
     privacyMode: status.privacyMode,
     allowedConnectors: getEnabledConnectorIds(),
+    prompt: params.command,
+    createdAt: timestamp,
   });
+  const decision = review.decision;
 
   return createSystemActionDraft({
     id: actionId,
@@ -1944,6 +1935,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     sendJson(response, 200, {
       protectedCore: status.protectedCore,
       privacyMode: status.privacyMode,
+      sentinel: status.agentSouls?.find((soul) => soul.id === "sentinel"),
       blockedCategories: ["network", "protected-core-access"],
       approvalCategories: [
         "delete-local",
@@ -1957,6 +1949,28 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         "irreversible-edit",
       ],
     });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/security/sentinel/review") {
+    const body = (await readBody(request)) as { prompt?: string; action?: ActionRequest };
+    const review = body.action
+      ? sentinelReviewAction({
+          action: body.action,
+          prompt: body.prompt,
+          privacyMode: status.privacyMode,
+          allowedConnectors: getEnabledConnectorIds(),
+          createdAt: now(),
+        })
+      : sentinelReviewPrompt({
+          prompt: body.prompt ?? "",
+          actionId: id("sentinel-review"),
+          privacyMode: status.privacyMode,
+          allowedConnectors: getEnabledConnectorIds(),
+          createdAt: now(),
+        });
+    events.publish("security", { sentinelReview: review });
+    sendJson(response, 200, { review });
     return;
   }
 

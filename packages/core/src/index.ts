@@ -5,6 +5,7 @@ export * from "./modelInstall.js";
 export * from "./memory.js";
 export * from "./policy.js";
 export * from "./seed.js";
+export * from "./sentinel.js";
 export * from "./social.js";
 export * from "./setupCatalog.js";
 export * from "./systemActions.js";

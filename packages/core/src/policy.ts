@@ -57,7 +57,7 @@ export function evaluateActionPolicy(params: {
     reasons.push(`${params.action.category} is configured as an approval-gated action.`);
   }
 
-  if (params.action.dataTouched.some((item) => /secret|token|credential|biometric/i.test(item))) {
+  if (params.action.dataTouched.some((item) => /\b(secret|token|credential|biometric)s?\b/i.test(item))) {
     reasons.push("The action touches sensitive data.");
   }
 

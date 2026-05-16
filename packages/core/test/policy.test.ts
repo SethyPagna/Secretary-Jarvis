@@ -49,6 +49,24 @@ describe("policy engine", () => {
     expect(decision.decision).toBe("allow");
   });
 
+  it("does not mistake the Secretary Jarvis folder name for a secret", () => {
+    const decision = evaluateActionPolicy({
+      privacyMode: "strict-local",
+      allowedConnectors: ["filesystem"],
+      action: {
+        id: "a2b",
+        title: "Inspect project folder",
+        category: "read-local",
+        target: "C:\\Users\\user\\Downloads\\Secretary Jarvis",
+        reason: "Read project metadata",
+        connectorId: "filesystem",
+        dataTouched: ["C:\\Users\\user\\Downloads\\Secretary Jarvis"],
+      },
+    });
+
+    expect(decision.decision).toBe("allow");
+  });
+
   it("denies protected core access even before approval routing", () => {
     const decision = evaluateActionPolicy({
       privacyMode: "strict-local",
