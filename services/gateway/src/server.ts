@@ -64,6 +64,7 @@ import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
 import { buildRuntimeEventHealth } from "./eventHealth.js";
 import { buildArchitectureMap } from "./architectureMap.js";
+import { buildAuthorityReadiness } from "./authorityReadiness.js";
 import { buildCodeHealthReport } from "./codeHealth.js";
 import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
@@ -1622,6 +1623,23 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         generatedAt: now(),
       }),
       note: "Read-only Windows startup/background readiness. This endpoint does not register tasks or elevate privileges.",
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/security/authority-readiness") {
+    const generatedAt = now();
+    const startup = buildStartupReadiness({
+      root: process.cwd(),
+      generatedAt,
+    });
+    sendJson(response, 200, {
+      authority: buildAuthorityReadiness({
+        generatedAt,
+        privacyMode: status.privacyMode,
+        startup,
+      }),
+      note: "Authority hierarchy and approval rules for high-trust local control. This endpoint is read-only.",
     });
     return;
   }
