@@ -266,9 +266,16 @@ Protocol:
 - [x] 35.5 Align Python Brain voice profiles with all eight souls - commit `02cebbd`
 - [x] 35.6 Verify clean app startup, live text, HF readiness, voices, tests, builds, and push - commit `02cebbd`
 
+## Phase 36 - Mature Desktop App Shell And Run Cleanup
+- [x] 36.1 Harden stop/start cleanup for stale HUD process families - commit `107df2e`
+- [x] 36.2 Make default Electron mode a visible desktop app shell - commit `107df2e`
+- [x] 36.3 Add desktop sidebar/rail with live model, task, approval, and stop controls - commit `107df2e`
+- [x] 36.4 Preserve centered orb/radial controls inside the desktop shell - commit `107df2e`
+- [x] 36.5 Verify builds, tests, clean stop/start behavior, live text, and push - commit `107df2e`
+
 ## Current Priority
 
-Next task: Continue with the next owner-requested refinement.
+Next task: Continue production hardening from Phase 37 after confirming the visible Electron app on the user's desktop.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
