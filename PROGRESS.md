@@ -72,7 +72,7 @@ Protocol:
 - [x] 7.5 Mobile pairing scaffolding - implemented before tracker
 
 ## Phase 8 - High-Trust System Control
-- [ ] 8.1 Define complete allowed local actions - partial helpers exist
+- [x] 8.1 Define complete allowed local actions - commit `a0f43af`
 - [x] 8.2 Implement `POST /api/system/actions/dry-run` - implemented before tracker
 - [ ] 8.3 Implement approved execution through privileged Python subprocess
 - [x] 8.4 Emergency stop mechanism - implemented before tracker
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `8.1 Define complete allowed local actions`.
+Next task: `8.3 Implement approved execution through privileged Python subprocess`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
