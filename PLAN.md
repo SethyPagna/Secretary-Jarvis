@@ -809,6 +809,20 @@ Goal: make the assistant feel responsive and operational from the owner's point 
 
 29.5 Verify interaction health with gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke checks.
 
+## Extension Phase 30 - Per-Agent Voice Matrix And Playback Readiness
+
+Goal: make every named soul visibly and testably wired to a distinct voice/personality path. Jarvis should show each agent's voice profile, status, sample/fallback path, and allow approval-safe local voice test requests from the HUD.
+
+30.1 Add a gateway per-agent voice matrix endpoint that joins agent souls, voice profiles, voice assets, runtime readiness, and suggested test phrases.
+
+30.2 Surface the voice matrix in the HUD Voice panel as compact soul chips with one-click local TTS test requests.
+
+30.3 Add tests that every seeded soul has a matrix entry, distinct voice profile, and HUD voice test action.
+
+30.4 Add documentation for current voice behavior, staged Piper/future clone upgrades, and how each soul should sound.
+
+30.5 Verify per-agent voice matrix with core/gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
