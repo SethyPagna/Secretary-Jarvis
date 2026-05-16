@@ -67,7 +67,7 @@ import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
 import { createLiveVisionRequest, type LiveVisionMode } from "./liveVision.js";
-import { buildModelActivationPlans } from "./modelActivationPlans.js";
+import { buildModelActivationPlans, createModelActivationDryRun } from "./modelActivationPlans.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
@@ -2141,6 +2141,39 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         missingAsset: plans.filter((plan) => plan.status === "missing-asset").length,
       },
       note: "Activation plans are safe-mode only. They do not load model weights or start runtime servers.",
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname.startsWith("/api/models/") && url.pathname.endsWith("/activation/dry-run")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const modelId = decodeURIComponent(parts[2] ?? "");
+    const body = (await readBody(request)) as { runtime?: RuntimeKind };
+    const plan = modelActivationPlans().find((candidate) => candidate.modelId === modelId || candidate.assetId === modelId || candidate.modelRef === modelId);
+    if (!plan) {
+      sendJson(response, 404, { error: "Model activation plan not found", modelId });
+      return;
+    }
+    const runtime = body.runtime && RUNTIME_KINDS.includes(body.runtime) ? body.runtime : undefined;
+    const dryRun = createModelActivationDryRun({
+      id: id("model-activation"),
+      plan,
+      runtime,
+      createdAt: now(),
+      evaluate: (action) =>
+        evaluateActionPolicy({
+          action,
+          privacyMode: status.privacyMode,
+          allowedConnectors: [...getEnabledConnectorIds(), "local-model-runtime"],
+        }),
+    });
+    if (dryRun.decision.decision === "requires_approval") {
+      recordPendingApproval(dryRun.action);
+    }
+    events.publish("model", { kind: "model-activation-dry-run", dryRun });
+    sendJson(response, dryRun.decision.decision === "deny" ? 403 : 202, {
+      dryRun,
+      message: "Activation dry-run only. No model weights were loaded and no runtime process was started.",
     });
     return;
   }

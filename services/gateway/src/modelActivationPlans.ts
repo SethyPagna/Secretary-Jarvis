@@ -1,4 +1,4 @@
-import type { ModelAssetManifest, ModelProfile, ModelReadiness, ReadyModelAsset, RuntimeKind } from "@jarvis/core";
+import type { ActionRequest, ModelAssetManifest, ModelProfile, ModelReadiness, PolicyDecision, ReadyModelAsset, RuntimeKind } from "@jarvis/core";
 
 export type ModelActivationStatus = "ready-to-use" | "asset-ready" | "needs-runtime" | "too-heavy" | "missing-asset" | "disabled";
 
@@ -27,6 +27,24 @@ export interface ModelActivationPlan {
   blockers: string[];
   nextAction: string;
   safeMode: true;
+}
+
+export interface ModelActivationDryRun {
+  id: string;
+  planId: string;
+  modelId: string;
+  modelRef: string;
+  runtime: RuntimeKind;
+  commandPreview: string;
+  unloadPreview: string;
+  expectedMemoryGb: number;
+  endpointEnv?: string;
+  endpointHint?: string;
+  decision: PolicyDecision;
+  action: ActionRequest;
+  safeMode: true;
+  notes: string[];
+  blockers: string[];
 }
 
 export function buildModelActivationPlans(params: {
@@ -60,6 +78,50 @@ export function buildModelActivationPlans(params: {
       safeMode: true,
     } satisfies ModelActivationPlan;
   });
+}
+
+export function createModelActivationDryRun(params: {
+  id: string;
+  plan: ModelActivationPlan;
+  runtime?: RuntimeKind;
+  createdAt: string;
+  evaluate: (action: ActionRequest) => PolicyDecision;
+}): ModelActivationDryRun {
+  const runtime = params.runtime ?? params.plan.recommendedRuntime;
+  const option = params.plan.runtimeOptions.find((candidate) => candidate.runtime === runtime);
+  const action: ActionRequest = {
+    id: params.id,
+    title: `Activate model runtime: ${params.plan.label}`,
+    category: "service-control",
+    target: `${params.plan.label} via ${runtimeLabel(runtime)}`,
+    reason: "Model activation can start local runtime services, allocate memory, and load local model weights.",
+    connectorId: "local-model-runtime",
+    agentId: "sentinel",
+    dataTouched: ["local model files", "runtime process", "system memory", "model endpoint"],
+  };
+  const decision = params.evaluate(action);
+
+  return {
+    id: params.id,
+    planId: params.plan.id,
+    modelId: params.plan.modelId,
+    modelRef: params.plan.modelRef,
+    runtime,
+    commandPreview: commandPreviewFor(runtime, params.plan),
+    unloadPreview: unloadPreviewFor(runtime, params.plan),
+    expectedMemoryGb: params.plan.expectedMemoryGb,
+    endpointEnv: option?.endpointEnv ?? endpointEnv(runtime),
+    endpointHint: option?.endpointHint ?? endpointHint(runtime),
+    decision,
+    action,
+    safeMode: true,
+    notes: [
+      "Dry-run only: no model weights were loaded and no runtime process was started.",
+      option?.summary ?? runtimeSummary(runtime, { label: params.plan.label, hardwareFit: params.plan.hardwareFit } as ReadyModelAsset, undefined, params.plan.status),
+      `Created at ${params.createdAt}.`,
+    ],
+    blockers: params.plan.blockers,
+  };
 }
 
 function recommendRuntime(asset: ReadyModelAsset, model?: ModelProfile, readiness?: ModelReadiness): RuntimeKind {
@@ -205,6 +267,44 @@ function endpointEnv(runtime: RuntimeKind): string | undefined {
     "lan-local": "JARVIS_LAN_MODEL_URL",
   };
   return env[runtime];
+}
+
+function commandPreviewFor(runtime: RuntimeKind, plan: ModelActivationPlan): string {
+  if (runtime === "ollama") {
+    return `ollama run ${plan.modelRef}`;
+  }
+  if (runtime === "huggingface-local") {
+    return `python services/brain/model_loader.py --model "${plan.localPath}" --safe-load --profile ${plan.modelId}`;
+  }
+  if (runtime === "llama-cpp") {
+    return `llama-server -m "<local gguf for ${plan.label}>" --host 127.0.0.1 --port 8080`;
+  }
+  if (runtime === "lmstudio") {
+    return `Open LM Studio, load "${plan.localPath}", enable local server at ${endpointHint(runtime)}`;
+  }
+  if (runtime === "vllm") {
+    return `python -m vllm.entrypoints.openai.api_server --model "${plan.localPath}" --host 127.0.0.1 --port 8000`;
+  }
+  if (runtime === "sglang") {
+    return `python -m sglang.launch_server --model-path "${plan.localPath}" --host 127.0.0.1 --port 30000`;
+  }
+  if (runtime === "huggingface-tgi") {
+    return `text-generation-launcher --model-id "${plan.localPath}" --hostname 127.0.0.1 --port 8081`;
+  }
+  return `Configure LAN model endpoint for ${plan.modelRef} and set ${endpointEnv(runtime) ?? "JARVIS_LAN_MODEL_URL"}`;
+}
+
+function unloadPreviewFor(runtime: RuntimeKind, plan: ModelActivationPlan): string {
+  if (runtime === "ollama") {
+    return `ollama stop ${plan.modelRef}`;
+  }
+  if (runtime === "lmstudio") {
+    return "Stop the LM Studio local server or unload the selected model.";
+  }
+  if (runtime === "lan-local") {
+    return "Unset the LAN endpoint or stop the remote local runtime.";
+  }
+  return `Stop the ${runtimeLabel(runtime)} process that serves ${plan.modelRef}.`;
 }
 
 function endpointHint(runtime: RuntimeKind): string | undefined {

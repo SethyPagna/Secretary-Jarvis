@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ModelAssetManifest, ModelProfile, ModelReadiness, ReadyModelAsset } from "@jarvis/core";
-import { buildModelActivationPlans } from "../src/modelActivationPlans.js";
+import { buildModelActivationPlans, createModelActivationDryRun } from "../src/modelActivationPlans.js";
 
 describe("model activation plans", () => {
   it("plans laptop-ready HF assets without loading weights", () => {
@@ -32,6 +32,35 @@ describe("model activation plans", () => {
     expect(plans[0]?.status).toBe("needs-runtime");
     expect(plans[0]?.runtimeOptions.find((option) => option.runtime === "huggingface-local")?.status).toBe("too-heavy");
     expect(plans[0]?.runtimeOptions.find((option) => option.runtime === "vllm")?.endpointEnv).toBe("JARVIS_VLLM_URL");
+  });
+
+  it("creates approval-gated activation dry-runs with command and unload previews", () => {
+    const asset = readyAsset("ready-qwen27", "hf-qwen27", "Qwen 27B", "Qwen/Qwen3.6-27B", "workstation", ["huggingface-local", "vllm"]);
+    const [plan] = buildModelActivationPlans({
+      models: [model("hf-qwen27", "Qwen 27B", "Qwen/Qwen3.6-27B", "huggingface-local", 62)],
+      readyAssets: [asset],
+      manifests: [manifest(asset, "complete")],
+      readiness: [readiness(asset, "workstation")],
+    });
+
+    const dryRun = createModelActivationDryRun({
+      id: "activation-dry-run",
+      plan: plan!,
+      runtime: "vllm",
+      createdAt: "2026-05-16T00:00:00.000Z",
+      evaluate: (action) => ({
+        actionId: action.id,
+        decision: "requires_approval",
+        risk: "approval-required",
+        reasons: ["service-control is configured as an approval-gated action."],
+      }),
+    });
+
+    expect(dryRun.commandPreview).toContain("vllm");
+    expect(dryRun.unloadPreview).toContain("vLLM");
+    expect(dryRun.endpointEnv).toBe("JARVIS_VLLM_URL");
+    expect(dryRun.decision.decision).toBe("requires_approval");
+    expect(dryRun.safeMode).toBe(true);
   });
 });
 
