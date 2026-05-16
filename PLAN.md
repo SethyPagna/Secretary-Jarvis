@@ -633,6 +633,20 @@ Goal: make every missing feature dependency a concrete plug-in slot Jarvis can d
 
 16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks.
 
+## Extension Phase 17 - Ready Model Runtime Activation
+
+Goal: make the five downloaded model assets feel plug-and-play by producing safe activation plans, runtime dry-runs, and compact HUD status without loading huge weights by surprise.
+
+17.1 Add ready-model activation plans for Ollama, Hugging Face local Transformers, llama.cpp/GGUF, LM Studio, vLLM, SGLang, and LAN endpoints.
+
+17.2 Add approval-gated model activation dry-runs with command previews, expected memory, runtime endpoint hints, and unload guidance.
+
+17.3 Surface model activation plans in the HUD dashboard/model area without text stuffing.
+
+17.4 Add user-facing runtime activation documentation for laptop, workstation, and homelab profiles.
+
+17.5 Verify model runtime activation plans with unit tests, HUD tests, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

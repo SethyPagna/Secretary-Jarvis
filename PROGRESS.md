@@ -138,9 +138,16 @@ Protocol:
 - [x] 16.4 Add user-facing setup documentation that separates ready model assets, feature dependencies, and future scaling models - commit `99dfd97`
 - [x] 16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks - commit `ac74f3c`
 
+## Phase 17 - Ready Model Runtime Activation
+- [ ] 17.1 Add ready-model activation plans for Ollama, Hugging Face local Transformers, llama.cpp/GGUF, LM Studio, vLLM, SGLang, and LAN endpoints
+- [ ] 17.2 Add approval-gated model activation dry-runs with command previews, expected memory, runtime endpoint hints, and unload guidance
+- [ ] 17.3 Surface model activation plans in the HUD dashboard/model area without text stuffing
+- [ ] 17.4 Add user-facing runtime activation documentation for laptop, workstation, and homelab profiles
+- [ ] 17.5 Verify model runtime activation plans with unit tests, HUD tests, and runtime smoke checks
+
 ## Current Priority
 
-Next task: Define Phase 17 for dependency install workflows, model runtime loading probes, or the next requested Jarvis refinement.
+Next task: 17.1 Add ready-model activation plans for Ollama, Hugging Face local Transformers, llama.cpp/GGUF, LM Studio, vLLM, SGLang, and LAN endpoints.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
