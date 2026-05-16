@@ -231,7 +231,7 @@ Protocol:
 - [x] 30.2 Surface voice matrix and test actions in HUD Voice panel - commit `c97f591`
 - [x] 30.3 Add per-agent voice matrix and HUD tests - commits `bb4a38f`, `c97f591`
 - [x] 30.4 Add per-agent voice behavior documentation - commit `7793309`
-- [ ] 30.5 Verify per-agent voice matrix with tests, builds, startup check-only scripts, and runtime smoke
+- [x] 30.5 Verify per-agent voice matrix with tests, builds, startup check-only scripts, and runtime smoke - pending verification doc commit
 
 ## Current Priority
 
