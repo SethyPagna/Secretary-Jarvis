@@ -67,6 +67,7 @@ import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
 import { createLiveVisionRequest, type LiveVisionMode } from "./liveVision.js";
+import { buildModelActivationPlans } from "./modelActivationPlans.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
@@ -232,6 +233,17 @@ function runtimeConstellation() {
     neededFeatureDownloads: hydrateFeatureDownloads(),
     privacyMode: status.privacyMode,
     updatedAt: now(),
+  });
+}
+
+function modelActivationPlans() {
+  const runtimeStatus = statusWithRuntimeState();
+  const assetManifests = localModelAssetManifests();
+  return buildModelActivationPlans({
+    models: runtimeStatus.models,
+    readyAssets: runtimeStatus.readyModelAssets ?? [],
+    manifests: assetManifests.ready,
+    readiness: runtimeStatus.modelReadiness ?? [],
   });
 }
 
@@ -2114,6 +2126,21 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       readiness: runtimeStatus.modelReadiness ?? [],
       activeModelId: runtimeStatus.activeModelId,
       hardwareProfile: runtimeStatus.hardwareProfile,
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/models/activation-plans") {
+    const plans = modelActivationPlans();
+    sendJson(response, 200, {
+      plans,
+      summary: {
+        readyToUse: plans.filter((plan) => plan.status === "ready-to-use").length,
+        assetReady: plans.filter((plan) => plan.status === "asset-ready").length,
+        needsRuntime: plans.filter((plan) => plan.status === "needs-runtime" || plan.status === "too-heavy").length,
+        missingAsset: plans.filter((plan) => plan.status === "missing-asset").length,
+      },
+      note: "Activation plans are safe-mode only. They do not load model weights or start runtime servers.",
     });
     return;
   }
