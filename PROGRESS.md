@@ -112,14 +112,14 @@ Protocol:
 
 ## Phase 13 - Runtime Constellation UI
 - [x] 13.1 Add a compact runtime constellation endpoint for model, voice, vision, privacy, and setup readiness - commit `ed68298`
-- [ ] 13.2 Surface the runtime constellation in the HUD dashboard without text stuffing
+- [x] 13.2 Surface the runtime constellation in the HUD dashboard without text stuffing - commit `a8e57cd`
 - [ ] 13.3 Add grouped setup actions that separate needed feature downloads from future scaling models
 - [ ] 13.4 Show latest runtime smoke status in the HUD/dashboard
 - [ ] 13.5 Verify the constellation UI across desktop and mobile
 
 ## Current Priority
 
-Next task: `13.2 Surface the runtime constellation in the HUD dashboard without text stuffing`.
+Next task: `13.3 Add grouped setup actions that separate needed feature downloads from future scaling models`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
