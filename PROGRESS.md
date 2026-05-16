@@ -251,9 +251,16 @@ Protocol:
 - [x] 33.4 Document the user-friendly run flow - commit `51e1a7b`
 - [x] 33.5 Verify friendly launch automation with check-only commands, tests, builds, and git push - commit `38c3ac7`
 
+## Phase 34 - App-Mode Runtime And Live Text
+- [ ] 34.1 Add friendly root responses for Gateway and Python Brain
+- [ ] 34.2 Add Electron app-mode local renderer loading
+- [ ] 34.3 Update default launcher to start app mode, with browser preview optional
+- [ ] 34.4 Extend runtime smoke for live text and root responses
+- [ ] 34.5 Document and verify app-mode runtime
+
 ## Current Priority
 
-Next task: Continue with the next owner-requested refinement.
+Next task: Phase 34 app-mode runtime and live text.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

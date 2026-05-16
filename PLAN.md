@@ -859,6 +859,20 @@ Goal: make Jarvis feel like software, not a pile of scripts. The scripts stay as
 
 33.5 Verify friendly launch automation with check-only commands, tests, builds, and git push.
 
+## Extension Phase 34 - App-Mode Runtime And Live Text
+
+Goal: stop making Jarvis feel like a browser preview. The default launcher should run the Electron HUD as the app shell, keep browser/dashboard surfaces optional, and prove live text works end-to-end.
+
+34.1 Add friendly root responses for Gateway and Python Brain so `http://127.0.0.1:4317/` and `http://127.0.0.1:5000/` explain the local services instead of returning confusing 404 JSON.
+
+34.2 Add Electron app-mode loading so the HUD can load the built local renderer files without requiring a Vite browser server.
+
+34.3 Update `scripts/start-jarvis.ps1` so the default path starts Brain, Gateway, and Electron HUD in app mode; Dashboard/HUD browser preview become optional.
+
+34.4 Extend runtime smoke to verify `POST /api/chat`, task completion, conversation persistence, and root service responses.
+
+34.5 Document and verify the app-mode runtime with tests, builds, check-only launch, runtime smoke, and GitHub push.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
