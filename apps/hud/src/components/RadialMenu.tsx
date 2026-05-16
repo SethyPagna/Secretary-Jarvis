@@ -23,6 +23,7 @@ export function RadialMenu({ open, onSelect, onClose }: { open: boolean; onSelec
             className="radial-item"
             style={{ "--angle": `${item.angle}deg`, "--delay": `${index * 45}ms`, "--mobile-x": item.mobileX } as CSSProperties}
             onClick={() => onSelect(item.id)}
+            aria-label={item.label}
             title={item.label}
           >
             <Icon size={19} aria-hidden="true" />

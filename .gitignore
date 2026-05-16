@@ -12,11 +12,14 @@ vendor/reference/openclaw-main/
 vendor/reference/ruflo/
 vendor/reference/jarvis-opensource/
 *.tsbuildinfo
+debug.log
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
 target/
 output/
 apps/hud/release/
+apps/hud/test-results/
+apps/hud/playwright-report/
 __pycache__/
 *.pyc

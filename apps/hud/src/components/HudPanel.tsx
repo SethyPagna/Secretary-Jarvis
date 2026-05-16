@@ -18,7 +18,8 @@ export function HudPanel({
   onClose: () => void;
 }) {
   const [text, setText] = useState("");
-  const activeModel = status?.models.find((model) => model.id === status.activeModelId) ?? status?.models[0];
+  const models = status?.models ?? [];
+  const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
 
   async function submitText(event: React.FormEvent<HTMLFormElement>) {
@@ -53,7 +54,7 @@ export function HudPanel({
   }
 
   return (
-    <section className={`hud-panel hud-panel-${panel}`} aria-label={`Jarvis ${panel} panel`}>
+    <section className={`hud-panel hud-panel-${panel}`} role="dialog" aria-label={`Jarvis ${panel} panel`}>
       <button className="panel-close" type="button" onClick={onClose} aria-label="Close panel">
         <X size={16} aria-hidden="true" />
       </button>

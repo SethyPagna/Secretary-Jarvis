@@ -12,6 +12,7 @@
     "dev": "npm run build:electron && vite --host 127.0.0.1 --port 5175",
     "start": "electron dist-electron/main.js",
     "electron": "npm run build:electron && electron dist-electron/main.js",
+    "test:ui": "playwright test -c playwright.config.ts",
     "package": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder --win portable nsis"
   },
