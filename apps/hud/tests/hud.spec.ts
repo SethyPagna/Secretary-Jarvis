@@ -147,6 +147,35 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/setup/install-plans")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          manifest: {
+            plans: [
+              {
+                id: "install-feature-piper",
+                label: "Piper executable and one voice",
+                status: "missing",
+                approvalRequired: true,
+                commandPreview: "manual extract: place piper.exe under tools/piper",
+                rollbackNote: "Remove the extracted Piper folder.",
+              },
+              {
+                id: "install-feature-vosk",
+                label: "Vosk streaming STT model",
+                status: "optional",
+                approvalRequired: true,
+                commandPreview: "manual extract: place a Vosk model folder",
+                rollbackNote: "Remove the Vosk model folder.",
+              },
+            ],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/runtime/smoke-status")) {
       await route.fulfill({
         status: 200,
@@ -312,4 +341,6 @@ test("settings separates feature downloads from future scaling", async ({ page }
   await expect(panel.getByLabel("Setup action groups")).toContainText("2 future");
   await expect(panel.getByLabel("Feature plug-in slots")).toContainText("Piper");
   await expect(panel.getByLabel("Feature plug-in slots")).toContainText("missing");
+  await expect(panel.getByLabel("Approved setup install plans")).toContainText("Piper");
+  await expect(panel.getByLabel("Approved setup install plans")).toContainText("approval");
 });

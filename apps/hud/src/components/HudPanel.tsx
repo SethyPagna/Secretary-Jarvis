@@ -32,6 +32,7 @@ export function HudPanel({
   const [voiceDraft, setVoiceDraft] = useState("");
   const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
   const [pluginSlots, setPluginSlots] = useState<FeaturePluginSlot[]>([]);
+  const [setupInstallPlans, setSetupInstallPlans] = useState<SetupInstallPlan[]>([]);
   const [activationPlans, setActivationPlans] = useState<ModelActivationPlan[]>([]);
   const [smokeStatus, setSmokeStatus] = useState<RuntimeSmokeStatus | null>(null);
   const [runtimeServices, setRuntimeServices] = useState<RuntimeServicesStatus | null>(null);
@@ -125,6 +126,14 @@ export function HudPanel({
       .then((payload: FeaturePluginSlotsResponse | undefined) => {
         if (!cancelled) {
           setPluginSlots(payload?.manifest?.slots ?? []);
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/setup/install-plans`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: SetupInstallPlansResponse | undefined) => {
+        if (!cancelled) {
+          setSetupInstallPlans(payload?.manifest?.plans ?? []);
         }
       })
       .catch(() => undefined);
@@ -362,6 +371,19 @@ export function HudPanel({
               </details>
             ))}
           </div>
+          <div className="setup-install-strip" aria-label="Approved setup install plans">
+            {setupInstallPlans.slice(0, 4).map((plan) => (
+              <details key={plan.id} className={`setup-install-card status-${plan.status}`}>
+                <summary>
+                  <i />
+                  <span>{plan.label}</span>
+                  <b>{plan.approvalRequired ? "approval" : "ready"}</b>
+                </summary>
+                <small>{plan.commandPreview}</small>
+                <em>{plan.rollbackNote}</em>
+              </details>
+            ))}
+          </div>
         </>
       )}
     </section>
@@ -414,6 +436,21 @@ interface FeaturePluginSlot {
 interface FeaturePluginSlotsResponse {
   manifest?: {
     slots?: FeaturePluginSlot[];
+  };
+}
+
+interface SetupInstallPlan {
+  id: string;
+  label: string;
+  status: "ready" | "partial" | "missing" | "optional";
+  approvalRequired: boolean;
+  commandPreview: string;
+  rollbackNote: string;
+}
+
+interface SetupInstallPlansResponse {
+  manifest?: {
+    plans?: SetupInstallPlan[];
   };
 }
 

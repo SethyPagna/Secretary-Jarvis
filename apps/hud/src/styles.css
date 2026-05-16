@@ -588,6 +588,80 @@ button {
   font-style: normal;
 }
 
+.setup-install-strip {
+  width: min(560px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.setup-install-card {
+  overflow: hidden;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.055), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.025);
+}
+
+.setup-install-card summary {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.setup-install-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.setup-install-card i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hud-cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.65);
+}
+
+.setup-install-card.status-missing i {
+  background: var(--hud-magenta);
+  box-shadow: 0 0 12px rgba(255, 0, 127, 0.58);
+}
+
+.setup-install-card.status-partial i,
+.setup-install-card.status-optional i {
+  background: #ffd45a;
+  box-shadow: 0 0 12px rgba(255, 212, 90, 0.54);
+}
+
+.setup-install-card span {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setup-install-card b {
+  color: var(--hud-cyan);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+}
+
+.setup-install-card small,
+.setup-install-card em {
+  display: block;
+  padding: 0 12px 8px;
+  overflow-wrap: anywhere;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-style: normal;
+}
+
 .tiny-feed {
   display: grid;
   gap: 6px;
@@ -1462,6 +1536,7 @@ button {
   .voice-readiness-strip,
   .constellation-grid,
   .setup-groups,
+  .setup-install-strip,
   .service-pulses,
   .device-grid,
   .setting-list,
