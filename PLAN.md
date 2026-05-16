@@ -781,6 +781,20 @@ Goal: convert wake/runtime repair guidance into concrete dry-run actions. Jarvis
 
 27.4 Verify runtime repair dry-runs with gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke checks.
 
+## Extension Phase 28 - Agent Manager, Voices, And Workflow Autonomy
+
+Goal: make Jarvis feel like the manager of a specialist team. Every named soul should have a distinct voice profile and personality lane, workflows should route through the right agent/reviewer/support roles, generated automations must stay approval-gated, and HUD status should show whether agents, voices, queue, approvals, and workflow response paths are connected.
+
+28.1 Add distinct voice profiles for all eight named souls and tests that enforce one voice profile per agent.
+
+28.2 Add an Agent Manager readiness endpoint that reports voice coverage, role routing, workflow autonomy gates, approval health, queue responsiveness, and freeze-risk notes.
+
+28.3 Surface Agent Manager readiness in the HUD without text stuffing, including voice coverage and workflow approval status.
+
+28.4 Add documentation for agent voice personalities, Jarvis manager behavior, workflow generation, and approval-gated automation.
+
+28.5 Verify Agent Manager readiness with core/gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
