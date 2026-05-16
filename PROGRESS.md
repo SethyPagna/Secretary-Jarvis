@@ -280,9 +280,16 @@ Protocol:
 - [x] 37.4 Update startup registration to use silent approved-admin supervisor mode - commit `29096a3`
 - [x] 37.5 Verify tests, builds, live start/test/stop behavior, commit, and push - commit `29096a3`
 
+## Phase 38 - HUD Render Recovery And Unified Palette
+- [x] 38.1 Fix Electron app-mode blank screen by making Vite production assets file-relative - commit `d05b7ab`
+- [x] 38.2 Unify desktop chrome and orb state colors around the Jarvis cyan palette - commit `d05b7ab`
+- [x] 38.3 Add local-only CSP for the HUD renderer - commit `d05b7ab`
+- [x] 38.4 Prevent production live-test from self-deadlocking Gateway by using in-process checks - commit `d05b7ab`
+- [x] 38.5 Verify Electron render, live test, builds, UI tests, and unit tests - commit `d05b7ab`
+
 ## Current Priority
 
-Next task: Confirm Phase 37 is pushed, then continue with the next requested runtime/app polish slice.
+Next task: Continue runtime/app polish from the latest user request.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
