@@ -160,7 +160,7 @@ Protocol:
 - [x] 19.5 Verify setup approval UI with builds, tests, and runtime smoke checks - commit `250c34a`
 
 ## Phase 20 - HUD Presence Polish
-- [ ] 20.1 Make the orb state-aware for all HUD states and offline mode
+- [x] 20.1 Make the orb state-aware for all HUD states and offline mode - commit `10f5243`
 - [ ] 20.2 Add non-text visual layers around the orb
 - [ ] 20.3 Add reduced-motion and small-screen behavior
 - [ ] 20.4 Add HUD tests for state-aware orb visuals and no-text idle behavior
@@ -168,7 +168,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Implement Phase 20.1 state-aware orb visuals.
+Next task: Implement Phase 20.2 non-text orb visual layers.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
