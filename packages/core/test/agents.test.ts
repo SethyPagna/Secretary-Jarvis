@@ -7,6 +7,7 @@ import {
   findAgentSoul,
   routeTaskToAgents,
 } from "../src/agents.js";
+import { seededStatus } from "../src/seed.js";
 
 describe("AgentOS souls", () => {
   it("defines the eight named Jarvis agent souls", () => {
@@ -27,6 +28,12 @@ describe("AgentOS souls", () => {
     expect(profiles).toHaveLength(8);
     expect(profiles.find((agent) => agent.id === "planner")?.name).toBe("Daedalus");
     expect(profiles.find((agent) => agent.id === "safety")?.name).toBe("Sentinel");
+  });
+
+  it("assigns a distinct voice profile to every named soul", () => {
+    const profileIds = defaultAgentSouls.map((soul) => soul.voiceProfileId);
+    expect(new Set(profileIds).size).toBe(defaultAgentSouls.length);
+    expect(seededStatus.voiceProfiles?.map((profile) => profile.agentId).sort()).toEqual(defaultAgentSouls.map((soul) => soul.id).sort());
   });
 
   it("looks up souls by soul id, name, or runtime profile id", () => {

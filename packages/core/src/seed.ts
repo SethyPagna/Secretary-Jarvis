@@ -153,6 +153,30 @@ export const seededStatus: JarvisStatus = {
       style: "firm, minimal, approval-focused",
       status: "ready",
     },
+    {
+      id: "voice-profile-mnemosyne",
+      agentId: "mnemosyne",
+      label: "Mnemosyne memory voice",
+      enginePreference: "future-clone",
+      style: "soft archivist cadence, careful provenance, measured recall",
+      status: "staged",
+    },
+    {
+      id: "voice-profile-vulcan",
+      agentId: "vulcan",
+      label: "Vulcan systems voice",
+      enginePreference: "windows-sapi",
+      style: "grounded mechanical cadence, terse status, rollback-aware",
+      status: "ready",
+    },
+    {
+      id: "voice-profile-hermes",
+      agentId: "hermes",
+      label: "Hermes communications voice",
+      enginePreference: "future-clone",
+      style: "smooth diplomatic cadence, draft-first, approval-aware",
+      status: "staged",
+    },
   ],
   identityProfiles: [
     {
