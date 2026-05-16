@@ -286,6 +286,7 @@ Protocol:
 - [x] 38.3 Add local-only CSP for the HUD renderer - commit `d05b7ab`
 - [x] 38.4 Prevent production live-test from self-deadlocking Gateway by using in-process checks - commit `d05b7ab`
 - [x] 38.5 Verify Electron render, live test, builds, UI tests, and unit tests - commit `d05b7ab`
+- [x] 38.6 Harden Electron ready heartbeat and app-mode runtime service status - commit `a888a92`
 
 ## Current Priority
 
