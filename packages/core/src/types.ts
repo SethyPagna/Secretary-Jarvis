@@ -664,6 +664,15 @@ export interface UndoJournalEntry {
   expiresAt: string;
   rollbackNote: string;
   snapshotSummary: string;
+  snapshot?: {
+    kind: "file-content" | "state-marker" | "none";
+    path?: string;
+    sizeBytes?: number;
+    modifiedAt?: string;
+    sha256?: string;
+    contentBase64?: string;
+    capturedAt: string;
+  };
   operation: {
     kind: ActionCategory;
     command: string;

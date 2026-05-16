@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { createReadStream, existsSync, statSync } from "node:fs";
-import { randomBytes } from "node:crypto";
-import { basename, join } from "node:path";
+import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { createHash, randomBytes } from "node:crypto";
+import { basename, dirname, isAbsolute, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { URL } from "node:url";
 import {
@@ -739,12 +739,76 @@ function createSystemAction(params: {
 }
 
 function createUndoEntry(action: SystemAction): UndoJournalEntry {
-  return createUndoJournalEntry({
+  const base = createUndoJournalEntry({
     id: id("undo"),
     action,
     createdAt: now(),
     ttlMinutes: 20,
   });
+  return attachFileCheckpoint(base);
+}
+
+function attachFileCheckpoint(entry: UndoJournalEntry): UndoJournalEntry {
+  if (!entry.reversible || entry.operation.restoreStrategy === "none") {
+    return {
+      ...entry,
+      snapshot: { kind: "none", capturedAt: entry.createdAt },
+    };
+  }
+
+  if (!isAbsolute(entry.target) || !existsSync(entry.target)) {
+    return {
+      ...entry,
+      snapshotSummary: `${entry.snapshotSummary} Target did not exist as a local file at checkpoint time.`,
+      snapshot: { kind: "state-marker", path: entry.target, capturedAt: entry.createdAt },
+    };
+  }
+
+  const stats = statSync(entry.target);
+  if (!stats.isFile() || stats.size > 2 * 1024 * 1024) {
+    return {
+      ...entry,
+      snapshotSummary: `${entry.snapshotSummary} Target is ${stats.isDirectory() ? "a directory" : "larger than 2 MB"}, so Jarvis kept a state marker.`,
+      snapshot: {
+        kind: "state-marker",
+        path: entry.target,
+        sizeBytes: stats.size,
+        modifiedAt: stats.mtime.toISOString(),
+        capturedAt: entry.createdAt,
+      },
+    };
+  }
+
+  const content = readFileSync(entry.target);
+  const sha256 = createHash("sha256").update(content).digest("hex");
+  return {
+    ...entry,
+    snapshotSummary: `File checkpoint captured for ${entry.target} (${stats.size} bytes). Undo can restore the exact previous content for 20 minutes.`,
+    snapshot: {
+      kind: "file-content",
+      path: entry.target,
+      sizeBytes: stats.size,
+      modifiedAt: stats.mtime.toISOString(),
+      sha256,
+      contentBase64: content.toString("base64"),
+      capturedAt: entry.createdAt,
+    },
+  };
+}
+
+function restoreUndoCheckpoint(entry: UndoJournalEntry): { restored: boolean; message: string } {
+  if (entry.snapshot?.kind !== "file-content" || !entry.snapshot.path || !entry.snapshot.contentBase64) {
+    return {
+      restored: false,
+      message: "Undo restored the Jarvis state marker. No file content snapshot was attached to this checkpoint.",
+    };
+  }
+  mkdirSync(dirname(entry.snapshot.path), { recursive: true });
+  writeFileSync(entry.snapshot.path, Buffer.from(entry.snapshot.contentBase64, "base64"));
+  return {
+    restored: true,
+    message: `Restored ${entry.snapshot.path} to its checkpointed content.`,
+  };
 }
 
 async function brainJson<T>(path: string, init?: RequestInit, timeoutMs = 3500): Promise<T | undefined> {
@@ -1985,14 +2049,16 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         sendJson(response, 409, { error: "Undo checkpoint expired", undoEntry: expired });
         return;
       }
+      const restoreResult = restoreUndoCheckpoint(undoEntry);
       const restored = store.markUndoJournalEntry(undoEntry.id, "restored") ?? { ...undoEntry, status: "restored" as const };
       const restoredAction: SystemAction = { ...systemAction, status: "undone" };
       pendingSystemActions.set(actionId, restoredAction);
-      events.publish("security", { systemAction: restoredAction, undoEntry: restored });
+      events.publish("security", { systemAction: restoredAction, undoEntry: restored, restoreResult });
       sendJson(response, 200, {
         systemAction: restoredAction,
         undoEntry: restored,
-        message: "Undo checkpoint restored. Jarvis-managed state is treated as back in time before the action.",
+        restoreResult,
+        message: restoreResult.message,
       });
       return;
     }
