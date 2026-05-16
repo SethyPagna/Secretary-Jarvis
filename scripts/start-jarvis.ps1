@@ -2,8 +2,11 @@ param(
   [switch]$NoDashboard,
   [switch]$NoHud,
   [switch]$OpenDashboard,
+  [switch]$CheckOnly,
   [int]$GatewayPort = 4317,
-  [int]$DashboardPort = 5174
+  [int]$DashboardPort = 5174,
+  [int]$HudPort = 5175,
+  [int]$BrainPort = 5000
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,6 +32,11 @@ function Start-JarvisProcess {
     [string]$WorkingDirectory
   )
 
+  if ($CheckOnly) {
+    Write-Host "Would start $Name with: $FilePath $Arguments"
+    return
+  }
+
   $existing = Get-CimInstance Win32_Process | Where-Object {
     $_.CommandLine -and $_.CommandLine.Contains($Arguments)
   } | Select-Object -First 1
@@ -50,8 +58,12 @@ Add-SessionPath
 if (Get-Command ollama -ErrorAction SilentlyContinue) {
   $ollama = Get-CimInstance Win32_Process | Where-Object { $_.Name -eq "ollama.exe" } | Select-Object -First 1
   if (-not $ollama) {
-    Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
-    Write-Host "Started Ollama service."
+    if ($CheckOnly) {
+      Write-Host "Would start Ollama service."
+    } else {
+      Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
+      Write-Host "Started Ollama service."
+    }
   } else {
     Write-Host "Ollama already running."
   }
@@ -59,19 +71,29 @@ if (Get-Command ollama -ErrorAction SilentlyContinue) {
   Write-Host "Ollama is not on PATH. Install/open Ollama before local LLM calls."
 }
 
-Start-JarvisProcess -Name "Python Brain" -FilePath "python" -Arguments "services\brain\brain_server.py" -WorkingDirectory $Root
-Start-JarvisProcess -Name "TypeScript Gateway" -FilePath "cmd.exe" -Arguments "/d /s /c npm.cmd run start:gateway" -WorkingDirectory $Root
+Start-JarvisProcess -Name "Python Brain" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_BRAIN_PORT=$BrainPort&& python services\brain\brain_server.py" -WorkingDirectory $Root
+Start-JarvisProcess -Name "TypeScript Gateway" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_GATEWAY_PORT=$GatewayPort&& npm.cmd run start:gateway" -WorkingDirectory $Root
 
 if (-not $NoDashboard) {
   Start-JarvisProcess -Name "Dashboard" -FilePath "cmd.exe" -Arguments "/d /s /c npm.cmd run dev:dashboard -- --host 127.0.0.1 --port $DashboardPort" -WorkingDirectory $Root
 }
 
 if (-not $NoHud) {
-  Start-JarvisProcess -Name "Electron HUD" -FilePath "cmd.exe" -Arguments "/d /s /c npm.cmd run build -w @jarvis/desktop && npm.cmd run hud -w @jarvis/desktop" -WorkingDirectory $Root
+  Start-JarvisProcess -Name "HUD Renderer" -FilePath "cmd.exe" -Arguments "/d /s /c set VITE_JARVIS_GATEWAY_URL=http://127.0.0.1:$GatewayPort&& npm.cmd run dev -w @jarvis/hud -- --host 127.0.0.1 --port $HudPort" -WorkingDirectory $Root
+  Start-Sleep -Seconds 2
+  Start-JarvisProcess -Name "Electron HUD" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_HUD_URL=http://127.0.0.1:$HudPort&& set JARVIS_GATEWAY_URL=http://127.0.0.1:$GatewayPort&& set JARVIS_DASHBOARD_URL=http://127.0.0.1:$DashboardPort&& npm.cmd run electron -w @jarvis/hud" -WorkingDirectory $Root
 }
 
 if ($OpenDashboard) {
-  Start-Process "http://127.0.0.1:$DashboardPort"
+  if ($CheckOnly) {
+    Write-Host "Would open dashboard: http://127.0.0.1:$DashboardPort"
+  } else {
+    Start-Process "http://127.0.0.1:$DashboardPort"
+  }
 }
 
-Write-Host "Jarvis local services requested. Gateway: http://127.0.0.1:$GatewayPort"
+Write-Host "Jarvis local services requested."
+Write-Host "Gateway:   http://127.0.0.1:$GatewayPort"
+Write-Host "Brain:     http://127.0.0.1:$BrainPort"
+Write-Host "Dashboard: http://127.0.0.1:$DashboardPort"
+Write-Host "HUD:       http://127.0.0.1:$HudPort"
