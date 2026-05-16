@@ -44,6 +44,8 @@ export function HudPanel({
   const [codeHealth, setCodeHealth] = useState<CodeHealthSummary | null>(null);
   const [startupReadiness, setStartupReadiness] = useState<StartupReadinessSummary | null>(null);
   const [authorityReadiness, setAuthorityReadiness] = useState<AuthorityReadinessSummary | null>(null);
+  const [processVisibility, setProcessVisibility] = useState<ProcessVisibilitySummary | null>(null);
+  const [startupPlans, setStartupPlans] = useState<StartupPlanSummary[]>([]);
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
@@ -201,6 +203,39 @@ export function HudPanel({
             blockedCategories: payload.authority.blockedCategories.length,
             guardrail: payload.authority.guardrails[0] ?? "Protected core remains sealed."
           });
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/process-visibility`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: ProcessVisibilityResponse | undefined) => {
+        if (!cancelled && payload?.visibility) {
+          setProcessVisibility({
+            tracked: payload.visibility.summary.tracked,
+            alive: payload.visibility.summary.alive,
+            visibleInTaskManager: payload.visibility.summary.visibleInTaskManager,
+            services: payload.visibility.services.slice(0, 3).map((service) => ({
+              id: service.id,
+              label: service.label,
+              pidAlive: service.pidAlive,
+              taskManagerGroup: service.taskManagerGroup
+            }))
+          });
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/startup-registration-plans`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: StartupRegistrationPlansResponse | undefined) => {
+        if (!cancelled) {
+          setStartupPlans((payload?.manifest?.plans ?? []).map((plan) => ({
+            id: plan.id,
+            label: plan.label,
+            mode: plan.mode,
+            runLevel: plan.runLevel,
+            status: plan.status,
+            approvalRequired: plan.approvalRequired
+          })));
         }
       })
       .catch(() => undefined);
@@ -501,6 +536,23 @@ export function HudPanel({
               <em>{codeHealth?.cleanupBacklog[0] ?? "Cleanup hints stay advisory until reviewed."}</em>
             </details>
           </div>
+          <div className="startup-control-strip" aria-label="Startup and service manager">
+            <span>
+              <small>Processes</small>
+              <strong>{processVisibility ? `${processVisibility.alive}/${processVisibility.tracked}` : "--"}</strong>
+              <em>{processVisibility ? `${processVisibility.visibleInTaskManager} visible` : "checking"}</em>
+            </span>
+            <span>
+              <small>Standard</small>
+              <strong>{startupPlans.find((plan) => plan.mode === "standard")?.status ?? "pending"}</strong>
+              <em>limited logon</em>
+            </span>
+            <span>
+              <small>Admin</small>
+              <strong>{startupPlans.find((plan) => plan.mode === "approved-admin")?.runLevel ?? "locked"}</strong>
+              <em>approval still required</em>
+            </span>
+          </div>
           <div className="setup-groups" aria-label="Setup action groups">
             {setupGroups.map((group) => (
               <span key={group.id}>
@@ -727,6 +779,56 @@ interface AuthorityReadinessSummary {
   reversible: number;
   blockedCategories: number;
   guardrail: string;
+}
+
+interface ProcessVisibilityResponse {
+  visibility?: {
+    summary: {
+      tracked: number;
+      alive: number;
+      visibleInTaskManager: number;
+    };
+    services: Array<{
+      id: string;
+      label: string;
+      pidAlive: boolean;
+      taskManagerGroup: "Apps" | "Background processes" | "Windows processes";
+    }>;
+  };
+}
+
+interface ProcessVisibilitySummary {
+  tracked: number;
+  alive: number;
+  visibleInTaskManager: number;
+  services: Array<{
+    id: string;
+    label: string;
+    pidAlive: boolean;
+    taskManagerGroup: "Apps" | "Background processes" | "Windows processes";
+  }>;
+}
+
+interface StartupRegistrationPlansResponse {
+  manifest?: {
+    plans: Array<{
+      id: string;
+      label: string;
+      mode: "standard" | "approved-admin";
+      runLevel: "limited" | "highest";
+      status: "ready" | "missing-script";
+      approvalRequired: boolean;
+    }>;
+  };
+}
+
+interface StartupPlanSummary {
+  id: string;
+  label: string;
+  mode: "standard" | "approved-admin";
+  runLevel: "limited" | "highest";
+  status: "ready" | "missing-script";
+  approvalRequired: boolean;
 }
 
 function Widget({ label, value }: { label: string; value: string }) {

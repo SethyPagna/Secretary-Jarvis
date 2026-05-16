@@ -828,6 +828,45 @@ button {
   line-height: 1.35;
 }
 
+.startup-control-strip {
+  width: min(560px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px auto 0;
+}
+
+.startup-control-strip span {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 255, 136, 0.14);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(0, 255, 136, 0.055), rgba(0, 229, 255, 0.03)),
+    rgba(0, 0, 0, 0.16);
+}
+
+.startup-control-strip small,
+.startup-control-strip em {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.startup-control-strip strong {
+  overflow: hidden;
+  color: var(--hud-green);
+  font: 700 13px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .setup-groups span {
   display: grid;
   gap: 8px;
@@ -1976,6 +2015,7 @@ button {
   .voice-readiness-strip,
   .constellation-grid,
   .hardening-grid,
+  .startup-control-strip,
   .setup-groups,
   .setup-approval-summary,
   .setup-install-strip,

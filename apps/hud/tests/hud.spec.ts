@@ -267,6 +267,38 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/runtime/process-visibility")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          visibility: {
+            summary: { tracked: 5, alive: 3, visibleInTaskManager: 3 },
+            services: [
+              { id: "brain", label: "Python Brain", pidAlive: true, taskManagerGroup: "Background processes" },
+              { id: "gateway", label: "Gateway", pidAlive: true, taskManagerGroup: "Background processes" },
+              { id: "electron-hud", label: "Electron HUD", pidAlive: true, taskManagerGroup: "Apps" },
+            ],
+          },
+        }),
+      });
+      return;
+    }
+    if (route.request().url().endsWith("/api/runtime/startup-registration-plans")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          manifest: {
+            plans: [
+              { id: "startup-shortcut", label: "Standard startup shortcut", mode: "standard", runLevel: "limited", status: "ready", approvalRequired: true },
+              { id: "scheduled-task-elevated", label: "Approved-admin scheduled task", mode: "approved-admin", runLevel: "highest", status: "ready", approvalRequired: true },
+            ],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().includes("/api/setup/install-plans/install-feature-piper/dry-run")) {
       await route.fulfill({
         status: 202,
@@ -511,6 +543,7 @@ test("settings shows compact architecture and authority hardening summaries", as
   await page.getByRole("button", { name: "Open Jarvis controls" }).click();
   await page.getByTitle("Settings").click();
 
+  const panel = page.getByRole("dialog", { name: "Jarvis settings panel" });
   const hardening = page.getByLabel("Architecture and runtime hardening");
   await expect(hardening).toContainText("Stack");
   await expect(hardening).toContainText("4");
@@ -519,6 +552,8 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(hardening).toContainText("Authority");
   await expect(hardening).toContainText("approved-admin-ready");
   await expect(hardening).toContainText("Code health");
+  await expect(panel.getByLabel("Startup and service manager")).toContainText("3/5");
+  await expect(panel.getByLabel("Startup and service manager")).toContainText("highest");
   await hardening.locator(".hardening-card", { hasText: "Authority" }).locator("summary").click();
   await expect(hardening).toContainText("9 gated");
   await hardening.locator(".hardening-card", { hasText: "Code health" }).locator("summary").click();
