@@ -1,6 +1,6 @@
 import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
-import { useState } from "react";
-import type { JarvisStatus } from "@jarvis/core";
+import { useEffect, useState } from "react";
+import type { JarvisStatus, ModelAssetManifest } from "@jarvis/core";
 import { WorkflowConsole } from "./WorkflowConsole";
 import type { HudPanel as HudPanelName } from "../types";
 
@@ -18,9 +18,34 @@ export function HudPanel({
   onClose: () => void;
 }) {
   const [text, setText] = useState("");
+  const [assetSummary, setAssetSummary] = useState<ModelAssetSummary | null>(null);
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
+
+  useEffect(() => {
+    if (panel !== "dashboard") {
+      return;
+    }
+    let cancelled = false;
+    fetch(`${apiBaseUrl}/api/models/local-assets`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: LocalAssetResponse | undefined) => {
+        if (!cancelled && payload?.summary) {
+          setAssetSummary({
+            readyComplete: payload.summary.readyComplete,
+            futureScalingComplete: payload.summary.futureScalingComplete,
+            missingOrPartial: payload.summary.missingOrPartial,
+            totalReady: payload.ready?.length ?? 0,
+            totalFuture: payload.futureScaling?.length ?? 0,
+          });
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, panel]);
 
   async function submitText(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,6 +91,11 @@ export function HudPanel({
             <Widget label="Mode" value={status?.privacyMode ?? "strict-local"} />
             <Widget label="Tasks" value={`${tasks.length}`} />
             <Widget label="TPS" value={`${status?.performance?.tokensPerSecond ?? "--"}`} />
+          </div>
+          <div className="model-manifest-strip" aria-label="Local model asset manifests">
+            <span><small>Ready</small><strong>{assetSummary ? `${assetSummary.readyComplete}/${assetSummary.totalReady}` : "--"}</strong></span>
+            <span><small>Future</small><strong>{assetSummary ? `${assetSummary.futureScalingComplete}/${assetSummary.totalFuture}` : "--"}</strong></span>
+            <span><small>Needs</small><strong>{assetSummary?.missingOrPartial ?? "--"}</strong></span>
           </div>
           <div className="tiny-feed">
             {tasks.length ? tasks.map((task) => <span key={task.id}>{task.status} / {task.title}</span>) : <span>Quiet. Ready.</span>}
@@ -117,6 +147,24 @@ export function HudPanel({
       )}
     </section>
   );
+}
+
+interface LocalAssetResponse {
+  ready?: ModelAssetManifest[];
+  futureScaling?: ModelAssetManifest[];
+  summary?: {
+    readyComplete: number;
+    futureScalingComplete: number;
+    missingOrPartial: number;
+  };
+}
+
+interface ModelAssetSummary {
+  readyComplete: number;
+  futureScalingComplete: number;
+  missingOrPartial: number;
+  totalReady: number;
+  totalFuture: number;
 }
 
 function Widget({ label, value }: { label: string; value: string }) {

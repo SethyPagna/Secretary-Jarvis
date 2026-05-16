@@ -494,6 +494,40 @@ button {
   font-size: 12px;
 }
 
+.model-manifest-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.model-manifest-strip span {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  background:
+    linear-gradient(90deg, rgba(0, 229, 255, 0.07), transparent),
+    rgba(255, 255, 255, 0.035);
+}
+
+.model-manifest-strip small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.58);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-manifest-strip strong {
+  color: var(--hud-cyan);
+  font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.28);
+}
+
 .mic-pulse {
   width: 92px;
   height: 92px;
@@ -957,6 +991,7 @@ button {
   }
 
   .widget-grid,
+  .model-manifest-strip,
   .device-grid,
   .setting-list,
   .workflow-layout {

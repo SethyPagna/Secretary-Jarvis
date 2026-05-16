@@ -10,6 +10,25 @@ async function mockGateway(page: import("playwright/test").Page) {
     });
   });
   await page.route("http://127.0.0.1:4317/api/**", async (route) => {
+    if (route.request().url().endsWith("/api/models/local-assets")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ready: Array.from({ length: 5 }, (_, index) => ({ id: `ready-${index}`, status: "complete" })),
+          futureScaling: [
+            { id: "scale-deepseek", status: "complete" },
+            { id: "scale-placeholder", status: "missing" },
+          ],
+          summary: {
+            readyComplete: 5,
+            futureScalingComplete: 1,
+            missingOrPartial: 1,
+          },
+        }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -62,6 +81,8 @@ test("orb click opens radial controls and dashboard stays grouped", async ({ pag
   await expect(panel.getByText("Model")).toBeVisible();
   await expect(panel.getByText("Tasks")).toBeVisible();
   await expect(panel.locator(".widget-grid")).toBeVisible();
+  await expect(panel.getByLabel("Local model asset manifests")).toContainText("5/5");
+  await expect(panel.getByLabel("Local model asset manifests")).toContainText("1/2");
 });
 
 test("voice and text panels expose compact interaction states", async ({ page }) => {
