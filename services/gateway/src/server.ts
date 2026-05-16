@@ -61,6 +61,7 @@ import {
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses } from "./doctor.js";
 import { buildAgentManagerReadiness } from "./agentManagerReadiness.js";
+import { buildAgentVoiceMatrix } from "./agentVoiceMatrix.js";
 import { EventHub } from "./eventHub.js";
 import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildInteractionHealth } from "./interactionHealth.js";
@@ -2380,6 +2381,19 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       profiles: status.voiceProfiles ?? [],
       assets: statusWithRuntimeState().voiceAssets ?? [],
       agents: status.agentSouls ?? [],
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/voice/agent-matrix") {
+    sendJson(response, 200, {
+      matrix: buildAgentVoiceMatrix({
+        generatedAt: now(),
+        agents: status.agentSouls ?? [],
+        voiceProfiles: status.voiceProfiles ?? [],
+        voiceAssets: statusWithRuntimeState().voiceAssets ?? [],
+        readiness: voiceRuntimeReadiness(),
+      }),
     });
     return;
   }
