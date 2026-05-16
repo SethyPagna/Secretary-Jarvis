@@ -129,11 +129,11 @@ Protocol:
 - [x] 15.2 Surface live voice session state in the HUD voice panel without text stuffing - commit `e6e9cbd`
 - [x] 15.3 Add approval-gated live vision request records for screen, camera, and selected-image analysis - commit `5119711`
 - [x] 15.4 Add multimodal activity timeline entries for voice transcripts, vision requests, identity dry-runs, and TTS actions - commit `dc9f81e`
-- [ ] 15.5 Verify the live voice/vision bridge with unit tests, HUD tests, and runtime smoke checks
+- [x] 15.5 Verify the live voice/vision bridge with unit tests, HUD tests, and runtime smoke checks - commit `7ea1159`
 
 ## Current Priority
 
-Next task: 15.5 Verify the live voice/vision bridge with unit tests, HUD tests, and runtime smoke checks.
+Next task: Define Phase 16 for live setup actions, dependency plug-in readiness, or the next requested Jarvis refinement.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
