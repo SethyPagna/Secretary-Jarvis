@@ -98,14 +98,14 @@ Protocol:
 - [x] 11.2 Voice tests - commit `ce7233a`
 - [x] 11.3 Vision tests - commit `46a6879`
 - [x] 11.4 Memory/undo tests - commit `d2e841e`
-- [ ] 11.5 Agent/task tests - partial
+- [x] 11.5 Agent/task tests - commit `e10da82`
 - [ ] 11.6 Connector/security tests - partial
 - [ ] 11.7 UI tests
 - [ ] 11.8 Final integration walkthrough
 
 ## Current Priority
 
-Next task: `11.5 Agent/task tests`.
+Next task: `11.6 Connector/security tests`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
