@@ -111,6 +111,31 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/voice/agent-matrix")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          matrix: {
+            generatedAt: "2026-05-16T00:00:00.000Z",
+            localOnly: true,
+            entries: [
+              { agentId: "jarvis", agentName: "Jarvis", status: "ready", enginePreference: "voice-sample", ttsRequest: { agentId: "jarvis", voiceProfileId: "voice-profile-jarvis", text: "Systems are online." } },
+              { agentId: "friday", agentName: "Friday", status: "ready", enginePreference: "windows-sapi", ttsRequest: { agentId: "friday", voiceProfileId: "voice-profile-friday", text: "Your brief is ready." } },
+              { agentId: "daedalus", agentName: "Daedalus", status: "ready", enginePreference: "windows-sapi", ttsRequest: { agentId: "daedalus", voiceProfileId: "voice-profile-daedalus", text: "Repository map ready." } },
+              { agentId: "argus", agentName: "Argus", status: "staged", enginePreference: "future-clone", ttsRequest: { agentId: "argus", voiceProfileId: "voice-profile-argus", text: "Visual context locked." } },
+              { agentId: "mnemosyne", agentName: "Mnemosyne", status: "staged", enginePreference: "future-clone", ttsRequest: { agentId: "mnemosyne", voiceProfileId: "voice-profile-mnemosyne", text: "Memory ready." } },
+              { agentId: "sentinel", agentName: "Sentinel", status: "ready", enginePreference: "windows-sapi", ttsRequest: { agentId: "sentinel", voiceProfileId: "voice-profile-sentinel", text: "Approval required." } },
+              { agentId: "vulcan", agentName: "Vulcan", status: "ready", enginePreference: "windows-sapi", ttsRequest: { agentId: "vulcan", voiceProfileId: "voice-profile-vulcan", text: "Systems staged." } },
+              { agentId: "hermes", agentName: "Hermes", status: "staged", enginePreference: "future-clone", ttsRequest: { agentId: "hermes", voiceProfileId: "voice-profile-hermes", text: "Draft ready." } },
+            ],
+            summary: { agents: 8, distinctProfiles: 8, ready: 5, staged: 3, missing: 0, ttsReady: true },
+            note: "distinct voices",
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/setup/action-groups")) {
       await route.fulfill({
         status: 200,
@@ -623,6 +648,22 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().method() === "POST" && route.request().url().endsWith("/api/audio/tts")) {
+      const payload = route.request().postDataJSON() as { agentId?: string };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          tts: {
+            requestId: "tts-ui",
+            status: "ready",
+            engine: "voice-sample",
+            agent: { id: payload.agentId ?? "jarvis" },
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().includes("/api/setup/install-plans/install-feature-piper/dry-run")) {
       await route.fulfill({
         status: 202,
@@ -807,6 +848,11 @@ test("voice and text panels expose compact interaction states", async ({ page })
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("4");
   await expect(voicePanel.getByLabel("Wake activation readiness")).toContainText("3/1");
   await expect(voicePanel.getByLabel("Wake activation readiness")).toContainText("missing");
+  await expect(voicePanel.getByLabel("Agent voice matrix")).toContainText("Jarvis");
+  await expect(voicePanel.getByLabel("Agent voice matrix")).toContainText("Sentinel");
+  await expect(voicePanel.getByLabel("Agent voice matrix")).toContainText("future-clone");
+  await page.getByRole("button", { name: "Test Sentinel voice" }).click();
+  await expect(voicePanel.getByLabel("Agent voice matrix")).toContainText("ready");
   await expect(voicePanel.getByLabel("Manual transcript bridge")).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop speaking" })).toBeVisible();
 

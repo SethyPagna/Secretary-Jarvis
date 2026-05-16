@@ -1338,6 +1338,57 @@ button {
   white-space: nowrap;
 }
 
+.agent-voice-matrix {
+  width: min(520px, 100%);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px auto 0;
+}
+
+.agent-voice-matrix button {
+  min-width: 0;
+  min-height: 56px;
+  display: grid;
+  gap: 5px;
+  justify-items: start;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 14px;
+  padding: 9px 10px;
+  color: rgba(255, 255, 255, 0.86);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(0, 229, 255, 0.08), transparent 42%),
+    rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+}
+
+.agent-voice-matrix button:hover {
+  border-color: rgba(0, 229, 255, 0.44);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.12);
+}
+
+.agent-voice-matrix small,
+.agent-voice-matrix strong,
+.agent-voice-matrix em {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-voice-matrix small,
+.agent-voice-matrix em {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.agent-voice-matrix strong {
+  color: var(--hud-green);
+  font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
 .constellation-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -2277,6 +2328,7 @@ button {
   .widget-grid,
   .model-manifest-strip,
   .voice-readiness-strip,
+  .agent-voice-matrix,
   .wake-activation-strip,
   .constellation-grid,
   .hardening-grid,

@@ -35,6 +35,8 @@ export function HudPanel({
   const [voiceReadiness, setVoiceReadiness] = useState<VoiceRuntimeReadiness | null>(null);
   const [voiceSession, setVoiceSession] = useState<VoiceSession | null>(status?.voiceSession ?? null);
   const [voiceDraft, setVoiceDraft] = useState("");
+  const [agentVoiceMatrix, setAgentVoiceMatrix] = useState<AgentVoiceEntry[]>([]);
+  const [agentVoiceTests, setAgentVoiceTests] = useState<Record<string, string>>({});
   const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
   const [pluginSlots, setPluginSlots] = useState<FeaturePluginSlot[]>([]);
   const [setupInstallPlans, setSetupInstallPlans] = useState<SetupInstallPlan[]>([]);
@@ -121,6 +123,14 @@ export function HudPanel({
       .then((payload: VoiceSessionResponse | undefined) => {
         if (!cancelled && payload?.voiceSession) {
           setVoiceSession(payload.voiceSession);
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/voice/agent-matrix`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: AgentVoiceMatrixResponse | undefined) => {
+        if (!cancelled) {
+          setAgentVoiceMatrix(payload?.matrix?.entries ?? []);
         }
       })
       .catch(() => undefined);
@@ -382,6 +392,21 @@ export function HudPanel({
     }).catch(() => undefined);
   }
 
+  async function testAgentVoice(agent: AgentVoiceEntry) {
+    setAgentVoiceTests((current) => ({ ...current, [agent.agentId]: "testing" }));
+    const payload = await fetch(`${apiBaseUrl}/api/audio/tts`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(agent.ttsRequest)
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as AgentTtsResponse | undefined;
+    setAgentVoiceTests((current) => ({
+      ...current,
+      [agent.agentId]: payload?.tts?.status ?? "unavailable"
+    }));
+  }
+
   async function startVoiceListening() {
     const payload = await fetch(`${apiBaseUrl}/api/voice/listening/start`, {
       method: "POST",
@@ -620,6 +645,15 @@ export function HudPanel({
             <span><small>Wake</small><strong>{activationReadiness ? `${activationReadiness.wakeReady}/${activationReadiness.wakeStaged}` : "--"}</strong></span>
             <span><small>Hotword</small><strong>{activationReadiness?.hotwordStatus ?? "staged"}</strong></span>
             <span><small>VAD</small><strong>{activationReadiness?.vad ?? "--"}</strong></span>
+          </div>
+          <div className="agent-voice-matrix" aria-label="Agent voice matrix">
+            {agentVoiceMatrix.slice(0, 8).map((agent) => (
+              <button key={agent.agentId} type="button" onClick={() => void testAgentVoice(agent)} aria-label={`Test ${agent.agentName} voice`}>
+                <small>{agent.agentName}</small>
+                <strong>{agentVoiceTests[agent.agentId] ?? agent.status}</strong>
+                <em>{agent.enginePreference}</em>
+              </button>
+            ))}
           </div>
           <div className="hud-identity-strip">
             <UserCheck size={16} />
@@ -937,6 +971,30 @@ interface VoiceSessionResponse {
   task?: {
     id: string;
     title: string;
+  };
+}
+
+interface AgentVoiceEntry {
+  agentId: string;
+  agentName: string;
+  status: "ready" | "staged" | "missing" | "missing-dependency";
+  enginePreference: "windows-sapi" | "piper" | "voice-sample" | "future-clone" | "missing";
+  ttsRequest: {
+    agentId: string;
+    voiceProfileId: string;
+    text: string;
+  };
+}
+
+interface AgentVoiceMatrixResponse {
+  matrix?: {
+    entries?: AgentVoiceEntry[];
+  };
+}
+
+interface AgentTtsResponse {
+  tts?: {
+    status?: string;
   };
 }
 
