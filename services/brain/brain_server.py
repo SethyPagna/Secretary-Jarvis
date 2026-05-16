@@ -129,6 +129,28 @@ class BrainHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         path = urlparse(self.path).path
+        if path == "/":
+            json_response(
+                self,
+                200,
+                {
+                    "ok": True,
+                    "service": "jarvis-python-brain",
+                    "role": "orchestration-memory-rag-skills",
+                    "localOnly": True,
+                    "buildId": BUILD_ID,
+                    "message": "Jarvis Python Brain is online. Use the Electron HUD or Gateway /api/chat for interaction.",
+                    "endpoints": {
+                        "health": "/health",
+                        "capabilities": "/capabilities",
+                        "models": "/models/readiness",
+                        "voice": "/audio/status",
+                        "vision": "/vision/readiness",
+                    },
+                },
+            )
+            return
+
         if path == "/health":
             capabilities = capabilities_payload()["capabilities"]
             json_response(

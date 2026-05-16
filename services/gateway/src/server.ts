@@ -1609,6 +1609,28 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   const url = new URL(request.url ?? "/", "http://localhost");
 
+  if (request.method === "GET" && url.pathname === "/") {
+    sendJson(response, 200, {
+      ok: true,
+      service: "jarvis-gateway",
+      role: "local-api-events-memory-agents",
+      localOnly: true,
+      app: {
+        primary: "Electron HUD",
+        launcher: "Start Jarvis.cmd",
+        control: "Jarvis.cmd",
+      },
+      endpoints: {
+        status: "/api/status",
+        events: "/api/events",
+        chat: "/api/chat",
+        selfTest: "/api/runtime/self-test",
+      },
+      message: "Jarvis Gateway is online. Use the Electron HUD or Jarvis.cmd control menu instead of this browser root.",
+    });
+    return;
+  }
+
   if (request.method === "GET" && url.pathname.startsWith("/api/assets/voice/")) {
     const fileName = decodeURIComponent(url.pathname.slice("/api/assets/voice/".length));
     sendVoiceAsset(response, fileName);
