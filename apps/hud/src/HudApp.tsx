@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Settings } from "lucide-react";
+import { Check, Settings, ShieldAlert, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
@@ -23,7 +23,10 @@ function HudSurface() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveringOrb, setHoveringOrb] = useState(false);
   const [panel, setPanel] = useState<HudPanelName | null>(null);
-  const active = state !== "idle";
+  const pendingApproval = status?.pendingApprovals?.[0];
+  const visualState = pendingApproval ? "approval" : state;
+  const active = visualState !== "idle";
+  const activeCaption = pendingApproval ? "Approval required." : caption;
 
   useEffect(() => {
     return window.jarvisDesktop?.onTrayAction((action) => {
@@ -51,8 +54,28 @@ function HudSurface() {
     resetHud();
   }
 
+  async function decideApproval(outcome: "approve" | "deny") {
+    if (!pendingApproval) {
+      return;
+    }
+    const systemAction =
+      pendingApproval.agentId === "vulcan" ||
+      pendingApproval.connectorId === "filesystem" ||
+      ["write-local", "delete-local", "run-script", "service-control", "device-control", "sensor-capture"].includes(pendingApproval.category);
+    const endpoint =
+      outcome === "approve" && systemAction
+        ? `/api/system/actions/${pendingApproval.id}/approve`
+        : `/api/approvals/${pendingApproval.id}/${outcome}`;
+    setHudState(outcome === "approve" ? "executing" : "idle", outcome === "approve" ? "Executing approved action." : "Approval denied.");
+    await fetch(`${apiBaseUrl}${endpoint}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}"
+    }).catch(() => setHudState("error", "Approval action failed."));
+  }
+
   return (
-    <main className={`hud-stage hud-state-${state} ${panel ? "panel-open" : ""}`} aria-label="Jarvis centered HUD">
+    <main className={`hud-stage hud-state-${visualState} ${panel ? "panel-open" : ""}`} aria-label="Jarvis centered HUD">
       <div className="orb-interaction-zone" onMouseEnter={() => setHoveringOrb(true)} onMouseLeave={() => setHoveringOrb(false)}>
         <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} />
         <Orb
@@ -76,7 +99,30 @@ function HudSurface() {
             transition={{ duration: 0.2 }}
           >
             <span />
-            {caption && <strong>{caption}</strong>}
+            {activeCaption && <strong>{activeCaption}</strong>}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {pendingApproval && !panel && (
+          <motion.div
+            className="approval-chip"
+            initial={{ opacity: 0, y: 14, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <ShieldAlert size={17} aria-hidden="true" />
+            <span>
+              <b>{pendingApproval.category}</b>
+              <small>{pendingApproval.target}</small>
+            </span>
+            <button className="approve" type="button" onClick={() => void decideApproval("approve")} aria-label="Approve action">
+              <Check size={15} aria-hidden="true" />
+            </button>
+            <button className="deny" type="button" onClick={() => void decideApproval("deny")} aria-label="Deny action">
+              <X size={15} aria-hidden="true" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

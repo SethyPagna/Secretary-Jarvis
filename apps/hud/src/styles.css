@@ -165,6 +165,88 @@ button {
   backdrop-filter: blur(14px);
 }
 
+.approval-chip {
+  position: fixed;
+  top: calc(50% + 128px);
+  left: 50%;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 34px 34px;
+  align-items: center;
+  width: min(430px, 88vw);
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 209, 102, 0.34);
+  border-radius: 999px;
+  color: white;
+  background:
+    linear-gradient(90deg, rgba(255, 209, 102, 0.16), rgba(0, 229, 255, 0.06)),
+    rgba(4, 12, 15, 0.68);
+  transform: translateX(-50%);
+  pointer-events: auto;
+  box-shadow:
+    0 0 28px rgba(255, 209, 102, 0.12),
+    inset 0 0 18px rgba(255, 209, 102, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.approval-chip > svg {
+  color: #ffd166;
+  filter: drop-shadow(0 0 8px rgba(255, 209, 102, 0.42));
+}
+
+.approval-chip span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.approval-chip b,
+.approval-chip small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.approval-chip b {
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+  color: #ffd166;
+  text-transform: uppercase;
+}
+
+.approval-chip small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
+.approval-chip button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.approval-chip .approve {
+  border: 1px solid rgba(0, 255, 136, 0.36);
+}
+
+.approval-chip .approve:hover {
+  color: var(--hud-green);
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.18);
+}
+
+.approval-chip .deny {
+  border: 1px solid rgba(255, 0, 127, 0.34);
+}
+
+.approval-chip .deny:hover {
+  color: var(--hud-magenta);
+  box-shadow: 0 0 14px rgba(255, 0, 127, 0.18);
+}
+
 .metrics-card {
   position: absolute;
   bottom: calc(100% + 18px);
