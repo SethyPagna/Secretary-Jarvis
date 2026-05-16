@@ -752,10 +752,48 @@ button {
   margin: 12px auto 0;
 }
 
-.hardening-card {
+.compact-card {
   overflow: hidden;
   border: 1px solid rgba(0, 229, 255, 0.14);
   border-radius: 14px;
+}
+
+.compact-card summary {
+  min-height: 42px;
+  display: grid;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+
+.compact-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.compact-card span {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-card b {
+  color: var(--hud-cyan);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+}
+
+.compact-card small,
+.compact-card em {
+  display: block;
+  padding: 0 12px 8px;
+  overflow-wrap: anywhere;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.hardening-card {
   background:
     radial-gradient(circle at 18% 0%, rgba(0, 229, 255, 0.08), transparent 38%),
     rgba(255, 255, 255, 0.035);
@@ -763,18 +801,9 @@ button {
 }
 
 .hardening-card summary {
-  min-height: 42px;
-  display: grid;
   grid-template-columns: 18px minmax(0, 1fr) auto;
-  align-items: center;
   gap: 8px;
   padding: 10px 11px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.hardening-card summary::-webkit-details-marker {
-  display: none;
 }
 
 .hardening-card svg {
@@ -783,18 +812,12 @@ button {
 }
 
 .hardening-card span {
-  overflow: hidden;
   color: rgba(255, 255, 255, 0.84);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .hardening-card b {
   max-width: 120px;
   overflow: hidden;
-  color: var(--hud-cyan);
-  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -802,12 +825,6 @@ button {
 
 .hardening-card small,
 .hardening-card em {
-  display: block;
-  padding: 0 12px 8px;
-  overflow-wrap: anywhere;
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 11px;
-  font-style: normal;
   line-height: 1.35;
 }
 
@@ -885,25 +902,13 @@ button {
 }
 
 .plugin-slot {
-  overflow: hidden;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  border-radius: 14px;
   background: rgba(255, 255, 255, 0.035);
 }
 
 .plugin-slot summary {
-  min-height: 42px;
-  display: grid;
   grid-template-columns: 8px minmax(0, 1fr) auto;
-  align-items: center;
   gap: 8px;
   padding: 0 11px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.plugin-slot summary::-webkit-details-marker {
-  display: none;
 }
 
 .plugin-slot i {
@@ -925,29 +930,6 @@ button {
   box-shadow: 0 0 12px rgba(255, 212, 90, 0.54);
 }
 
-.plugin-slot span {
-  overflow: hidden;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.plugin-slot b {
-  color: var(--hud-cyan);
-  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
-}
-
-.plugin-slot small,
-.plugin-slot em {
-  display: block;
-  padding: 0 12px 8px;
-  overflow-wrap: anywhere;
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 11px;
-  font-style: normal;
-}
-
 .setup-install-strip {
   width: min(560px, 100%);
   display: grid;
@@ -957,9 +939,6 @@ button {
 }
 
 .setup-install-card {
-  overflow: hidden;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  border-radius: 14px;
   background:
     linear-gradient(135deg, rgba(0, 229, 255, 0.055), rgba(255, 255, 255, 0.025)),
     rgba(0, 0, 0, 0.18);
@@ -967,17 +946,9 @@ button {
 }
 
 .setup-install-card summary {
-  min-height: 42px;
-  display: grid;
   grid-template-columns: 8px minmax(0, 1fr) auto;
-  align-items: center;
   gap: 9px;
   padding: 10px 12px;
-  cursor: pointer;
-}
-
-.setup-install-card summary::-webkit-details-marker {
-  display: none;
 }
 
 .setup-install-card i {
@@ -997,29 +968,6 @@ button {
 .setup-install-card.status-optional i {
   background: #ffd45a;
   box-shadow: 0 0 12px rgba(255, 212, 90, 0.54);
-}
-
-.setup-install-card span {
-  overflow: hidden;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.setup-install-card b {
-  color: var(--hud-cyan);
-  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
-}
-
-.setup-install-card small,
-.setup-install-card em {
-  display: block;
-  padding: 0 12px 8px;
-  overflow-wrap: anywhere;
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 11px;
-  font-style: normal;
 }
 
 .setup-install-card button {

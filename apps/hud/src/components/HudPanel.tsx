@@ -459,7 +459,7 @@ export function HudPanel({
             <span>Theme <b>dark</b></span>
           </div>
           <div className="hardening-grid" aria-label="Architecture and runtime hardening">
-            <details className="hardening-card">
+            <details className="hardening-card compact-card">
               <summary>
                 <Cpu size={15} aria-hidden="true" />
                 <span>Stack</span>
@@ -468,7 +468,7 @@ export function HudPanel({
               <small>{architectureSummary?.languages.join(" / ") ?? "Loading language map."}</small>
               <em>{architectureSummary?.stackSummary ?? "Checking architecture hierarchy."}</em>
             </details>
-            <details className="hardening-card">
+            <details className="hardening-card compact-card">
               <summary>
                 <Play size={15} aria-hidden="true" />
                 <span>Startup</span>
@@ -477,7 +477,7 @@ export function HudPanel({
               <small>{startupReadiness?.scriptsReady ? "scripts ready" : "scripts pending"} / {startupReadiness?.highTrustMode ?? "checking"}</small>
               <em>{startupReadiness ? `${startupReadiness.runningPidFiles}/${startupReadiness.backgroundPidFiles} runtime PID files alive` : "Checking background runtime."}</em>
             </details>
-            <details className="hardening-card">
+            <details className="hardening-card compact-card">
               <summary>
                 <CheckCircle2 size={15} aria-hidden="true" />
                 <span>Authority</span>
@@ -486,7 +486,7 @@ export function HudPanel({
               <small>{authorityReadiness ? `${authorityReadiness.approvalRequired} gated / ${authorityReadiness.adminApproved} admin` : "Loading approval hierarchy."}</small>
               <em>{authorityReadiness?.guardrail ?? "Sensitive actions remain policy-gated."}</em>
             </details>
-            <details className="hardening-card">
+            <details className="hardening-card compact-card">
               <summary>
                 <Cable size={15} aria-hidden="true" />
                 <span>Code health</span>
@@ -517,7 +517,7 @@ export function HudPanel({
           </div>
           <div className="plugin-slot-grid" aria-label="Feature plug-in slots">
             {pluginSlots.slice(0, 6).map((slot) => (
-              <details key={slot.id} className={`plugin-slot status-${slot.status}`}>
+              <details key={slot.id} className={`plugin-slot compact-card status-${slot.status}`}>
                 <summary>
                   <i />
                   <span>{slot.label}</span>
@@ -530,7 +530,7 @@ export function HudPanel({
           </div>
           <div className="setup-install-strip" aria-label="Approved setup install plans">
             {setupInstallPlans.slice(0, 4).map((plan) => (
-              <details key={plan.id} className={`setup-install-card status-${plan.status}`}>
+              <details key={plan.id} className={`setup-install-card compact-card status-${plan.status}`}>
                 <summary>
                   <i />
                   <span>{plan.label}</span>
