@@ -1,4 +1,4 @@
-import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
+import { Cable, CheckCircle2, Cpu, Mic, Play, Send, Settings, Square, UserCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type {
   JarvisStatus,
@@ -6,6 +6,7 @@ import type {
   RuntimeServicesStatus,
   RuntimeSmokeStatus,
   SetupActionGroup,
+  VoiceSession,
   VoiceRuntimeReadiness
 } from "@jarvis/core";
 import { WorkflowConsole } from "./WorkflowConsole";
@@ -27,6 +28,8 @@ export function HudPanel({
   const [text, setText] = useState("");
   const [constellation, setConstellation] = useState<RuntimeConstellation | null>(null);
   const [voiceReadiness, setVoiceReadiness] = useState<VoiceRuntimeReadiness | null>(null);
+  const [voiceSession, setVoiceSession] = useState<VoiceSession | null>(status?.voiceSession ?? null);
+  const [voiceDraft, setVoiceDraft] = useState("");
   const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
   const [smokeStatus, setSmokeStatus] = useState<RuntimeSmokeStatus | null>(null);
   const [runtimeServices, setRuntimeServices] = useState<RuntimeServicesStatus | null>(null);
@@ -81,6 +84,14 @@ export function HudPanel({
         }
       })
       .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/voice/session`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: VoiceSessionResponse | undefined) => {
+        if (!cancelled && payload?.voiceSession) {
+          setVoiceSession(payload.voiceSession);
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -124,6 +135,64 @@ export function HudPanel({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ reason: "HUD stop speaking" })
     }).catch(() => undefined);
+  }
+
+  async function startVoiceListening() {
+    const payload = await fetch(`${apiBaseUrl}/api/voice/listening/start`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ resetTranscript: true })
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as VoiceSessionResponse | undefined;
+    if (payload?.voiceSession) {
+      setVoiceSession(payload.voiceSession);
+    }
+  }
+
+  async function stopVoiceListening() {
+    const payload = await fetch(`${apiBaseUrl}/api/voice/listening/stop`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: "HUD voice stop" })
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as VoiceSessionResponse | undefined;
+    if (payload?.voiceSession) {
+      setVoiceSession(payload.voiceSession);
+    }
+  }
+
+  async function submitVoiceDraft(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = voiceDraft.trim();
+    if (!text) {
+      return;
+    }
+    const transcript = await fetch(`${apiBaseUrl}/api/voice/transcript`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text, final: true, confidence: 0.9, engineId: "hud-manual" })
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as VoiceSessionResponse | undefined;
+    if (transcript?.voiceSession) {
+      setVoiceSession(transcript.voiceSession);
+      setVoiceDraft("");
+    }
+  }
+
+  async function commitVoiceTranscript() {
+    const payload = await fetch(`${apiBaseUrl}/api/voice/transcript/commit`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ taskProfile: "daily-assistant" })
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as VoiceSessionResponse | undefined;
+    if (payload?.voiceSession) {
+      setVoiceSession(payload.voiceSession);
+    }
   }
 
   async function recognizeOwnerDryRun() {
@@ -186,8 +255,23 @@ export function HudPanel({
       {panel === "voice" && (
         <>
           <header><Mic size={18} /><strong>Voice</strong></header>
-          <div className="mic-pulse"><Mic size={30} /></div>
-          <p>{voiceReadiness?.summary.sttReady ? "Say a command..." : "Voice staged"}</p>
+          <div className={`voice-session-card state-${voiceSession?.state ?? "idle"}`} aria-label="Live voice session">
+            <div className="mic-pulse"><Mic size={30} /></div>
+            <div className="voice-wave" aria-hidden="true">
+              {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
+            </div>
+            <strong>{voiceSession?.state ?? (voiceReadiness?.summary.sttReady ? "ready" : "staged")}</strong>
+            <small>{voiceSession?.transcript.at(-1)?.text ?? (voiceReadiness?.summary.sttReady ? "Say a command..." : "Voice staged")}</small>
+          </div>
+          <div className="voice-control-row" aria-label="Voice session controls">
+            <button type="button" onClick={startVoiceListening} aria-label="Start listening"><Play size={15} /></button>
+            <button type="button" onClick={stopVoiceListening} aria-label="Stop listening"><Square size={14} /></button>
+            <button type="button" onClick={commitVoiceTranscript} aria-label="Commit transcript"><CheckCircle2 size={15} /></button>
+          </div>
+          <form className="voice-transcript-form" onSubmit={submitVoiceDraft} aria-label="Manual transcript bridge">
+            <input value={voiceDraft} onChange={(event) => setVoiceDraft(event.target.value)} placeholder="Type heard command..." />
+            <button type="submit" aria-label="Add transcript"><Send size={14} /></button>
+          </form>
           <div className="voice-readiness-strip" aria-label="Voice runtime readiness">
             <span><small>STT</small><strong>{voiceReadiness?.primaryStt.status ?? "--"}</strong></span>
             <span><small>TTS</small><strong>{voiceReadiness?.summary.ttsReady ? "ready" : "staged"}</strong></span>
@@ -258,6 +342,10 @@ interface RuntimeServicesResponse {
 
 interface VoiceReadinessResponse {
   readiness?: VoiceRuntimeReadiness;
+}
+
+interface VoiceSessionResponse {
+  voiceSession?: VoiceSession;
 }
 
 interface SetupActionGroupsResponse {

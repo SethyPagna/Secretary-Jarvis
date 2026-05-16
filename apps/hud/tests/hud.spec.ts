@@ -59,6 +59,35 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/voice/session")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          voiceSession: {
+            id: "voice-session-ui",
+            state: "listening",
+            sttEngineId: "whisper-large-v3-turbo",
+            ttsEngineId: "windows-sapi",
+            vadEnabled: true,
+            transcript: [
+              {
+                id: "chunk-ui",
+                text: "Jarvis status",
+                startMs: 0,
+                endMs: 800,
+                confidence: 0.9,
+                engineId: "hud-manual",
+                final: true,
+              },
+            ],
+            updatedAt: "2026-05-16T00:00:00.000Z",
+            message: "Transcript ready to send.",
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/setup/action-groups")) {
       await route.fulfill({
         status: 200,
@@ -202,9 +231,12 @@ test("voice and text panels expose compact interaction states", async ({ page })
 
   const voicePanel = page.getByRole("dialog", { name: "Jarvis voice panel" });
   await expect(voicePanel).toBeVisible();
-  await expect(voicePanel.getByText("Say a command...")).toBeVisible();
+  await expect(voicePanel.getByLabel("Live voice session")).toContainText("listening");
+  await expect(voicePanel.getByLabel("Live voice session")).toContainText("Jarvis status");
+  await expect(voicePanel.getByLabel("Voice session controls")).toBeVisible();
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("ready-asset");
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("4");
+  await expect(voicePanel.getByLabel("Manual transcript bridge")).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop speaking" })).toBeVisible();
 
   await page.getByRole("button", { name: "Close panel" }).click();
