@@ -217,7 +217,7 @@ Protocol:
 - [x] 28.2 Add Agent Manager readiness endpoint - commit `d94fed4`
 - [x] 28.3 Surface Agent Manager readiness in HUD - commit `56ae543`
 - [x] 28.4 Add Agent Manager and workflow autonomy documentation - commit `917fe44`
-- [x] 28.5 Verify Agent Manager readiness with tests, builds, startup check-only scripts, and runtime smoke - pending verification doc commit
+- [x] 28.5 Verify Agent Manager readiness with tests, builds, startup check-only scripts, and runtime smoke - commit `4826d9e`
 
 ## Current Priority
 
