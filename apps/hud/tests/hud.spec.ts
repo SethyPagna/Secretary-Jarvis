@@ -981,6 +981,11 @@ test("workflow console keeps generated automations approval-gated", async ({ pag
 
   const panel = page.getByRole("dialog", { name: "Jarvis workflows panel" });
   await expect(panel.getByLabel("Workflow list")).toContainText("Generated inbox triage");
+  await expect(panel.getByLabel("Workflow canvas")).toBeVisible();
+  await expect(panel.getByLabel("Workflow node Owner approval")).toBeVisible();
+  await panel.getByLabel("Workflow node Owner approval").click();
+  await expect(panel.getByLabel("Workflow node details")).toContainText("Owner approval");
+  await expect(panel.getByLabel("Workflow variables")).toContainText("approval");
   await expect(panel.getByLabel("Workflow manager delegation")).toContainText("Jarvis");
   await expect(panel.getByLabel("Workflow manager delegation")).toContainText("Sentinel");
   await expect(panel.getByRole("button", { name: "Approval needed", exact: true })).toBeDisabled();

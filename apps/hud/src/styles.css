@@ -7,6 +7,8 @@
   --hud-bg: #02070a;
   --hud-text: #ffffff;
   --hud-glass: rgba(4, 12, 15, 0.46);
+  --desktop-rail-width: 72px;
+  --desktop-rail-expanded-width: 188px;
   font-family: Inter, "Segoe UI", system-ui, sans-serif;
 }
 
@@ -92,11 +94,11 @@ html[data-shell="desktop"] .desktop-app-chrome {
   top: 52px;
   bottom: 18px;
   z-index: 20;
-  width: 176px;
+  width: var(--desktop-rail-width);
   display: grid;
-  grid-template-rows: auto auto auto auto 1fr;
-  gap: 12px;
-  padding: 14px;
+  grid-template-rows: auto auto auto auto auto auto 1fr;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid rgba(0, 229, 255, 0.18);
   border-radius: 22px;
   background:
@@ -107,6 +109,21 @@ html[data-shell="desktop"] .desktop-app-chrome {
     inset 0 0 32px rgba(0, 229, 255, 0.035);
   backdrop-filter: blur(22px);
   pointer-events: auto;
+  overflow: hidden;
+  transition:
+    width 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.expanded,
+html[data-shell="desktop"] .desktop-app-chrome:focus-within {
+  width: var(--desktop-rail-expanded-width);
+  border-color: rgba(0, 229, 255, 0.3);
+  box-shadow:
+    0 0 48px rgba(0, 229, 255, 0.16),
+    inset 0 0 34px rgba(0, 229, 255, 0.05);
 }
 
 .desktop-brand {
@@ -142,6 +159,7 @@ html[data-shell="desktop"] .desktop-app-chrome {
 
 .desktop-brand b {
   font-size: 15px;
+  transition: opacity 140ms ease, transform 140ms ease;
 }
 
 .desktop-brand small,
@@ -150,6 +168,18 @@ html[data-shell="desktop"] .desktop-app-chrome {
   color: rgba(255, 255, 255, 0.56);
   font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
   text-transform: uppercase;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand {
+  grid-template-columns: 34px 0;
+  justify-content: center;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand b,
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
 }
 
 .desktop-rail {
@@ -170,6 +200,12 @@ html[data-shell="desktop"] .desktop-app-chrome {
   color: rgba(255, 255, 255, 0.82);
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
+  transition:
+    grid-template-columns 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .desktop-rail button:hover {
@@ -184,6 +220,24 @@ html[data-shell="desktop"] .desktop-app-chrome {
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: opacity 130ms ease, transform 130ms ease;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-rail button,
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-action,
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding-inline: 0;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-rail span,
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-action span,
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop span {
+  width: 0;
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
 }
 
 .desktop-status-card {
@@ -196,6 +250,7 @@ html[data-shell="desktop"] .desktop-app-chrome {
   border: 1px solid rgba(0, 255, 136, 0.16);
   border-radius: 16px;
   background: rgba(0, 255, 136, 0.045);
+  transition: min-height 160ms ease, padding 160ms ease;
 }
 
 .desktop-status-card svg {
@@ -206,6 +261,18 @@ html[data-shell="desktop"] .desktop-app-chrome {
   min-width: 0;
   display: grid;
   gap: 5px;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-card {
+  min-height: 38px;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 0;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-card span,
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-grid {
+  display: none;
 }
 
 .desktop-status-card b {
@@ -257,7 +324,12 @@ html[data-shell="desktop"] .desktop-app-chrome {
 }
 
 html[data-shell="desktop"] .orb-interaction-zone {
-  left: calc(50% + 88px);
+  left: calc(50% + 36px);
+  transition: left 180ms ease;
+}
+
+html[data-shell="desktop"] .hud-stage.sidebar-expanded .orb-interaction-zone {
+  left: calc(50% + 94px);
 }
 
 html[data-shell="desktop"] .hud-activation-line,
@@ -265,7 +337,16 @@ html[data-shell="desktop"] .command-capsule,
 html[data-shell="desktop"] .approval-chip,
 html[data-shell="desktop"] .workflow-approval-popup,
 html[data-shell="desktop"] .service-confirmation {
-  left: calc(50% + 88px);
+  left: calc(50% + 36px);
+  transition: left 180ms ease;
+}
+
+html[data-shell="desktop"] .hud-stage.sidebar-expanded .hud-activation-line,
+html[data-shell="desktop"] .hud-stage.sidebar-expanded .command-capsule,
+html[data-shell="desktop"] .hud-stage.sidebar-expanded .approval-chip,
+html[data-shell="desktop"] .hud-stage.sidebar-expanded .workflow-approval-popup,
+html[data-shell="desktop"] .hud-stage.sidebar-expanded .service-confirmation {
+  left: calc(50% + 94px);
 }
 
 html[data-shell="desktop"] .hud-corner-control {
@@ -2600,6 +2681,309 @@ html[data-shell="desktop"] .hud-corner-control {
   box-shadow: 0 0 12px rgba(255, 209, 102, 0.36);
 }
 
+.workflow-console-header {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.workflow-console-header span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+}
+
+.workflow-console-header svg {
+  color: var(--hud-cyan);
+}
+
+.workflow-console-header small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-topology {
+  display: grid;
+  grid-template-columns: minmax(178px, 0.42fr) minmax(0, 1.5fr) minmax(220px, 0.58fr);
+  gap: 12px;
+  min-height: 480px;
+}
+
+.workflow-topology .workflow-list {
+  max-height: 560px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.workflow-canvas-shell,
+.workflow-node-detail {
+  min-width: 0;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.045), rgba(255, 0, 127, 0.018)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.workflow-canvas-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.workflow-canvas-toolbar {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.12);
+  background: rgba(2, 8, 11, 0.44);
+}
+
+.workflow-canvas-toolbar span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.workflow-canvas-toolbar b,
+.workflow-canvas-toolbar small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-canvas-toolbar small {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+}
+
+.workflow-canvas-toolbar div {
+  display: flex;
+  gap: 8px;
+}
+
+.workflow-canvas-toolbar button {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  border-radius: 999px;
+  color: white;
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.workflow-canvas-toolbar button:disabled {
+  opacity: 0.56;
+}
+
+.workflow-canvas-scroll {
+  overflow: auto;
+}
+
+.workflow-canvas {
+  position: relative;
+  min-width: 780px;
+  min-height: 440px;
+  background:
+    radial-gradient(circle, rgba(0, 229, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.03), transparent 26%, rgba(255, 0, 127, 0.025));
+  background-size: 22px 22px, 100% 100%;
+}
+
+.workflow-link-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.workflow-link-layer marker path {
+  fill: rgba(0, 229, 255, 0.74);
+}
+
+.workflow-link {
+  fill: none;
+  stroke: rgba(0, 229, 255, 0.44);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.22));
+}
+
+.workflow-link.dashed {
+  stroke: rgba(255, 212, 90, 0.55);
+  stroke-dasharray: 8 8;
+}
+
+.workflow-node {
+  position: absolute;
+  width: 168px;
+  min-height: 112px;
+  display: grid;
+  grid-template-rows: 24px minmax(0, 1fr);
+  align-content: center;
+  justify-items: center;
+  gap: 9px;
+  padding: 16px 14px;
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 22px;
+  color: white;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.16), transparent 58%),
+    rgba(8, 13, 15, 0.86);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.28),
+    inset 0 0 26px rgba(0, 229, 255, 0.035);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.workflow-node:active {
+  cursor: grabbing;
+}
+
+.workflow-node:hover,
+.workflow-node.selected {
+  border-color: rgba(0, 229, 255, 0.56);
+  box-shadow:
+    0 0 28px rgba(0, 229, 255, 0.16),
+    inset 0 0 32px rgba(0, 229, 255, 0.07);
+}
+
+.workflow-node svg {
+  color: var(--hud-cyan);
+}
+
+.workflow-node span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  text-align: center;
+}
+
+.workflow-node b,
+.workflow-node small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workflow-node b {
+  display: -webkit-box;
+  font-size: 13px;
+  line-height: 1.12;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.workflow-node small {
+  color: rgba(255, 255, 255, 0.58);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.workflow-node-approval-required {
+  border-color: rgba(255, 212, 90, 0.34);
+}
+
+.workflow-node-approval-required svg {
+  color: var(--hud-amber);
+}
+
+.workflow-node-blocked {
+  border-color: rgba(255, 0, 127, 0.42);
+}
+
+.workflow-node-blocked svg {
+  color: var(--hud-magenta);
+}
+
+.workflow-port {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.34);
+  border-radius: 50%;
+  background: rgba(15, 18, 20, 0.94);
+  transform: translateY(-50%);
+}
+
+.workflow-port-in {
+  left: -8px;
+}
+
+.workflow-port-out {
+  right: -8px;
+}
+
+.workflow-node-detail {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.workflow-detail-title {
+  display: grid;
+  gap: 5px;
+}
+
+.workflow-detail-title b,
+.workflow-detail-title small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-detail-title small {
+  color: rgba(255, 255, 255, 0.58);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.workflow-variable-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.workflow-variable-grid span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 13px;
+  background: rgba(0, 229, 255, 0.035);
+}
+
+.workflow-variable-grid small,
+.workflow-variable-grid b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-variable-grid small {
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 11px;
+}
+
+.workflow-variable-grid b {
+  color: white;
+  font-size: 12px;
+}
+
 @keyframes orb-breathe {
   0%,
   100% {
@@ -2773,12 +3157,32 @@ html[data-shell="desktop"] .hud-corner-control {
   .service-pulses,
   .device-grid,
   .setting-list,
-  .workflow-layout {
+  .workflow-layout,
+  .workflow-topology,
+  .workflow-console-header,
+  .workflow-canvas-toolbar {
     grid-template-columns: 1fr;
   }
 
   .workflow-generated-card,
   .workflow-manager-note {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-topology .workflow-list {
+    max-height: 190px;
+  }
+
+  .workflow-canvas-scroll {
+    max-height: 430px;
+  }
+
+  .workflow-canvas-toolbar div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .workflow-activity-log {
     grid-template-columns: 1fr;
   }
 }

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, Bot, Check, CircleStop, Cpu, FlaskConical, LayoutDashboard, Mic, Power, RefreshCw, Route, Settings, ShieldAlert, TerminalSquare, Waypoints, X } from "lucide-react";
-import { lazy, Suspense, useEffect, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useEffect, useState, type CSSProperties, type FocusEvent } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
 import { RadialMenu } from "./components/RadialMenu";
@@ -36,6 +36,7 @@ function HudSurface() {
   const [panel, setPanel] = useState<HudPanelName | null>(null);
   const [commandCapsule, setCommandCapsule] = useState<CommandCapsule | null>(null);
   const [serviceIntent, setServiceIntent] = useState<"stop-services" | "restart-services" | null>(null);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const pendingApproval = status?.pendingApprovals?.[0];
   const workflowApproval = pendingApproval?.connectorId === "workflow-engine" ? pendingApproval : undefined;
   const visualState = pendingApproval ? "approval" : state;
@@ -141,12 +142,17 @@ function HudSurface() {
   }
 
   return (
-    <main className={`hud-stage hud-state-${visualState} ${panel ? "panel-open" : ""}`} aria-label="Jarvis centered HUD">
+    <main
+      className={`hud-stage hud-state-${visualState} ${panel ? "panel-open" : ""} ${sidebarExpanded ? "sidebar-expanded" : "sidebar-collapsed"}`}
+      aria-label="Jarvis centered HUD"
+    >
       <DesktopAppChrome
+        expanded={sidebarExpanded}
         online={online}
         activeModel={status?.models?.find((model) => model.id === status?.activeModelId)?.label ?? "Local model"}
         runningTasks={(status?.tasks ?? []).filter((task) => task.status === "running").length}
         pendingApprovals={status?.pendingApprovals?.length ?? 0}
+        onExpandedChange={setSidebarExpanded}
         onOpenPanel={openPanel}
         onStopJarvis={() => requestServiceAction("stop-services")}
         onRestartJarvis={() => requestServiceAction("restart-services")}
@@ -334,20 +340,24 @@ function HudSurface() {
 }
 
 function DesktopAppChrome({
+  expanded,
   online,
   activeModel,
   runningTasks,
   pendingApprovals,
+  onExpandedChange,
   onOpenPanel,
   onStopJarvis,
   onRestartJarvis,
   onLiveTest,
   onEmergencyStop
 }: {
+  expanded: boolean;
   online: boolean;
   activeModel: string;
   runningTasks: number;
   pendingApprovals: number;
+  onExpandedChange: (expanded: boolean) => void;
   onOpenPanel: (panel: HudPanelName) => void;
   onStopJarvis: () => void;
   onRestartJarvis: () => void;
@@ -363,8 +373,24 @@ function DesktopAppChrome({
     { panel: "settings", label: "System", icon: Settings },
   ];
 
+  function collapseAfterFocusLeaves(event: FocusEvent<HTMLElement>) {
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+      return;
+    }
+    onExpandedChange(false);
+  }
+
   return (
-    <aside className="desktop-app-chrome" aria-label="Jarvis desktop shell">
+    <aside
+      className={`desktop-app-chrome ${expanded ? "expanded" : "collapsed"}`}
+      aria-label="Jarvis desktop shell"
+      onMouseEnter={() => onExpandedChange(true)}
+      onMouseLeave={() => onExpandedChange(false)}
+      onFocus={() => onExpandedChange(true)}
+      onBlur={collapseAfterFocusLeaves}
+      data-expanded={expanded ? "true" : "false"}
+    >
       <div className="desktop-brand">
         <span><Bot size={18} aria-hidden="true" /></span>
         <b>Jarvis</b>
@@ -403,21 +429,21 @@ function DesktopAppChrome({
           <b>{pendingApprovals}</b>
         </span>
       </div>
-      <button className="desktop-action" type="button" onClick={onLiveTest}>
+      <button className="desktop-action" type="button" onClick={onLiveTest} aria-label="Run live test">
         <FlaskConical size={17} aria-hidden="true" />
-        Live
+        <span>Live</span>
       </button>
-      <button className="desktop-action" type="button" onClick={onRestartJarvis}>
+      <button className="desktop-action" type="button" onClick={onRestartJarvis} aria-label="Restart Jarvis">
         <RefreshCw size={17} aria-hidden="true" />
-        Restart
+        <span>Restart</span>
       </button>
-      <button className="desktop-action" type="button" onClick={onStopJarvis}>
+      <button className="desktop-action" type="button" onClick={onStopJarvis} aria-label="Stop Jarvis">
         <Power size={17} aria-hidden="true" />
-        Stop Jarvis
+        <span>Stop Jarvis</span>
       </button>
-      <button className="desktop-stop" type="button" onClick={onEmergencyStop}>
+      <button className="desktop-stop" type="button" onClick={onEmergencyStop} aria-label="Emergency Stop">
         <CircleStop size={17} aria-hidden="true" />
-        Emergency
+        <span>Emergency</span>
       </button>
     </aside>
   );
