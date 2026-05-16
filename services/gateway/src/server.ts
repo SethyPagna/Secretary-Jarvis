@@ -64,6 +64,7 @@ import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
 import { buildRuntimeEventHealth } from "./eventHealth.js";
 import { buildArchitectureMap } from "./architectureMap.js";
+import { buildCodeHealthReport } from "./codeHealth.js";
 import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
@@ -1598,6 +1599,17 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     sendJson(response, 200, {
       architecture: buildArchitectureMap(now()),
       note: "Local architecture map for language boundaries, runtime hierarchy, optimization backlog, and hardening review.",
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/architecture/code-health") {
+    sendJson(response, 200, {
+      codeHealth: buildCodeHealthReport({
+        root: process.cwd(),
+        generatedAt: now(),
+      }),
+      note: "Local code-health scan for cleanup planning. Findings are review hints, not deletion instructions.",
     });
     return;
   }
