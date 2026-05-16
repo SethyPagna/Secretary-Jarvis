@@ -1,13 +1,15 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Route, Settings, ShieldAlert, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type CSSProperties } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
-import { Orb } from "./components/Orb";
 import { RadialMenu } from "./components/RadialMenu";
 import { useJarvisStatus } from "./hooks/useJarvisStatus";
 import { HudStateProvider, useHudState } from "./state/hudState";
 import type { HudPanel as HudPanelName } from "./types";
+import type { HudState } from "@jarvis/core";
+
+const Orb = lazy(() => import("./components/Orb").then((module) => ({ default: module.Orb })));
 
 type CommandCapsuleState = "queued" | "running" | "completed" | "failed" | "cancelled";
 
@@ -124,16 +126,31 @@ function HudSurface() {
     <main className={`hud-stage hud-state-${visualState} ${panel ? "panel-open" : ""}`} aria-label="Jarvis centered HUD">
       <div className="orb-interaction-zone" onMouseEnter={() => setHoveringOrb(true)} onMouseLeave={() => setHoveringOrb(false)}>
         <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} />
-        <Orb
-          visualState={visualState}
-          online={online}
-          pendingApproval={Boolean(pendingApproval)}
-          onClick={() => {
-            setPanel(null);
-            setMenuOpen((value) => !value);
-            setHudState(menuOpen ? "idle" : "wake", online ? "Jarvis ready." : "Gateway offline.");
-          }}
-        />
+        <Suspense
+          fallback={
+            <OrbFallback
+              visualState={visualState}
+              online={online}
+              pendingApproval={Boolean(pendingApproval)}
+              onClick={() => {
+                setPanel(null);
+                setMenuOpen((value) => !value);
+                setHudState(menuOpen ? "idle" : "wake", online ? "Jarvis ready." : "Gateway offline.");
+              }}
+            />
+          }
+        >
+          <Orb
+            visualState={visualState}
+            online={online}
+            pendingApproval={Boolean(pendingApproval)}
+            onClick={() => {
+              setPanel(null);
+              setMenuOpen((value) => !value);
+              setHudState(menuOpen ? "idle" : "wake", online ? "Jarvis ready." : "Gateway offline.");
+            }}
+          />
+        </Suspense>
       </div>
       <RadialMenu open={menuOpen} onSelect={openPanel} onClose={closeAll} />
       <AnimatePresence>
@@ -250,6 +267,41 @@ function HudSurface() {
         <Settings size={18} aria-hidden="true" />
       </button>
     </main>
+  );
+}
+
+function OrbFallback({
+  visualState,
+  online,
+  pendingApproval,
+  onClick
+}: {
+  visualState: HudState;
+  online: boolean;
+  pendingApproval: boolean;
+  onClick: () => void;
+}) {
+  const state = online ? visualState : "error";
+  return (
+    <button
+      className={`orb-button orb-fallback orb-visual-${state} ${pendingApproval ? "has-approval" : ""}`}
+      type="button"
+      aria-label="Open Jarvis controls"
+      data-state={state}
+      onClick={onClick}
+    >
+      <span className="orb-aura" />
+      <span className="orb-scan-ring" aria-hidden="true" />
+      <span className="orb-data-arcs" aria-hidden="true" />
+      <span className="orb-kinetic-frame" aria-hidden="true" />
+      <span className="orb-particle-field" aria-hidden="true">
+        {Array.from({ length: 12 }, (_, index) => (
+          <i key={index} style={{ "--i": index } as CSSProperties} />
+        ))}
+      </span>
+      <span className="orb-state-glyph" aria-hidden="true" />
+      <span className="orb-css-core" aria-hidden="true" />
+    </button>
   );
 }
 
