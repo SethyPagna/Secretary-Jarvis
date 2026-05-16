@@ -74,6 +74,7 @@ import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeContr
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { buildSetupActionGroups } from "./setupActions.js";
+import { buildSetupInstallPlanManifest } from "./setupInstallPlans.js";
 import { JarvisStore } from "./store.js";
 import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
 import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
@@ -2261,6 +2262,20 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       manifest: buildFeaturePluginSlotManifest({
         downloads: hydrateFeatureDownloads(),
         generatedAt: now(),
+      }),
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/setup/install-plans") {
+    const generatedAt = now();
+    sendJson(response, 200, {
+      manifest: buildSetupInstallPlanManifest({
+        generatedAt,
+        slotManifest: buildFeaturePluginSlotManifest({
+          downloads: hydrateFeatureDownloads(),
+          generatedAt,
+        }),
       }),
     });
     return;

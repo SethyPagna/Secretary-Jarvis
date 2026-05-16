@@ -767,6 +767,42 @@ export interface SetupActionGroup {
   items: SetupActionItem[];
 }
 
+export interface SetupInstallPlan {
+  id: string;
+  slotId: string;
+  label: string;
+  category: NeededFeatureDownload["category"];
+  status: "ready" | "partial" | "missing" | "optional";
+  purpose: string;
+  expectedPath: string;
+  installHint: string;
+  plugsInto: string[];
+  actionCategory: ActionCategory;
+  approvalRequired: boolean;
+  commandPreview: string;
+  manualSteps: string[];
+  validationChecks: string[];
+  rollbackNote: string;
+  uninstallPreview: string;
+  blockers: string[];
+  localOnly: true;
+  detailsHiddenByDefault: true;
+}
+
+export interface SetupInstallPlanManifest {
+  generatedAt: string;
+  localOnly: true;
+  plans: SetupInstallPlan[];
+  summary: {
+    ready: number;
+    partial: number;
+    missing: number;
+    optional: number;
+    approvalRequired: number;
+  };
+  note: string;
+}
+
 export interface RuntimeSmokeStatus {
   ok: boolean;
   status: "passed" | "failed" | "missing";
