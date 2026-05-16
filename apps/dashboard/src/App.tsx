@@ -48,7 +48,9 @@ import {
   seededStatus,
   type ActionRequest,
   type AgentProfile,
+  type Conversation,
   type ConversationTurn,
+  type MemoryRecord,
   type MobilePairing,
   type MemoryWrite,
   type ModelReadiness,
@@ -65,6 +67,7 @@ import {
   type UndoJournalEntry,
   type TaskRun,
   type TaskProfile,
+  type TimelineEvent,
 } from "@jarvis/core";
 
 const API_BASE_URL = import.meta.env.VITE_JARVIS_GATEWAY_URL ?? "http://127.0.0.1:4317";
@@ -436,14 +439,28 @@ function AgentFlow({ agents }: { agents: AgentProfile[] }) {
 function MemoryTimeline({ status }: { status: JarvisStatus }) {
   const [query, setQuery] = useState("privacy");
   const [writes, setWrites] = useState<MemoryWrite[]>([]);
+  const [records, setRecords] = useState<MemoryRecord[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>(status.conversations ?? []);
 
   async function searchMemory() {
-    const response = await fetch(`${API_BASE_URL}/api/memory/search?q=${encodeURIComponent(query)}`);
+    const response = await fetch(`${API_BASE_URL}/api/memory/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query, includeTimeline: true, limit: 24 }),
+    });
     if (!response.ok) {
       throw new Error("Memory search failed");
     }
-    const body = (await response.json()) as { writes?: MemoryWrite[] };
+    const body = (await response.json()) as { writes?: MemoryWrite[]; records?: MemoryRecord[]; timeline?: TimelineEvent[] };
     setWrites(body.writes ?? []);
+    setRecords(body.records ?? []);
+    setTimeline(body.timeline ?? []);
+    const conversationResponse = await fetch(`${API_BASE_URL}/api/conversations`);
+    if (conversationResponse.ok) {
+      const conversationBody = (await conversationResponse.json()) as { conversations?: Conversation[] };
+      setConversations(conversationBody.conversations ?? []);
+    }
   }
 
   return (
@@ -459,7 +476,33 @@ function MemoryTimeline({ status }: { status: JarvisStatus }) {
         <input value={query} onChange={(event) => setQuery(event.target.value)} />
         <button type="button" onClick={searchMemory}>Recall</button>
       </div>
+      <div className="time-travel-summary">
+        <span><b>{conversations.length}</b>conversations</span>
+        <span><b>{records.length}</b>memories</span>
+        <span><b>{timeline.length}</b>timeline</span>
+        <span><b>{status.undoJournal?.filter((entry) => entry.status === "available").length ?? 0}</b>undos</span>
+      </div>
       <div className="timeline">
+        {timeline.slice(0, 6).map((event) => (
+          <article className="timeline-event timeline-system" key={event.id}>
+            <time>{new Date(event.occurredAt).toLocaleString()}</time>
+            <div>
+              <strong>{event.title}</strong>
+              <p>{event.summary}</p>
+              <span>{event.kind} / {event.reversible ? "undoable" : "fixed"} / {event.tags.join(" / ")}</span>
+            </div>
+          </article>
+        ))}
+        {records.slice(0, 5).map((memory) => (
+          <article className="timeline-event memory-record" key={memory.id}>
+            <time>{new Date(memory.createdAt).toLocaleString()}</time>
+            <div>
+              <strong>{memory.title}</strong>
+              <p>{memory.content}</p>
+              <span>{memory.layer} / {memory.kind} / confidence {Math.round(memory.confidence * 100)}%</span>
+            </div>
+          </article>
+        ))}
         {writes.map((memory) => (
           <article className="timeline-event memory-write" key={memory.id}>
             <time>{new Date(memory.createdAt).toLocaleString()}</time>
