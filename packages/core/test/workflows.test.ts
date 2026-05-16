@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  createWorkflowRun,
+  createWorkflowRunEvent,
   dryRunWorkflow,
   findSeedWorkflow,
   riskForWorkflow,
@@ -80,5 +82,27 @@ describe("workflow core domain", () => {
 
     expect(issues.some((issue) => issue.message === "Step ids must be unique.")).toBe(true);
     expect(issues.some((issue) => issue.message === "Step title is required.")).toBe(true);
+  });
+
+  it("creates workflow run records and events for persistence", () => {
+    const createdAt = "2026-05-16T10:55:00.000Z";
+    const run = createWorkflowRun({
+      id: "workflow-run-1",
+      workflowId: "workflow-daily-brief",
+      input: { topic: "today" },
+      createdAt,
+    });
+    const event = createWorkflowRunEvent({
+      id: "workflow-event-1",
+      workflowRunId: run.id,
+      workflowId: run.workflowId,
+      kind: "queued",
+      message: "Workflow queued.",
+      createdAt,
+    });
+
+    expect(run.status).toBe("queued");
+    expect(run.input.topic).toBe("today");
+    expect(event.workflowRunId).toBe(run.id);
   });
 });

@@ -2,6 +2,8 @@ import type { ActionCategory, TaskProfile } from "./types.js";
 
 export type WorkflowRisk = "safe" | "approval-required" | "blocked";
 export type WorkflowStepKind = "agent" | "connector-action" | "system-action" | "approval" | "memory-write" | "sub-workflow";
+export type WorkflowRunStatus = "queued" | "running" | "waiting-approval" | "completed" | "failed" | "cancelled";
+export type WorkflowRunEventKind = "queued" | "started" | "step-started" | "approval-requested" | "step-completed" | "completed" | "failed" | "cancelled";
 
 export interface WorkflowStep {
   id: string;
@@ -54,6 +56,28 @@ export interface WorkflowDryRun {
   blockedStepIds: string[];
   validationIssues: WorkflowValidationIssue[];
   steps: WorkflowDryRunStep[];
+}
+
+export interface WorkflowRun {
+  id: string;
+  workflowId: string;
+  status: WorkflowRunStatus;
+  currentStepId?: string;
+  input: Record<string, unknown>;
+  result?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkflowRunEvent {
+  id: string;
+  workflowRunId: string;
+  workflowId: string;
+  kind: WorkflowRunEventKind;
+  message: string;
+  stepId?: string;
+  createdAt: string;
+  payload?: Record<string, unknown>;
 }
 
 const blockedCategories = new Set<ActionCategory>(["protected-core-access", "credential-access", "purchase"]);
@@ -281,4 +305,45 @@ export function dryRunWorkflow(workflow: WorkflowDefinition): WorkflowDryRun {
 
 export function findSeedWorkflow(id: string): WorkflowDefinition | undefined {
   return seedWorkflows.find((workflow) => workflow.id === id);
+}
+
+export function createWorkflowRun(params: {
+  id: string;
+  workflowId: string;
+  input?: Record<string, unknown>;
+  status?: WorkflowRunStatus;
+  currentStepId?: string;
+  createdAt: string;
+}): WorkflowRun {
+  return {
+    id: params.id,
+    workflowId: params.workflowId,
+    status: params.status ?? "queued",
+    currentStepId: params.currentStepId,
+    input: params.input ?? {},
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+  };
+}
+
+export function createWorkflowRunEvent(params: {
+  id: string;
+  workflowRunId: string;
+  workflowId: string;
+  kind: WorkflowRunEventKind;
+  message: string;
+  stepId?: string;
+  createdAt: string;
+  payload?: Record<string, unknown>;
+}): WorkflowRunEvent {
+  return {
+    id: params.id,
+    workflowRunId: params.workflowRunId,
+    workflowId: params.workflowId,
+    kind: params.kind,
+    message: params.message,
+    stepId: params.stepId,
+    createdAt: params.createdAt,
+    payload: params.payload,
+  };
 }

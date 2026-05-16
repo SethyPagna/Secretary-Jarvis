@@ -13,8 +13,12 @@ import {
   createOutboundMessageDraft,
   createSteeringEvent,
   createVoiceSession,
+  createWorkflowRun,
+  createWorkflowRunEvent,
+  dryRunWorkflow,
   hydrateReadyModelAssets,
   neededFeatureDownloads,
+  validateWorkflowDefinition,
   evaluateActionPolicy,
   classifySystemCommand,
   createSystemActionDraft,
@@ -48,6 +52,7 @@ import {
   type TtsRequest,
   type UndoJournalEntry,
   type VisionInsight,
+  type WorkflowDefinition,
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
@@ -1272,6 +1277,124 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       queue: store.listQueue(),
     });
     return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/workflows") {
+    const workflows = store.listWorkflows();
+    sendJson(response, 200, {
+      workflows,
+      runs: store.listWorkflowRuns(40),
+      dryRuns: workflows.map((workflow) => dryRunWorkflow(workflow)),
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/workflows") {
+    const body = (await readBody(request)) as { workflow?: WorkflowDefinition } & Partial<WorkflowDefinition>;
+    const workflow = (body.workflow ?? body) as WorkflowDefinition;
+    const issues = validateWorkflowDefinition(workflow);
+    if (issues.some((issue) => issue.severity === "error")) {
+      sendJson(response, 400, { error: "Workflow validation failed", issues });
+      return;
+    }
+
+    store.upsertWorkflow(workflow, now());
+    const dryRun = dryRunWorkflow(workflow);
+    events.publish("task", { workflow, dryRun, kind: "workflow-saved" });
+    sendJson(response, 201, { workflow, dryRun, issues });
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/workflows/")) {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const workflowId = decodeURIComponent(parts[2] ?? "");
+    const action = parts[3];
+    const workflow = store.getWorkflow(workflowId);
+    if (!workflow) {
+      sendJson(response, 404, { error: "Workflow not found", workflowId });
+      return;
+    }
+
+    if (request.method === "GET" && !action) {
+      const runs = store.listWorkflowRuns(80).filter((run) => run.workflowId === workflowId);
+      sendJson(response, 200, {
+        workflow,
+        dryRun: dryRunWorkflow(workflow),
+        runs,
+      });
+      return;
+    }
+
+    if (request.method === "POST" && action === "dry-run") {
+      const dryRun = dryRunWorkflow(workflow);
+      events.publish("task", { workflowId, dryRun, kind: "workflow-dry-run" });
+      sendJson(response, 200, { workflow, dryRun });
+      return;
+    }
+
+    if (request.method === "GET" && action === "runs") {
+      sendJson(response, 200, {
+        workflowId,
+        runs: store.listWorkflowRuns(120).filter((run) => run.workflowId === workflowId),
+      });
+      return;
+    }
+
+    if (request.method === "POST" && action === "runs") {
+      const body = (await readBody(request)) as { input?: Record<string, unknown> };
+      const dryRun = dryRunWorkflow(workflow);
+      if (!dryRun.runnable) {
+        sendJson(response, 409, {
+          error: "Workflow is not runnable",
+          workflow,
+          dryRun,
+        });
+        return;
+      }
+
+      const timestamp = now();
+      const firstStep = workflow.steps[0];
+      const run = createWorkflowRun({
+        id: id("workflow-run"),
+        workflowId,
+        input: body.input ?? {},
+        status: dryRun.approvalStepIds.length > 0 ? "waiting-approval" : "queued",
+        currentStepId: firstStep?.id,
+        createdAt: timestamp,
+      });
+      store.upsertWorkflowRun(run);
+      const event = createWorkflowRunEvent({
+        id: id("workflow-event"),
+        workflowRunId: run.id,
+        workflowId,
+        kind: dryRun.approvalStepIds.length > 0 ? "approval-requested" : "queued",
+        message:
+          dryRun.approvalStepIds.length > 0
+            ? `Workflow ${workflow.name} is waiting for owner approval before execution.`
+            : `Workflow ${workflow.name} queued for local execution.`,
+        stepId: firstStep?.id,
+        createdAt: timestamp,
+        payload: { dryRun },
+      });
+      store.addWorkflowRunEvent(event);
+      if (dryRun.approvalStepIds.length > 0) {
+        const approval: ActionRequest = {
+          id: run.id,
+          title: `Approve workflow: ${workflow.name}`,
+          category: workflow.steps.find((step) => dryRun.approvalStepIds.includes(step.id))?.actionCategory ?? "run-script",
+          target: workflow.name,
+          reason: "Workflow contains approval-gated steps and cannot execute until the owner approves.",
+          connectorId: "workflow-engine",
+          agentId: "sentinel",
+          dataTouched: ["workflow definition", "workflow run input", "approval-gated steps"],
+        };
+        recordPendingApproval(approval);
+        events.publish("approval", { action: approval, workflow, run, dryRun });
+      }
+      events.publish("task", { workflow, run, event, dryRun, kind: "workflow-run-created" });
+      sendJson(response, 202, { workflow, run, event, dryRun });
+      return;
+    }
   }
 
   if (request.method === "GET" && url.pathname === "/api/models") {

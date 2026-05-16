@@ -1,16 +1,20 @@
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type {
-  Conversation,
-  ConversationTurn,
-  MemoryRecord,
-  MemoryWrite,
-  TaskEvent,
-  TaskQueueItem,
-  TaskRun,
-  TimelineEvent,
-  UndoJournalEntry,
+import {
+  seedWorkflows,
+  type Conversation,
+  type ConversationTurn,
+  type MemoryRecord,
+  type MemoryWrite,
+  type TaskEvent,
+  type TaskQueueItem,
+  type TaskRun,
+  type TimelineEvent,
+  type UndoJournalEntry,
+  type WorkflowDefinition,
+  type WorkflowRun,
+  type WorkflowRunEvent,
 } from "@jarvis/core";
 
 const DEFAULT_DB_PATH = join(process.cwd(), "data", "jarvis.sqlite");
@@ -24,6 +28,7 @@ export class JarvisStore {
     this.db.exec("PRAGMA journal_mode = WAL");
     this.db.exec("PRAGMA foreign_keys = ON");
     this.migrate();
+    this.seedWorkflowDefinitions();
   }
 
   close(): void {
@@ -478,6 +483,154 @@ export class JarvisStore {
     return { ...entry, status };
   }
 
+  upsertWorkflow(workflow: WorkflowDefinition, timestamp = new Date().toISOString()): void {
+    this.db
+      .prepare(
+        `INSERT INTO workflows (
+           id, name, description, version, owner, enabled, task_profile, steps_json, tags_json, created_at, updated_at
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name = excluded.name,
+           description = excluded.description,
+           version = excluded.version,
+           owner = excluded.owner,
+           enabled = excluded.enabled,
+           task_profile = excluded.task_profile,
+           steps_json = excluded.steps_json,
+           tags_json = excluded.tags_json,
+           updated_at = excluded.updated_at`,
+      )
+      .run(
+        workflow.id,
+        workflow.name,
+        workflow.description,
+        workflow.version,
+        workflow.owner,
+        workflow.enabled ? 1 : 0,
+        workflow.taskProfile,
+        JSON.stringify(workflow.steps),
+        JSON.stringify(workflow.tags),
+        timestamp,
+        timestamp,
+      );
+    this.addTimelineEvent({
+      id: `timeline-workflow-${workflow.id}-${Date.parse(timestamp) || Date.now()}`,
+      kind: "decision",
+      title: `Workflow saved: ${workflow.name}`,
+      summary: workflow.description,
+      occurredAt: timestamp,
+      source: "system",
+      reversible: false,
+      status: "remembered",
+      tags: ["workflow", workflow.owner, workflow.taskProfile],
+    });
+  }
+
+  getWorkflow(id: string): WorkflowDefinition | undefined {
+    const row = this.db
+      .prepare(
+        `SELECT id, name, description, version, owner, enabled, task_profile, steps_json, tags_json
+         FROM workflows WHERE id = ?`,
+      )
+      .get(id) as WorkflowRow | undefined;
+    return row ? workflowFromRow(row) : undefined;
+  }
+
+  listWorkflows(): WorkflowDefinition[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, name, description, version, owner, enabled, task_profile, steps_json, tags_json
+         FROM workflows ORDER BY name ASC`,
+      )
+      .all() as unknown as WorkflowRow[];
+    return rows.map(workflowFromRow);
+  }
+
+  upsertWorkflowRun(run: WorkflowRun): void {
+    this.db
+      .prepare(
+        `INSERT INTO workflow_runs (id, workflow_id, status, current_step_id, input_json, result, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           status = excluded.status,
+           current_step_id = excluded.current_step_id,
+           input_json = excluded.input_json,
+           result = excluded.result,
+           updated_at = excluded.updated_at`,
+      )
+      .run(
+        run.id,
+        run.workflowId,
+        run.status,
+        run.currentStepId ?? null,
+        JSON.stringify(run.input),
+        run.result ?? null,
+        run.createdAt,
+        run.updatedAt,
+      );
+  }
+
+  getWorkflowRun(id: string): WorkflowRun | undefined {
+    const row = this.db
+      .prepare(
+        `SELECT id, workflow_id, status, current_step_id, input_json, result, created_at, updated_at
+         FROM workflow_runs WHERE id = ?`,
+      )
+      .get(id) as WorkflowRunRow | undefined;
+    return row ? workflowRunFromRow(row) : undefined;
+  }
+
+  listWorkflowRuns(limit = 80): WorkflowRun[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, workflow_id, status, current_step_id, input_json, result, created_at, updated_at
+         FROM workflow_runs ORDER BY updated_at DESC LIMIT ?`,
+      )
+      .all(limit) as unknown as WorkflowRunRow[];
+    return rows.map(workflowRunFromRow);
+  }
+
+  addWorkflowRunEvent(event: WorkflowRunEvent): void {
+    this.db
+      .prepare(
+        `INSERT INTO workflow_run_events (id, workflow_run_id, workflow_id, kind, message, step_id, created_at, payload_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        event.id,
+        event.workflowRunId,
+        event.workflowId,
+        event.kind,
+        event.message,
+        event.stepId ?? null,
+        event.createdAt,
+        JSON.stringify(event.payload ?? {}),
+      );
+    this.addTimelineEvent({
+      id: `timeline-workflow-run-${event.id}`,
+      kind: event.kind === "step-completed" ? "task-checkpoint" : "decision",
+      title: `Workflow ${event.kind}`,
+      summary: event.message,
+      occurredAt: event.createdAt,
+      source: "agent",
+      reversible: false,
+      relatedTaskId: event.workflowRunId,
+      status: event.kind === "approval-requested" ? "waiting-approval" : event.kind === "completed" ? "completed" : undefined,
+      tags: ["workflow", event.workflowId, event.kind],
+    });
+  }
+
+  listWorkflowRunEvents(workflowRunId: string): WorkflowRunEvent[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, workflow_run_id, workflow_id, kind, message, step_id, created_at, payload_json
+         FROM workflow_run_events WHERE workflow_run_id = ? ORDER BY created_at ASC`,
+      )
+      .all(workflowRunId) as unknown as WorkflowRunEventRow[];
+    return rows.map(workflowRunEventFromRow);
+  }
+
   private migrate(): void {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS conversations (
@@ -587,6 +740,42 @@ export class JarvisStore {
         snapshot_json TEXT NOT NULL DEFAULT '{"kind":"none","capturedAt":"1970-01-01T00:00:00.000Z"}',
         operation_json TEXT NOT NULL DEFAULT '{"kind":"write-local","command":"unknown","dryRunOnly":true,"restoreStrategy":"state-marker"}'
       );
+
+      CREATE TABLE IF NOT EXISTS workflows (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        owner TEXT NOT NULL,
+        enabled INTEGER NOT NULL,
+        task_profile TEXT NOT NULL,
+        steps_json TEXT NOT NULL,
+        tags_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS workflow_runs (
+        id TEXT PRIMARY KEY,
+        workflow_id TEXT NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+        status TEXT NOT NULL,
+        current_step_id TEXT,
+        input_json TEXT NOT NULL,
+        result TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS workflow_run_events (
+        id TEXT PRIMARY KEY,
+        workflow_run_id TEXT NOT NULL REFERENCES workflow_runs(id) ON DELETE CASCADE,
+        workflow_id TEXT NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL,
+        message TEXT NOT NULL,
+        step_id TEXT,
+        created_at TEXT NOT NULL,
+        payload_json TEXT NOT NULL
+      );
     `);
     this.addColumnIfMissing(
       "undo_journal",
@@ -606,6 +795,15 @@ export class JarvisStore {
     } catch (error) {
       if (!(error instanceof Error) || !/duplicate column name/i.test(error.message)) {
         throw error;
+      }
+    }
+  }
+
+  private seedWorkflowDefinitions(): void {
+    const timestamp = new Date().toISOString();
+    for (const workflow of seedWorkflows) {
+      if (!this.getWorkflow(workflow.id)) {
+        this.upsertWorkflow(workflow, timestamp);
       }
     }
   }
@@ -717,6 +915,40 @@ interface UndoJournalRow {
   snapshot_summary: string;
   snapshot_json: string;
   operation_json: string;
+}
+
+interface WorkflowRow {
+  id: string;
+  name: string;
+  description: string;
+  version: number;
+  owner: WorkflowDefinition["owner"];
+  enabled: number;
+  task_profile: WorkflowDefinition["taskProfile"];
+  steps_json: string;
+  tags_json: string;
+}
+
+interface WorkflowRunRow {
+  id: string;
+  workflow_id: string;
+  status: WorkflowRun["status"];
+  current_step_id: string | null;
+  input_json: string;
+  result: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface WorkflowRunEventRow {
+  id: string;
+  workflow_run_id: string;
+  workflow_id: string;
+  kind: WorkflowRunEvent["kind"];
+  message: string;
+  step_id: string | null;
+  created_at: string;
+  payload_json: string;
 }
 
 function conversationFromRow(row: ConversationRow): Conversation {
@@ -842,6 +1074,46 @@ function undoJournalFromRow(row: UndoJournalRow): UndoJournalEntry {
     snapshotSummary: row.snapshot_summary,
     snapshot: JSON.parse(row.snapshot_json) as UndoJournalEntry["snapshot"],
     operation: JSON.parse(row.operation_json) as UndoJournalEntry["operation"],
+  };
+}
+
+function workflowFromRow(row: WorkflowRow): WorkflowDefinition {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    version: row.version,
+    owner: row.owner,
+    enabled: row.enabled === 1,
+    taskProfile: row.task_profile,
+    steps: JSON.parse(row.steps_json) as WorkflowDefinition["steps"],
+    tags: JSON.parse(row.tags_json) as string[],
+  };
+}
+
+function workflowRunFromRow(row: WorkflowRunRow): WorkflowRun {
+  return {
+    id: row.id,
+    workflowId: row.workflow_id,
+    status: row.status,
+    currentStepId: row.current_step_id ?? undefined,
+    input: JSON.parse(row.input_json) as Record<string, unknown>,
+    result: row.result ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function workflowRunEventFromRow(row: WorkflowRunEventRow): WorkflowRunEvent {
+  return {
+    id: row.id,
+    workflowRunId: row.workflow_run_id,
+    workflowId: row.workflow_id,
+    kind: row.kind,
+    message: row.message,
+    stepId: row.step_id ?? undefined,
+    createdAt: row.created_at,
+    payload: JSON.parse(row.payload_json) as Record<string, unknown>,
   };
 }
 
