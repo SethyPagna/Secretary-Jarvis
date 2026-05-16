@@ -254,7 +254,7 @@ Protocol:
 ## Phase 34 - App-Mode Runtime And Live Text
 - [x] 34.1 Add friendly root responses for Gateway and Python Brain - commit `44a4dcf`
 - [x] 34.2 Add Electron app-mode local renderer loading - commit `10e623c`
-- [x] 34.3 Update default launcher to start app mode, with browser preview optional - commit `pending`
+- [x] 34.3 Update default launcher to start app mode, with browser preview optional - commit `af344d2`
 - [ ] 34.4 Extend runtime smoke for live text and root responses
 - [ ] 34.5 Document and verify app-mode runtime
 
