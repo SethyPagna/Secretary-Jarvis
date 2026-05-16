@@ -32,3 +32,7 @@ Strict local-only is the default. Outbound network, cloud inference, social post
 ## Growth Path
 
 The laptop profile favors Ollama models and small/medium local inference. Workstation and homelab profiles add LM Studio, llama.cpp/GGUF, Hugging Face local imports, vLLM, SGLang, LAN inference, and DeepSeek V4 Flash scale targets.
+
+## Hardening Review
+
+The current language/runtime hierarchy, startup/background path, high-trust authority model, and code-health cleanup backlog are tracked in [ARCHITECTURE_HARDENING_REVIEW.md](ARCHITECTURE_HARDENING_REVIEW.md).
