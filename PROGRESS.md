@@ -200,9 +200,15 @@ Protocol:
 - [x] 25.2 Add install/start/stop dry-run controls in HUD Settings - commit `c3de818`
 - [x] 25.3 Verify package/startup readiness with builds, tests, and smoke checks - commit `30f245d`
 
+## Phase 26 - Wake And Runtime Adapter Activation
+- [ ] 26.1 Add wake/runtime activation readiness endpoint
+- [ ] 26.2 Surface wake/runtime activation readiness in HUD Settings and Voice
+- [ ] 26.3 Add run/wake/runtime repair documentation
+- [ ] 26.4 Verify wake/runtime activation with tests, builds, startup check-only scripts, and runtime smoke
+
 ## Current Priority
 
-Next task: Plan the next refinement phase for packaged HUD distribution, wake-word activation, or Ollama PATH/runtime adapter repair.
+Next task: Implement Phase 26.1 wake/runtime activation readiness endpoint.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

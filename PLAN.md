@@ -757,6 +757,18 @@ Goal: move Jarvis from dev-process startup toward everyday install/start/stop co
 
 25.3 Verify packaging/startup readiness with gateway tests, HUD tests, Electron/HUD build checks, startup check-only scripts, and runtime smoke checks.
 
+## Extension Phase 26 - Wake And Runtime Adapter Activation
+
+Goal: make background wake behavior and local model runtime activation obvious, repairable, and approval-gated. Jarvis should explain exactly how it can wake, which pieces are ready, what is staged, and how to repair Ollama or alternate runtime adapters without silently modifying the laptop.
+
+26.1 Add a wake/runtime activation readiness endpoint that reports tray/orb/manual voice wake, staged hotword wake, VAD/STT/TTS readiness, Ollama PATH/common install candidates, local endpoint hints, and safe repair commands.
+
+26.2 Surface wake/runtime activation readiness in HUD Settings and Voice as compact status chips and drawers, with no long command dumps unless expanded.
+
+26.3 Add run/wake/runtime repair documentation that separates immediate reliable wake methods from staged hotword activation and local model adapter repair.
+
+26.4 Verify wake/runtime activation with gateway tests, HUD tests, build checks, startup check-only scripts, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
