@@ -694,6 +694,56 @@ button {
   color: var(--hud-magenta);
 }
 
+.service-pulses {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.service-pulses span {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid rgba(0, 229, 255, 0.11);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.service-pulses i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.service-pulses small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-online i {
+  background: var(--hud-green);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.7);
+}
+
+.service-degraded i {
+  background: #ffd45a;
+  box-shadow: 0 0 12px rgba(255, 212, 90, 0.65);
+}
+
+.service-offline i {
+  background: var(--hud-magenta);
+  box-shadow: 0 0 12px rgba(255, 0, 127, 0.62);
+}
+
 .mic-pulse {
   width: 92px;
   height: 92px;
@@ -1161,6 +1211,7 @@ button {
   .voice-readiness-strip,
   .constellation-grid,
   .setup-groups,
+  .service-pulses,
   .device-grid,
   .setting-list,
   .workflow-layout {

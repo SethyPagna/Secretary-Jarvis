@@ -112,6 +112,29 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/runtime/services")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          runtime: {
+            localOnly: true,
+            checkedAt: "2026-05-16T00:00:00.000Z",
+            services: [
+              { id: "brain", label: "Python Brain", status: "online", pidAlive: true, httpOk: true, detail: "ok" },
+              { id: "gateway", label: "Gateway", status: "online", pidAlive: true, httpOk: true, detail: "ok" },
+              { id: "hud-renderer", label: "HUD", status: "online", pidAlive: true, httpOk: true, detail: "ok" },
+              { id: "dashboard", label: "Dashboard", status: "offline", pidAlive: false, httpOk: false, detail: "off" },
+              { id: "electron-hud", label: "Electron", status: "degraded", pidAlive: true, httpOk: false, detail: "pid only" },
+              { id: "ollama", label: "Ollama", status: "offline", pidAlive: false, httpOk: false, detail: "off" },
+            ],
+            summary: { online: 3, degraded: 1, offline: 2, unknown: 0 },
+            note: "read only",
+          },
+        }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -160,7 +183,7 @@ test("orb click opens radial controls and dashboard stays grouped", async ({ pag
   await page.getByTitle("Dashboard").click();
   const panel = page.getByRole("dialog", { name: "Jarvis dashboard panel" });
   await expect(panel).toBeVisible();
-  await expect(panel.getByText("Dashboard")).toBeVisible();
+  await expect(panel.locator("header").getByText("Dashboard")).toBeVisible();
   await expect(panel.getByText("Model", { exact: true })).toBeVisible();
   await expect(panel.getByText("Tasks")).toBeVisible();
   await expect(panel.locator(".widget-grid")).toBeVisible();
@@ -168,6 +191,8 @@ test("orb click opens radial controls and dashboard stays grouped", async ({ pag
   await expect(panel.getByLabel("Runtime constellation")).toContainText("sealed");
   await expect(panel.getByLabel("Runtime constellation")).toContainText("4 needed");
   await expect(panel.getByLabel("Runtime smoke status")).toContainText("passed");
+  await expect(panel.getByLabel("Live service heartbeats")).toContainText("Python Brain");
+  await expect(panel.getByLabel("Live service heartbeats")).toContainText("Ollama");
 });
 
 test("voice and text panels expose compact interaction states", async ({ page }) => {

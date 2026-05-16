@@ -1,6 +1,13 @@
 import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { JarvisStatus, RuntimeConstellation, RuntimeSmokeStatus, SetupActionGroup, VoiceRuntimeReadiness } from "@jarvis/core";
+import type {
+  JarvisStatus,
+  RuntimeConstellation,
+  RuntimeServicesStatus,
+  RuntimeSmokeStatus,
+  SetupActionGroup,
+  VoiceRuntimeReadiness
+} from "@jarvis/core";
 import { WorkflowConsole } from "./WorkflowConsole";
 import type { HudPanel as HudPanelName } from "../types";
 
@@ -22,6 +29,7 @@ export function HudPanel({
   const [voiceReadiness, setVoiceReadiness] = useState<VoiceRuntimeReadiness | null>(null);
   const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
   const [smokeStatus, setSmokeStatus] = useState<RuntimeSmokeStatus | null>(null);
+  const [runtimeServices, setRuntimeServices] = useState<RuntimeServicesStatus | null>(null);
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
@@ -44,6 +52,14 @@ export function HudPanel({
       .then((payload: RuntimeSmokeResponse | undefined) => {
         if (!cancelled && payload?.smoke) {
           setSmokeStatus(payload.smoke);
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/services`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: RuntimeServicesResponse | undefined) => {
+        if (!cancelled && payload?.runtime) {
+          setRuntimeServices(payload.runtime);
         }
       })
       .catch(() => undefined);
@@ -154,6 +170,14 @@ export function HudPanel({
             <strong>{smokeStatus?.status ?? "missing"}</strong>
             <span>{smokeStatus?.checks.length ?? 0} checks</span>
           </div>
+          <div className="service-pulses" aria-label="Live service heartbeats">
+            {(runtimeServices?.services ?? []).slice(0, 6).map((service) => (
+              <span key={service.id} className={`service-${service.status}`} title={service.detail}>
+                <i />
+                <small>{service.label}</small>
+              </span>
+            ))}
+          </div>
           <div className="tiny-feed">
             {tasks.length ? tasks.map((task) => <span key={task.id}>{task.status} / {task.title}</span>) : <span>Quiet. Ready.</span>}
           </div>
@@ -226,6 +250,10 @@ interface RuntimeConstellationResponse {
 
 interface RuntimeSmokeResponse {
   smoke?: RuntimeSmokeStatus;
+}
+
+interface RuntimeServicesResponse {
+  runtime?: RuntimeServicesStatus;
 }
 
 interface VoiceReadinessResponse {
