@@ -192,12 +192,12 @@ Protocol:
 ## Phase 24 - Admin Startup And Service Manager Polish
 - [x] 24.1 Add read-only Windows Task Manager/process visibility summary - commit `e0cb5dc`
 - [x] 24.2 Add startup registration dry-run preview for standard and elevated modes - commit `e632e03`
-- [ ] 24.3 Add HUD Settings controls for startup readiness, service status, and approved-admin explanation
+- [x] 24.3 Add HUD Settings controls for startup readiness, service status, and approved-admin explanation - commit `4e2e0c9`
 - [ ] 24.4 Add verification docs for startup/background/admin readiness
 
 ## Current Priority
 
-Next task: Implement Phase 24.3 HUD Settings startup/admin controls.
+Next task: Implement Phase 24.4 startup/background/admin readiness verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
