@@ -1065,6 +1065,14 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/conversations") {
+    sendJson(response, 200, {
+      conversations: store.listConversations(),
+      recentTurns: store.listRecentTurns(20),
+    });
+    return;
+  }
+
   if (request.method === "GET" && url.pathname.startsWith("/api/conversations/")) {
     const conversationId = decodeURIComponent(url.pathname.replace("/api/conversations/", ""));
     const conversation = store.getConversation(conversationId);
@@ -1076,6 +1084,71 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       conversation,
       turns: store.listTurns(conversationId),
       tasks: store.listTasks().filter((task) => task.conversationId === conversationId),
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname.startsWith("/api/conversations/")) {
+    const conversationId = decodeURIComponent(url.pathname.replace("/api/conversations/", ""));
+    const body = (await readBody(request)) as {
+      title?: string;
+      summary?: string;
+      role?: ConversationTurn["role"];
+      content?: string;
+      taskId?: string;
+      remember?: boolean;
+      tags?: string[];
+    };
+    const timestamp = now();
+    const content = body.content?.trim();
+    if (!content) {
+      sendJson(response, 400, { error: "content is required" });
+      return;
+    }
+    const conversation =
+      store.getConversation(conversationId) ??
+      ({
+        id: conversationId,
+        title: body.title?.trim() || content.slice(0, 64),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        summary: body.summary?.trim() || "Conversation created through the Jarvis conversation API.",
+        tokenBudget: 32_000,
+      } satisfies Conversation);
+    store.upsertConversation({ ...conversation, updatedAt: timestamp, summary: body.summary?.trim() || conversation.summary });
+    const turn: ConversationTurn = {
+      id: id("turn"),
+      conversationId,
+      role: body.role ?? "user",
+      content,
+      createdAt: timestamp,
+      taskId: body.taskId,
+      tokenEstimate: estimateTokens(content),
+    };
+    store.addTurn(turn);
+    const memoryWrite =
+      body.remember === false
+        ? undefined
+        : ({
+            id: id("memory"),
+            conversationId,
+            taskId: body.taskId,
+            kind: "session",
+            content,
+            importance: body.role === "assistant" ? 0.52 : 0.62,
+            createdAt: timestamp,
+            tags: body.tags ?? ["conversation", body.role ?? "user"],
+          } satisfies MemoryWrite);
+    if (memoryWrite) {
+      store.addMemoryWrite(memoryWrite);
+      events.publish("memory", { memoryWrite });
+    }
+    events.publish("conversation", { conversationId, turn, memoryWrite });
+    sendJson(response, 201, {
+      conversation: store.getConversation(conversationId),
+      turn,
+      memoryWrite,
+      turns: store.listTurns(conversationId),
     });
     return;
   }
@@ -1945,6 +2018,27 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     const records = query ? store.searchMemoryRecords(query) : store.listMemoryRecords(40);
     const timeline = query ? store.searchTimelineEvents(query) : store.listTimelineEvents(80);
     sendJson(response, 200, { query, memories: seedResults, writes, records, timeline });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/memory/search") {
+    const body = (await readBody(request)) as { query?: string; q?: string; limit?: number; includeTimeline?: boolean };
+    const query = (body.query ?? body.q ?? "").trim();
+    const limit = Math.max(1, Math.min(120, body.limit ?? 40));
+    const seedResults = query
+      ? status.memories.filter((memory) =>
+          `${memory.title} ${memory.summary} ${memory.tags.join(" ")}`.toLowerCase().includes(query.toLowerCase()),
+        )
+      : status.memories.slice(0, limit);
+    const writes = query ? store.searchMemoryWrites(query, limit) : store.listMemoryWrites(limit);
+    const records = query ? store.searchMemoryRecords(query, limit) : store.listMemoryRecords(limit);
+    const timeline = body.includeTimeline === false ? [] : query ? store.searchTimelineEvents(query, limit) : store.listTimelineEvents(limit);
+    sendJson(response, 200, { query, memories: seedResults, writes, records, timeline });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/memory/records") {
+    sendJson(response, 200, { records: store.listMemoryRecords(120), timeline: store.listTimelineEvents(120) });
     return;
   }
 
