@@ -234,13 +234,13 @@ Protocol:
 - [x] 30.5 Verify per-agent voice matrix with tests, builds, startup check-only scripts, and runtime smoke - commit `2cad876`
 
 ## Phase 31 - HUD Bundle And Startup Responsiveness
-- [ ] 31.1 Add Vite manual chunking for HUD dependencies
+- [x] 31.1 Add Vite manual chunking for HUD dependencies - commit `17a0986`
 - [ ] 31.2 Add HUD build-output documentation
 - [ ] 31.3 Verify HUD bundle splitting with tests, builds, startup check-only scripts, and runtime smoke
 
 ## Current Priority
 
-Next task: Implement Phase 31.1 HUD manual chunking.
+Next task: Implement Phase 31.2 HUD build-output documentation.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
