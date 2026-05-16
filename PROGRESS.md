@@ -185,13 +185,13 @@ Protocol:
 ## Phase 23 - Route And UI Code Health Refactor
 - [x] 23.1 Extract health/architecture/setup route handlers from the gateway server - commit `b38476d`
 - [x] 23.2 Extract model/runtime/security route handlers from the gateway server - commits `54ccab3`, `0cc2135`, `8d24a97`
-- [ ] 23.3 Consolidate repeated HUD compact-card styles
+- [x] 23.3 Consolidate repeated HUD compact-card styles - commit `b31f70c`
 - [ ] 23.4 Add HUD route-level code splitting for heavy panels
 - [ ] 23.5 Verify refactor with gateway tests, HUD tests, builds, and runtime smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 23.3 HUD compact-card style consolidation.
+Next task: Implement Phase 23.4 HUD code splitting for heavy panels.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
