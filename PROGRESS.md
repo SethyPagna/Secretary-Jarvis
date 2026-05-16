@@ -95,7 +95,7 @@ Protocol:
 
 ## Phase 11 - Full Test Suite & Polish
 - [x] 11.1 Model tests - commit `8e51ea9`
-- [ ] 11.2 Voice tests - partial
+- [x] 11.2 Voice tests - commit `ce7233a`
 - [ ] 11.3 Vision tests
 - [ ] 11.4 Memory/undo tests - partial
 - [ ] 11.5 Agent/task tests - partial
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `11.2 Voice tests`.
+Next task: `11.3 Vision tests`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
