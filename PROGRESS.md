@@ -157,11 +157,11 @@ Protocol:
 - [x] 19.2 Add compact setup approval summary in HUD Settings - commit `d376622`
 - [x] 19.3 Add gateway/HUD tests for setup dry-run action routing and no-execution messaging - commit `1261ba4`
 - [x] 19.4 Add documentation for the HUD setup approval flow - commit `1d01498`
-- [ ] 19.5 Verify setup approval UI with builds, tests, and runtime smoke checks
+- [x] 19.5 Verify setup approval UI with builds, tests, and runtime smoke checks - commit `250c34a`
 
 ## Current Priority
 
-Next task: Implement Phase 19.5 final setup approval UI verification.
+Next task: Define Phase 20 for the next Jarvis refinement slice.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
