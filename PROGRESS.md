@@ -136,11 +136,11 @@ Protocol:
 - [x] 16.2 Surface plug-in slots in the HUD settings panel as compact setup cards with paths hidden until expanded - commit `7c8356c`
 - [x] 16.3 Add local validation probes for Piper voices, Vosk models, wake-word profiles, OCR tools, YOLO weights, media runtimes, map data, and connector vaults - commit `e5c5ed5`
 - [x] 16.4 Add user-facing setup documentation that separates ready model assets, feature dependencies, and future scaling models - commit `99dfd97`
-- [ ] 16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks
+- [x] 16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks - commit `ac74f3c`
 
 ## Current Priority
 
-Next task: 16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks.
+Next task: Define Phase 17 for dependency install workflows, model runtime loading probes, or the next requested Jarvis refinement.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
