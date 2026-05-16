@@ -1033,4 +1033,5 @@ Tasks:
 - 39.4 Keep generated workflow automation approval-gated and queueable through existing Gateway endpoints.
 - 39.5 Add responsive CSS so workflow, panels, and action controls avoid horizontal overflow on desktop and mobile.
 - 39.6 Add a safe outer-folder organization dry-run for `Secretary Jarvis` assets, references, installers, voice files, and local model folders.
-- 39.7 Verify with HUD UI tests, full TypeScript build, core/gateway tests, runtime status, commit, and push.
+- 39.7 Harden the Electron preload bridge so app controls work in production file mode.
+- 39.8 Verify with HUD UI tests, full TypeScript build, core/gateway tests, runtime status, Electron visual smoke, commit, and push.

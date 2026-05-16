@@ -295,7 +295,8 @@ Protocol:
 - [x] 39.4 Generated workflow automations remain approval-gated and queueable - commit `5655544`
 - [x] 39.5 Responsive HUD/workflow CSS and mobile overflow verification - commit `5655544`
 - [x] 39.6 Safe outer-folder organization dry-run script - commit `5655544`
-- [x] 39.7 Verify HUD UI tests, full build, core/gateway tests, runtime status, and push - pending push
+- [x] 39.7 Harden Electron preload bridge for production app controls - commit `f2b78c7`
+- [x] 39.8 Verify HUD UI tests, full build, core/gateway tests, runtime status, Electron visual smoke, and push - pending push
 
 ## Current Priority
 
