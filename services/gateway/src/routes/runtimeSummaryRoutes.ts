@@ -1,5 +1,6 @@
 import type { ActionRequest, RuntimeConstellation, RuntimeSmokeStatus, RuntimeServicesStatus } from "@jarvis/core";
 import { buildRuntimeEventHealth } from "../eventHealth.js";
+import type { PackagingReadiness } from "../packagingReadiness.js";
 import type { ProcessVisibilityStatus } from "../processVisibility.js";
 import type { StartupRegistrationPlansManifest } from "../startupRegistrationPlans.js";
 import type { JarvisStore } from "../store.js";
@@ -14,6 +15,7 @@ export function tryHandleRuntimeSummaryRoute(params: {
   runtimeConstellation: () => RuntimeConstellation;
   runtimeSmokeStatus: () => RuntimeSmokeStatus | null;
   runtimeServicesStatus: () => Promise<RuntimeServicesStatus>;
+  packagingReadiness?: () => PackagingReadiness;
   processVisibilityStatus?: () => ProcessVisibilityStatus;
   startupRegistrationPlans?: () => StartupRegistrationPlansManifest;
   store: JarvisStore;
@@ -42,6 +44,11 @@ export function tryHandleRuntimeSummaryRoute(params: {
 
   if (params.pathname === "/api/runtime/process-visibility" && params.processVisibilityStatus) {
     params.sendJson(200, { visibility: params.processVisibilityStatus() });
+    return true;
+  }
+
+  if (params.pathname === "/api/runtime/packaging-readiness" && params.packagingReadiness) {
+    params.sendJson(200, { packaging: params.packagingReadiness() });
     return true;
   }
 

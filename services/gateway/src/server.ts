@@ -68,6 +68,7 @@ import { createLiveVisionRequest, type LiveVisionMode } from "./liveVision.js";
 import { buildModelActivationPlans, createModelActivationDryRun } from "./modelActivationPlans.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
+import { buildPackagingReadiness } from "./packagingReadiness.js";
 import { buildProcessVisibilityStatus } from "./processVisibility.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
@@ -2068,6 +2069,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     runtimeConstellation,
     runtimeSmokeStatus: readRuntimeSmokeStatus,
     runtimeServicesStatus: buildRuntimeServicesStatus,
+    packagingReadiness: () => buildPackagingReadiness({ root: process.cwd(), generatedAt: now() }),
     processVisibilityStatus: () => buildProcessVisibilityStatus({ generatedAt: now() }),
     startupRegistrationPlans: () => buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
     store,

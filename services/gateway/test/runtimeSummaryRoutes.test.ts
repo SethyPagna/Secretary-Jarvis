@@ -37,6 +37,48 @@ describe("runtime summary routes", () => {
       runtimeConstellation: () => constellation,
       runtimeSmokeStatus: () => smoke,
       runtimeServicesStatus: () => Promise.resolve(services),
+      packagingReadiness: () => ({
+        generatedAt: "2026-05-16T00:00:00.000Z",
+        root: "C:/jarvis",
+        electron: {
+          ready: true,
+          packageJson: "C:/jarvis/apps/hud/package.json",
+          mainEntry: "C:/jarvis/apps/hud/electron/main.ts",
+          rendererBuild: "C:/jarvis/apps/hud/dist/index.html",
+          mainBuild: "C:/jarvis/apps/hud/dist-electron/main.js",
+          releaseFolder: "C:/jarvis/apps/hud/release",
+          commands: ["npm.cmd run dist:hud"],
+          note: "ready",
+        },
+        tauriFallback: {
+          ready: false,
+          configPath: "C:/jarvis/apps/desktop/src-tauri/tauri.conf.json",
+          commands: ["npm.cmd run dev:tauri"],
+          note: "fallback",
+        },
+        startup: {
+          startScript: "C:/jarvis/scripts/start-jarvis.ps1",
+          stopScript: "C:/jarvis/scripts/stop-jarvis.ps1",
+          registerScript: "C:/jarvis/scripts/register-startup-task.ps1",
+          checkOnlyCommand: "powershell -File scripts\\register-startup-task.ps1 -CheckOnly",
+          standardRegisterCommand: "powershell -File scripts\\register-startup-task.ps1",
+          elevatedRegisterCommand: "powershell -File scripts\\register-startup-task.ps1 -Elevated",
+          note: "read only",
+        },
+        backgroundRuntime: {
+          pidFolder: "C:/jarvis/data/runtime",
+          logFolder: "C:/jarvis/data/logs",
+          expectedProcesses: ["electron.exe"],
+          wakeMethods: [{ id: "orb-click", label: "Orb click", status: "ready", detail: "ready" }],
+        },
+        summary: {
+          electronShellReady: true,
+          tauriFallbackReady: false,
+          startupScriptsReady: true,
+          productionCommandsReady: true,
+        },
+        recommendations: ["Use check-only startup commands first."],
+      }),
       processVisibilityStatus: () => ({
         generatedAt: "2026-05-16T00:00:00.000Z",
         runtimeRoot: "data/runtime",
@@ -58,15 +100,17 @@ describe("runtime summary routes", () => {
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/smoke-status" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/services" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/process-visibility" })).toBe(true);
+    expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/packaging-readiness" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/startup-registration-plans" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, method: "POST", pathname: "/api/runtime/services" })).toBe(false);
 
-    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200]);
+    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200]);
     expect(JSON.stringify(sent[0]?.body)).toContain("runtime-constellation");
     expect(JSON.stringify(sent[1]?.body)).toContain("passed");
     expect(JSON.stringify(sent[2]?.body)).toContain("read only");
     expect(JSON.stringify(sent[3]?.body)).toContain("visibleInTaskManager");
-    expect(JSON.stringify(sent[4]?.body)).toContain("Dry-run registration");
+    expect(JSON.stringify(sent[4]?.body)).toContain("electronShellReady");
+    expect(JSON.stringify(sent[5]?.body)).toContain("Dry-run registration");
   });
 });
 
