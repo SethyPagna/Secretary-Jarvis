@@ -62,6 +62,7 @@ import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
+import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { JarvisStore } from "./store.js";
 import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
 import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
@@ -208,6 +209,19 @@ function visionRuntimeReadiness() {
     hfSnapshotRoot: HF_SNAPSHOT_ROOT,
     screenEnabled: status.connectors.some((connector) => connector.id === "screen" && connector.enabled),
     cameraEnabled: status.connectors.some((connector) => connector.id === "camera" && connector.enabled),
+  });
+}
+
+function runtimeConstellation() {
+  const manifests = localModelAssetManifests();
+  return buildRuntimeConstellation({
+    readyModels: manifests.ready,
+    futureScalingModels: manifests.futureScaling,
+    voice: voiceRuntimeReadiness(),
+    vision: visionRuntimeReadiness(),
+    neededFeatureDownloads: hydrateFeatureDownloads(),
+    privacyMode: status.privacyMode,
+    updatedAt: now(),
   });
 }
 
@@ -1943,6 +1957,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       hardwareProfile: runtimeStatus.hardwareProfile,
       toolStatuses: detectToolStatuses(),
     });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/runtime/constellation") {
+    sendJson(response, 200, { constellation: runtimeConstellation() });
     return;
   }
 

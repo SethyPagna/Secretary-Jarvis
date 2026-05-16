@@ -723,6 +723,32 @@ export interface VisionRuntimeReadiness {
   };
 }
 
+export type RuntimeConstellationStatus = "ready" | "ready-asset" | "staged" | "attention" | "locked";
+
+export interface RuntimeConstellationNode {
+  id: string;
+  label: string;
+  kind: "models" | "voice" | "vision" | "privacy" | "setup";
+  status: RuntimeConstellationStatus;
+  value: string;
+  detail: string;
+  tone: "cyan" | "green" | "amber" | "magenta";
+}
+
+export interface RuntimeConstellation {
+  id: string;
+  localOnly: boolean;
+  updatedAt: string;
+  nodes: RuntimeConstellationNode[];
+  summary: {
+    ready: number;
+    staged: number;
+    attention: number;
+    locked: number;
+  };
+  note: string;
+}
+
 export interface SystemAction {
   id: string;
   label: string;
