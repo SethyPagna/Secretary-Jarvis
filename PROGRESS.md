@@ -190,14 +190,14 @@ Protocol:
 - [x] 23.5 Verify refactor with gateway tests, HUD tests, builds, and runtime smoke checks - commit `c66fb67`
 
 ## Phase 24 - Admin Startup And Service Manager Polish
-- [ ] 24.1 Add read-only Windows Task Manager/process visibility summary
+- [x] 24.1 Add read-only Windows Task Manager/process visibility summary - commit `e0cb5dc`
 - [ ] 24.2 Add startup registration dry-run preview for standard and elevated modes
 - [ ] 24.3 Add HUD Settings controls for startup readiness, service status, and approved-admin explanation
 - [ ] 24.4 Add verification docs for startup/background/admin readiness
 
 ## Current Priority
 
-Next task: Implement Phase 24.1 Windows process visibility summary.
+Next task: Implement Phase 24.2 startup registration dry-run preview.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
