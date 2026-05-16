@@ -110,9 +110,16 @@ Protocol:
 - [x] 12.4 Add real vision dependency probes for OCR/YOLO/LLaVA and approval-gated actions - commit `53dacdd`
 - [x] 12.5 Add one-command local runtime smoke for gateway, brain, and HUD - commit `bf5fdab`
 
+## Phase 13 - Runtime Constellation UI
+- [ ] 13.1 Add a compact runtime constellation endpoint for model, voice, vision, privacy, and setup readiness
+- [ ] 13.2 Surface the runtime constellation in the HUD dashboard without text stuffing
+- [ ] 13.3 Add grouped setup actions that separate needed feature downloads from future scaling models
+- [ ] 13.4 Show latest runtime smoke status in the HUD/dashboard
+- [ ] 13.5 Verify the constellation UI across desktop and mobile
+
 ## Current Priority
 
-Next task: Define the next refinement phase after Phase 12, or continue polishing runtime readiness based on live Jarvis use.
+Next task: `13.1 Add a compact runtime constellation endpoint for model, voice, vision, privacy, and setup readiness`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
