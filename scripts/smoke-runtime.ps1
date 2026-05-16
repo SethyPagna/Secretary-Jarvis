@@ -113,6 +113,50 @@ function Wait-HttpJson {
   throw "$Name did not become ready at $Url. Last error: $lastError"
 }
 
+function Invoke-JsonPost {
+  param(
+    [string]$Name,
+    [string]$Url,
+    [object]$Body
+  )
+
+  $json = $Body | ConvertTo-Json -Depth 8
+  $response = Invoke-RestMethod -Uri $Url -Method Post -ContentType "application/json" -Body $json -TimeoutSec 15
+  $Results.Add([pscustomobject]@{
+    name = $Name
+    url = $Url
+    ok = $true
+    statusCode = 202
+  })
+  Write-Host "Ready $Name $Url" -ForegroundColor Green
+  return $response
+}
+
+function Wait-GatewayTask {
+  param(
+    [string]$TaskId,
+    [int]$TimeoutSeconds = 20
+  )
+
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+  while ((Get-Date) -lt $deadline) {
+    $tasks = Invoke-RestMethod -Uri "http://127.0.0.1:$GatewayPort/api/tasks" -Method Get -TimeoutSec 5
+    $task = @($tasks.tasks | Where-Object { $_.id -eq $TaskId } | Select-Object -First 1)
+    if ($task -and $task.status -eq "completed" -and $task.result) {
+      $Results.Add([pscustomobject]@{
+        name = "Gateway chat completion"
+        url = "http://127.0.0.1:$GatewayPort/api/tasks"
+        ok = $true
+        statusCode = 200
+      })
+      Write-Host "Ready Gateway chat completion $TaskId" -ForegroundColor Green
+      return $task
+    }
+    Start-Sleep -Milliseconds 700
+  }
+  throw "Gateway task $TaskId did not complete in $TimeoutSeconds seconds."
+}
+
 Push-Location $Root
 try {
   if (-not $SkipBuild) {
@@ -130,13 +174,26 @@ try {
     Start-SmokeProcess -Name "Python Brain" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_BRAIN_PORT=$BrainPort&& `"$python`" services\brain\brain_server.py" | Out-Null
   }
   Wait-HttpJson -Name "Python Brain health" -Url "http://127.0.0.1:$BrainPort/health" | Out-Null
+  Wait-HttpJson -Name "Python Brain root" -Url "http://127.0.0.1:$BrainPort/" | Out-Null
 
   Invoke-Step "Start TypeScript Gateway" {
     Start-SmokeProcess -Name "TypeScript Gateway" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_GATEWAY_PORT=$GatewayPort&& set JARVIS_BRAIN_URL=http://127.0.0.1:$BrainPort&& node services\gateway\dist\server.js" | Out-Null
   }
+  Wait-HttpJson -Name "Gateway root" -Url "http://127.0.0.1:$GatewayPort/" | Out-Null
   Wait-HttpJson -Name "Gateway status" -Url "http://127.0.0.1:$GatewayPort/api/status" | Out-Null
   Wait-HttpJson -Name "Gateway voice readiness" -Url "http://127.0.0.1:$GatewayPort/api/voice/readiness" | Out-Null
   Wait-HttpJson -Name "Gateway vision readiness" -Url "http://127.0.0.1:$GatewayPort/api/vision/readiness" | Out-Null
+  $chat = Invoke-JsonPost -Name "Gateway chat queue" -Url "http://127.0.0.1:$GatewayPort/api/chat" -Body @{
+    message = "Jarvis smoke test: respond briefly that live text is connected."
+    taskProfile = "daily-assistant"
+  }
+  if (-not $chat.task.id) {
+    throw "Gateway chat did not return a task id."
+  }
+  $completedTask = Wait-GatewayTask -TaskId $chat.task.id
+  if (-not ($completedTask.result -match "Jarvis|local|connected|smoke|ready")) {
+    throw "Gateway chat completed but returned an unexpected result: $($completedTask.result)"
+  }
 
   Invoke-Step "Start HUD renderer" {
     Start-SmokeProcess -Name "HUD Renderer" -FilePath "cmd.exe" -Arguments "/d /s /c set VITE_JARVIS_GATEWAY_URL=http://127.0.0.1:$GatewayPort&& npm.cmd run dev -w @jarvis/hud -- --host 127.0.0.1 --port $HudPort" | Out-Null
