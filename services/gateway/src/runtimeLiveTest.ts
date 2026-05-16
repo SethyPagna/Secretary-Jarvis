@@ -4,6 +4,27 @@ import type { RuntimeLiveTestCheck, RuntimeLiveTestStatus } from "@jarvis/core";
 
 const DEFAULT_LIVE_TEST_SUMMARY = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\data\\smoke\\runtime-live-latest.json";
 
+export interface RuntimeLiveTestGatewayCheckResult {
+  ok: boolean;
+  detail: string;
+  statusCode?: number;
+}
+
+export interface RuntimeLiveTestChatCheckResult extends RuntimeLiveTestGatewayCheckResult {
+  result?: string;
+}
+
+export interface RuntimeLiveTestSelfCheckResult extends RuntimeLiveTestGatewayCheckResult {
+  topStatus?: string;
+}
+
+export interface RuntimeLiveTestGatewayChecks {
+  root?: () => Promise<RuntimeLiveTestGatewayCheckResult> | RuntimeLiveTestGatewayCheckResult;
+  status?: () => Promise<RuntimeLiveTestGatewayCheckResult> | RuntimeLiveTestGatewayCheckResult;
+  chat?: () => Promise<RuntimeLiveTestChatCheckResult> | RuntimeLiveTestChatCheckResult;
+  selfTest?: () => Promise<RuntimeLiveTestSelfCheckResult> | RuntimeLiveTestSelfCheckResult;
+}
+
 export function readRuntimeLiveTestStatus(summaryPath = DEFAULT_LIVE_TEST_SUMMARY): RuntimeLiveTestStatus {
   if (!existsSync(summaryPath)) {
     return {
@@ -49,6 +70,7 @@ export async function runRuntimeLiveTest(options: {
   summaryPath?: string;
   now?: () => string;
   fetchImpl?: typeof fetch;
+  gatewayChecks?: RuntimeLiveTestGatewayChecks;
 } = {}): Promise<RuntimeLiveTestStatus> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const createdAt = options.now?.() ?? new Date().toISOString();
@@ -60,11 +82,23 @@ export async function runRuntimeLiveTest(options: {
   const checks: RuntimeLiveTestCheck[] = [];
 
   await httpCheck(checks, fetchImpl, "Python Brain root", `${brainUrl}/`);
-  await httpCheck(checks, fetchImpl, "Gateway root", `${gatewayUrl}/`);
-  await httpCheck(checks, fetchImpl, "Gateway status", `${gatewayUrl}/api/status`);
+  if (options.gatewayChecks?.root) {
+    await customCheck(checks, "Gateway root", `${gatewayUrl}/`, options.gatewayChecks.root);
+  } else {
+    await httpCheck(checks, fetchImpl, "Gateway root", `${gatewayUrl}/`);
+  }
+  if (options.gatewayChecks?.status) {
+    await customCheck(checks, "Gateway status", `${gatewayUrl}/api/status`, options.gatewayChecks.status);
+  } else {
+    await httpCheck(checks, fetchImpl, "Gateway status", `${gatewayUrl}/api/status`);
+  }
 
-  const chatResult = await chatCheck(checks, fetchImpl, gatewayUrl);
-  const selfTestStatus = await selfTestCheck(checks, fetchImpl, gatewayUrl);
+  const chatResult = options.gatewayChecks?.chat
+    ? await customChatCheck(checks, gatewayUrl, options.gatewayChecks.chat)
+    : await chatCheck(checks, fetchImpl, gatewayUrl);
+  const selfTestStatus = options.gatewayChecks?.selfTest
+    ? await customSelfTestCheck(checks, gatewayUrl, options.gatewayChecks.selfTest)
+    : await selfTestCheck(checks, fetchImpl, gatewayUrl);
   const electronHeartbeat = electronHeartbeatCheck(checks, root);
 
   const completedAt = options.now?.() ?? new Date().toISOString();
@@ -90,6 +124,35 @@ export async function runRuntimeLiveTest(options: {
   return result;
 }
 
+async function customCheck(
+  checks: RuntimeLiveTestCheck[],
+  name: string,
+  url: string,
+  runCheck: () => Promise<RuntimeLiveTestGatewayCheckResult> | RuntimeLiveTestGatewayCheckResult,
+): Promise<void> {
+  const started = Date.now();
+  try {
+    const result = await runCheck();
+    checks.push({
+      name,
+      ok: result.ok,
+      url,
+      statusCode: result.statusCode,
+      durationMs: Date.now() - started,
+      detail: result.detail,
+    });
+  } catch (error) {
+    checks.push({
+      name,
+      ok: false,
+      url,
+      durationMs: Date.now() - started,
+      detail: `${name} failed in-process.`,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 async function httpCheck(checks: RuntimeLiveTestCheck[], fetchImpl: typeof fetch, name: string, url: string): Promise<void> {
   const started = Date.now();
   try {
@@ -111,6 +174,36 @@ async function httpCheck(checks: RuntimeLiveTestCheck[], fetchImpl: typeof fetch
       detail: "HTTP heartbeat failed.",
       error: error instanceof Error ? error.message : String(error),
     });
+  }
+}
+
+async function customChatCheck(
+  checks: RuntimeLiveTestCheck[],
+  gatewayUrl: string,
+  runCheck: () => Promise<RuntimeLiveTestChatCheckResult> | RuntimeLiveTestChatCheckResult,
+): Promise<string | undefined> {
+  const started = Date.now();
+  try {
+    const result = await runCheck();
+    checks.push({
+      name: "Live text chat",
+      ok: result.ok,
+      url: `${gatewayUrl}/api/chat`,
+      statusCode: result.statusCode,
+      durationMs: Date.now() - started,
+      detail: result.detail,
+    });
+    return result.result;
+  } catch (error) {
+    checks.push({
+      name: "Live text chat",
+      ok: false,
+      url: `${gatewayUrl}/api/chat`,
+      durationMs: Date.now() - started,
+      detail: "Jarvis could not complete an in-process live chat task.",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return undefined;
   }
 }
 
@@ -143,6 +236,36 @@ async function chatCheck(checks: RuntimeLiveTestCheck[], fetchImpl: typeof fetch
       url: `${gatewayUrl}/api/chat`,
       durationMs: Date.now() - started,
       detail: "Jarvis could not complete a live chat task.",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return undefined;
+  }
+}
+
+async function customSelfTestCheck(
+  checks: RuntimeLiveTestCheck[],
+  gatewayUrl: string,
+  runCheck: () => Promise<RuntimeLiveTestSelfCheckResult> | RuntimeLiveTestSelfCheckResult,
+): Promise<string | undefined> {
+  const started = Date.now();
+  try {
+    const result = await runCheck();
+    checks.push({
+      name: "Runtime self-test",
+      ok: result.ok,
+      url: `${gatewayUrl}/api/runtime/self-test`,
+      statusCode: result.statusCode,
+      durationMs: Date.now() - started,
+      detail: result.detail,
+    });
+    return result.topStatus;
+  } catch (error) {
+    checks.push({
+      name: "Runtime self-test",
+      ok: false,
+      url: `${gatewayUrl}/api/runtime/self-test`,
+      durationMs: Date.now() - started,
+      detail: "Runtime self-test failed in-process.",
       error: error instanceof Error ? error.message : String(error),
     });
     return undefined;

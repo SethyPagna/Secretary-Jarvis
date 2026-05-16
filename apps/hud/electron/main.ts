@@ -60,6 +60,14 @@ function createHudWindow(): BrowserWindow {
     skipTaskbar: false,
     hasShadow: desktopMode,
     title: "Secretary Jarvis",
+    titleBarStyle: desktopMode ? "hidden" : "default",
+    titleBarOverlay: desktopMode
+      ? {
+          color: "#02070a",
+          symbolColor: "#00e5ff",
+          height: 34
+        }
+      : false,
     backgroundColor: desktopMode ? "#02070a" : "#00000000",
     webPreferences: {
       contextIsolation: true,

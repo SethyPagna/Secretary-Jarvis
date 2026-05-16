@@ -96,16 +96,16 @@ export function Orb({
 
 function themeFor(state: HudState, pendingApproval: boolean): OrbVisualTheme {
   if (pendingApproval || state === "approval") {
-    return { core: "#ffd45a", emissive: "#6e4e00", wire: "#fff1b8", ring: "#ffd45a", speed: 1.7, pulse: 0.045 };
+    return { core: "#00e5ff", emissive: "#006b7a", wire: "#fff1b8", ring: "#ffd45a", speed: 1.7, pulse: 0.045 };
   }
   if (state === "error") {
-    return { core: "#ff2f7d", emissive: "#720026", wire: "#ffd1df", ring: "#ff007f", speed: 2.15, pulse: 0.06 };
+    return { core: "#00e5ff", emissive: "#006b7a", wire: "#ffd1df", ring: "#ff007f", speed: 2.15, pulse: 0.05 };
   }
   if (state === "thinking" || state === "planning") {
-    return { core: "#a64dff", emissive: "#3a006d", wire: "#f2ddff", ring: "#ff007f", speed: 1.9, pulse: 0.045 };
+    return { core: "#00e5ff", emissive: "#006b7a", wire: "#f2ddff", ring: "#ff007f", speed: 1.9, pulse: 0.045 };
   }
   if (state === "listening" || state === "speaking") {
-    return { core: "#00ff88", emissive: "#00643d", wire: "#cffff0", ring: "#00ff88", speed: 1.45, pulse: 0.052 };
+    return { core: "#00e5ff", emissive: "#006b7a", wire: "#cffff0", ring: "#00ff88", speed: 1.45, pulse: 0.052 };
   }
   if (state === "recognizing") {
     return { core: "#ffffff", emissive: "#0a8da0", wire: "#ffffff", ring: "#00e5ff", speed: 1.8, pulse: 0.04 };

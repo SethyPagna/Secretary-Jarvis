@@ -168,6 +168,19 @@ function interactionHealth() {
   });
 }
 
+async function runtimeSelfTest() {
+  return buildRuntimeSelfTest({
+    generatedAt: now(),
+    activation: runtimeActivationReadiness(),
+    manager: agentManagerReadiness(),
+    interaction: interactionHealth(),
+    packaging: buildPackagingReadiness({ root: process.cwd(), generatedAt: now() }),
+    processVisibility: buildProcessVisibilityStatus({ generatedAt: now() }),
+    startupPlans: buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
+    services: await buildRuntimeServicesStatus(),
+  });
+}
+
 function sendVoiceAsset(response: ServerResponse, fileName: string): void {
   const safeName = basename(fileName);
   const allowed = (status.voiceAssets ?? []).some((asset) => basename(asset.localPath) === safeName);
@@ -596,6 +609,22 @@ function queueChatMessage(params: {
   events.publish("task", { task, event: queued });
   void runAssistantTask(task, params.message);
   return { conversation, task, queued };
+}
+
+async function waitForStoredTask(taskId: string, timeoutMs: number): Promise<TaskRun> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const task = store.getTask(taskId);
+    if (task && ["completed", "failed", "cancelled"].includes(task.status)) {
+      return task;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  const task = store.getTask(taskId);
+  if (task) {
+    return task;
+  }
+  throw new Error(`Task ${taskId} was not found before the live-test timeout.`);
 }
 
 async function runAssistantTask(task: TaskRun, prompt: string): Promise<void> {
@@ -2188,17 +2217,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     wakeRuntimeActivation: runtimeActivationReadiness,
     agentManagerReadiness,
     interactionHealth,
-    runtimeSelfTest: async () =>
-      buildRuntimeSelfTest({
-        generatedAt: now(),
-        activation: runtimeActivationReadiness(),
-        manager: agentManagerReadiness(),
-        interaction: interactionHealth(),
-        packaging: buildPackagingReadiness({ root: process.cwd(), generatedAt: now() }),
-        processVisibility: buildProcessVisibilityStatus({ generatedAt: now() }),
-        startupPlans: buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
-        services: await buildRuntimeServicesStatus(),
-      }),
+    runtimeSelfTest,
     store,
     approvals: status.pendingApprovals,
   });
@@ -2217,6 +2236,46 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       brainUrl: process.env.JARVIS_BRAIN_URL ?? "http://127.0.0.1:5000",
       root: process.cwd(),
       now,
+      gatewayChecks: {
+        root: () => ({
+          ok: true,
+          statusCode: 200,
+          detail: "Gateway is handling the production live test in-process.",
+        }),
+        status: () => {
+          const runtimeStatus = statusWithRuntimeState();
+          return {
+            ok: Boolean(runtimeStatus.activeModelId),
+            statusCode: 200,
+            detail: `Status hydrated with active model ${runtimeStatus.activeModelId}.`,
+          };
+        },
+        chat: async () => {
+          const queued = queueChatMessage({
+            message: "Jarvis production live test: reply briefly that the app is connected.",
+            taskProfile: "daily-assistant",
+            timestamp: now(),
+          });
+          const task = await waitForStoredTask(queued.task.id, 30_000);
+          const result = String(task.result ?? "").trim();
+          return {
+            ok: task.status === "completed" && result.length > 0,
+            statusCode: 202,
+            result,
+            detail: result ? result.slice(0, 120) : `Task finished with status ${task.status}.`,
+          };
+        },
+        selfTest: async () => {
+          const selfTest = await runtimeSelfTest();
+          const topStatus = selfTest.summary.topStatus;
+          return {
+            ok: selfTest.summary.connected && topStatus !== "blocked",
+            statusCode: 200,
+            topStatus,
+            detail: `Self-test status: ${topStatus}.`,
+          };
+        },
+      },
     });
     events.publish("status", { kind: "production-live-test", liveTest });
     sendJson(response, liveTest.ok ? 200 : 503, { liveTest });
