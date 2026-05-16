@@ -7,6 +7,7 @@ import { URL } from "node:url";
 import {
   appendTranscriptChunk,
   applyTaskStatus,
+  allowedLocalActions,
   futureScalingModels,
   createModelDryRun,
   createOutboundMessageDraft,
@@ -1971,6 +1972,21 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         });
     events.publish("security", { sentinelReview: review });
     sendJson(response, 200, { review });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/system/actions") {
+    sendJson(response, 200, {
+      actions: allowedLocalActions,
+      count: allowedLocalActions.length,
+      privacyMode: status.privacyMode,
+      mode: "approved-admin",
+      defaults: {
+        approvalRequired: allowedLocalActions.filter((action) => action.approval === "requires_approval").map((action) => action.id),
+        localOnly: true,
+        undoWindowMinutes: 20,
+      },
+    });
     return;
   }
 
