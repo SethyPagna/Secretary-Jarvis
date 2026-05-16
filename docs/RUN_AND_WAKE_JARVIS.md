@@ -66,6 +66,7 @@ Approved-admin mode gives Jarvis the ability to request higher-trust local actio
 Invoke-WebRequest -UseBasicParsing http://127.0.0.1:4317/api/status
 Invoke-WebRequest -UseBasicParsing http://127.0.0.1:4317/api/runtime/process-visibility
 Invoke-WebRequest -UseBasicParsing http://127.0.0.1:4317/api/runtime/packaging-readiness
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:4317/api/runtime/activation-readiness
 ```
 
 The HUD Settings panel also shows process visibility, startup readiness, authority readiness, and packaging readiness in compact form.
@@ -77,3 +78,4 @@ The HUD Settings panel also shows process visibility, startup readiness, authori
 3. Run `scripts\start-jarvis.ps1`.
 4. If Electron is unavailable, open the dev renderer fallback at `http://127.0.0.1:5175/` while repairing Electron packaging.
 
+For hotword wake activation and Ollama PATH repair, see `docs\WAKE_AND_RUNTIME_REPAIR.md`.
