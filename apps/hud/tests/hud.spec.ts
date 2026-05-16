@@ -6,20 +6,7 @@ async function mockGateway(page: import("playwright/test").Page) {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({
-        ...seededStatus,
-        pendingApprovals: [
-          ...seededStatus.pendingApprovals,
-          {
-            id: "setup-install-ui",
-            title: "Prepare feature setup: Piper executable and one voice",
-            category: "model-download",
-            target: "C:/Users/user/Downloads/Secretary Jarvis/tools/piper",
-            reason: "UI test setup approval.",
-            dataTouched: ["local voice tools"],
-          },
-        ],
-      }),
+      body: JSON.stringify({ ...seededStatus, pendingApprovals: [] }),
     });
   });
   await page.route("http://127.0.0.1:4317/api/**", async (route) => {
@@ -27,20 +14,7 @@ async function mockGateway(page: import("playwright/test").Page) {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          ...seededStatus,
-          pendingApprovals: [
-            ...seededStatus.pendingApprovals,
-            {
-              id: "setup-install-ui",
-              title: "Prepare feature setup: Piper executable and one voice",
-              category: "model-download",
-              target: "C:/Users/user/Downloads/Secretary Jarvis/tools/piper",
-              reason: "UI test setup approval.",
-              dataTouched: ["local voice tools"],
-            },
-          ],
-        }),
+        body: JSON.stringify({ ...seededStatus, pendingApprovals: [] }),
       });
       return;
     }
@@ -312,6 +286,10 @@ test("idle HUD renders a centered orb without opening panels", async ({ page }) 
   await expect(stage).toBeVisible();
   await expect(orb).toBeVisible();
   await expect(page.getByRole("dialog", { name: /Jarvis dashboard panel/i })).toHaveCount(0);
+  await expect(orb.locator(".orb-scan-ring")).toHaveCount(1);
+  await expect(orb.locator(".orb-data-arcs")).toHaveCount(1);
+  await expect(orb.locator(".orb-kinetic-frame")).toHaveCount(1);
+  await expect(orb.locator(".orb-state-glyph")).toHaveCount(1);
 
   const orbBox = await orb.boundingBox();
   const viewport = page.viewportSize();
@@ -320,6 +298,18 @@ test("idle HUD renders a centered orb without opening panels", async ({ page }) 
   expect(Math.abs((orbBox!.x + orbBox!.width / 2) - viewport!.width / 2)).toBeLessThan(8);
   expect(Math.abs((orbBox!.y + orbBox!.height / 2) - viewport!.height / 2)).toBeLessThan(8);
   expect(consoleErrors).toEqual([]);
+});
+
+test("orb visuals shift state without adding idle text", async ({ page }) => {
+  await page.goto("/");
+  const orb = page.getByRole("button", { name: "Open Jarvis controls" });
+  await expect(orb).toHaveAttribute("data-state", "idle");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await orb.click();
+  await page.getByTitle("Voice").click();
+  await expect(orb).toHaveAttribute("data-state", "listening");
+  await expect(orb.locator(".orb-particle-field i")).toHaveCount(12);
 });
 
 test("orb click opens radial controls and dashboard stays grouped", async ({ page }) => {
@@ -390,8 +380,8 @@ test("settings separates feature downloads from future scaling", async ({ page }
   const panel = page.getByRole("dialog", { name: "Jarvis settings panel" });
   await expect(panel.getByLabel("Setup action groups")).toContainText("2 needed");
   await expect(panel.getByLabel("Setup action groups")).toContainText("2 future");
-  await expect(panel.getByLabel("Setup approval summary")).toContainText("1");
-  await expect(panel.getByLabel("Setup approval summary")).toContainText("gated");
+  await expect(panel.getByLabel("Setup approval summary")).toContainText("0");
+  await expect(panel.getByLabel("Setup approval summary")).toContainText("quiet");
   await expect(panel.getByLabel("Feature plug-in slots")).toContainText("Piper");
   await expect(panel.getByLabel("Feature plug-in slots")).toContainText("missing");
   await expect(panel.getByLabel("Approved setup install plans")).toContainText("Piper");
