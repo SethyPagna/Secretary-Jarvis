@@ -325,6 +325,34 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/runtime/activation-readiness")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          activation: {
+            wake: {
+              summary: { ready: 3, staged: 1, approvalGated: 1 },
+            },
+            voice: {
+              primaryStt: "ready",
+              vad: "staged",
+              wakeWord: "missing",
+            },
+            ollama: {
+              status: "found-off-path",
+              repairCommands: ["& \"C:\\Users\\user\\AppData\\Local\\Programs\\Ollama\\ollama.exe\" list"],
+              note: "Ollama found off PATH.",
+            },
+            summary: {
+              localModelAdaptersReady: 1,
+            },
+            recommendations: ["Use tray/orb wake for reliable background access today."],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().endsWith("/api/runtime/control/dry-run")) {
       const payload = route.request().postDataJSON() as { control?: string };
       await route.fulfill({
@@ -532,6 +560,8 @@ test("voice and text panels expose compact interaction states", async ({ page })
   await expect(voicePanel.getByLabel("Voice session controls")).toBeVisible();
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("ready-asset");
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("4");
+  await expect(voicePanel.getByLabel("Wake activation readiness")).toContainText("3/1");
+  await expect(voicePanel.getByLabel("Wake activation readiness")).toContainText("missing");
   await expect(voicePanel.getByLabel("Manual transcript bridge")).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop speaking" })).toBeVisible();
 
@@ -611,6 +641,9 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(panel.getByLabel("Packaging and wake readiness")).toContainText("ready");
   await panel.getByLabel("Packaging and wake readiness").locator("summary").click();
   await expect(panel.getByLabel("Packaging and wake readiness")).toContainText("2 wake ready / 1 staged");
+  await expect(panel.getByLabel("Wake and runtime activation")).toContainText("3/1");
+  await panel.getByLabel("Wake and runtime activation").locator("summary").click();
+  await expect(panel.getByLabel("Wake and runtime activation")).toContainText("Ollama found-off-path");
   await hardening.locator(".hardening-card", { hasText: "Authority" }).locator("summary").click();
   await expect(hardening).toContainText("9 gated");
   await hardening.locator(".hardening-card", { hasText: "Code health" }).locator("summary").click();

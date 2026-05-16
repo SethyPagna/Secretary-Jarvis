@@ -925,6 +925,32 @@ button {
   grid-template-columns: 16px minmax(0, 1fr) auto;
 }
 
+.activation-readiness-card {
+  width: min(560px, 100%);
+  margin: 10px auto 0;
+  background:
+    radial-gradient(circle at 82% 0%, rgba(255, 0, 127, 0.075), transparent 36%),
+    rgba(0, 0, 0, 0.2);
+}
+
+.activation-readiness-card summary {
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+}
+
+.activation-readiness-card code {
+  display: block;
+  overflow: hidden;
+  margin: 0 12px 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 229, 255, 0.13);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.24);
+  color: rgba(255, 255, 255, 0.68);
+  font: 700 10px/1.35 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .setup-groups span {
   display: grid;
   gap: 8px;
@@ -1126,7 +1152,8 @@ button {
 }
 
 .model-manifest-strip,
-.voice-readiness-strip {
+.voice-readiness-strip,
+.wake-activation-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
@@ -1140,8 +1167,15 @@ button {
   margin-left: auto;
 }
 
+.wake-activation-strip {
+  width: min(460px, 100%);
+  margin-right: auto;
+  margin-left: auto;
+}
+
 .model-manifest-strip span,
-.voice-readiness-strip span {
+.voice-readiness-strip span,
+.wake-activation-strip span {
   min-height: 42px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1161,8 +1195,16 @@ button {
   gap: 5px;
 }
 
+.wake-activation-strip span {
+  border-color: rgba(0, 255, 136, 0.13);
+  background:
+    linear-gradient(90deg, rgba(0, 255, 136, 0.055), rgba(0, 229, 255, 0.035)),
+    rgba(255, 255, 255, 0.03);
+}
+
 .model-manifest-strip small,
-.voice-readiness-strip small {
+.voice-readiness-strip small,
+.wake-activation-strip small {
   overflow: hidden;
   color: rgba(255, 255, 255, 0.58);
   text-overflow: ellipsis;
@@ -1170,7 +1212,8 @@ button {
 }
 
 .model-manifest-strip strong,
-.voice-readiness-strip strong {
+.voice-readiness-strip strong,
+.wake-activation-strip strong {
   max-width: 100%;
   overflow: hidden;
   color: var(--hud-cyan);
@@ -2071,6 +2114,7 @@ button {
   .widget-grid,
   .model-manifest-strip,
   .voice-readiness-strip,
+  .wake-activation-strip,
   .constellation-grid,
   .hardening-grid,
   .startup-control-strip,

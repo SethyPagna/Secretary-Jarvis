@@ -49,6 +49,7 @@ export function HudPanel({
   const [processVisibility, setProcessVisibility] = useState<ProcessVisibilitySummary | null>(null);
   const [startupPlans, setStartupPlans] = useState<StartupPlanSummary[]>([]);
   const [packagingReadiness, setPackagingReadiness] = useState<PackagingReadinessSummary | null>(null);
+  const [activationReadiness, setActivationReadiness] = useState<WakeRuntimeActivationSummary | null>(null);
   const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
@@ -117,6 +118,36 @@ export function HudPanel({
       .then((payload: VoiceSessionResponse | undefined) => {
         if (!cancelled && payload?.voiceSession) {
           setVoiceSession(payload.voiceSession);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, panel]);
+
+  useEffect(() => {
+    if (panel !== "voice" && panel !== "settings") {
+      return;
+    }
+    let cancelled = false;
+    fetch(`${apiBaseUrl}/api/runtime/activation-readiness`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: WakeRuntimeActivationResponse | undefined) => {
+        if (!cancelled && payload?.activation) {
+          setActivationReadiness({
+            wakeReady: payload.activation.wake.summary.ready,
+            wakeStaged: payload.activation.wake.summary.staged,
+            approvalGated: payload.activation.wake.summary.approvalGated,
+            hotwordStatus: payload.activation.voice.wakeWord,
+            primaryStt: payload.activation.voice.primaryStt,
+            vad: payload.activation.voice.vad,
+            ollamaStatus: payload.activation.ollama.status,
+            ollamaNote: payload.activation.ollama.note,
+            adapterReady: payload.activation.summary.localModelAdaptersReady,
+            repairCommand: payload.activation.ollama.repairCommands[0] ?? "No repair command staged.",
+            recommendation: payload.activation.recommendations[0] ?? "Use tray/orb wake for reliable background access today."
+          });
         }
       })
       .catch(() => undefined);
@@ -503,6 +534,11 @@ export function HudPanel({
             <span><small>Voice</small><strong>{voiceReadiness ? `${voiceReadiness.summary.sampleCount}` : "--"}</strong></span>
             <span><small>Needs</small><strong>{voiceReadiness?.summary.missingRequired ?? "--"}</strong></span>
           </div>
+          <div className="wake-activation-strip" aria-label="Wake activation readiness">
+            <span><small>Wake</small><strong>{activationReadiness ? `${activationReadiness.wakeReady}/${activationReadiness.wakeStaged}` : "--"}</strong></span>
+            <span><small>Hotword</small><strong>{activationReadiness?.hotwordStatus ?? "staged"}</strong></span>
+            <span><small>VAD</small><strong>{activationReadiness?.vad ?? "--"}</strong></span>
+          </div>
           <div className="hud-identity-strip">
             <UserCheck size={16} />
             <span>{status?.identityReadiness?.voiceVerification.status ?? "staged"}</span>
@@ -618,6 +654,20 @@ export function HudPanel({
                 : "Loading wake methods."}
             </small>
             <em>{packagingReadiness?.packageCommand ?? "Checking Electron HUD package command."}</em>
+          </details>
+          <details className="activation-readiness-card compact-card" aria-label="Wake and runtime activation">
+            <summary>
+              <Mic size={15} aria-hidden="true" />
+              <span>Wake</span>
+              <b>{activationReadiness ? `${activationReadiness.wakeReady}/${activationReadiness.wakeStaged}` : "--"}</b>
+            </summary>
+            <small>
+              {activationReadiness
+                ? `Ollama ${activationReadiness.ollamaStatus} / ${activationReadiness.adapterReady} adapter ready`
+                : "Checking wake and runtime adapters."}
+            </small>
+            <em>{activationReadiness?.recommendation ?? "Reliable wake uses tray and orb today."}</em>
+            <code>{activationReadiness?.repairCommand ?? "Repair previews load after readiness check."}</code>
           </details>
           <div className="setup-groups" aria-label="Setup action groups">
             {setupGroups.map((group) => (
@@ -931,6 +981,46 @@ interface PackagingReadinessSummary {
   wakeReady: number;
   wakeStaged: number;
   packageCommand: string;
+}
+
+interface WakeRuntimeActivationResponse {
+  activation?: {
+    wake: {
+      summary: {
+        ready: number;
+        staged: number;
+        approvalGated: number;
+      };
+    };
+    voice: {
+      primaryStt: "ready" | "staged" | "repair-needed" | "missing";
+      vad: "ready" | "staged" | "repair-needed" | "missing";
+      wakeWord: "ready" | "staged" | "repair-needed" | "missing";
+    };
+    ollama: {
+      status: "ready" | "staged" | "repair-needed" | "missing" | "found-off-path" | "installer-available";
+      repairCommands: string[];
+      note: string;
+    };
+    summary: {
+      localModelAdaptersReady: number;
+    };
+    recommendations: string[];
+  };
+}
+
+interface WakeRuntimeActivationSummary {
+  wakeReady: number;
+  wakeStaged: number;
+  approvalGated: number;
+  hotwordStatus: "ready" | "staged" | "repair-needed" | "missing";
+  primaryStt: "ready" | "staged" | "repair-needed" | "missing";
+  vad: "ready" | "staged" | "repair-needed" | "missing";
+  ollamaStatus: "ready" | "staged" | "repair-needed" | "missing" | "found-off-path" | "installer-available";
+  ollamaNote: string;
+  adapterReady: number;
+  repairCommand: string;
+  recommendation: string;
 }
 
 function Widget({ label, value }: { label: string; value: string }) {
