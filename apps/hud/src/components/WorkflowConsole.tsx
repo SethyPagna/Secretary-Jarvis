@@ -1,6 +1,6 @@
-import { AlertTriangle, CheckCircle2, Play, Route, ShieldAlert } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import type { WorkflowDefinition, WorkflowDryRun, WorkflowRun } from "@jarvis/core";
+import { AlertTriangle, CheckCircle2, Play, Route, Save, ShieldAlert, Wand2 } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import type { WorkflowDefinition, WorkflowDryRun, WorkflowGenerationResult, WorkflowRun } from "@jarvis/core";
 
 interface WorkflowPayload {
   workflows: WorkflowDefinition[];
@@ -12,6 +12,10 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
   const [payload, setPayload] = useState<WorkflowPayload>({ workflows: [], runs: [], dryRuns: [] });
   const [activeId, setActiveId] = useState<string>("");
   const [busyId, setBusyId] = useState<string>("");
+  const [generationPrompt, setGenerationPrompt] = useState("");
+  const [generated, setGenerated] = useState<WorkflowGenerationResult | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [savingGenerated, setSavingGenerated] = useState(false);
 
   async function load() {
     const response = await fetch(`${apiBaseUrl}/api/workflows`);
@@ -45,12 +49,74 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
     setBusyId("");
   }
 
+  async function generateWorkflow(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const prompt = generationPrompt.trim();
+    if (!prompt) {
+      return;
+    }
+    setGenerating(true);
+    const response = await fetch(`${apiBaseUrl}/api/workflows/generate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+    if (response.ok) {
+      setGenerated((await response.json()) as WorkflowGenerationResult);
+    }
+    setGenerating(false);
+  }
+
+  async function saveGeneratedWorkflow() {
+    if (!generated) {
+      return;
+    }
+    setSavingGenerated(true);
+    const response = await fetch(`${apiBaseUrl}/api/workflows`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ workflow: { ...generated.workflow, enabled: true } }),
+    });
+    if (response.ok) {
+      setActiveId(generated.workflow.id);
+      setGenerated(null);
+      setGenerationPrompt("");
+      await load().catch(() => undefined);
+    }
+    setSavingGenerated(false);
+  }
+
   return (
     <div className="workflow-console">
       <header>
         <Route size={18} />
         <strong>Workflows</strong>
       </header>
+      <form className="workflow-generate" onSubmit={(event) => void generateWorkflow(event)}>
+        <Wand2 size={15} aria-hidden="true" />
+        <input
+          value={generationPrompt}
+          onChange={(event) => setGenerationPrompt(event.target.value)}
+          placeholder="Describe a workflow..."
+          aria-label="Describe a workflow"
+        />
+        <button type="submit" disabled={generating || !generationPrompt.trim()}>
+          {generating ? "Drafting" : "Generate"}
+        </button>
+      </form>
+      {generated && (
+        <div className="workflow-generated-card" aria-label="Generated workflow proposal">
+          <span>
+            <b>{generated.workflow.name}</b>
+            <small>{generated.note}</small>
+          </span>
+          <Chip label={generated.dryRun.risk} tone={generated.dryRun.risk} />
+          <button type="button" onClick={() => void saveGeneratedWorkflow()} disabled={savingGenerated}>
+            <Save size={14} aria-hidden="true" />
+            {savingGenerated ? "Saving" : "Save"}
+          </button>
+        </div>
+      )}
       <div className="workflow-layout">
         <div className="workflow-list" aria-label="Workflow list">
           {payload.workflows.map((workflow) => {

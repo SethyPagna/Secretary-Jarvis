@@ -598,6 +598,8 @@ button {
 
 .workflow-list,
 .workflow-detail,
+.workflow-generate,
+.workflow-generated-card,
 .workflow-step-map,
 .workflow-runs {
   display: grid;
@@ -605,6 +607,8 @@ button {
 }
 
 .workflow-card,
+.workflow-generate,
+.workflow-generated-card,
 .workflow-title-row,
 .workflow-step,
 .workflow-runs span,
@@ -612,6 +616,73 @@ button {
   border: 1px solid rgba(0, 229, 255, 0.14);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.045);
+}
+
+.workflow-generate {
+  grid-template-columns: 18px minmax(0, 1fr) 92px;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 10px;
+}
+
+.workflow-generate svg {
+  color: var(--hud-cyan);
+}
+
+.workflow-generate input {
+  min-width: 0;
+  height: 30px;
+  border: 0;
+  color: white;
+  background: transparent;
+  outline: none;
+}
+
+.workflow-generate button,
+.workflow-generated-card button {
+  min-width: 86px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(0, 229, 255, 0.26);
+  border-radius: 999px;
+  color: white;
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.workflow-generate button:disabled,
+.workflow-generated-card button:disabled {
+  opacity: 0.58;
+}
+
+.workflow-generated-card {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  padding: 12px;
+  border-color: rgba(0, 255, 136, 0.26);
+  background:
+    linear-gradient(90deg, rgba(0, 255, 136, 0.08), rgba(0, 229, 255, 0.04)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.workflow-generated-card span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.workflow-generated-card b,
+.workflow-generated-card small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-generated-card small {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
 }
 
 .workflow-card {

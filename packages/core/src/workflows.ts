@@ -80,6 +80,23 @@ export interface WorkflowRunEvent {
   payload?: Record<string, unknown>;
 }
 
+export interface WorkflowGenerationRequest {
+  prompt: string;
+  owner?: WorkflowDefinition["owner"];
+  save?: boolean;
+}
+
+export interface WorkflowGenerationResult {
+  workflow: WorkflowDefinition;
+  dryRun: WorkflowDryRun;
+  issues: WorkflowValidationIssue[];
+  approvalRequired: boolean;
+  saved: boolean;
+  strategy: "local-model" | "deterministic-local";
+  modelRef?: string;
+  note: string;
+}
+
 const blockedCategories = new Set<ActionCategory>(["protected-core-access", "credential-access", "purchase"]);
 const approvalCategories = new Set<ActionCategory>([
   "write-local",
@@ -307,6 +324,85 @@ export function findSeedWorkflow(id: string): WorkflowDefinition | undefined {
   return seedWorkflows.find((workflow) => workflow.id === id);
 }
 
+export function draftWorkflowFromPrompt(prompt: string, idSuffix: string, owner: WorkflowDefinition["owner"] = "generated"): WorkflowDefinition {
+  const lowerPrompt = prompt.toLowerCase();
+  const slug = slugifyWorkflowName(prompt).slice(0, 42) || "generated-workflow";
+  const baseId = `workflow-${slug}-${idSuffix}`;
+  const isSocial = /\b(email|message|discord|telegram|whatsapp|slack|post|social)\b/.test(lowerPrompt);
+  const isCoding = /\b(code|repo|test|lint|review|bug|build|typescript|python)\b/.test(lowerPrompt);
+  const isSystem = /\b(file|folder|download|organize|move|copy|script|service|window|app)\b/.test(lowerPrompt);
+  const isResearch = /\b(research|summarize|paper|web|report|brief|analyze)\b/.test(lowerPrompt);
+
+  if (isSocial) {
+    return {
+      id: baseId,
+      name: titleFromPrompt(prompt, "Social Draft Workflow"),
+      description: "Generated local-first workflow: draft outbound communication locally and require owner approval before sending.",
+      version: 1,
+      owner,
+      enabled: false,
+      taskProfile: "daily-assistant",
+      tags: ["generated", "social", "approval"],
+      steps: [
+        generatedAgentStep("compose-draft", "Compose local draft", "Hermes writes a concise local draft without sending.", "hermes", "daily-assistant"),
+        generatedApprovalStep("approve-send", "Approve outbound send", "Owner must approve before any external message is sent.", "send-message"),
+      ],
+    };
+  }
+
+  if (isCoding) {
+    return {
+      id: baseId,
+      name: titleFromPrompt(prompt, "Coding Workflow"),
+      description: "Generated local-first workflow: inspect approved code, run approval-gated checks, and summarize findings.",
+      version: 1,
+      owner,
+      enabled: false,
+      taskProfile: "coding",
+      tags: ["generated", "coding", "review"],
+      steps: [
+        generatedSystemStep("inspect-workspace", "Inspect approved workspace", "Read approved project files and summarize relevant code.", "read-local", false),
+        generatedSystemStep("run-checks", "Run approved checks", "Run explicit test, lint, or build commands after owner approval.", "run-script", true),
+        generatedAgentStep("summarize-findings", "Summarize findings", "Daedalus reports risks, failures, and next actions.", "daedalus", "coding"),
+      ],
+    };
+  }
+
+  if (isSystem) {
+    return {
+      id: baseId,
+      name: titleFromPrompt(prompt, "Local System Workflow"),
+      description: "Generated local-first workflow: plan a reversible laptop action, request approval, then record the result.",
+      version: 1,
+      owner,
+      enabled: false,
+      taskProfile: "daily-assistant",
+      tags: ["generated", "system", "undo"],
+      steps: [
+        generatedAgentStep("plan-action", "Plan local action", "Vulcan creates a concise dry-run plan with rollback notes.", "vulcan", "daily-assistant"),
+        generatedSystemStep("execute-approved-action", "Execute approved action", "Run the approved local action with checkpointing where possible.", "write-local", true),
+        generatedAgentStep("record-result", "Record result", "Mnemosyne writes the outcome into MemoryOS and the timeline.", "mnemosyne", "rag"),
+      ],
+    };
+  }
+
+  return {
+    id: baseId,
+    name: titleFromPrompt(prompt, isResearch ? "Research Workflow" : "Generated Workflow"),
+    description: "Generated local-first workflow: gather context, reason with the selected local model, and save a concise result.",
+    version: 1,
+    owner,
+    enabled: false,
+    taskProfile: isResearch ? "research" : "daily-assistant",
+    tags: ["generated", isResearch ? "research" : "assistant", "memory"],
+    steps: [
+      generatedAgentStep("gather-context", "Gather local context", "Recall relevant MemoryOS notes and approved local documents.", "mnemosyne", "rag"),
+      generatedAgentStep("reason-and-compose", "Reason and compose", "Jarvis produces a short answer or report using the selected local model.", "jarvis", isResearch ? "research" : "daily-assistant"),
+      generatedAgentStep("save-summary", "Save summary", "Mnemosyne stores the useful outcome in the timeline.", "mnemosyne", "rag"),
+    ],
+  };
+}
+
 export function createWorkflowRun(params: {
   id: string;
   workflowId: string;
@@ -346,4 +442,78 @@ export function createWorkflowRunEvent(params: {
     createdAt: params.createdAt,
     payload: params.payload,
   };
+}
+
+function generatedAgentStep(
+  id: string,
+  title: string,
+  summary: string,
+  agentId: string,
+  taskProfile: TaskProfile,
+): WorkflowStep {
+  return {
+    id,
+    kind: "agent",
+    title,
+    summary,
+    agentId,
+    taskProfile,
+    requiresApproval: false,
+    reversible: false,
+    expectedInputs: ["user intent", "local context"],
+    expectedOutputs: ["agent result"],
+  };
+}
+
+function generatedSystemStep(
+  id: string,
+  title: string,
+  summary: string,
+  actionCategory: ActionCategory,
+  requiresApproval: boolean,
+): WorkflowStep {
+  return {
+    id,
+    kind: "system-action",
+    title,
+    summary,
+    actionCategory,
+    requiresApproval,
+    reversible: actionCategory === "write-local",
+    expectedInputs: ["approved target", "dry-run plan"],
+    expectedOutputs: ["system result", "audit event"],
+  };
+}
+
+function generatedApprovalStep(id: string, title: string, summary: string, actionCategory: ActionCategory): WorkflowStep {
+  return {
+    id,
+    kind: "approval",
+    title,
+    summary,
+    actionCategory,
+    requiresApproval: true,
+    reversible: false,
+    expectedInputs: ["draft", "recipient", "channel"],
+    expectedOutputs: ["owner decision"],
+  };
+}
+
+function slugifyWorkflowName(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function titleFromPrompt(prompt: string, fallback: string): string {
+  const cleaned = prompt
+    .replace(/\s+/g, " ")
+    .replace(/[^\w\s-]/g, "")
+    .trim();
+  if (!cleaned) {
+    return fallback;
+  }
+  const words = cleaned.split(" ").slice(0, 5);
+  return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }

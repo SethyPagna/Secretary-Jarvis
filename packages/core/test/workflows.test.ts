@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createWorkflowRun,
   createWorkflowRunEvent,
+  draftWorkflowFromPrompt,
   dryRunWorkflow,
   findSeedWorkflow,
   riskForWorkflow,
@@ -82,6 +83,16 @@ describe("workflow core domain", () => {
 
     expect(issues.some((issue) => issue.message === "Step ids must be unique.")).toBe(true);
     expect(issues.some((issue) => issue.message === "Step title is required.")).toBe(true);
+  });
+
+  it("drafts approval-gated workflows from natural language prompts", () => {
+    const workflow = draftWorkflowFromPrompt("Review this TypeScript repo and run tests", "test", "generated");
+    const dryRun = dryRunWorkflow(workflow);
+
+    expect(workflow.id).toContain("workflow-review-this-typescript-repo");
+    expect(workflow.enabled).toBe(false);
+    expect(workflow.steps.some((step) => step.actionCategory === "run-script")).toBe(true);
+    expect(dryRun.risk).toBe("approval-required");
   });
 
   it("creates workflow run records and events for persistence", () => {
