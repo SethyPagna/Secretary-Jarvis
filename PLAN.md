@@ -647,6 +647,20 @@ Goal: make the five downloaded model assets feel plug-and-play by producing safe
 
 17.5 Verify model runtime activation plans with unit tests, HUD tests, and runtime smoke checks.
 
+## Extension Phase 18 - Approved Feature Setup Install Plans
+
+Goal: turn missing feature dependencies into safe, owner-approved setup cards. Jarvis should explain exactly what to place or install for Piper, wake-word, Vosk, OCR, YOLO, media, maps, and connector vaults without silently downloading or executing installers.
+
+18.1 Add feature setup install plans with compact command previews, manual steps, expected folders, validation checks, rollback/uninstall notes, and no execution.
+
+18.2 Add approval-gated install dry-runs that create policy-reviewed action requests before any tool install, credential setup, model placement, or connector enablement.
+
+18.3 Surface setup install plans in the HUD settings panel as quiet cards with details hidden until expanded.
+
+18.4 Add user-facing approved setup documentation that separates "copy/download this dependency yourself" from "future scaling models."
+
+18.5 Verify setup install plans with gateway tests, HUD tests, build checks, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
