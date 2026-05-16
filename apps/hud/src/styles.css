@@ -951,6 +951,61 @@ button {
   white-space: nowrap;
 }
 
+.adapter-repair-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 12px 12px;
+}
+
+.adapter-repair-grid button {
+  min-height: 42px;
+  display: grid;
+  gap: 5px;
+  justify-items: start;
+  border: 1px solid rgba(0, 255, 136, 0.14);
+  border-radius: 11px;
+  background:
+    linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(0, 229, 255, 0.025)),
+    rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.86);
+  cursor: pointer;
+}
+
+.adapter-repair-grid button:hover {
+  border-color: rgba(0, 255, 136, 0.36);
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.1);
+}
+
+.adapter-repair-grid small,
+.adapter-repair-grid strong {
+  overflow: hidden;
+  max-width: 100%;
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.adapter-repair-grid strong {
+  color: #ffd45a;
+}
+
+.activation-readiness-card .adapter-repair-result {
+  border-color: rgba(255, 212, 90, 0.18);
+  color: #ffd45a;
+}
+
+.activation-readiness-card .adapter-repair-result.risk-safe {
+  border-color: rgba(0, 255, 136, 0.18);
+  color: var(--hud-green);
+}
+
+.activation-readiness-card .adapter-repair-result.risk-blocked {
+  border-color: rgba(255, 0, 127, 0.18);
+  color: var(--hud-magenta);
+}
+
 .setup-groups span {
   display: grid;
   gap: 8px;
@@ -2119,6 +2174,7 @@ button {
   .hardening-grid,
   .startup-control-strip,
   .runtime-command-grid,
+  .adapter-repair-grid,
   .setup-groups,
   .setup-approval-summary,
   .setup-install-strip,

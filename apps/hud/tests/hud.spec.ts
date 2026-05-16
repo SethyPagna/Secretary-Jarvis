@@ -378,6 +378,32 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().method() === "POST" && route.request().url().endsWith("/api/runtime/adapter-repair/dry-run")) {
+      const payload = route.request().postDataJSON() as { repair?: string };
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({
+          dryRun: {
+            id: "adapter-repair-ui",
+            repair: payload.repair ?? "ollama-path",
+            label: "Repair Ollama PATH",
+            commandPreview: "[Environment]::SetEnvironmentVariable('Path', $env:Path + ';C:\\Ollama', 'User')",
+            reversible: true,
+            action: { id: "approval-adapter-repair", title: "Repair Ollama PATH" },
+            decision: {
+              decision: "requires_approval",
+              risk: "approval-required",
+              reasons: ["run-script is approval gated"],
+            },
+            dataTouched: ["User PATH environment variable"],
+            notes: ["Dry-run only."],
+            message: "Dry-run only. Owner approval is required before repairing this runtime adapter.",
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().includes("/api/setup/install-plans/install-feature-piper/dry-run")) {
       await route.fulfill({
         status: 202,
@@ -644,6 +670,10 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(panel.getByLabel("Wake and runtime activation")).toContainText("3/1");
   await panel.getByLabel("Wake and runtime activation").locator("summary").click();
   await expect(panel.getByLabel("Wake and runtime activation")).toContainText("Ollama found-off-path");
+  await expect(panel.getByLabel("Runtime adapter repair dry-runs")).toContainText("Ollama PATH");
+  await page.getByRole("button", { name: "Ollama PATH dry-run", exact: true }).click();
+  await expect(panel.getByLabel("Runtime adapter repair dry-runs")).toContainText("requires_approval");
+  await expect(panel.getByLabel("Wake and runtime activation")).toContainText("SetEnvironmentVariable");
   await hardening.locator(".hardening-card", { hasText: "Authority" }).locator("summary").click();
   await expect(hardening).toContainText("9 gated");
   await hardening.locator(".hardening-card", { hasText: "Code health" }).locator("summary").click();

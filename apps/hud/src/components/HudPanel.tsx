@@ -50,6 +50,7 @@ export function HudPanel({
   const [startupPlans, setStartupPlans] = useState<StartupPlanSummary[]>([]);
   const [packagingReadiness, setPackagingReadiness] = useState<PackagingReadinessSummary | null>(null);
   const [activationReadiness, setActivationReadiness] = useState<WakeRuntimeActivationSummary | null>(null);
+  const [adapterRepairDryRuns, setAdapterRepairDryRuns] = useState<Record<string, AdapterRepairDryRunSummary>>({});
   const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
@@ -451,6 +452,32 @@ export function HudPanel({
     }));
   }
 
+  async function dryRunAdapterRepair(repair: RuntimeAdapterRepairKind) {
+    const payload = await fetch(`${apiBaseUrl}/api/runtime/adapter-repair/dry-run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ repair })
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as AdapterRepairDryRunResponse | undefined;
+    setAdapterRepairDryRuns((current) => ({
+      ...current,
+      [repair]: payload?.dryRun
+        ? {
+            decision: payload.dryRun.decision.decision,
+            risk: payload.dryRun.decision.risk,
+            commandPreview: payload.dryRun.commandPreview,
+            message: payload.dryRun.message
+          }
+        : {
+            decision: "unavailable",
+            risk: "blocked",
+            commandPreview: "adapter repair dry-run unavailable",
+            message: "Gateway did not return a runtime adapter repair preview."
+          }
+    }));
+  }
+
   return (
     <section className={`hud-panel hud-panel-${panel}`} role="dialog" aria-label={`Jarvis ${panel} panel`}>
       <button className="panel-close" type="button" onClick={onClose} aria-label="Close panel">
@@ -668,6 +695,19 @@ export function HudPanel({
             </small>
             <em>{activationReadiness?.recommendation ?? "Reliable wake uses tray and orb today."}</em>
             <code>{activationReadiness?.repairCommand ?? "Repair previews load after readiness check."}</code>
+            <div className="adapter-repair-grid" aria-label="Runtime adapter repair dry-runs">
+              {(["ollama-path", "ollama-launch", "lmstudio-endpoint", "hotword-enable"] as RuntimeAdapterRepairKind[]).map((repair) => (
+                <button key={repair} type="button" onClick={() => void dryRunAdapterRepair(repair)}>
+                  <small>{repairLabel(repair)}</small>
+                  <strong>{adapterRepairDryRuns[repair]?.decision ?? "dry-run"}</strong>
+                </button>
+              ))}
+            </div>
+            {Object.entries(adapterRepairDryRuns).slice(-1).map(([repair, dryRun]) => (
+              <code key={repair} className={`adapter-repair-result risk-${dryRun.risk}`}>
+                {dryRun.commandPreview}
+              </code>
+            ))}
           </details>
           <div className="setup-groups" aria-label="Setup action groups">
             {setupGroups.map((group) => (
@@ -1009,6 +1049,26 @@ interface WakeRuntimeActivationResponse {
   };
 }
 
+type RuntimeAdapterRepairKind = "ollama-path" | "ollama-launch" | "lmstudio-endpoint" | "hotword-enable";
+
+interface AdapterRepairDryRunResponse {
+  dryRun?: {
+    decision: {
+      decision: "allow" | "deny" | "requires_approval";
+      risk: "safe" | "approval-required" | "blocked";
+    };
+    commandPreview: string;
+    message: string;
+  };
+}
+
+interface AdapterRepairDryRunSummary {
+  decision: "allow" | "deny" | "requires_approval" | "unavailable";
+  risk: "safe" | "approval-required" | "blocked";
+  commandPreview: string;
+  message: string;
+}
+
 interface WakeRuntimeActivationSummary {
   wakeReady: number;
   wakeStaged: number;
@@ -1041,4 +1101,14 @@ function controlLabel(control: RuntimeControlKind): string {
     return "Emergency";
   }
   return `${control[0]?.toUpperCase() ?? ""}${control.slice(1)}`;
+}
+
+function repairLabel(repair: RuntimeAdapterRepairKind): string {
+  const labels: Record<RuntimeAdapterRepairKind, string> = {
+    "ollama-path": "Ollama PATH",
+    "ollama-launch": "Launch Ollama",
+    "lmstudio-endpoint": "LM Studio",
+    "hotword-enable": "Hotword",
+  };
+  return labels[repair];
 }
