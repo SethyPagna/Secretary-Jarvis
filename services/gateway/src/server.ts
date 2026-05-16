@@ -63,6 +63,7 @@ import { EventHub } from "./eventHub.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { JarvisStore } from "./store.js";
+import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
 
 const DEFAULT_PORT = 4317;
 const HF_SNAPSHOT_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\models\\huggingface\\snapshots";
@@ -191,6 +192,14 @@ function localModelAssetManifests() {
     ready: hydratedReadyAssets.map(inspectReadyModelAsset),
     futureScaling: futureScalingModels.map(inspectFutureScalingModel),
   };
+}
+
+function voiceRuntimeReadiness() {
+  return buildVoiceRuntimeReadiness({
+    voiceAssets: status.voiceAssets ?? [],
+    voiceAssetRoot: VOICE_ASSET_ROOT,
+    hfSnapshotRoot: HF_SNAPSHOT_ROOT,
+  });
 }
 
 function buildIdentityReadiness(): JarvisStatus["identityReadiness"] {
@@ -2085,11 +2094,22 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   if (request.method === "GET" && url.pathname === "/api/audio/status") {
     const runtimeStatus = statusWithRuntimeState();
     const brainAudio = await brainJson<Record<string, unknown>>("/audio/status");
+    const readiness = voiceRuntimeReadiness();
     sendJson(response, 200, {
       engines: runtimeStatus.audioEngines ?? [],
       voiceSession: runtimeStatus.voiceSession,
       voiceAssets: runtimeStatus.voiceAssets ?? [],
+      readiness,
       toolStatuses: detectToolStatuses().filter((tool) => ["whisper-cli", "piper"].includes(tool.id)),
+      brain: brainAudio ?? { status: "offline", message: "Python Brain is not reachable." },
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/voice/readiness") {
+    const brainAudio = await brainJson<Record<string, unknown>>("/audio/status", undefined, 1500);
+    sendJson(response, 200, {
+      readiness: voiceRuntimeReadiness(),
       brain: brainAudio ?? { status: "offline", message: "Python Brain is not reachable." },
     });
     return;

@@ -1,6 +1,6 @@
 import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { JarvisStatus, ModelAssetManifest } from "@jarvis/core";
+import type { JarvisStatus, ModelAssetManifest, VoiceRuntimeReadiness } from "@jarvis/core";
 import { WorkflowConsole } from "./WorkflowConsole";
 import type { HudPanel as HudPanelName } from "../types";
 
@@ -19,6 +19,7 @@ export function HudPanel({
 }) {
   const [text, setText] = useState("");
   const [assetSummary, setAssetSummary] = useState<ModelAssetSummary | null>(null);
+  const [voiceReadiness, setVoiceReadiness] = useState<VoiceRuntimeReadiness | null>(null);
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
@@ -39,6 +40,24 @@ export function HudPanel({
             totalReady: payload.ready?.length ?? 0,
             totalFuture: payload.futureScaling?.length ?? 0,
           });
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, panel]);
+
+  useEffect(() => {
+    if (panel !== "voice") {
+      return;
+    }
+    let cancelled = false;
+    fetch(`${apiBaseUrl}/api/voice/readiness`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: VoiceReadinessResponse | undefined) => {
+        if (!cancelled && payload?.readiness) {
+          setVoiceReadiness(payload.readiness);
         }
       })
       .catch(() => undefined);
@@ -106,7 +125,13 @@ export function HudPanel({
         <>
           <header><Mic size={18} /><strong>Voice</strong></header>
           <div className="mic-pulse"><Mic size={30} /></div>
-          <p>Say a command...</p>
+          <p>{voiceReadiness?.summary.sttReady ? "Say a command..." : "Voice staged"}</p>
+          <div className="voice-readiness-strip" aria-label="Voice runtime readiness">
+            <span><small>STT</small><strong>{voiceReadiness?.primaryStt.status ?? "--"}</strong></span>
+            <span><small>TTS</small><strong>{voiceReadiness?.summary.ttsReady ? "ready" : "staged"}</strong></span>
+            <span><small>Voice</small><strong>{voiceReadiness ? `${voiceReadiness.summary.sampleCount}` : "--"}</strong></span>
+            <span><small>Needs</small><strong>{voiceReadiness?.summary.missingRequired ?? "--"}</strong></span>
+          </div>
           <div className="hud-identity-strip">
             <UserCheck size={16} />
             <span>{status?.identityReadiness?.voiceVerification.status ?? "staged"}</span>
@@ -165,6 +190,10 @@ interface ModelAssetSummary {
   missingOrPartial: number;
   totalReady: number;
   totalFuture: number;
+}
+
+interface VoiceReadinessResponse {
+  readiness?: VoiceRuntimeReadiness;
 }
 
 function Widget({ label, value }: { label: string; value: string }) {

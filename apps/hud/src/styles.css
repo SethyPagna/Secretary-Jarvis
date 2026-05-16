@@ -494,14 +494,23 @@ button {
   font-size: 12px;
 }
 
-.model-manifest-strip {
+.model-manifest-strip,
+.voice-readiness-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 12px;
 }
 
-.model-manifest-strip span {
+.voice-readiness-strip {
+  width: min(460px, 100%);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.model-manifest-strip span,
+.voice-readiness-strip span {
   min-height: 42px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -515,17 +524,29 @@ button {
     rgba(255, 255, 255, 0.035);
 }
 
-.model-manifest-strip small {
+.voice-readiness-strip span {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 5px;
+}
+
+.model-manifest-strip small,
+.voice-readiness-strip small {
   overflow: hidden;
   color: rgba(255, 255, 255, 0.58);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.model-manifest-strip strong {
+.model-manifest-strip strong,
+.voice-readiness-strip strong {
+  max-width: 100%;
+  overflow: hidden;
   color: var(--hud-cyan);
   font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
   text-shadow: 0 0 12px rgba(0, 229, 255, 0.28);
+  white-space: nowrap;
 }
 
 .mic-pulse {
@@ -992,6 +1013,7 @@ button {
 
   .widget-grid,
   .model-manifest-strip,
+  .voice-readiness-strip,
   .device-grid,
   .setting-list,
   .workflow-layout {

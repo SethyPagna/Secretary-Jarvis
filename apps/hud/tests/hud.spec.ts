@@ -29,6 +29,32 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/voice/readiness")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          readiness: {
+            primaryStt: { id: "stt-whisper", label: "Whisper", kind: "stt", status: "ready-asset", installed: true, notes: [] },
+            tts: [{ id: "tts-sapi", label: "SAPI", kind: "tts", status: "ready", installed: true, notes: [] }],
+            fallbackStt: [],
+            vad: { id: "vad", label: "VAD", kind: "vad", status: "staged", installed: false, notes: [] },
+            wakeWord: { id: "wake", label: "Wake", kind: "wake-word", status: "missing", installed: false, notes: [] },
+            identitySamples: Array.from({ length: 4 }, (_, index) => ({
+              id: `sample-${index}`,
+              label: `Sample ${index}`,
+              kind: "identity-sample",
+              status: "ready",
+              installed: true,
+              notes: [],
+            })),
+            summary: { sttReady: true, ttsReady: true, sampleCount: 4, missingRequired: 1 },
+            privacy: { micCaptureActive: false, speakingActive: false, note: "test" },
+          },
+        }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -93,6 +119,8 @@ test("voice and text panels expose compact interaction states", async ({ page })
   const voicePanel = page.getByRole("dialog", { name: "Jarvis voice panel" });
   await expect(voicePanel).toBeVisible();
   await expect(voicePanel.getByText("Say a command...")).toBeVisible();
+  await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("ready-asset");
+  await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("4");
   await expect(page.getByRole("button", { name: "Stop speaking" })).toBeVisible();
 
   await page.getByRole("button", { name: "Close panel" }).click();

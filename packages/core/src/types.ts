@@ -621,6 +621,39 @@ export interface VoiceProfile {
   status: "ready" | "staged" | "missing-dependency";
 }
 
+export type VoiceProbeStatus = "ready" | "ready-asset" | "staged" | "missing" | "unavailable";
+
+export interface VoiceRuntimeProbe {
+  id: string;
+  label: string;
+  kind: "stt" | "tts" | "vad" | "wake-word" | "identity-sample";
+  status: VoiceProbeStatus;
+  installed: boolean;
+  path?: string;
+  runtime?: string;
+  notes: string[];
+}
+
+export interface VoiceRuntimeReadiness {
+  primaryStt: VoiceRuntimeProbe;
+  tts: VoiceRuntimeProbe[];
+  fallbackStt: VoiceRuntimeProbe[];
+  vad: VoiceRuntimeProbe;
+  wakeWord: VoiceRuntimeProbe;
+  identitySamples: VoiceRuntimeProbe[];
+  summary: {
+    sttReady: boolean;
+    ttsReady: boolean;
+    sampleCount: number;
+    missingRequired: number;
+  };
+  privacy: {
+    micCaptureActive: boolean;
+    speakingActive: boolean;
+    note: string;
+  };
+}
+
 export type IdentityFactor = "voice" | "face" | "device" | "passphrase";
 
 export interface IdentityProfile {
