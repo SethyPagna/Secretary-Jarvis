@@ -63,6 +63,7 @@ import {
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
 import { buildRuntimeEventHealth } from "./eventHealth.js";
+import { buildArchitectureMap } from "./architectureMap.js";
 import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
@@ -1589,6 +1590,14 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       activeModelId: status.activeModelId,
       localOnly: status.privacyMode === "strict-local",
       timestamp: new Date().toISOString(),
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/architecture/map") {
+    sendJson(response, 200, {
+      architecture: buildArchitectureMap(now()),
+      note: "Local architecture map for language boundaries, runtime hierarchy, optimization backlog, and hardening review.",
     });
     return;
   }
