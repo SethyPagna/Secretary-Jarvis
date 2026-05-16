@@ -767,6 +767,21 @@ export interface SetupActionGroup {
   items: SetupActionItem[];
 }
 
+export interface RuntimeSmokeStatus {
+  ok: boolean;
+  status: "passed" | "failed" | "missing";
+  summaryPath: string;
+  createdAt?: string;
+  checks: Array<{
+    name: string;
+    ok: boolean;
+    url?: string;
+    statusCode?: number;
+    error?: string;
+  }>;
+  message: string;
+}
+
 export interface SystemAction {
   id: string;
   label: string;

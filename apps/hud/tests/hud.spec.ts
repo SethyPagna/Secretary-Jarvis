@@ -91,6 +91,27 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/runtime/smoke-status")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          smoke: {
+            ok: true,
+            status: "passed",
+            summaryPath: "data/smoke/runtime-smoke-latest.json",
+            createdAt: "2026-05-16T00:00:00.000Z",
+            checks: [
+              { name: "Brain", ok: true, statusCode: 200 },
+              { name: "Gateway", ok: true, statusCode: 200 },
+              { name: "HUD", ok: true, statusCode: 200 },
+            ],
+            message: "Latest runtime smoke passed.",
+          },
+        }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -146,6 +167,7 @@ test("orb click opens radial controls and dashboard stays grouped", async ({ pag
   await expect(panel.getByLabel("Runtime constellation")).toContainText("5/5");
   await expect(panel.getByLabel("Runtime constellation")).toContainText("sealed");
   await expect(panel.getByLabel("Runtime constellation")).toContainText("4 needed");
+  await expect(panel.getByLabel("Runtime smoke status")).toContainText("passed");
 });
 
 test("voice and text panels expose compact interaction states", async ({ page }) => {

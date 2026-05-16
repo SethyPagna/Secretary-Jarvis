@@ -654,6 +654,46 @@ button {
   box-shadow: 0 0 14px rgba(255, 0, 127, 0.72);
 }
 
+.smoke-chip {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.smoke-chip small {
+  color: rgba(255, 255, 255, 0.58);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.smoke-chip strong {
+  color: var(--hud-cyan);
+  font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
+}
+
+.smoke-chip span {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.68);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smoke-passed strong {
+  color: var(--hud-green);
+}
+
+.smoke-failed strong {
+  color: var(--hud-magenta);
+}
+
 .mic-pulse {
   width: 92px;
   height: 92px;

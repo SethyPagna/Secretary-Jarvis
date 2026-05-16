@@ -1,6 +1,6 @@
 import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { JarvisStatus, RuntimeConstellation, SetupActionGroup, VoiceRuntimeReadiness } from "@jarvis/core";
+import type { JarvisStatus, RuntimeConstellation, RuntimeSmokeStatus, SetupActionGroup, VoiceRuntimeReadiness } from "@jarvis/core";
 import { WorkflowConsole } from "./WorkflowConsole";
 import type { HudPanel as HudPanelName } from "../types";
 
@@ -21,6 +21,7 @@ export function HudPanel({
   const [constellation, setConstellation] = useState<RuntimeConstellation | null>(null);
   const [voiceReadiness, setVoiceReadiness] = useState<VoiceRuntimeReadiness | null>(null);
   const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
+  const [smokeStatus, setSmokeStatus] = useState<RuntimeSmokeStatus | null>(null);
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
@@ -35,6 +36,14 @@ export function HudPanel({
       .then((payload: RuntimeConstellationResponse | undefined) => {
         if (!cancelled && payload?.constellation) {
           setConstellation(payload.constellation);
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/smoke-status`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: RuntimeSmokeResponse | undefined) => {
+        if (!cancelled && payload?.smoke) {
+          setSmokeStatus(payload.smoke);
         }
       })
       .catch(() => undefined);
@@ -140,6 +149,11 @@ export function HudPanel({
               </span>
             ))}
           </div>
+          <div className={`smoke-chip smoke-${smokeStatus?.status ?? "missing"}`} aria-label="Runtime smoke status">
+            <small>Smoke</small>
+            <strong>{smokeStatus?.status ?? "missing"}</strong>
+            <span>{smokeStatus?.checks.length ?? 0} checks</span>
+          </div>
           <div className="tiny-feed">
             {tasks.length ? tasks.map((task) => <span key={task.id}>{task.status} / {task.title}</span>) : <span>Quiet. Ready.</span>}
           </div>
@@ -208,6 +222,10 @@ export function HudPanel({
 
 interface RuntimeConstellationResponse {
   constellation?: RuntimeConstellation;
+}
+
+interface RuntimeSmokeResponse {
+  smoke?: RuntimeSmokeStatus;
 }
 
 interface VoiceReadinessResponse {

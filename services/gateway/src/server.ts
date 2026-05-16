@@ -63,6 +63,7 @@ import { EventHub } from "./eventHub.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
+import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { buildSetupActionGroups } from "./setupActions.js";
 import { JarvisStore } from "./store.js";
 import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
@@ -1963,6 +1964,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/runtime/constellation") {
     sendJson(response, 200, { constellation: runtimeConstellation() });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/runtime/smoke-status") {
+    sendJson(response, 200, { smoke: readRuntimeSmokeStatus() });
     return;
   }
 
