@@ -288,9 +288,18 @@ Protocol:
 - [x] 38.5 Verify Electron render, live test, builds, UI tests, and unit tests - commit `d05b7ab`
 - [x] 38.6 Harden Electron ready heartbeat and app-mode runtime service status - commit `a888a92`
 
+## Phase 39 - Responsive Production HUD And Workflow Canvas
+- [x] 39.1 Auto-collapsing desktop icon rail - commit `5655544`
+- [x] 39.2 Working sidebar controls remain wired for panels and runtime actions - commit `5655544`
+- [x] 39.3 n8n-inspired workflow canvas with draggable nodes, gateway lines, ports, and node details - commit `5655544`
+- [x] 39.4 Generated workflow automations remain approval-gated and queueable - commit `5655544`
+- [x] 39.5 Responsive HUD/workflow CSS and mobile overflow verification - commit `5655544`
+- [x] 39.6 Safe outer-folder organization dry-run script - commit `5655544`
+- [x] 39.7 Verify HUD UI tests, full build, core/gateway tests, runtime status, and push - pending push
+
 ## Current Priority
 
-Next task: Continue runtime/app polish from the latest user request.
+Next task: Continue production hardening with real voice/model runtime probes, richer workflow editing persistence, and live Electron visual verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

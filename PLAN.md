@@ -1021,3 +1021,16 @@ Tasks:
 - 37.5 Default normal app shutdown to Jarvis-only services while keeping Ollama running.
 - 37.6 Update startup registration to use the supervisor in silent tray/orb mode, with approved-admin scheduled task as the default plan.
 - 37.7 Verify with unit tests, HUD UI tests, builds, clean start, live test, stop, commits, and push.
+
+## Extension Phase 39 - Responsive Production HUD And Workflow Canvas
+
+Goal: Keep the current Jarvis visual direction, but make the desktop app feel mature: responsive panels, working controls, an auto-collapsing sidebar, and an n8n-inspired workflow/gateway editor that is visual, editable, and approval-gated.
+
+Tasks:
+- 39.1 Convert the fixed desktop sidebar into an auto-collapsing icon rail that expands on hover or keyboard focus.
+- 39.2 Preserve working sidebar controls for panels, live test, restart, Stop Jarvis, and Emergency Stop.
+- 39.3 Replace the workflow text/list center with a draggable node canvas, gateway lines, ports, risk states, and selected-node details.
+- 39.4 Keep generated workflow automation approval-gated and queueable through existing Gateway endpoints.
+- 39.5 Add responsive CSS so workflow, panels, and action controls avoid horizontal overflow on desktop and mobile.
+- 39.6 Add a safe outer-folder organization dry-run for `Secretary Jarvis` assets, references, installers, voice files, and local model folders.
+- 39.7 Verify with HUD UI tests, full TypeScript build, core/gateway tests, runtime status, commit, and push.
