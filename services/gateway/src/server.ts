@@ -76,6 +76,7 @@ import { buildProcessVisibilityStatus } from "./processVisibility.js";
 import { createRuntimeAdapterRepairDryRun, isRuntimeAdapterRepairKind } from "./runtimeAdapterRepair.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
+import { buildRuntimeSelfTest } from "./runtimeSelfTest.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { buildStartupRegistrationPlans } from "./startupRegistrationPlans.js";
 import { tryHandleCatalogRoute } from "./routes/catalogRoutes.js";
@@ -129,6 +130,31 @@ function runtimeActivationReadiness() {
     generatedAt: now(),
     voiceReadiness: buildVoiceRuntimeReadiness({ voiceAssets: status.voiceAssets ?? [], voiceAssetRoot: VOICE_ASSET_ROOT }),
     ollamaEndpoint: OLLAMA_URL,
+  });
+}
+
+function agentManagerReadiness() {
+  return buildAgentManagerReadiness({
+    generatedAt: now(),
+    status,
+    workflows: store.listWorkflows(),
+    workflowRuns: store.listWorkflowRuns(80),
+    tasks: store.listTasks(),
+    queue: store.listQueue(),
+    approvals: status.pendingApprovals,
+  });
+}
+
+function interactionHealth() {
+  return buildInteractionHealth({
+    generatedAt: now(),
+    status,
+    workflows: store.listWorkflows(),
+    workflowRuns: store.listWorkflowRuns(80),
+    tasks: store.listTasks(),
+    queue: store.listQueue(),
+    approvals: status.pendingApprovals,
+    undoJournal: store.listUndoJournal(),
   });
 }
 
@@ -2087,26 +2113,18 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     processVisibilityStatus: () => buildProcessVisibilityStatus({ generatedAt: now() }),
     startupRegistrationPlans: () => buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
     wakeRuntimeActivation: runtimeActivationReadiness,
-    agentManagerReadiness: () =>
-      buildAgentManagerReadiness({
+    agentManagerReadiness,
+    interactionHealth,
+    runtimeSelfTest: async () =>
+      buildRuntimeSelfTest({
         generatedAt: now(),
-        status,
-        workflows: store.listWorkflows(),
-        workflowRuns: store.listWorkflowRuns(80),
-        tasks: store.listTasks(),
-        queue: store.listQueue(),
-        approvals: status.pendingApprovals,
-      }),
-    interactionHealth: () =>
-      buildInteractionHealth({
-        generatedAt: now(),
-        status,
-        workflows: store.listWorkflows(),
-        workflowRuns: store.listWorkflowRuns(80),
-        tasks: store.listTasks(),
-        queue: store.listQueue(),
-        approvals: status.pendingApprovals,
-        undoJournal: store.listUndoJournal(),
+        activation: runtimeActivationReadiness(),
+        manager: agentManagerReadiness(),
+        interaction: interactionHealth(),
+        packaging: buildPackagingReadiness({ root: process.cwd(), generatedAt: now() }),
+        processVisibility: buildProcessVisibilityStatus({ generatedAt: now() }),
+        startupPlans: buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
+        services: await buildRuntimeServicesStatus(),
       }),
     store,
     approvals: status.pendingApprovals,

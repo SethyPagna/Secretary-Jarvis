@@ -239,7 +239,7 @@ Protocol:
 - [x] 31.3 Verify HUD bundle splitting with tests, builds, startup check-only scripts, and runtime smoke - commit `3f007e0`
 
 ## Phase 32 - Runtime Self-Test And Actionable Fixes
-- [ ] 32.1 Add runtime self-test endpoint
+- [x] 32.1 Add runtime self-test endpoint - commit `pending`
 - [ ] 32.2 Surface runtime self-test in HUD Settings
 - [ ] 32.3 Add runtime self-test documentation
 - [ ] 32.4 Verify runtime self-test with tests, builds, startup check-only scripts, and runtime smoke

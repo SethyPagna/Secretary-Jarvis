@@ -4,6 +4,7 @@ import { buildRuntimeEventHealth } from "../eventHealth.js";
 import type { InteractionHealth } from "../interactionHealth.js";
 import type { PackagingReadiness } from "../packagingReadiness.js";
 import type { ProcessVisibilityStatus } from "../processVisibility.js";
+import type { RuntimeSelfTest } from "../runtimeSelfTest.js";
 import type { StartupRegistrationPlansManifest } from "../startupRegistrationPlans.js";
 import type { JarvisStore } from "../store.js";
 import type { WakeRuntimeActivationReadiness } from "../wakeRuntimeActivation.js";
@@ -24,6 +25,7 @@ export function tryHandleRuntimeSummaryRoute(params: {
   wakeRuntimeActivation?: () => WakeRuntimeActivationReadiness;
   agentManagerReadiness?: () => AgentManagerReadiness;
   interactionHealth?: () => InteractionHealth;
+  runtimeSelfTest?: () => Promise<RuntimeSelfTest> | RuntimeSelfTest;
   store: JarvisStore;
   approvals: ActionRequest[];
 }): Promise<boolean> | boolean {
@@ -71,6 +73,13 @@ export function tryHandleRuntimeSummaryRoute(params: {
   if (params.pathname === "/api/runtime/interaction-health" && params.interactionHealth) {
     params.sendJson(200, { interaction: params.interactionHealth() });
     return true;
+  }
+
+  if (params.pathname === "/api/runtime/self-test" && params.runtimeSelfTest) {
+    return Promise.resolve(params.runtimeSelfTest()).then((selfTest) => {
+      params.sendJson(200, { selfTest });
+      return true;
+    });
   }
 
   if (params.pathname === "/api/runtime/startup-registration-plans" && params.startupRegistrationPlans) {

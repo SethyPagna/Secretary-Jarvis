@@ -205,6 +205,24 @@ describe("runtime summary routes", () => {
         },
         recommendations: ["Generated workflows remain drafts until approved."],
       }),
+      runtimeSelfTest: () => ({
+        generatedAt: "2026-05-16T00:00:00.000Z",
+        localOnly: true,
+        summary: { ready: 6, attention: 1, blocked: 0, staged: 0, connected: true, topStatus: "attention" },
+        checks: [{ id: "models", label: "Models", status: "attention", value: "1 adapter", detail: "Ollama found off PATH.", fixIds: ["fix-ollama-path"] }],
+        fixes: [
+          {
+            id: "fix-ollama-path",
+            label: "Ollama PATH",
+            category: "models",
+            status: "dry-run",
+            detail: "Preview PATH repair.",
+            dryRunEndpoint: "/api/runtime/adapter-repair/dry-run",
+            dryRunPayload: { repair: "ollama-path" },
+          },
+        ],
+        recommendations: ["All fixes are dry-run or approval-gated."],
+      }),
       store: emptyStore(),
       approvals: [],
     };
@@ -217,10 +235,11 @@ describe("runtime summary routes", () => {
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/activation-readiness" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/agents/manager-readiness" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/interaction-health" })).toBe(true);
+    expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/self-test" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/startup-registration-plans" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, method: "POST", pathname: "/api/runtime/services" })).toBe(false);
 
-    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200, 200, 200, 200]);
+    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200, 200, 200, 200, 200]);
     expect(JSON.stringify(sent[0]?.body)).toContain("runtime-constellation");
     expect(JSON.stringify(sent[1]?.body)).toContain("passed");
     expect(JSON.stringify(sent[2]?.body)).toContain("read only");
@@ -229,7 +248,8 @@ describe("runtime summary routes", () => {
     expect(JSON.stringify(sent[5]?.body)).toContain("ollamaUsable");
     expect(JSON.stringify(sent[6]?.body)).toContain("voicesCovered");
     expect(JSON.stringify(sent[7]?.body)).toContain("canTalkWhileWorking");
-    expect(JSON.stringify(sent[8]?.body)).toContain("Dry-run registration");
+    expect(JSON.stringify(sent[8]?.body)).toContain("fix-ollama-path");
+    expect(JSON.stringify(sent[9]?.body)).toContain("Dry-run registration");
   });
 });
 
