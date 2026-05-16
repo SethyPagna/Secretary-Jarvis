@@ -195,6 +195,48 @@ function buildIdentityReadiness(): JarvisStatus["identityReadiness"] {
   };
 }
 
+function buildSensorPrivacyLocks(): Array<Record<string, unknown>> {
+  const cameraEnabled = status.connectors.some((connector) => connector.id === "camera" && connector.enabled);
+  const screenEnabled = status.connectors.some((connector) => connector.id === "screen" && connector.enabled);
+  return [
+    {
+      id: "screen-one-time",
+      surface: "screen",
+      state: screenEnabled ? "approval-required-ready" : "requires-approval",
+      retention: "ask-each-time",
+      capturing: false,
+    },
+    {
+      id: "screen-continuous",
+      surface: "screen",
+      state: "locked",
+      retention: "disabled",
+      capturing: false,
+    },
+    {
+      id: "camera-one-time",
+      surface: "camera",
+      state: cameraEnabled ? "approval-required-ready" : "requires-approval",
+      retention: "ask-each-time",
+      capturing: false,
+    },
+    {
+      id: "camera-continuous",
+      surface: "camera",
+      state: "locked",
+      retention: "disabled",
+      capturing: false,
+    },
+    {
+      id: "biometric-retention",
+      surface: "identity",
+      state: "locked",
+      retention: "disabled-until-owner-approval",
+      capturing: false,
+    },
+  ];
+}
+
 function hydrateStartupState(): JarvisStatus["startup"] {
   const startupShortcuts = [
     `${process.env.APPDATA ?? ""}\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Secretary Jarvis Local Runtime.lnk`,
@@ -1607,7 +1649,18 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         },
       ],
       neededFeatureDownloads: hydrateFeatureDownloads().filter((download) => download.category === "vision"),
+      privacyLocks: buildSensorPrivacyLocks(),
       brain: brainVision,
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/privacy/sensors") {
+    const brainLocks = await brainJson<Record<string, unknown>>("/vision/privacy-locks");
+    sendJson(response, 200, {
+      localOnly: true,
+      locks: buildSensorPrivacyLocks(),
+      brain: brainLocks ?? { status: "offline", message: "Python Brain sensor privacy service is not reachable." },
     });
     return;
   }
@@ -1641,6 +1694,40 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       action,
       decision,
       preview: "No screen capture was taken. Approval is required before Argus can inspect live pixels.",
+      brain: brainDryRun,
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/vision/capture-camera/dry-run") {
+    const brainDryRun = await brainJson<Record<string, unknown>>(
+      "/vision/capture-camera/dry-run",
+      { method: "POST", body: "{}" },
+      5000,
+    );
+    const action: ActionRequest = {
+      id: id("vision-camera"),
+      title: "Capture camera frame",
+      category: "sensor-capture",
+      target: "webcam",
+      reason: "Camera frames may include biometric identity and private room context; capture is approval-gated.",
+      connectorId: "camera",
+      agentId: "argus",
+      dataTouched: ["camera frames", "face embedding", "room context"],
+    };
+    const decision = evaluateActionPolicy({
+      action,
+      privacyMode: status.privacyMode,
+      allowedConnectors: action.connectorId ? [...getEnabledConnectorIds(), action.connectorId] : getEnabledConnectorIds(),
+    });
+    if (decision.decision === "requires_approval") {
+      recordPendingApproval(action);
+    }
+    events.publish("vision", { dryRun: action, decision, brain: brainDryRun });
+    sendJson(response, 200, {
+      action,
+      decision,
+      preview: "No camera frame was captured. Approval is required before Argus can inspect live camera input.",
       brain: brainDryRun,
     });
     return;

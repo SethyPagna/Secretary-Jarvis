@@ -178,6 +178,10 @@ class BrainHandler(BaseHTTPRequestHandler):
             json_response(self, 200, VISION.readiness())
             return
 
+        if path == "/vision/privacy-locks":
+            json_response(self, 200, {"locks": VISION.privacy_locks(), "localOnly": True})
+            return
+
         if path == "/identity/readiness":
             json_response(self, 200, IDENTITY.readiness())
             return
@@ -277,6 +281,10 @@ class BrainHandler(BaseHTTPRequestHandler):
 
         if path == "/vision/capture-screen/dry-run":
             json_response(self, 200, VISION.capture_screen_dry_run())
+            return
+
+        if path == "/vision/capture-camera/dry-run":
+            json_response(self, 200, VISION.capture_camera_dry_run())
             return
 
         if path == "/identity/recognize/dry-run":

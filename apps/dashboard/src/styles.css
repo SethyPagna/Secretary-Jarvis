@@ -1131,6 +1131,7 @@ h1 {
 .report-grid,
 .device-grid,
 .vision-list,
+.privacy-lock-grid,
 .security-tags,
 .performance-bars,
 .brain-capabilities,
@@ -1314,11 +1315,13 @@ h1 {
 }
 
 .vision-list,
+.privacy-lock-grid,
 .security-tags {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .vision-list span,
+.privacy-lock-grid span,
 .security-tags span {
   padding: 10px;
   border: 1px solid rgba(72, 217, 255, 0.15);
@@ -1326,6 +1329,16 @@ h1 {
   background: rgba(245, 248, 248, 0.055);
   color: var(--muted);
   font-size: 12px;
+}
+
+.privacy-lock-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.privacy-lock-grid b {
+  display: block;
+  color: var(--text);
+  font-size: 13px;
 }
 
 .device-grid {

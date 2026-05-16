@@ -961,6 +961,18 @@ function VisionPanel({ status, onRefresh }: { status: JarvisStatus; onRefresh: (
     await onRefresh();
   }
 
+  async function dryRunSensor(kind: "screen" | "camera") {
+    const response = await fetch(`${API_BASE_URL}/api/vision/capture-${kind}/dry-run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+    if (!response.ok) {
+      throw new Error(`${kind} dry-run failed`);
+    }
+    await onRefresh();
+  }
+
   return (
     <section className="panel vision-panel">
       <div className="panel-header">
@@ -981,6 +993,15 @@ function VisionPanel({ status, onRefresh }: { status: JarvisStatus; onRefresh: (
         {(latest?.observations ?? ["No hosted vision by default.", "Identity and camera are approval-gated."]).map((item) => (
           <span key={item}>{item}</span>
         ))}
+      </div>
+      <div className="privacy-lock-grid">
+        <span><b>Screen</b>approval</span>
+        <span><b>Camera</b>locked</span>
+        <span><b>Timeline</b>off</span>
+      </div>
+      <div className="map-query">
+        <button type="button" onClick={() => dryRunSensor("screen")}>Screen dry-run</button>
+        <button type="button" onClick={() => dryRunSensor("camera")}>Camera dry-run</button>
       </div>
       <div className="map-query">
         <input value={filePath} onChange={(event) => setFilePath(event.target.value)} />

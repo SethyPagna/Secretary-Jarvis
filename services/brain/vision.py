@@ -103,6 +103,7 @@ class VisionService:
             },
             "screen": {"status": "requires-approval", "continuousCapture": "locked"},
             "camera": {"status": "requires-approval", "identity": "staged"},
+            "privacyLocks": self.privacy_locks(),
         }
 
     def analyze_image(self, file_path: str, include_ocr: bool = False) -> dict[str, Any]:
@@ -145,6 +146,55 @@ class VisionService:
             "message": "No screen pixels were captured. Screen analysis requires explicit owner approval.",
             "dataTouchedIfApproved": ["screen pixels", "OCR text", "active app context"],
         }
+
+    def capture_camera_dry_run(self) -> dict[str, Any]:
+        return {
+            "status": "requires-approval",
+            "mode": "camera",
+            "captured": False,
+            "message": "No camera frames were captured. Webcam analysis and identity checks require explicit owner approval.",
+            "dataTouchedIfApproved": ["camera frames", "face embedding", "room context"],
+        }
+
+    @staticmethod
+    def privacy_locks() -> list[dict[str, Any]]:
+        return [
+            {
+                "id": "screen-one-time",
+                "surface": "screen",
+                "state": "requires-approval",
+                "retention": "ask-each-time",
+                "capturing": False,
+            },
+            {
+                "id": "screen-continuous",
+                "surface": "screen",
+                "state": "locked",
+                "retention": "disabled",
+                "capturing": False,
+            },
+            {
+                "id": "camera-one-time",
+                "surface": "camera",
+                "state": "requires-approval",
+                "retention": "ask-each-time",
+                "capturing": False,
+            },
+            {
+                "id": "camera-continuous",
+                "surface": "camera",
+                "state": "locked",
+                "retention": "disabled",
+                "capturing": False,
+            },
+            {
+                "id": "biometric-retention",
+                "surface": "identity",
+                "state": "locked",
+                "retention": "disabled-until-owner-approval",
+                "capturing": False,
+            },
+        ]
 
     def image_dimensions(self, file_path: str, observations: list[str]) -> dict[str, Any] | None:
         if not self.package_available("PIL"):
