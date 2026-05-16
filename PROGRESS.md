@@ -101,11 +101,11 @@ Protocol:
 - [x] 11.5 Agent/task tests - commit `e10da82`
 - [x] 11.6 Connector/security tests - commit `71e517f`
 - [x] 11.7 UI tests - commit `3e00003`
-- [ ] 11.8 Final integration walkthrough
+- [x] 11.8 Final integration walkthrough - commit `582a2b5`
 
 ## Current Priority
 
-Next task: `11.8 Final integration walkthrough`.
+Next task: all tracked phases are complete. Continue with targeted polish, real device/model runtime probes, or new feature phases.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
