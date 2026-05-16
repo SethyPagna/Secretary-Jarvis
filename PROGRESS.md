@@ -210,11 +210,11 @@ Protocol:
 - [x] 27.1 Add runtime adapter repair dry-run domain logic and endpoint - commit `e8e5efc`
 - [x] 27.2 Surface runtime adapter repair dry-run buttons in HUD Settings - commit `5ed6102`
 - [x] 27.3 Add runtime repair approval documentation - commit `67cc80a`
-- [ ] 27.4 Verify runtime repair dry-runs with tests, builds, startup check-only scripts, and runtime smoke
+- [x] 27.4 Verify runtime repair dry-runs with tests, builds, startup check-only scripts, and runtime smoke - commit `1b90f7f`
 
 ## Current Priority
 
-Next task: Implement Phase 27.4 runtime repair dry-run verification.
+Next task: Plan the next refinement phase for executing approved runtime repairs, packaged HUD installer polish, or hotword dependency validation.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
