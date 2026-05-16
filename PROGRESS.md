@@ -76,7 +76,7 @@ Protocol:
 - [x] 8.2 Implement `POST /api/system/actions/dry-run` - implemented before tracker
 - [x] 8.3 Implement approved execution through privileged Python subprocess - commit `a3b7ab9`
 - [x] 8.4 Emergency stop mechanism - implemented before tracker
-- [ ] 8.5 HUD approval-required action display
+- [x] 8.5 HUD approval-required action display - commit `00edb18`
 
 ## Phase 9 - Workflow Engine & Self-Expanding Automation
 - [ ] 9.1 Add workflow core domain
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `8.5 HUD approval-required action display`.
+Next task: `9.1 Add workflow core domain`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
