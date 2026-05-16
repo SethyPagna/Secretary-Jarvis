@@ -132,6 +132,16 @@ button {
     0 0 86px rgba(0, 229, 255, 0.14);
 }
 
+.hud-state-recognizing .orb-aura {
+  background:
+    conic-gradient(from 120deg, transparent, rgba(0, 229, 255, 0.3), transparent, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(circle, rgba(0, 229, 255, 0.2), rgba(0, 0, 0, 0.08) 52%, transparent 72%);
+  box-shadow:
+    0 0 38px rgba(0, 229, 255, 0.32),
+    0 0 96px rgba(255, 255, 255, 0.08);
+  animation: identity-shimmer 1.35s linear infinite;
+}
+
 .hud-state-approval .orb-aura {
   background: radial-gradient(circle, rgba(255, 209, 102, 0.24), rgba(0, 229, 255, 0.08) 48%, transparent 72%);
 }
@@ -361,6 +371,29 @@ button {
   box-shadow: inset 0 0 18px rgba(255, 0, 127, 0.08);
 }
 
+.hud-identity-strip {
+  display: grid;
+  grid-template-columns: 18px auto auto auto;
+  align-items: center;
+  gap: 9px;
+  width: min(420px, 100%);
+  margin: 12px auto 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.hud-identity-strip button {
+  min-width: 72px;
+  height: 30px;
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  border-radius: 999px;
+  color: white;
+  background: rgba(0, 229, 255, 0.08);
+}
+
 .hud-input-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 42px;
@@ -413,6 +446,21 @@ button {
   50% {
     transform: scale(1.08);
     opacity: 1;
+  }
+}
+
+@keyframes identity-shimmer {
+  0% {
+    filter: hue-rotate(0deg) brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    filter: hue-rotate(24deg) brightness(1.16);
+    transform: scale(1.04);
+  }
+  100% {
+    filter: hue-rotate(0deg) brightness(1);
+    transform: scale(1);
   }
 }
 

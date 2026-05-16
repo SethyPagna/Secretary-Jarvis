@@ -9,6 +9,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+from identity import IdentityService
 from vision import VisionService
 from voice import VoiceService
 
@@ -22,6 +23,7 @@ DATA_AUDIO_DIR = PROJECT_ROOT / "data" / "audio" / "tts"
 TASKS: dict[str, dict[str, Any]] = {}
 MEMORIES: list[dict[str, Any]] = []
 SOCIAL_DRAFTS: list[dict[str, Any]] = []
+IDENTITY = IdentityService(PROJECT_ROOT, SECRETARY_ROOT)
 VISION = VisionService(PROJECT_ROOT, SECRETARY_ROOT)
 VOICE = VoiceService(PROJECT_ROOT, SECRETARY_ROOT)
 
@@ -176,6 +178,10 @@ class BrainHandler(BaseHTTPRequestHandler):
             json_response(self, 200, VISION.readiness())
             return
 
+        if path == "/identity/readiness":
+            json_response(self, 200, IDENTITY.readiness())
+            return
+
         json_response(self, 404, {"error": "not found", "path": path, "buildId": BUILD_ID})
 
     def do_POST(self) -> None:
@@ -271,6 +277,11 @@ class BrainHandler(BaseHTTPRequestHandler):
 
         if path == "/vision/capture-screen/dry-run":
             json_response(self, 200, VISION.capture_screen_dry_run())
+            return
+
+        if path == "/identity/recognize/dry-run":
+            factors = payload.get("factors")
+            json_response(self, 200, IDENTITY.recognize_dry_run(factors if isinstance(factors, list) else None))
             return
 
         if path == "/connectors/social/draft":

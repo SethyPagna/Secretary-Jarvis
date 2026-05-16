@@ -97,7 +97,13 @@ function HudSurface() {
               transition={{ duration: 0.24, ease: "easeOut" }}
               onClick={(event) => event.stopPropagation()}
             >
-              <HudPanel panel={panel} status={status} apiBaseUrl={apiBaseUrl} onClose={closeAll} />
+              <HudPanel
+                panel={panel}
+                status={status}
+                apiBaseUrl={apiBaseUrl}
+                onRecognizing={(message) => setHudState("recognizing", message)}
+                onClose={closeAll}
+              />
             </motion.div>
           </motion.div>
         )}

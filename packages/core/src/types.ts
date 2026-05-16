@@ -396,6 +396,7 @@ export interface StreamEvent {
     | "report"
     | "map"
     | "vision"
+    | "identity"
     | "device"
     | "security"
     | "performance";
@@ -599,6 +600,41 @@ export interface VoiceProfile {
   status: "ready" | "staged" | "missing-dependency";
 }
 
+export type IdentityFactor = "voice" | "face" | "device" | "passphrase";
+
+export interface IdentityProfile {
+  id: string;
+  label: string;
+  role: "owner" | "trusted-user" | "guest";
+  trusted: boolean;
+  factors: IdentityFactor[];
+  voiceProfileId?: string;
+  voiceAssetIds: string[];
+  faceModelStatus: "locked" | "staged" | "ready";
+  speakerModelStatus: "locked" | "staged" | "ready";
+  permissionMode: "owner-approved" | "limited" | "locked";
+  privacyNote: string;
+  updatedAt: string;
+}
+
+export interface IdentityReadiness {
+  status: "ready" | "staged" | "requires-approval" | "missing-dependency";
+  ownerProfileId: string;
+  voiceVerification: {
+    status: "ready" | "staged" | "missing-dependency";
+    sampleCount: number;
+    packages: string[];
+  };
+  faceRecognition: {
+    status: "ready" | "staged" | "requires-approval" | "missing-dependency";
+    cameraStatus: "locked" | "requires-approval" | "ready";
+    packages: string[];
+  };
+  trustedDevices: string[];
+  privacyLocks: string[];
+  notes: string[];
+}
+
 export type VisionEngineStatus = "ready" | "requires-approval" | "missing-dependency" | "staged";
 
 export interface SystemAction {
@@ -767,6 +803,8 @@ export interface JarvisStatus {
   voiceSession?: VoiceSession;
   voiceAssets?: VoiceAsset[];
   voiceProfiles?: VoiceProfile[];
+  identityProfiles?: IdentityProfile[];
+  identityReadiness?: IdentityReadiness;
   agentSouls?: AgentSoul[];
   referenceSources?: ReferenceSource[];
   startup?: StartupState;

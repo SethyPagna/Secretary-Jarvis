@@ -150,6 +150,7 @@ function statusWithRuntimeState(): JarvisStatus {
     modelReadiness: hydratedModels.map((model) => readinessForModel(model, existsSync, hydratedReadyAssets)),
     audioEngines: (status.audioEngines ?? []).map(hydrateAudioEngineState),
     voiceAssets: (status.voiceAssets ?? []).filter((asset) => existsSync(`C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\${asset.localPath}`)),
+    identityReadiness: buildIdentityReadiness(),
     startup: hydrateStartupState(),
     conversations: store.listConversations(),
     tasks: store.listTasks(),
@@ -163,6 +164,34 @@ function statusWithRuntimeState(): JarvisStatus {
     visionInsights: status.visionInsights ?? [],
     devices: hydrateDevices(),
     performance: buildPerformanceSnapshot(),
+  };
+}
+
+function buildIdentityReadiness(): JarvisStatus["identityReadiness"] {
+  const profiles = status.identityProfiles ?? [];
+  const owner = profiles.find((profile) => profile.role === "owner") ?? profiles[0];
+  const voiceAssets = (status.voiceAssets ?? []).filter((asset) => existsSync(`C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\${asset.localPath}`));
+  const cameraEnabled = status.connectors.some((connector) => connector.id === "camera" && connector.enabled);
+  return {
+    status: voiceAssets.length > 0 ? "staged" : "missing-dependency",
+    ownerProfileId: owner?.id ?? "owner-primary",
+    voiceVerification: {
+      status: voiceAssets.length > 0 ? "staged" : "missing-dependency",
+      sampleCount: voiceAssets.length,
+      packages: [],
+    },
+    faceRecognition: {
+      status: cameraEnabled ? "staged" : "requires-approval",
+      cameraStatus: cameraEnabled ? "ready" : "locked",
+      packages: [],
+    },
+    trustedDevices: ["asus-g14-rx6700s"],
+    privacyLocks: ["camera", "continuous-microphone", "biometric-retention"],
+    notes: [
+      "Identity is local-only and opt-in.",
+      "Recognition dry-runs emit HUD state without capturing biometric data.",
+      "Speaker and face matching require local dependency setup before live use.",
+    ],
   };
 }
 
@@ -1248,12 +1277,70 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/identity/readiness") {
+    const brainIdentity = await brainJson<Record<string, unknown>>("/identity/readiness");
+    sendJson(response, 200, {
+      profiles: status.identityProfiles ?? [],
+      readiness: buildIdentityReadiness(),
+      brain: brainIdentity ?? { status: "offline", message: "Python Brain identity service is not reachable." },
+    });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/identity/recognize/dry-run") {
+    const body = (await readBody(request)) as { factors?: string[]; mode?: "voice" | "face" | "combined" };
+    const requestedFactors = body.factors ?? (body.mode === "voice" ? ["voice"] : body.mode === "face" ? ["face"] : ["voice", "face"]);
+    const brainIdentity = await brainJson<Record<string, unknown>>(
+      "/identity/recognize/dry-run",
+      { method: "POST", body: JSON.stringify({ factors: requestedFactors }) },
+      5000,
+    );
+    const action: ActionRequest = {
+      id: id("identity-recognition"),
+      title: "Recognize owner identity",
+      category: "sensor-capture",
+      target: requestedFactors.join("+"),
+      reason: "Identity checks may touch voiceprints, face embeddings, or trusted device signals.",
+      agentId: "sentinel",
+      dataTouched: [
+        ...(requestedFactors.includes("voice") ? ["voiceprint"] : []),
+        ...(requestedFactors.includes("face") ? ["face embedding", "camera frames"] : []),
+        "trusted device signal",
+      ],
+    };
+    const decision = evaluateActionPolicy({
+      action,
+      privacyMode: status.privacyMode,
+      allowedConnectors: getEnabledConnectorIds(),
+    });
+    if (decision.decision === "requires_approval") {
+      recordPendingApproval(action);
+    }
+    const hudEvent = {
+      id: id("hud"),
+      state: "recognizing",
+      title: "Recognizing owner",
+      summary: "Dry-run only. No biometric capture was performed.",
+      createdAt: now(),
+    };
+    events.publish("identity", { action, decision, hudEvent, brain: brainIdentity });
+    sendJson(response, 200, {
+      action,
+      decision,
+      hudEvent,
+      captured: false,
+      brain: brainIdentity,
+    });
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/api/brain/status") {
-    const [health, capabilities, audio, vision] = await Promise.all([
+    const [health, capabilities, audio, vision, identity] = await Promise.all([
       brainJson<Record<string, unknown>>("/health"),
       brainJson<Record<string, unknown>>("/capabilities"),
       brainJson<Record<string, unknown>>("/audio/status"),
       brainJson<Record<string, unknown>>("/vision/status"),
+      brainJson<Record<string, unknown>>("/identity/readiness"),
     ]);
     sendJson(response, health ? 200 : 503, {
       online: Boolean(health),
@@ -1261,6 +1348,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       capabilities,
       audio,
       vision,
+      identity,
       url: BRAIN_URL,
     });
     return;

@@ -1,4 +1,4 @@
-import { Cable, Cpu, Mic, Send, Settings, X } from "lucide-react";
+import { Cable, Cpu, Mic, Send, Settings, UserCheck, X } from "lucide-react";
 import { useState } from "react";
 import type { JarvisStatus } from "@jarvis/core";
 import type { HudPanel as HudPanelName } from "../types";
@@ -7,11 +7,13 @@ export function HudPanel({
   panel,
   status,
   apiBaseUrl,
+  onRecognizing,
   onClose
 }: {
   panel: HudPanelName;
   status: JarvisStatus | null;
   apiBaseUrl: string;
+  onRecognizing?: (message: string) => void;
   onClose: () => void;
 }) {
   const [text, setText] = useState("");
@@ -40,6 +42,15 @@ export function HudPanel({
     }).catch(() => undefined);
   }
 
+  async function recognizeOwnerDryRun() {
+    onRecognizing?.("Recognizing you...");
+    await fetch(`${apiBaseUrl}/api/identity/recognize/dry-run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "combined" })
+    }).catch(() => undefined);
+  }
+
   return (
     <section className={`hud-panel hud-panel-${panel}`} aria-label={`Jarvis ${panel} panel`}>
       <button className="panel-close" type="button" onClick={onClose} aria-label="Close panel">
@@ -64,6 +75,12 @@ export function HudPanel({
           <header><Mic size={18} /><strong>Voice</strong></header>
           <div className="mic-pulse"><Mic size={30} /></div>
           <p>Say a command...</p>
+          <div className="hud-identity-strip">
+            <UserCheck size={16} />
+            <span>{status?.identityReadiness?.voiceVerification.status ?? "staged"}</span>
+            <span>{status?.identityReadiness?.faceRecognition.cameraStatus ?? "locked"}</span>
+            <button type="button" onClick={recognizeOwnerDryRun}>Dry-run</button>
+          </div>
           <button className="hud-secondary-action" type="button" onClick={stopSpeaking}>Stop speaking</button>
         </>
       )}

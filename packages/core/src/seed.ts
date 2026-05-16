@@ -153,6 +153,43 @@ export const seededStatus: JarvisStatus = {
       status: "ready",
     },
   ],
+  identityProfiles: [
+    {
+      id: "owner-primary",
+      label: "Owner profile",
+      role: "owner",
+      trusted: true,
+      factors: ["voice", "face", "device", "passphrase"],
+      voiceProfileId: "voice-profile-jarvis",
+      voiceAssetIds: ["voice-jarvis-main", "voice-jarvis-intro-1", "voice-jarvis-intro-2", "voice-jarvis-morning"],
+      faceModelStatus: "staged",
+      speakerModelStatus: "staged",
+      permissionMode: "owner-approved",
+      privacyNote: "Identity checks are local and opt-in; camera and continuous microphone capture remain approval-gated.",
+      updatedAt: "2026-05-16T08:40:00+08:00",
+    },
+  ],
+  identityReadiness: {
+    status: "staged",
+    ownerProfileId: "owner-primary",
+    voiceVerification: {
+      status: "staged",
+      sampleCount: 4,
+      packages: [],
+    },
+    faceRecognition: {
+      status: "requires-approval",
+      cameraStatus: "locked",
+      packages: [],
+    },
+    trustedDevices: ["asus-g14-rx6700s"],
+    privacyLocks: ["camera", "continuous-microphone", "biometric-retention"],
+    notes: [
+      "Voice identity samples are linked.",
+      "Speaker and face verification activate only after local dependencies are installed and approved.",
+      "Recognition events can drive the HUD state without enabling continuous capture.",
+    ],
+  },
   referenceSources: [
     {
       id: "openclaw",
