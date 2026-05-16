@@ -100,12 +100,12 @@ Protocol:
 - [x] 11.4 Memory/undo tests - commit `d2e841e`
 - [x] 11.5 Agent/task tests - commit `e10da82`
 - [x] 11.6 Connector/security tests - commit `71e517f`
-- [ ] 11.7 UI tests
+- [x] 11.7 UI tests - commit `3e00003`
 - [ ] 11.8 Final integration walkthrough
 
 ## Current Priority
 
-Next task: `11.7 UI tests`.
+Next task: `11.8 Final integration walkthrough`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
