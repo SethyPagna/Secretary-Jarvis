@@ -14,6 +14,7 @@ import {
   evaluateActionPolicy,
   resolveToolStatus,
   selectModelForTask,
+  seededStatus,
 } from "../src/index.js";
 
 describe("model install dry runs", () => {
@@ -185,6 +186,38 @@ describe("tool doctor helpers", () => {
 });
 
 describe("voice session helpers", () => {
+  it("uses Whisper large-v3-turbo as the primary STT engine", () => {
+    expect(seededStatus.voiceSession?.sttEngineId).toBe("whisper-large-v3-turbo");
+    expect(seededStatus.audioEngines?.find((engine) => engine.id === "whisper-large-v3-turbo")).toMatchObject({
+      role: "stt",
+      modelRef: "openai/whisper-large-v3-turbo",
+    });
+  });
+
+  it("tracks the owner-provided Jarvis voice identity MP3 assets", () => {
+    expect(seededStatus.voiceAssets?.map((asset) => asset.fileName).sort()).toEqual([
+      "jarvis-intro-1.mp3",
+      "jarvis-intro2.mp3",
+      "jarvis.mp3",
+      "jarvis_morning.mp3",
+    ]);
+    expect(seededStatus.voiceProfiles?.find((profile) => profile.agentId === "jarvis")).toMatchObject({
+      enginePreference: "voice-sample",
+      sampleAssetId: "voice-jarvis-main",
+      status: "ready",
+    });
+  });
+
+  it("lists Piper and Vosk as missing voice feature dependencies", () => {
+    const voiceDownloads = neededFeatureDownloads.filter((download) => download.category === "voice");
+
+    expect(voiceDownloads.map((download) => download.id)).toEqual(
+      expect.arrayContaining(["feature-piper", "feature-wake-word", "feature-vosk"]),
+    );
+    expect(seededStatus.audioEngines?.find((engine) => engine.id === "piper-local")?.status).toBe("planned");
+    expect(seededStatus.audioEngines?.find((engine) => engine.id === "vosk-streaming")?.status).toBe("planned");
+  });
+
   it("starts in missing-tools mode when STT/TTS are unavailable", () => {
     const session = createVoiceSession({
       id: "voice-1",
