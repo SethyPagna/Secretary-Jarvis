@@ -55,7 +55,7 @@ Protocol:
 - [x] 5.1 Define dedicated memory types in `memory.ts` - commit `dac0794`
 - [x] 5.2 Implement full memory/vector/timeline storage - commit `31f7caf`
 - [x] 5.3 Add conversations and vector memory endpoints - commit `45543bb`
-- [ ] 5.4 Implement full 20-minute undo with file checkpoints - metadata commit `1cf355b`, full restore missing
+- [x] 5.4 Implement full 20-minute undo with file checkpoints - commit `dfcc0fd`
 - [ ] 5.5 Add go-back-in-time views - partial panels exist
 
 ## Phase 6 - AgentOS, Souls & Task Queue
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `5.4 Implement full 20-minute undo with file checkpoints`.
+Next task: `5.5 Add go-back-in-time views`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
