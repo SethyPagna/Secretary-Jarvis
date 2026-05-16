@@ -2,17 +2,14 @@ from __future__ import annotations
 
 import json
 import importlib.util
-import mimetypes
 import os
-import re
 import shutil
 import subprocess
-import time
-import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+from vision import VisionService
 from voice import VoiceService
 
 HOST = "127.0.0.1"
@@ -25,6 +22,7 @@ DATA_AUDIO_DIR = PROJECT_ROOT / "data" / "audio" / "tts"
 TASKS: dict[str, dict[str, Any]] = {}
 MEMORIES: list[dict[str, Any]] = []
 SOCIAL_DRAFTS: list[dict[str, Any]] = []
+VISION = VisionService(PROJECT_ROOT, SECRETARY_ROOT)
 VOICE = VoiceService(PROJECT_ROOT, SECRETARY_ROOT)
 
 MODEL_SIZE_ESTIMATES_GB = {
@@ -53,65 +51,7 @@ def snapshot_available(name: str) -> bool:
     return (HF_SNAPSHOT_ROOT / name).exists()
 
 
-def file_info(file_path: str) -> dict[str, Any]:
-    path = Path(file_path)
-    exists = path.exists()
-    info: dict[str, Any] = {
-        "path": file_path,
-        "exists": exists,
-        "name": path.name,
-        "suffix": path.suffix.lower(),
-        "mime": mimetypes.guess_type(str(path))[0],
-    }
-    if exists:
-        info["sizeBytes"] = path.stat().st_size
-        info["modifiedAt"] = path.stat().st_mtime
-    return info
-
-
-def audio_duration_seconds(file_path: str) -> float | None:
-    try:
-        with wave.open(file_path, "rb") as audio:
-            frames = audio.getnframes()
-            rate = audio.getframerate()
-            return round(frames / float(rate), 3) if rate else None
-    except Exception:
-        return None
-
-
-def ps_quote(value: str) -> str:
-    return "'" + value.replace("'", "''") + "'"
-
-
-def synthesize_with_windows_sapi(text: str) -> dict[str, Any]:
-    DATA_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
-    safe_name = re.sub(r"[^a-zA-Z0-9_-]+", "-", text.strip()[:32]).strip("-") or "jarvis"
-    output = DATA_AUDIO_DIR / f"{int(time.time())}-{safe_name}.wav"
-    script = (
-        "Add-Type -AssemblyName System.Speech; "
-        "$speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
-        f"$speaker.SetOutputToWaveFile({ps_quote(str(output))}); "
-        f"$speaker.Speak({ps_quote(text[:2000])}); "
-        "$speaker.Dispose();"
-    )
-    subprocess.run(
-        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
-        check=True,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        timeout=45,
-    )
-    return {
-        "status": "ready",
-        "engine": "windows-sapi",
-        "audioPath": str(output),
-        "message": "Windows SAPI generated a local WAV file.",
-    }
-
-
 def capabilities_payload() -> dict[str, Any]:
-    whisper_snapshot = snapshot_available("openai__whisper-large-v3-turbo")
     return {
         "service": "jarvis-python-brain",
         "buildId": BUILD_ID,
@@ -123,14 +63,7 @@ def capabilities_payload() -> dict[str, Any]:
         },
         "capabilities": [
             *VOICE.capabilities(),
-            {
-                "id": "vision-file-inspector",
-                "label": "Local image/file inspector",
-                "kind": "vision",
-                "status": "ready",
-                "installed": True,
-                "details": "Dependency-light local file metadata and optional PIL image dimensions.",
-            },
+            *VISION.capabilities(),
         ],
     }
 
@@ -236,39 +169,11 @@ class BrainHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/vision/status":
-            json_response(
-                self,
-                200,
-                {
-                    "status": "ready",
-                    "localOnly": True,
-                    "engines": {
-                        "pil": package_available("PIL"),
-                        "opencv": package_available("cv2"),
-                        "tesseract": bool(shutil.which("tesseract")),
-                    },
-                },
-            )
+            json_response(self, 200, VISION.status())
             return
 
         if path == "/vision/readiness":
-            json_response(
-                self,
-                200,
-                {
-                    "status": "approval-gated",
-                    "localOnly": True,
-                    "screenCapture": "requires-approval",
-                    "webcamIdentity": "requires-approval",
-                    "staticImage": "ready",
-                    "ocr": "ready" if shutil.which("tesseract") else "missing-dependency",
-                    "packages": {
-                        "PIL": package_available("PIL"),
-                        "opencv": package_available("cv2"),
-                        "ultralytics": package_available("ultralytics"),
-                    },
-                },
-            )
+            json_response(self, 200, VISION.readiness())
             return
 
         json_response(self, 404, {"error": "not found", "path": path, "buildId": BUILD_ID})
@@ -362,6 +267,10 @@ class BrainHandler(BaseHTTPRequestHandler):
 
         if path == "/vision/analyze-image":
             self.handle_vision_analyze(payload)
+            return
+
+        if path == "/vision/capture-screen/dry-run":
+            json_response(self, 200, VISION.capture_screen_dry_run())
             return
 
         if path == "/connectors/social/draft":
@@ -462,53 +371,9 @@ class BrainHandler(BaseHTTPRequestHandler):
 
     def handle_vision_analyze(self, payload: dict[str, Any]) -> None:
         file_path = str(payload.get("filePath", "")).strip()
-        info = file_info(file_path) if file_path else {}
-        observations: list[str] = []
-        if not file_path:
-            json_response(
-                self,
-                400,
-                {"status": "needs-input", "message": "filePath is required for local image analysis."},
-            )
-            return
-
-        if not info.get("exists"):
-            json_response(
-                self,
-                200,
-                {
-                    "status": "missing-file",
-                    "file": info,
-                    "summary": "The requested local image/file was not found.",
-                    "observations": ["No external lookup was attempted."],
-                },
-            )
-            return
-
-        dimensions = None
-        if package_available("PIL"):
-            try:
-                from PIL import Image  # type: ignore
-
-                with Image.open(file_path) as image:
-                    dimensions = {"width": image.width, "height": image.height, "mode": image.mode}
-                    observations.append(f"Image dimensions: {image.width} x {image.height}.")
-            except Exception as error:  # noqa: BLE001 - file may not be an image.
-                observations.append(f"PIL could not parse image metadata: {error}.")
-
-        observations.append(f"File size: {info.get('sizeBytes', 0)} bytes.")
-        observations.append(f"MIME guess: {info.get('mime') or 'unknown'}.")
-        json_response(
-            self,
-            200,
-            {
-                "status": "ready",
-                "file": info,
-                "dimensions": dimensions,
-                "summary": "Local vision sidecar inspected the file without hosted inference.",
-                "observations": observations,
-            },
-        )
+        include_ocr = bool(payload.get("ocr") or payload.get("includeOcr"))
+        result = VISION.analyze_image(file_path, include_ocr=include_ocr)
+        json_response(self, 400 if result.get("status") == "needs-input" else 200, result)
 
     def handle_social_draft(self, payload: dict[str, Any]) -> None:
         draft = {

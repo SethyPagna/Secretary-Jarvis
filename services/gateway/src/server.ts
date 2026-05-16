@@ -1525,6 +1525,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   }
 
   if (request.method === "POST" && url.pathname === "/api/vision/capture-screen/dry-run") {
+    const brainDryRun = await brainJson<Record<string, unknown>>(
+      "/vision/capture-screen/dry-run",
+      { method: "POST", body: "{}" },
+      5000,
+    );
     const action: ActionRequest = {
       id: id("vision-screen"),
       title: "Capture current screen",
@@ -1538,7 +1543,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     const decision = evaluateActionPolicy({
       action,
       privacyMode: status.privacyMode,
-      allowedConnectors: getEnabledConnectorIds(),
+      allowedConnectors: action.connectorId ? [...getEnabledConnectorIds(), action.connectorId] : getEnabledConnectorIds(),
     });
     if (decision.decision === "requires_approval") {
       recordPendingApproval(action);
@@ -1548,12 +1553,13 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       action,
       decision,
       preview: "No screen capture was taken. Approval is required before Argus can inspect live pixels.",
+      brain: brainDryRun,
     });
     return;
   }
 
   if (request.method === "POST" && url.pathname === "/api/vision/analyze-image") {
-    const body = (await readBody(request)) as { filePath?: string; source?: string; mode?: VisionInsight["mode"] };
+    const body = (await readBody(request)) as { filePath?: string; source?: string; mode?: VisionInsight["mode"]; ocr?: boolean; includeOcr?: boolean };
     const timestamp = now();
     const mode = body.mode ?? (body.filePath ? "image" : "camera");
     const brainVision = body.filePath
@@ -1567,7 +1573,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
           "/vision/analyze-image",
           {
             method: "POST",
-            body: JSON.stringify({ filePath: body.filePath }),
+            body: JSON.stringify({ filePath: body.filePath, ocr: body.ocr ?? body.includeOcr ?? false }),
           },
           8000,
         )
