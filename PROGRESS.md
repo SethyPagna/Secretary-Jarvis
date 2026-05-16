@@ -209,12 +209,12 @@ Protocol:
 ## Phase 27 - Approval-Gated Runtime Repair Actions
 - [x] 27.1 Add runtime adapter repair dry-run domain logic and endpoint - commit `e8e5efc`
 - [x] 27.2 Surface runtime adapter repair dry-run buttons in HUD Settings - commit `5ed6102`
-- [ ] 27.3 Add runtime repair approval documentation
+- [x] 27.3 Add runtime repair approval documentation - commit `67cc80a`
 - [ ] 27.4 Verify runtime repair dry-runs with tests, builds, startup check-only scripts, and runtime smoke
 
 ## Current Priority
 
-Next task: Implement Phase 27.3 runtime repair approval documentation.
+Next task: Implement Phase 27.4 runtime repair dry-run verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
