@@ -795,6 +795,20 @@ Goal: make Jarvis feel like the manager of a specialist team. Every named soul s
 
 28.5 Verify Agent Manager readiness with core/gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke checks.
 
+## Extension Phase 29 - Interaction Health And Workflow Manager Polish
+
+Goal: make the assistant feel responsive and operational from the owner's point of view. Jarvis should show whether text, voice, workflow generation, workflow execution, editing/undo, approvals, and emergency controls are connected without stuffing the HUD with logs.
+
+29.1 Add an interaction health endpoint that summarizes command input, voice input, workflow autonomy, approved editing, undo coverage, approval pressure, and freeze risk.
+
+29.2 Surface interaction health in the HUD Settings panel as compact chips and status strips.
+
+29.3 Add workflow console polish for owner-approved automation proposals, including clearer generated-workflow approval state and manager delegation notes.
+
+29.4 Add documentation for run/wake/use flows: how to start Jarvis, wake it, talk while tasks run, approve generated workflows, undo edits, and stop safely.
+
+29.5 Verify interaction health with gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
