@@ -1815,6 +1815,33 @@ button {
     height: 76px !important;
   }
 
+  .orb-scan-ring {
+    inset: -4px;
+  }
+
+  .orb-data-arcs {
+    inset: -12px;
+  }
+
+  .orb-kinetic-frame {
+    inset: -18px;
+  }
+
+  .orb-particle-field {
+    inset: -22px;
+  }
+
+  .orb-particle-field i {
+    transform: rotate(calc(var(--i) * 30deg)) translateY(-52px);
+  }
+
+  .orb-state-glyph {
+    right: 0;
+    bottom: 2px;
+    width: 14px;
+    height: 14px;
+  }
+
   .radial-menu.open .radial-item {
     transform: translateX(calc(var(--mobile-x) * 1px)) translateY(102px) scale(1);
   }
@@ -1841,5 +1868,27 @@ button {
   .setting-list,
   .workflow-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-aura,
+  .orb-scan-ring,
+  .orb-data-arcs,
+  .orb-kinetic-frame,
+  .orb-particle-field,
+  .radial-item,
+  .radial-close,
+  .metrics-card,
+  .voice-wave i,
+  .mic-pulse {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+
+  .orb-data-arcs,
+  .orb-particle-field {
+    opacity: 0.42;
   }
 }
