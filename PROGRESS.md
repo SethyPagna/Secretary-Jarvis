@@ -220,7 +220,7 @@ Protocol:
 - [x] 28.5 Verify Agent Manager readiness with tests, builds, startup check-only scripts, and runtime smoke - commit `4826d9e`
 
 ## Phase 29 - Interaction Health And Workflow Manager Polish
-- [ ] 29.1 Add interaction health endpoint
+- [x] 29.1 Add interaction health endpoint - commit `70cfa7f`
 - [ ] 29.2 Surface interaction health in HUD Settings
 - [ ] 29.3 Polish workflow console owner-approved automation state
 - [ ] 29.4 Add run/wake/use flow documentation
@@ -228,7 +228,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Implement Phase 29.1 interaction health endpoint.
+Next task: Implement Phase 29.2 HUD interaction health summary.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
