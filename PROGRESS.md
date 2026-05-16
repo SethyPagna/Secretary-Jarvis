@@ -147,14 +147,14 @@ Protocol:
 
 ## Phase 18 - Approved Feature Setup Install Plans
 - [x] 18.1 Add feature setup install plans with command previews, manual steps, expected folders, validation checks, rollback/uninstall notes, and no execution - commit `b5600d9`
-- [ ] 18.2 Add approval-gated install dry-runs that create policy-reviewed action requests
+- [x] 18.2 Add approval-gated install dry-runs that create policy-reviewed action requests - commit `0aa8f64`
 - [ ] 18.3 Surface setup install plans in the HUD settings panel without text stuffing
 - [ ] 18.4 Add user-facing approved setup documentation
 - [ ] 18.5 Verify setup install plans with tests, builds, and runtime smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 18.2 approval-gated setup install dry-runs.
+Next task: Implement Phase 18.3 HUD setup install plan cards.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
