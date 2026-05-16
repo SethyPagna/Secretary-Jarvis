@@ -242,11 +242,11 @@ Protocol:
 - [x] 32.1 Add runtime self-test endpoint - commit `29181ab`
 - [x] 32.2 Surface runtime self-test in HUD Settings - commit `e212338`
 - [x] 32.3 Add runtime self-test documentation - commit `6196d73`
-- [ ] 32.4 Verify runtime self-test with tests, builds, startup check-only scripts, and runtime smoke
+- [x] 32.4 Verify runtime self-test with tests, builds, startup check-only scripts, and runtime smoke - commit `pending`
 
 ## Current Priority
 
-Next task: Phase 32 runtime self-test and compact actionable fixes.
+Next task: Continue with the next owner-requested refinement.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

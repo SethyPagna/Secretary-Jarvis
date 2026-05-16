@@ -87,7 +87,7 @@ function buildChecks(
   const packaging = params.packaging;
   const processVisibility = params.processVisibility;
   const services = params.services;
-  const startupConfigured = params.startupPlans.plans.some((plan) => plan.status === "ready" || plan.status === "registered");
+  const startupConfigured = params.startupPlans.plans.some((plan) => plan.status === "ready");
   const modelFixIds = ["fix-ollama-path", "fix-ollama-launch"].filter((id) => fixIds.has(id));
   const voiceFixIds = ["fix-hotword-enable"].filter((id) => fixIds.has(id));
   const startupFixIds = ["fix-start-runtime", "fix-register-startup"].filter((id) => fixIds.has(id));
@@ -159,7 +159,7 @@ function buildChecks(
 function buildFixes(params: Parameters<typeof buildRuntimeSelfTest>[0]): RuntimeSelfTestFix[] {
   const fixes: RuntimeSelfTestFix[] = [];
   const activation = params.activation;
-  const startupConfigured = params.startupPlans.plans.some((plan) => plan.status === "ready" || plan.status === "registered");
+  const startupConfigured = params.startupPlans.plans.some((plan) => plan.status === "ready");
 
   if (activation.ollama.status === "found-off-path") {
     fixes.push({
