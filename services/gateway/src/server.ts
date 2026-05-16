@@ -60,12 +60,9 @@ import {
   type WorkflowRunEvent,
   type WorkflowStep,
 } from "@jarvis/core";
-import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
+import { commandVersion, detectToolStatuses } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
 import { buildRuntimeEventHealth } from "./eventHealth.js";
-import { buildArchitectureMap } from "./architectureMap.js";
-import { buildAuthorityReadiness } from "./authorityReadiness.js";
-import { buildCodeHealthReport } from "./codeHealth.js";
 import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
@@ -78,7 +75,7 @@ import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { buildSetupActionGroups } from "./setupActions.js";
 import { buildSetupInstallPlanManifest, createSetupInstallDryRun } from "./setupInstallPlans.js";
-import { buildStartupReadiness } from "./startupReadiness.js";
+import { tryHandleReadinessRoute } from "./routes/readinessRoutes.js";
 import { JarvisStore } from "./store.js";
 import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
 import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
@@ -1586,66 +1583,17 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
-  if (request.method === "GET" && url.pathname === "/api/health") {
-    sendJson(response, 200, {
-      ok: true,
-      privacyMode: status.privacyMode,
-      activeModelId: status.activeModelId,
-      localOnly: status.privacyMode === "strict-local",
-      timestamp: new Date().toISOString(),
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/architecture/map") {
-    sendJson(response, 200, {
-      architecture: buildArchitectureMap(now()),
-      note: "Local architecture map for language boundaries, runtime hierarchy, optimization backlog, and hardening review.",
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/architecture/code-health") {
-    sendJson(response, 200, {
-      codeHealth: buildCodeHealthReport({
-        root: process.cwd(),
-        generatedAt: now(),
-      }),
-      note: "Local code-health scan for cleanup planning. Findings are review hints, not deletion instructions.",
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/runtime/startup-readiness") {
-    sendJson(response, 200, {
-      startup: buildStartupReadiness({
-        root: process.cwd(),
-        generatedAt: now(),
-      }),
-      note: "Read-only Windows startup/background readiness. This endpoint does not register tasks or elevate privileges.",
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/security/authority-readiness") {
-    const generatedAt = now();
-    const startup = buildStartupReadiness({
+  if (
+    tryHandleReadinessRoute({
+      method: request.method,
+      pathname: url.pathname,
+      status,
+      voiceAssetRoot: VOICE_ASSET_ROOT,
       root: process.cwd(),
-      generatedAt,
-    });
-    sendJson(response, 200, {
-      authority: buildAuthorityReadiness({
-        generatedAt,
-        privacyMode: status.privacyMode,
-        startup,
-      }),
-      note: "Authority hierarchy and approval rules for high-trust local control. This endpoint is read-only.",
-    });
-    return;
-  }
-
-  if (request.method === "GET" && url.pathname === "/api/setup/doctor") {
-    sendJson(response, 200, setupDoctor({ privacyMode: status.privacyMode, voiceAssetRoot: VOICE_ASSET_ROOT }));
+      now,
+      sendJson: (statusCode, body) => sendJson(response, statusCode, body),
+    })
+  ) {
     return;
   }
 
