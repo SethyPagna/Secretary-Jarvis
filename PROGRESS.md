@@ -175,7 +175,7 @@ Protocol:
 
 ## Phase 22 - Architecture And Runtime Hardening
 - [x] 22.1 Add local architecture map endpoint - commit `fcb9e17`
-- [ ] 22.2 Add code health scanner
+- [x] 22.2 Add code health scanner - commit `fefeda3`
 - [ ] 22.3 Add startup/background readiness checks
 - [ ] 22.4 Add high-trust authority readiness notes
 - [ ] 22.5 Surface architecture/startup/code-health summaries in HUD Settings
@@ -184,7 +184,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Implement Phase 22.2 code health scanner.
+Next task: Implement Phase 22.3 startup/background readiness checks.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
