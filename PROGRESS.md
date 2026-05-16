@@ -221,14 +221,14 @@ Protocol:
 
 ## Phase 29 - Interaction Health And Workflow Manager Polish
 - [x] 29.1 Add interaction health endpoint - commit `70cfa7f`
-- [ ] 29.2 Surface interaction health in HUD Settings
+- [x] 29.2 Surface interaction health in HUD Settings - commit `1ac3bda`
 - [ ] 29.3 Polish workflow console owner-approved automation state
 - [ ] 29.4 Add run/wake/use flow documentation
 - [ ] 29.5 Verify interaction health with tests, builds, startup check-only scripts, and runtime smoke
 
 ## Current Priority
 
-Next task: Implement Phase 29.2 HUD interaction health summary.
+Next task: Implement Phase 29.3 workflow console owner-approved automation polish.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
