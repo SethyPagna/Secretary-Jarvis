@@ -80,7 +80,7 @@ Protocol:
 
 ## Phase 9 - Workflow Engine & Self-Expanding Automation
 - [x] 9.1 Add workflow core domain - commit `034f8f6`
-- [ ] 9.2 Add workflow persistence and gateway API
+- [x] 9.2 Add workflow persistence and gateway API - commit `67e3527`
 - [ ] 9.3 Create HUD Workflow Console
 - [ ] 9.4 Implement workflow approval pop-ups
 - [ ] 9.5 Implement LLM-driven workflow generation
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `9.2 Add workflow persistence and gateway API`.
+Next task: `9.3 Create HUD Workflow Console`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
