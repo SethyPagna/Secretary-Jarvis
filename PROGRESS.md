@@ -149,12 +149,12 @@ Protocol:
 - [x] 18.1 Add feature setup install plans with command previews, manual steps, expected folders, validation checks, rollback/uninstall notes, and no execution - commit `b5600d9`
 - [x] 18.2 Add approval-gated install dry-runs that create policy-reviewed action requests - commit `0aa8f64`
 - [x] 18.3 Surface setup install plans in the HUD settings panel without text stuffing - commit `86be06d`
-- [ ] 18.4 Add user-facing approved setup documentation
+- [x] 18.4 Add user-facing approved setup documentation - commit `1230cdf`
 - [ ] 18.5 Verify setup install plans with tests, builds, and runtime smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 18.4 approved setup documentation.
+Next task: Implement Phase 18.5 verification for approved setup install plans.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
