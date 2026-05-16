@@ -235,12 +235,12 @@ Protocol:
 
 ## Phase 31 - HUD Bundle And Startup Responsiveness
 - [x] 31.1 Add Vite manual chunking for HUD dependencies - commit `17a0986`
-- [ ] 31.2 Add HUD build-output documentation
+- [x] 31.2 Add HUD build-output documentation - commit `f7f6760`
 - [ ] 31.3 Verify HUD bundle splitting with tests, builds, startup check-only scripts, and runtime smoke
 
 ## Current Priority
 
-Next task: Implement Phase 31.2 HUD build-output documentation.
+Next task: Implement Phase 31.3 verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
