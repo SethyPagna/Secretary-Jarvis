@@ -252,7 +252,7 @@ Protocol:
 - [x] 33.5 Verify friendly launch automation with check-only commands, tests, builds, and git push - commit `38c3ac7`
 
 ## Phase 34 - App-Mode Runtime And Live Text
-- [x] 34.1 Add friendly root responses for Gateway and Python Brain - commit `pending`
+- [x] 34.1 Add friendly root responses for Gateway and Python Brain - commit `44a4dcf`
 - [ ] 34.2 Add Electron app-mode local renderer loading
 - [ ] 34.3 Update default launcher to start app mode, with browser preview optional
 - [ ] 34.4 Extend runtime smoke for live text and root responses
