@@ -735,6 +735,18 @@ Goal: optimize the implementation after the architecture review by reducing over
 
 23.5 Verify the refactor with gateway tests, HUD tests, build checks, runtime smoke checks, and a code-health scan.
 
+## Extension Phase 24 - Admin Startup And Service Manager Polish
+
+Goal: make everyday background operation clearer to the owner: Jarvis should be visible in Windows process/task views, start at logon when configured, explain standard versus approved-admin mode, and never silently elevate.
+
+24.1 Add a read-only Windows process visibility summary that reports tracked Jarvis service names, PID files, expected process names, and whether each should appear in Task Manager.
+
+24.2 Add startup registration dry-run previews for standard Startup shortcut mode and elevated Scheduled Task mode. These previews must show commands, run level, rollback/removal instructions, and approval requirements without changing Windows.
+
+24.3 Add HUD Settings controls for startup readiness, live service status, approved-admin explanation, and emergency stop. Controls that alter startup or elevation must create approval requests first.
+
+24.4 Verify startup/background/admin readiness with gateway tests, HUD tests, startup script check-only mode, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

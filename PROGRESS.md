@@ -187,11 +187,17 @@ Protocol:
 - [x] 23.2 Extract model/runtime/security route handlers from the gateway server - commits `54ccab3`, `0cc2135`, `8d24a97`
 - [x] 23.3 Consolidate repeated HUD compact-card styles - commit `b31f70c`
 - [x] 23.4 Add HUD route-level code splitting for heavy panels - commit `bc56864`
-- [ ] 23.5 Verify refactor with gateway tests, HUD tests, builds, and runtime smoke checks
+- [x] 23.5 Verify refactor with gateway tests, HUD tests, builds, and runtime smoke checks - commit `c66fb67`
+
+## Phase 24 - Admin Startup And Service Manager Polish
+- [ ] 24.1 Add read-only Windows Task Manager/process visibility summary
+- [ ] 24.2 Add startup registration dry-run preview for standard and elevated modes
+- [ ] 24.3 Add HUD Settings controls for startup readiness, service status, and approved-admin explanation
+- [ ] 24.4 Add verification docs for startup/background/admin readiness
 
 ## Current Priority
 
-Next task: Implement Phase 23.5 refactor verification.
+Next task: Implement Phase 24.1 Windows process visibility summary.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
