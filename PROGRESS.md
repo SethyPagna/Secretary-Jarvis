@@ -49,7 +49,7 @@ Protocol:
 - [x] 4.1 Python vision service - commit `499b09a`
 - [x] 4.2 Add vision readiness/analyze/capture dry-run endpoints - implemented before tracker
 - [x] 4.3 Identity scaffolding - commit `3213b81`
-- [ ] 4.4 Privacy locks - partial policy gating exists
+- [x] 4.4 Privacy locks - commit `9b15273`
 
 ## Phase 5 - MemoryOS & 20-Minute Time-Travel Undo
 - [ ] 5.1 Define dedicated memory types in `memory.ts` - partial in `types.ts`
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `4.4 Privacy locks`.
+Next task: `5.1 Define dedicated memory types in memory.ts`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
