@@ -703,6 +703,24 @@ Goal: make text and voice commands feel alive after submission. Jarvis should cl
 
 21.5 Verify command capsule behavior with HUD build, UI tests, and runtime smoke checks.
 
+## Extension Phase 22 - Architecture And Runtime Hardening
+
+Goal: review and harden the whole Jarvis architecture: TypeScript, Python, native/C++ runtimes, gateways, workflows, background startup, authority boundaries, and cleanup opportunities.
+
+22.1 Add a local architecture map endpoint that describes each subsystem, language choice, responsibility, runtime boundary, and optimization notes.
+
+22.2 Add a code health scanner for duplicate exports, oversized files, likely dead files, stale docs, and redundant runtime paths.
+
+22.3 Add startup/background readiness checks for Windows scheduled task, Startup shortcut fallback, PID files, hidden process launch, and elevated/admin mode status.
+
+22.4 Add high-trust authority readiness notes that show which actions are allowed, approval-gated, denied, reversible, and eligible for 20-minute undo.
+
+22.5 Surface architecture/startup/code-health summaries in HUD Settings without text stuffing.
+
+22.6 Add documentation for the TypeScript/Python/native architecture review and optimization strategy.
+
+22.7 Verify architecture hardening with gateway tests, HUD tests, build checks, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

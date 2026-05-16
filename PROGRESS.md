@@ -173,9 +173,18 @@ Protocol:
 - [x] 21.4 Add HUD tests for command capsule submission and task-event updates - commit `85b217c`
 - [x] 21.5 Verify command capsule behavior with builds, UI tests, and runtime smoke checks - commit `40ef810`
 
+## Phase 22 - Architecture And Runtime Hardening
+- [ ] 22.1 Add local architecture map endpoint
+- [ ] 22.2 Add code health scanner
+- [ ] 22.3 Add startup/background readiness checks
+- [ ] 22.4 Add high-trust authority readiness notes
+- [ ] 22.5 Surface architecture/startup/code-health summaries in HUD Settings
+- [ ] 22.6 Add architecture review and optimization documentation
+- [ ] 22.7 Verify architecture hardening with tests, builds, and runtime smoke checks
+
 ## Current Priority
 
-Next task: Define Phase 22 for the next Jarvis refinement slice.
+Next task: Implement Phase 22.1 local architecture map endpoint.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
