@@ -721,6 +721,20 @@ Goal: review and harden the whole Jarvis architecture: TypeScript, Python, nativ
 
 22.7 Verify architecture hardening with gateway tests, HUD tests, build checks, and runtime smoke checks.
 
+## Extension Phase 23 - Route And UI Code Health Refactor
+
+Goal: optimize the implementation after the architecture review by reducing oversized files, duplicated UI patterns, old/dead code, and runtime redundancy while preserving all tested behavior.
+
+23.1 Extract health, architecture, startup, authority, and setup route handlers from the gateway server into focused modules.
+
+23.2 Extract model, runtime, security, system-action, and workflow route handlers from the gateway server where tests already protect behavior.
+
+23.3 Consolidate repeated HUD compact-card, setup-card, hardening-card, and status-chip styles into shared CSS primitives without changing the centered orb design.
+
+23.4 Add HUD route/panel-level code splitting for heavier panels such as workflows and setup so the background HUD stays fast.
+
+23.5 Verify the refactor with gateway tests, HUD tests, build checks, runtime smoke checks, and a code-health scan.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

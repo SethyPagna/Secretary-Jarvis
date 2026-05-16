@@ -180,11 +180,18 @@ Protocol:
 - [x] 22.4 Add high-trust authority readiness notes - commit `efc99ca`
 - [x] 22.5 Surface architecture/startup/code-health summaries in HUD Settings - commit `5c07652`
 - [x] 22.6 Add architecture review and optimization documentation - commit `7d98e5e`
-- [ ] 22.7 Verify architecture hardening with tests, builds, and runtime smoke checks
+- [x] 22.7 Verify architecture hardening with tests, builds, and runtime smoke checks - commit `d51effc`
+
+## Phase 23 - Route And UI Code Health Refactor
+- [ ] 23.1 Extract health/architecture/setup route handlers from the gateway server
+- [ ] 23.2 Extract model/runtime/security route handlers from the gateway server
+- [ ] 23.3 Consolidate repeated HUD compact-card styles
+- [ ] 23.4 Add HUD route-level code splitting for heavy panels
+- [ ] 23.5 Verify refactor with gateway tests, HUD tests, builds, and runtime smoke checks
 
 ## Current Priority
 
-Next task: Implement Phase 22.7 verification for architecture hardening.
+Next task: Implement Phase 23.1 gateway health/architecture/setup route extraction.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
