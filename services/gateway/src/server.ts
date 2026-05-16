@@ -77,6 +77,7 @@ import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
 import { buildSetupActionGroups } from "./setupActions.js";
 import { buildSetupInstallPlanManifest, createSetupInstallDryRun } from "./setupInstallPlans.js";
+import { buildStartupReadiness } from "./startupReadiness.js";
 import { JarvisStore } from "./store.js";
 import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
 import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
@@ -1610,6 +1611,17 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         generatedAt: now(),
       }),
       note: "Local code-health scan for cleanup planning. Findings are review hints, not deletion instructions.",
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/runtime/startup-readiness") {
+    sendJson(response, 200, {
+      startup: buildStartupReadiness({
+        root: process.cwd(),
+        generatedAt: now(),
+      }),
+      note: "Read-only Windows startup/background readiness. This endpoint does not register tasks or elevate privileges.",
     });
     return;
   }
