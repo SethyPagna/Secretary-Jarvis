@@ -1,5 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useRef } from "react";
+import type { CSSProperties } from "react";
 import type { Mesh } from "three";
 import type { HudState } from "@jarvis/core";
 
@@ -78,6 +79,12 @@ export function Orb({
       <span className="orb-aura" />
       <span className="orb-scan-ring" aria-hidden="true" />
       <span className="orb-data-arcs" aria-hidden="true" />
+      <span className="orb-kinetic-frame" aria-hidden="true" />
+      <span className="orb-particle-field" aria-hidden="true">
+        {Array.from({ length: 12 }, (_, index) => (
+          <i key={index} style={{ "--i": index } as CSSProperties} />
+        ))}
+      </span>
       <span className="orb-state-glyph" aria-hidden="true" />
       <Canvas className="orb-canvas" camera={{ position: [0, 0, 4.4], fov: 42 }} gl={{ alpha: true, antialias: true }}>
         <ambientLight intensity={0.55} />
