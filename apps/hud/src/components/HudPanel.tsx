@@ -153,11 +153,21 @@ export function HudPanel({
     if (!text.trim()) {
       return;
     }
-    await fetch(`${apiBaseUrl}/api/chat`, {
+    const payload = await fetch(`${apiBaseUrl}/api/chat`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ message: text.trim(), taskProfile: "daily-assistant" })
-    }).catch(() => undefined);
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as ChatQueuedResponse | undefined;
+    if (payload?.task) {
+      onCommandQueued?.({
+        taskId: payload.task.id,
+        state: "queued",
+        title: payload.task.title,
+        detail: compactDetail(payload.task.title)
+      });
+    }
     setText("");
     onClose();
   }
@@ -180,6 +190,14 @@ export function HudPanel({
       .catch(() => undefined) as VoiceSessionResponse | undefined;
     if (payload?.voiceSession) {
       setVoiceSession(payload.voiceSession);
+      if (payload.task) {
+        onCommandQueued?.({
+          taskId: payload.task.id,
+          state: "queued",
+          title: payload.task.title,
+          detail: compactDetail(payload.task.title)
+        });
+      }
     }
   }
 
@@ -468,6 +486,17 @@ interface VoiceReadinessResponse {
 
 interface VoiceSessionResponse {
   voiceSession?: VoiceSession;
+  task?: {
+    id: string;
+    title: string;
+  };
+}
+
+interface ChatQueuedResponse {
+  task?: {
+    id: string;
+    title: string;
+  };
 }
 
 interface SetupActionGroupsResponse {
@@ -526,4 +555,8 @@ function Widget({ label, value }: { label: string; value: string }) {
       <strong>{value}</strong>
     </span>
   );
+}
+
+function compactDetail(value: string): string {
+  return value.length > 64 ? `${value.slice(0, 61)}...` : value;
 }
