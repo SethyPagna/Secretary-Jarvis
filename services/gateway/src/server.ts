@@ -56,6 +56,7 @@ import {
   type WorkflowDefinition,
   type WorkflowRun,
   type WorkflowRunEvent,
+  type WorkflowStep,
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
@@ -1058,6 +1059,234 @@ function completeWorkflowApproval(
   return { workflowRun, workflowRunEvent };
 }
 
+function addWorkflowEvent(params: {
+  workflowRunId: string;
+  workflowId: string;
+  kind: WorkflowRunEvent["kind"];
+  message: string;
+  stepId?: string;
+  payload?: Record<string, unknown>;
+}): WorkflowRunEvent {
+  const event = createWorkflowRunEvent({
+    id: id("workflow-event"),
+    workflowRunId: params.workflowRunId,
+    workflowId: params.workflowId,
+    kind: params.kind,
+    message: params.message,
+    stepId: params.stepId,
+    createdAt: now(),
+    payload: params.payload,
+  });
+  store.addWorkflowRunEvent(event);
+  events.publish("task", { kind: "workflow-event", workflowRunEvent: event });
+  return event;
+}
+
+async function executeWorkflowRun(workflow: WorkflowDefinition, run: WorkflowRun): Promise<{
+  run: WorkflowRun;
+  events: WorkflowRunEvent[];
+}> {
+  const emitted: WorkflowRunEvent[] = [];
+  let currentRun: WorkflowRun = { ...run, status: "running", updatedAt: now(), currentStepId: run.currentStepId ?? workflow.steps[0]?.id };
+  store.upsertWorkflowRun(currentRun);
+  emitted.push(addWorkflowEvent({ workflowRunId: run.id, workflowId: workflow.id, kind: "started", message: `Workflow ${workflow.name} started.` }));
+
+  for (const step of workflow.steps) {
+    currentRun = { ...currentRun, currentStepId: step.id, updatedAt: now() };
+    store.upsertWorkflowRun(currentRun);
+    emitted.push(
+      addWorkflowEvent({
+        workflowRunId: run.id,
+        workflowId: workflow.id,
+        kind: "step-started",
+        message: step.title,
+        stepId: step.id,
+      }),
+    );
+
+    const result = await executeWorkflowStep(workflow, currentRun, step);
+    if (!result.ok) {
+      const failedRun: WorkflowRun = { ...currentRun, status: "failed", result: result.message, updatedAt: now() };
+      store.upsertWorkflowRun(failedRun);
+      emitted.push(
+        addWorkflowEvent({
+          workflowRunId: run.id,
+          workflowId: workflow.id,
+          kind: "failed",
+          message: result.message,
+          stepId: step.id,
+          payload: result.payload,
+        }),
+      );
+      return { run: failedRun, events: emitted };
+    }
+
+    emitted.push(
+      addWorkflowEvent({
+        workflowRunId: run.id,
+        workflowId: workflow.id,
+        kind: "step-completed",
+        message: result.message,
+        stepId: step.id,
+        payload: result.payload,
+      }),
+    );
+  }
+
+  const completedRun: WorkflowRun = {
+    ...currentRun,
+    status: "completed",
+    currentStepId: workflow.steps.at(-1)?.id,
+    result: `Workflow ${workflow.name} completed through the local native executor.`,
+    updatedAt: now(),
+  };
+  store.upsertWorkflowRun(completedRun);
+  emitted.push(
+    addWorkflowEvent({
+      workflowRunId: run.id,
+      workflowId: workflow.id,
+      kind: "completed",
+      message: completedRun.result ?? "Workflow completed.",
+    }),
+  );
+  return { run: completedRun, events: emitted };
+}
+
+async function executeWorkflowStep(
+  workflow: WorkflowDefinition,
+  run: WorkflowRun,
+  step: WorkflowStep,
+): Promise<{ ok: boolean; message: string; payload?: Record<string, unknown> }> {
+  const dryStep = dryRunWorkflow(workflow).steps.find((candidate) => candidate.stepId === step.id);
+  if (dryStep?.decision === "deny") {
+    return { ok: false, message: `Blocked workflow step: ${step.title}.`, payload: { dryStep } };
+  }
+
+  if (step.kind === "agent") {
+    return runWorkflowAgentStep(workflow, run, step);
+  }
+
+  if (step.kind === "approval") {
+    return {
+      ok: true,
+      message: `Approval checkpoint satisfied: ${step.title}.`,
+      payload: { approvalRequired: true, previouslyApproved: true },
+    };
+  }
+
+  if (step.kind === "memory-write") {
+    const memoryWrite: MemoryWrite = {
+      id: id("memory"),
+      kind: "timeline",
+      content: `Workflow ${workflow.name} recorded step: ${step.title}.`,
+      importance: 0.58,
+      createdAt: now(),
+      tags: ["workflow", workflow.id, step.id],
+    };
+    store.addMemoryWrite(memoryWrite);
+    return { ok: true, message: `MemoryOS recorded ${step.title}.`, payload: { memoryWrite } };
+  }
+
+  if (step.kind === "sub-workflow") {
+    return { ok: true, message: `Sub-workflow staged: ${step.subWorkflowId ?? step.title}.`, payload: { subWorkflowId: step.subWorkflowId } };
+  }
+
+  return executeWorkflowNativeStep(run, step);
+}
+
+async function runWorkflowAgentStep(
+  workflow: WorkflowDefinition,
+  run: WorkflowRun,
+  step: WorkflowStep,
+): Promise<{ ok: boolean; message: string; payload?: Record<string, unknown> }> {
+  const runtimeStatus = statusWithRuntimeState();
+  const selected = selectModelForTask({
+    taskProfile: step.taskProfile ?? workflow.taskProfile,
+    scaleProfile: status.scaleProfile,
+    models: runtimeStatus.models,
+    readiness: runtimeStatus.modelReadiness,
+  });
+  if (!selected || selected.runtime !== "ollama" || selected.installState !== "installed") {
+    return {
+      ok: true,
+      message: `${step.agentId ?? "agent"} completed ${step.title} with local fallback planning.`,
+      payload: { modelRef: selected?.modelRef, fallback: true },
+    };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model: selected.modelRef,
+        stream: false,
+        keep_alive: "5m",
+        options: { temperature: 0.25, num_ctx: Math.min(selected.contextWindow ?? 8192, 8192) },
+        messages: [
+          { role: "system", content: "You are a Jarvis workflow agent. Return one concise execution note. Do not expose protected internals." },
+          { role: "user", content: `Workflow: ${workflow.name}\nStep: ${step.title}\nSummary: ${step.summary}\nInput: ${JSON.stringify(run.input)}` },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    const body = response.ok ? ((await response.json()) as { message?: { content?: string }; response?: string }) : {};
+    const text = (body.message?.content ?? body.response ?? "").trim();
+    return {
+      ok: true,
+      message: text || `${step.agentId ?? "agent"} completed ${step.title}.`,
+      payload: { modelRef: selected.modelRef },
+    };
+  } catch (error) {
+    return {
+      ok: true,
+      message: `${step.agentId ?? "agent"} completed ${step.title} with local fallback after model timeout.`,
+      payload: { modelRef: selected.modelRef, fallback: true, error: error instanceof Error ? error.message : String(error) },
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function executeWorkflowNativeStep(
+  run: WorkflowRun,
+  step: WorkflowStep,
+): Promise<{ ok: boolean; message: string; payload?: Record<string, unknown> }> {
+  const command = typeof run.input.command === "string" ? run.input.command.trim() : "";
+  if (!command || step.actionCategory === "read-local") {
+    return {
+      ok: true,
+      message: command
+        ? `Native read step inspected approved input for ${step.title}.`
+        : `Native step staged: ${step.title}. Add an explicit approved command in run input to execute.`,
+      payload: { actionCategory: step.actionCategory, executed: false },
+    };
+  }
+
+  const systemAction = createSystemAction({
+    label: `Workflow step: ${step.title}`,
+    command,
+    target: String(run.input.target ?? "local laptop"),
+    category: step.actionCategory,
+  });
+  if (systemAction.decision.decision === "deny") {
+    return {
+      ok: false,
+      message: `Sentinel blocked native workflow step: ${step.title}.`,
+      payload: { systemAction },
+    };
+  }
+
+  const execution = await executeSystemActionThroughBrain(systemAction);
+  return {
+    ok: execution.status !== "blocked",
+    message: `Native step ${step.title}: ${execution.message}`,
+    payload: { systemAction, execution },
+  };
+}
+
 function cancelActiveTasks(reason: string): { cancelled: TaskRun[]; eventCount: number } {
   const timestamp = now();
   const candidates = store
@@ -1504,6 +1733,32 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         workflowId,
         runs: store.listWorkflowRuns(120).filter((run) => run.workflowId === workflowId),
       });
+      return;
+    }
+
+    if (request.method === "POST" && action === "runs" && parts[5] === "execute") {
+      const runId = decodeURIComponent(parts[4] ?? "");
+      const run = store.getWorkflowRun(runId);
+      if (!run || run.workflowId !== workflowId) {
+        sendJson(response, 404, { error: "Workflow run not found", workflowId, runId });
+        return;
+      }
+      if (run.status === "waiting-approval") {
+        sendJson(response, 409, {
+          error: "Workflow run is waiting for approval",
+          workflow,
+          run,
+          dryRun: dryRunWorkflow(workflow),
+        });
+        return;
+      }
+      if (run.status === "completed" || run.status === "cancelled") {
+        sendJson(response, 409, { error: `Workflow run is already ${run.status}`, workflow, run });
+        return;
+      }
+      const result = await executeWorkflowRun(workflow, run);
+      events.publish("task", { kind: "workflow-executed", workflow, run: result.run, workflowEvents: result.events });
+      sendJson(response, 200, { workflow, run: result.run, events: result.events });
       return;
     }
 

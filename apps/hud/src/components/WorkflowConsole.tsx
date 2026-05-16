@@ -16,6 +16,7 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
   const [generated, setGenerated] = useState<WorkflowGenerationResult | null>(null);
   const [generating, setGenerating] = useState(false);
   const [savingGenerated, setSavingGenerated] = useState(false);
+  const [executingRunId, setExecutingRunId] = useState("");
 
   async function load() {
     const response = await fetch(`${apiBaseUrl}/api/workflows`);
@@ -84,6 +85,17 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
       await load().catch(() => undefined);
     }
     setSavingGenerated(false);
+  }
+
+  async function executeRun(workflowId: string, runId: string) {
+    setExecutingRunId(runId);
+    await fetch(`${apiBaseUrl}/api/workflows/${encodeURIComponent(workflowId)}/runs/${encodeURIComponent(runId)}/execute`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    }).catch(() => undefined);
+    await load().catch(() => undefined);
+    setExecutingRunId("");
   }
 
   return (
@@ -168,7 +180,21 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
                 })}
               </div>
               <div className="workflow-runs">
-                {recentRuns.length ? recentRuns.map((run) => <span key={run.id}>{run.status} / {run.currentStepId ?? "ready"}</span>) : <span>No recent runs.</span>}
+                {recentRuns.length ? (
+                  recentRuns.map((run) => (
+                    <span key={run.id} className="workflow-run-row">
+                      <b>{run.status}</b>
+                      <small>{run.currentStepId ?? "ready"}</small>
+                      {run.status === "queued" && (
+                        <button type="button" onClick={() => void executeRun(run.workflowId, run.id)} disabled={executingRunId === run.id}>
+                          {executingRunId === run.id ? "Running" : "Run"}
+                        </button>
+                      )}
+                    </span>
+                  ))
+                ) : (
+                  <span>No recent runs.</span>
+                )}
               </div>
             </>
           ) : (

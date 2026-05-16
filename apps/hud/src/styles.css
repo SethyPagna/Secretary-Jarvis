@@ -824,6 +824,28 @@ button {
   padding: 0 12px;
 }
 
+.workflow-run-row {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.workflow-run-row b,
+.workflow-run-row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workflow-run-row button {
+  min-width: 54px;
+  height: 26px;
+  border: 1px solid rgba(0, 255, 136, 0.24);
+  border-radius: 999px;
+  color: white;
+  background: rgba(0, 255, 136, 0.08);
+}
+
 @keyframes orb-breathe {
   0%,
   100% {
