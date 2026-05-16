@@ -296,7 +296,7 @@ Protocol:
 - [x] 39.5 Responsive HUD/workflow CSS and mobile overflow verification - commit `5655544`
 - [x] 39.6 Safe outer-folder organization dry-run script - commit `5655544`
 - [x] 39.7 Harden Electron preload bridge for production app controls - commit `f2b78c7`
-- [x] 39.8 Verify HUD UI tests, full build, core/gateway tests, runtime status, Electron visual smoke, and push - pending push
+- [x] 39.8 Verify HUD UI tests, full build, core/gateway tests, runtime status, Electron visual smoke, and push - commits `5655544`, `f2b78c7`, `3701f33`
 
 ## Current Priority
 
