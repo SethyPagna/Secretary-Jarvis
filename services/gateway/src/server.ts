@@ -70,6 +70,7 @@ import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManife
 import { probeModelRuntime } from "./modelProbe.js";
 import { buildPackagingReadiness } from "./packagingReadiness.js";
 import { buildProcessVisibilityStatus } from "./processVisibility.js";
+import { createRuntimeAdapterRepairDryRun, isRuntimeAdapterRepairKind } from "./runtimeAdapterRepair.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
@@ -117,6 +118,15 @@ const pendingSystemActions = new Map<string, SystemAction>();
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
   response.writeHead(statusCode, JSON_HEADERS);
   response.end(JSON.stringify(body, null, 2));
+}
+
+function runtimeActivationReadiness() {
+  return buildWakeRuntimeActivationReadiness({
+    root: process.cwd(),
+    generatedAt: now(),
+    voiceReadiness: buildVoiceRuntimeReadiness({ voiceAssets: status.voiceAssets ?? [], voiceAssetRoot: VOICE_ASSET_ROOT }),
+    ollamaEndpoint: OLLAMA_URL,
+  });
 }
 
 function sendVoiceAsset(response: ServerResponse, fileName: string): void {
@@ -2073,13 +2083,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     packagingReadiness: () => buildPackagingReadiness({ root: process.cwd(), generatedAt: now() }),
     processVisibilityStatus: () => buildProcessVisibilityStatus({ generatedAt: now() }),
     startupRegistrationPlans: () => buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
-    wakeRuntimeActivation: () =>
-      buildWakeRuntimeActivationReadiness({
-        root: process.cwd(),
-        generatedAt: now(),
-        voiceReadiness: buildVoiceRuntimeReadiness({ voiceAssets: status.voiceAssets ?? [], voiceAssetRoot: VOICE_ASSET_ROOT }),
-        ollamaEndpoint: OLLAMA_URL,
-      }),
+    wakeRuntimeActivation: runtimeActivationReadiness,
     store,
     approvals: status.pendingApprovals,
   });
@@ -2115,6 +2119,36 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     }
     events.publish("security", { runtimeControl: dryRun });
     sendJson(response, dryRun.decision.decision === "deny" ? 403 : 200, { dryRun });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/runtime/adapter-repair/dry-run") {
+    const body = (await readBody(request)) as { repair?: string };
+    const repair = String(body.repair ?? "").trim();
+    if (!isRuntimeAdapterRepairKind(repair)) {
+      sendJson(response, 400, { error: "repair must be ollama-path, ollama-launch, lmstudio-endpoint, or hotword-enable" });
+      return;
+    }
+    const dryRun = createRuntimeAdapterRepairDryRun({
+      id: id("runtime-repair"),
+      repair,
+      activation: runtimeActivationReadiness(),
+      createdAt: now(),
+      evaluate: (action) =>
+        evaluateActionPolicy({
+          action,
+          privacyMode: status.privacyMode,
+          allowedConnectors: [...getEnabledConnectorIds(), "local-model-runtime"],
+        }),
+    });
+    if (dryRun.decision.decision === "requires_approval") {
+      recordPendingApproval(dryRun.action);
+    }
+    events.publish("security", { kind: "runtime-adapter-repair-dry-run", dryRun });
+    sendJson(response, dryRun.decision.decision === "deny" ? 403 : 202, {
+      dryRun,
+      message: "Runtime adapter repair dry-run only. No PATH, app, endpoint, or microphone state was changed.",
+    });
     return;
   }
 
