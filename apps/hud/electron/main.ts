@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const DEV_HUD_URL = "http://127.0.0.1:5175";
 const HUD_URL = process.env.JARVIS_HUD_URL;
+const HUD_MODE = process.env.JARVIS_HUD_MODE ?? "dev";
 const DASHBOARD_URL = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:5174";
 const GATEWAY_URL = process.env.JARVIS_GATEWAY_URL ?? "http://127.0.0.1:4317";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -43,6 +44,8 @@ function createHudWindow(): BrowserWindow {
   window.setAlwaysOnTop(true, "screen-saver");
   if (HUD_URL) {
     void window.loadURL(HUD_URL);
+  } else if (HUD_MODE === "app") {
+    void window.loadFile(path.join(__dirname, "../dist/index.html"));
   } else if (app.isPackaged) {
     void window.loadFile(path.join(__dirname, "../dist/index.html"));
   } else {
