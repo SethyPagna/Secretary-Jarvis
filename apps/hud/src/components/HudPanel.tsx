@@ -51,6 +51,7 @@ export function HudPanel({
   const [packagingReadiness, setPackagingReadiness] = useState<PackagingReadinessSummary | null>(null);
   const [activationReadiness, setActivationReadiness] = useState<WakeRuntimeActivationSummary | null>(null);
   const [agentManagerReadiness, setAgentManagerReadiness] = useState<AgentManagerReadinessSummary | null>(null);
+  const [interactionHealth, setInteractionHealth] = useState<InteractionHealthSummary | null>(null);
   const [adapterRepairDryRuns, setAdapterRepairDryRuns] = useState<Record<string, AdapterRepairDryRunSummary>>({});
   const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
   const models = status?.models ?? [];
@@ -314,6 +315,32 @@ export function HudPanel({
               voiceStatus: agent.voiceStatus,
               voiceStyle: agent.voiceStyle
             }))
+          });
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/interaction-health`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: InteractionHealthResponse | undefined) => {
+        if (!cancelled && payload?.interaction) {
+          setInteractionHealth({
+            surfaces: payload.interaction.surfaces.map((surface) => ({
+              id: surface.id,
+              label: surface.label,
+              status: surface.status
+            })),
+            runningTasks: payload.interaction.metrics.runningTasks,
+            queuedItems: payload.interaction.metrics.queuedItems,
+            waitingApprovals: payload.interaction.metrics.waitingApprovals,
+            activeWorkflowRuns: payload.interaction.metrics.activeWorkflowRuns,
+            generatedWorkflows: payload.interaction.metrics.generatedWorkflows,
+            enabledWorkflows: payload.interaction.metrics.enabledWorkflows,
+            availableUndos: payload.interaction.metrics.availableUndos,
+            responsive: payload.interaction.summary.responsive,
+            canTalkWhileWorking: payload.interaction.summary.canTalkWhileWorking,
+            workflowAutonomyApprovalGated: payload.interaction.summary.workflowAutonomyApprovalGated,
+            editingUndoReady: payload.interaction.summary.editingUndoReady,
+            freezeRisk: payload.interaction.summary.freezeRisk
           });
         }
       })
@@ -779,6 +806,35 @@ export function HudPanel({
               </span>
             ))}
           </div>
+          <div className="interaction-health-strip" aria-label="Interaction health">
+            {(["text", "voice", "workflow-generate", "undo"] as const).map((surfaceId) => {
+              const surface = interactionHealth?.surfaces.find((candidate) => candidate.id === surfaceId);
+              return (
+                <span key={surfaceId}>
+                  <small>{surface?.label ?? interactionLabel(surfaceId)}</small>
+                  <strong>{surface?.status ?? "--"}</strong>
+                </span>
+              );
+            })}
+          </div>
+          <div className="interaction-metrics-strip" aria-label="Interaction response pressure">
+            <span>
+              <small>Queue</small>
+              <strong>{interactionHealth ? `${interactionHealth.runningTasks}/${interactionHealth.queuedItems}` : "--"}</strong>
+            </span>
+            <span>
+              <small>Approvals</small>
+              <strong>{interactionHealth?.waitingApprovals ?? "--"}</strong>
+            </span>
+            <span>
+              <small>Workflows</small>
+              <strong>{interactionHealth ? `${interactionHealth.generatedWorkflows}/${interactionHealth.enabledWorkflows}` : "--"}</strong>
+            </span>
+            <span>
+              <small>Freeze</small>
+              <strong>{interactionHealth?.freezeRisk ?? "--"}</strong>
+            </span>
+          </div>
           <div className="setup-groups" aria-label="Setup action groups">
             {setupGroups.map((group) => (
               <span key={group.id}>
@@ -1207,6 +1263,56 @@ interface AgentManagerReadinessSummary {
   }>;
 }
 
+type InteractionSurfaceId = "text" | "voice" | "workflow-generate" | "workflow-execute" | "editing" | "undo" | "approvals" | "emergency-stop";
+type InteractionSurfaceStatus = "ready" | "staged" | "attention" | "blocked";
+
+interface InteractionHealthResponse {
+  interaction?: {
+    surfaces: Array<{
+      id: InteractionSurfaceId;
+      label: string;
+      status: InteractionSurfaceStatus;
+      detail: string;
+    }>;
+    metrics: {
+      runningTasks: number;
+      queuedItems: number;
+      waitingApprovals: number;
+      activeWorkflowRuns: number;
+      generatedWorkflows: number;
+      enabledWorkflows: number;
+      availableUndos: number;
+    };
+    summary: {
+      responsive: boolean;
+      canTalkWhileWorking: boolean;
+      workflowAutonomyApprovalGated: boolean;
+      editingUndoReady: boolean;
+      freezeRisk: "low" | "attention";
+    };
+  };
+}
+
+interface InteractionHealthSummary {
+  surfaces: Array<{
+    id: InteractionSurfaceId;
+    label: string;
+    status: InteractionSurfaceStatus;
+  }>;
+  runningTasks: number;
+  queuedItems: number;
+  waitingApprovals: number;
+  activeWorkflowRuns: number;
+  generatedWorkflows: number;
+  enabledWorkflows: number;
+  availableUndos: number;
+  responsive: boolean;
+  canTalkWhileWorking: boolean;
+  workflowAutonomyApprovalGated: boolean;
+  editingUndoReady: boolean;
+  freezeRisk: "low" | "attention";
+}
+
 function Widget({ label, value }: { label: string; value: string }) {
   return (
     <span className="hud-widget">
@@ -1235,4 +1341,18 @@ function repairLabel(repair: RuntimeAdapterRepairKind): string {
     "hotword-enable": "Hotword",
   };
   return labels[repair];
+}
+
+function interactionLabel(surfaceId: InteractionSurfaceId): string {
+  const labels: Record<InteractionSurfaceId, string> = {
+    text: "Text",
+    voice: "Voice",
+    "workflow-generate": "Generate",
+    "workflow-execute": "Execute",
+    editing: "Editing",
+    undo: "Undo",
+    approvals: "Approvals",
+    "emergency-stop": "Stop",
+  };
+  return labels[surfaceId];
 }

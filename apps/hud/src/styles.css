@@ -1007,7 +1007,9 @@ button {
 }
 
 .agent-manager-strip,
-.agent-voice-strip {
+.agent-voice-strip,
+.interaction-health-strip,
+.interaction-metrics-strip {
   width: min(560px, 100%);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1016,7 +1018,9 @@ button {
 }
 
 .agent-manager-strip span,
-.agent-voice-strip span {
+.agent-voice-strip span,
+.interaction-health-strip span,
+.interaction-metrics-strip span {
   min-width: 0;
   display: grid;
   gap: 5px;
@@ -1032,7 +1036,11 @@ button {
 .agent-manager-strip strong,
 .agent-voice-strip small,
 .agent-voice-strip strong,
-.agent-voice-strip em {
+.agent-voice-strip em,
+.interaction-health-strip small,
+.interaction-health-strip strong,
+.interaction-metrics-strip small,
+.interaction-metrics-strip strong {
   overflow: hidden;
   max-width: 100%;
   text-overflow: ellipsis;
@@ -1041,14 +1049,18 @@ button {
 
 .agent-manager-strip small,
 .agent-voice-strip small,
-.agent-voice-strip em {
+.agent-voice-strip em,
+.interaction-health-strip small,
+.interaction-metrics-strip small {
   color: rgba(255, 255, 255, 0.58);
   font-size: 11px;
   font-style: normal;
 }
 
 .agent-manager-strip strong,
-.agent-voice-strip strong {
+.agent-voice-strip strong,
+.interaction-health-strip strong,
+.interaction-metrics-strip strong {
   color: var(--hud-green);
   font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
   text-transform: uppercase;
@@ -2225,6 +2237,8 @@ button {
   .adapter-repair-grid,
   .agent-manager-strip,
   .agent-voice-strip,
+  .interaction-health-strip,
+  .interaction-metrics-strip,
   .setup-groups,
   .setup-approval-summary,
   .setup-install-strip,

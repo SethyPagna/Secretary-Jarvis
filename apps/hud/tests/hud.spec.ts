@@ -414,6 +414,46 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/runtime/interaction-health")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          interaction: {
+            generatedAt: "2026-05-16T00:00:00.000Z",
+            localOnly: true,
+            surfaces: [
+              { id: "text", label: "Text", status: "ready", detail: "Text commands queue into Jarvis." },
+              { id: "voice", label: "Voice", status: "ready", detail: "Voice sessions are wired." },
+              { id: "workflow-generate", label: "Generate", status: "ready", detail: "Workflow drafts are approval-gated." },
+              { id: "workflow-execute", label: "Execute", status: "ready", detail: "Enabled workflows can run with policy checks." },
+              { id: "editing", label: "Editing", status: "ready", detail: "Edits are checkpointed." },
+              { id: "undo", label: "Undo", status: "ready", detail: "Undo journal is ready." },
+              { id: "approvals", label: "Approvals", status: "ready", detail: "No backlog." },
+              { id: "emergency-stop", label: "Stop", status: "ready", detail: "Emergency stop is wired." },
+            ],
+            metrics: {
+              runningTasks: 0,
+              queuedItems: 1,
+              waitingApprovals: 0,
+              activeWorkflowRuns: 0,
+              generatedWorkflows: 1,
+              enabledWorkflows: 4,
+              availableUndos: 0,
+            },
+            summary: {
+              responsive: true,
+              canTalkWhileWorking: true,
+              workflowAutonomyApprovalGated: true,
+              editingUndoReady: true,
+              freezeRisk: "low",
+            },
+            recommendations: [],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().endsWith("/api/runtime/control/dry-run")) {
       const payload = route.request().postDataJSON() as { control?: string };
       await route.fulfill({
@@ -742,6 +782,13 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(panel.getByLabel("Agent voice personalities")).toContainText("Jarvis");
   await expect(panel.getByLabel("Agent voice personalities")).toContainText("Friday");
   await expect(panel.getByLabel("Agent voice personalities")).toContainText("ready");
+  await expect(panel.getByLabel("Interaction health")).toContainText("Text");
+  await expect(panel.getByLabel("Interaction health")).toContainText("Voice");
+  await expect(panel.getByLabel("Interaction health")).toContainText("Generate");
+  await expect(panel.getByLabel("Interaction health")).toContainText("Undo");
+  await expect(panel.getByLabel("Interaction response pressure")).toContainText("0/1");
+  await expect(panel.getByLabel("Interaction response pressure")).toContainText("1/4");
+  await expect(panel.getByLabel("Interaction response pressure")).toContainText("low");
   await hardening.locator(".hardening-card", { hasText: "Authority" }).locator("summary").click();
   await expect(hardening).toContainText("9 gated");
   await hardening.locator(".hardening-card", { hasText: "Code health" }).locator("summary").click();
