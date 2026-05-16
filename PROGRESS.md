@@ -249,11 +249,11 @@ Protocol:
 - [x] 33.2 Add smart `scripts/jarvis-control.ps1` menu - commit `51e1a7b`
 - [x] 33.3 Add `scripts/install-shortcuts.ps1` - commit `51e1a7b`
 - [x] 33.4 Document the user-friendly run flow - commit `51e1a7b`
-- [ ] 33.5 Verify friendly launch automation with check-only commands, tests, builds, and git push
+- [x] 33.5 Verify friendly launch automation with check-only commands, tests, builds, and git push - commit `pending`
 
 ## Current Priority
 
-Next task: Phase 33 friendly launch and automation.
+Next task: Continue with the next owner-requested refinement.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

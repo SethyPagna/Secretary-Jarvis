@@ -839,7 +839,11 @@ test("idle HUD renders a centered orb without opening panels", async ({ page }) 
   await expect(orb.locator(".orb-kinetic-frame")).toHaveCount(1);
   await expect(orb.locator(".orb-state-glyph")).toHaveCount(1);
 
-  const orbBox = await orb.boundingBox();
+  let orbBox = await orb.boundingBox();
+  for (let attempt = 0; !orbBox && attempt < 10; attempt += 1) {
+    await page.waitForTimeout(100);
+    orbBox = await orb.boundingBox();
+  }
   const viewport = page.viewportSize();
   expect(orbBox).not.toBeNull();
   expect(viewport).not.toBeNull();

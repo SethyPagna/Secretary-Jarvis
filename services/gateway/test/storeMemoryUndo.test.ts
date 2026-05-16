@@ -95,6 +95,9 @@ describe("JarvisStore MemoryOS and undo journal", () => {
   });
 
   it("keeps active undo checkpoints available within the 20-minute window", () => {
+    const activeNow = new Date();
+    const activeCreatedAt = activeNow.toISOString();
+    const activeExpiresAt = new Date(activeNow.getTime() + 20 * 60 * 1000).toISOString();
     const entry: UndoJournalEntry = {
       id: "undo-active",
       actionId: "action-edit-file",
@@ -102,8 +105,8 @@ describe("JarvisStore MemoryOS and undo journal", () => {
       target: join(tempRoot, "config.yaml"),
       reversible: true,
       status: "available",
-      createdAt: now,
-      expiresAt: "2026-05-16T13:40:00.000Z",
+      createdAt: activeCreatedAt,
+      expiresAt: activeExpiresAt,
       rollbackNote: "Jarvis can restore this file content for 20 minutes.",
       snapshotSummary: "File checkpoint captured.",
       snapshot: {
@@ -112,7 +115,7 @@ describe("JarvisStore MemoryOS and undo journal", () => {
         sizeBytes: 14,
         sha256: "fixture",
         contentBase64: Buffer.from("before: true\n").toString("base64"),
-        capturedAt: now,
+        capturedAt: activeCreatedAt,
       },
       operation: {
         kind: "write-local",
