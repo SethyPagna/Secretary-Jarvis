@@ -605,6 +605,20 @@ Core types:
 
 After every major phase or group of tasks, run the existing test suite with `npm run test`. If any test fails, fix it before progressing. After Phase 5, run a dedicated memory undo scenario manually through the gateway API and verify the undo journal behaves correctly.
 
+## Extension Phase 15 - Live Voice And Vision Bridge
+
+Goal: move beyond readiness cards into a steerable local multimodal bridge while keeping capture approval-gated and the HUD quiet.
+
+15.1 Add live voice session endpoints for start, stop, transcript chunk ingest, and transcript commit-to-chat.
+
+15.2 Surface live voice session state in the HUD voice panel with compact controls and no text stuffing.
+
+15.3 Add approval-gated live vision request records for screen, camera, and selected-image analysis.
+
+15.4 Add multimodal activity timeline entries for voice transcripts, vision requests, identity dry-runs, and TTS actions.
+
+15.5 Verify the live voice/vision bridge with unit tests, HUD tests, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

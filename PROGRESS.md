@@ -124,9 +124,16 @@ Protocol:
 - [x] 14.4 Add live event health summary for queue, approvals, and recent errors - commit `a5c147f`
 - [x] 14.5 Verify live runtime operation across tests and smoke checks - commit `1293149`
 
+## Phase 15 - Live Voice And Vision Bridge
+- [ ] 15.1 Add live voice session endpoints for start, stop, transcript chunk ingest, and transcript commit-to-chat
+- [ ] 15.2 Surface live voice session state in the HUD voice panel without text stuffing
+- [ ] 15.3 Add approval-gated live vision request records for screen, camera, and selected-image analysis
+- [ ] 15.4 Add multimodal activity timeline entries for voice transcripts, vision requests, identity dry-runs, and TTS actions
+- [ ] 15.5 Verify the live voice/vision bridge with unit tests, HUD tests, and runtime smoke checks
+
 ## Current Priority
 
-Next task: Define Phase 15 for deeper live voice/vision operation, or continue with the next requested Jarvis refinement.
+Next task: 15.1 Add live voice session endpoints for start, stop, transcript chunk ingest, and transcript commit-to-chat.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
