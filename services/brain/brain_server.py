@@ -10,12 +10,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 from identity import IdentityService
+from system_control import SystemControlService
 from vision import VisionService
 from voice import VoiceService
 
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("JARVIS_BRAIN_PORT", "5000"))
-BUILD_ID = "brain-capabilities-v2"
+BUILD_ID = "brain-capabilities-v3"
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SECRETARY_ROOT = PROJECT_ROOT.parent
 HF_SNAPSHOT_ROOT = SECRETARY_ROOT / "models" / "huggingface" / "snapshots"
@@ -24,6 +25,7 @@ TASKS: dict[str, dict[str, Any]] = {}
 MEMORIES: list[dict[str, Any]] = []
 SOCIAL_DRAFTS: list[dict[str, Any]] = []
 IDENTITY = IdentityService(PROJECT_ROOT, SECRETARY_ROOT)
+SYSTEM = SystemControlService(PROJECT_ROOT, SECRETARY_ROOT)
 VISION = VisionService(PROJECT_ROOT, SECRETARY_ROOT)
 VOICE = VoiceService(PROJECT_ROOT, SECRETARY_ROOT)
 
@@ -64,6 +66,7 @@ def capabilities_payload() -> dict[str, Any]:
             "audioArtifacts": str(DATA_AUDIO_DIR),
         },
         "capabilities": [
+            *SYSTEM.capabilities(),
             *VOICE.capabilities(),
             *VISION.capabilities(),
         ],
@@ -294,6 +297,10 @@ class BrainHandler(BaseHTTPRequestHandler):
 
         if path == "/connectors/social/draft":
             self.handle_social_draft(payload)
+            return
+
+        if path == "/system/actions/execute":
+            json_response(self, 200, SYSTEM.execute(payload))
             return
 
         json_response(self, 404, {"error": "not found", "path": path, "pathRepr": repr(path), "buildId": BUILD_ID})

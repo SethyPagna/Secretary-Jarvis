@@ -67,6 +67,16 @@ const JSON_HEADERS = {
 };
 const RUNTIME_KINDS: RuntimeKind[] = ["ollama", "lmstudio", "llama-cpp", "vllm", "sglang", "huggingface-local", "huggingface-tgi", "lan-local"];
 
+type BrainSystemExecutionResult = {
+  status: "executed" | "staged" | "blocked" | "failed" | string;
+  executed: boolean;
+  actionId?: string;
+  category?: string;
+  message: string;
+  payload?: Record<string, unknown>;
+  localOnly?: boolean;
+};
+
 let status: JarvisStatus = structuredClone(seededStatus);
 const store = new JarvisStore();
 const events = new EventHub();
@@ -738,6 +748,53 @@ function createUndoEntry(action: SystemAction): UndoJournalEntry {
     ttlMinutes: 20,
   });
   return attachFileCheckpoint(base);
+}
+
+async function executeSystemActionThroughBrain(systemAction: SystemAction): Promise<BrainSystemExecutionResult> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20_000);
+  try {
+    const response = await fetch(`${BRAIN_URL}/system/actions/execute`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        approved: true,
+        systemAction,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      return {
+        status: "failed",
+        executed: false,
+        actionId: systemAction.id,
+        category: systemAction.category,
+        message: `Python Brain executor returned HTTP ${response.status}.`,
+        localOnly: true,
+      };
+    }
+
+    const body = (await response.json()) as BrainSystemExecutionResult;
+    return {
+      ...body,
+      status: body.status ?? "failed",
+      executed: Boolean(body.executed),
+      message: body.message ?? "Python Brain returned no execution message.",
+      localOnly: body.localOnly ?? true,
+    };
+  } catch (error) {
+    return {
+      status: "failed",
+      executed: false,
+      actionId: systemAction.id,
+      category: systemAction.category,
+      message: `Python Brain executor is unavailable: ${error instanceof Error ? error.message : String(error)}.`,
+      localOnly: true,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function attachFileCheckpoint(entry: UndoJournalEntry): UndoJournalEntry {
@@ -2032,9 +2089,25 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     }
 
     if (actionName === "approve") {
+      const execution =
+        systemAction.decision.decision === "deny"
+          ? {
+              status: "blocked",
+              executed: false,
+              actionId: systemAction.id,
+              category: systemAction.category,
+              message: "Execution blocked because Sentinel or policy denied this action.",
+              localOnly: true,
+            }
+          : await executeSystemActionThroughBrain(systemAction);
       const executed: SystemAction = {
         ...systemAction,
-        status: systemAction.decision.decision === "deny" ? "blocked" : "executed",
+        status:
+          systemAction.decision.decision === "deny" || execution.status === "blocked"
+            ? "blocked"
+            : execution.executed
+              ? "executed"
+              : "approved",
       };
       pendingSystemActions.set(actionId, executed);
       const undoEntry = systemAction.reversible
@@ -2046,20 +2119,23 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       const memoryWrite: MemoryWrite = {
         id: id("memory"),
         kind: "decision",
-        content: `Approved-admin action accepted: ${systemAction.label}. Command remains mediated by Jarvis policy. Undo: ${undoEntry.status}.`,
+        content: `Approved-admin action accepted: ${systemAction.label}. Python executor status: ${execution.status}. ${execution.message} Undo: ${undoEntry.status}.`,
         importance: 0.82,
         createdAt: now(),
         tags: ["system-action", "approved-admin", systemAction.category],
       };
       store.addMemoryWrite(memoryWrite);
-      events.publish("security", { systemAction: executed, undoEntry, memoryWrite });
+      events.publish("security", { systemAction: executed, undoEntry, memoryWrite, execution });
       sendJson(response, 200, {
         systemAction: executed,
         undoEntry,
         memoryWrite,
-        message: systemAction.reversible
-          ? "Action approved with a 20-minute rollback checkpoint."
-          : "Action approved, but it is marked non-reversible.",
+        execution,
+        message: execution.executed
+          ? systemAction.reversible
+            ? "Action executed through Python Brain with a 20-minute rollback checkpoint."
+            : "Action executed through Python Brain. It is marked non-reversible."
+          : `Action approved, but execution did not complete: ${execution.message}`,
       });
       return;
     }
