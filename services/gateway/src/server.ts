@@ -63,6 +63,7 @@ import { EventHub } from "./eventHub.js";
 import { inspectFutureScalingModel, inspectReadyModelAsset } from "./modelManifest.js";
 import { probeModelRuntime } from "./modelProbe.js";
 import { JarvisStore } from "./store.js";
+import { buildVisionRuntimeReadiness } from "./visionReadiness.js";
 import { buildVoiceRuntimeReadiness } from "./voiceReadiness.js";
 
 const DEFAULT_PORT = 4317;
@@ -199,6 +200,14 @@ function voiceRuntimeReadiness() {
     voiceAssets: status.voiceAssets ?? [],
     voiceAssetRoot: VOICE_ASSET_ROOT,
     hfSnapshotRoot: HF_SNAPSHOT_ROOT,
+  });
+}
+
+function visionRuntimeReadiness() {
+  return buildVisionRuntimeReadiness({
+    hfSnapshotRoot: HF_SNAPSHOT_ROOT,
+    screenEnabled: status.connectors.some((connector) => connector.id === "screen" && connector.enabled),
+    cameraEnabled: status.connectors.some((connector) => connector.id === "camera" && connector.enabled),
   });
 }
 
@@ -2496,28 +2505,35 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/vision/readiness") {
     const brainVision = await brainJson<Record<string, unknown>>("/vision/readiness");
+    const readiness = visionRuntimeReadiness();
     sendJson(response, 200, {
       status: "approval-gated",
+      readiness,
       engines: [
         {
           id: "screen-capture",
           label: "Screen capture",
-          status: status.connectors.find((connector) => connector.id === "screen")?.enabled ? "ready" : "requires-approval",
+          status: readiness.screenCapture.status,
         },
         {
           id: "image-analysis",
           label: "Static image analysis",
-          status: "ready",
+          status: readiness.summary.localVisionAssets > 0 ? "ready-asset" : "staged",
         },
         {
           id: "webcam-identity",
           label: "Webcam identity",
-          status: status.connectors.find((connector) => connector.id === "camera")?.enabled ? "ready" : "requires-approval",
+          status: readiness.camera.status,
         },
         {
           id: "ocr",
           label: "OCR",
-          status: commandVersion("tesseract", ["--version"]).ok ? "ready" : "missing-dependency",
+          status: readiness.ocr.status,
+        },
+        {
+          id: "object-detection",
+          label: "YOLO object detection",
+          status: readiness.objectDetection.status,
         },
       ],
       neededFeatureDownloads: hydrateFeatureDownloads().filter((download) => download.category === "vision"),

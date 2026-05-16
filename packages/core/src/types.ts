@@ -689,7 +689,39 @@ export interface IdentityReadiness {
   notes: string[];
 }
 
-export type VisionEngineStatus = "ready" | "requires-approval" | "missing-dependency" | "staged";
+export type VisionEngineStatus = "ready" | "ready-asset" | "requires-approval" | "missing-dependency" | "staged" | "locked";
+
+export interface VisionRuntimeProbe {
+  id: string;
+  label: string;
+  kind: "image-understanding" | "ocr" | "object-detection" | "screen-capture" | "camera" | "runtime-package";
+  status: VisionEngineStatus;
+  installed: boolean;
+  path?: string;
+  runtime?: string;
+  notes: string[];
+}
+
+export interface VisionRuntimeReadiness {
+  modelAssets: VisionRuntimeProbe[];
+  ocr: VisionRuntimeProbe;
+  objectDetection: VisionRuntimeProbe;
+  packages: VisionRuntimeProbe[];
+  screenCapture: VisionRuntimeProbe;
+  camera: VisionRuntimeProbe;
+  summary: {
+    localVisionAssets: number;
+    ocrReady: boolean;
+    objectDetectionReady: boolean;
+    approvalGatedSensors: number;
+    missingFeatureDependencies: number;
+  };
+  privacy: {
+    screenCaptureActive: boolean;
+    cameraCaptureActive: boolean;
+    note: string;
+  };
+}
 
 export interface SystemAction {
   id: string;
