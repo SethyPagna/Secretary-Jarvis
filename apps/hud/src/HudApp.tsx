@@ -80,6 +80,9 @@ function HudSurface() {
       <div className="orb-interaction-zone" onMouseEnter={() => setHoveringOrb(true)} onMouseLeave={() => setHoveringOrb(false)}>
         <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} />
         <Orb
+          visualState={visualState}
+          online={online}
+          pendingApproval={Boolean(pendingApproval)}
           onClick={() => {
             setPanel(null);
             setMenuOpen((value) => !value);
