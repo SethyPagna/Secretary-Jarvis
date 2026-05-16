@@ -176,6 +176,23 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().method() === "POST" && route.request().url().includes("/api/setup/install-plans/install-feature-piper/dry-run")) {
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({
+          dryRun: {
+            decision: {
+              decision: "requires_approval",
+              risk: "approval-required",
+              reasons: ["model-download is approval gated"],
+            },
+            notes: ["Dry-run only: no installer was launched."],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/runtime/smoke-status")) {
       await route.fulfill({
         status: 200,
@@ -343,4 +360,7 @@ test("settings separates feature downloads from future scaling", async ({ page }
   await expect(panel.getByLabel("Feature plug-in slots")).toContainText("missing");
   await expect(panel.getByLabel("Approved setup install plans")).toContainText("Piper");
   await expect(panel.getByLabel("Approved setup install plans")).toContainText("approval");
+  await panel.locator(".setup-install-card", { hasText: "Piper executable and one voice" }).locator("summary").click();
+  await page.getByRole("button", { name: "Dry-run Piper executable and one voice" }).click();
+  await expect(panel.getByLabel("Approved setup install plans")).toContainText("requires_approval");
 });

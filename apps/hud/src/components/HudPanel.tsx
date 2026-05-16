@@ -33,6 +33,7 @@ export function HudPanel({
   const [setupGroups, setSetupGroups] = useState<SetupActionGroup[]>([]);
   const [pluginSlots, setPluginSlots] = useState<FeaturePluginSlot[]>([]);
   const [setupInstallPlans, setSetupInstallPlans] = useState<SetupInstallPlan[]>([]);
+  const [setupDryRuns, setSetupDryRuns] = useState<Record<string, SetupDryRunResult>>({});
   const [activationPlans, setActivationPlans] = useState<ModelActivationPlan[]>([]);
   const [smokeStatus, setSmokeStatus] = useState<RuntimeSmokeStatus | null>(null);
   const [runtimeServices, setRuntimeServices] = useState<RuntimeServicesStatus | null>(null);
@@ -231,6 +232,30 @@ export function HudPanel({
     }).catch(() => undefined);
   }
 
+  async function dryRunSetupPlan(plan: SetupInstallPlan) {
+    const payload = await fetch(`${apiBaseUrl}/api/setup/install-plans/${encodeURIComponent(plan.id)}/dry-run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ source: "hud-settings" })
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as SetupDryRunResponse | undefined;
+    setSetupDryRuns((current) => ({
+      ...current,
+      [plan.id]: payload?.dryRun
+        ? {
+            decision: payload.dryRun.decision.decision,
+            risk: payload.dryRun.decision.risk,
+            note: payload.dryRun.notes?.[0] ?? "Dry-run staged."
+          }
+        : {
+            decision: "unavailable",
+            risk: "blocked",
+            note: "Dry-run endpoint did not return a setup preview."
+          }
+    }));
+  }
+
   return (
     <section className={`hud-panel hud-panel-${panel}`} role="dialog" aria-label={`Jarvis ${panel} panel`}>
       <button className="panel-close" type="button" onClick={onClose} aria-label="Close panel">
@@ -381,6 +406,14 @@ export function HudPanel({
                 </summary>
                 <small>{plan.commandPreview}</small>
                 <em>{plan.rollbackNote}</em>
+                <button type="button" onClick={() => dryRunSetupPlan(plan)} aria-label={`Dry-run ${plan.label}`}>
+                  Dry-run
+                </button>
+                {setupDryRuns[plan.id] && (
+                  <strong className={`setup-dry-run-result risk-${setupDryRuns[plan.id].risk}`}>
+                    {setupDryRuns[plan.id].decision}
+                  </strong>
+                )}
               </details>
             ))}
           </div>
@@ -451,6 +484,22 @@ interface SetupInstallPlan {
 interface SetupInstallPlansResponse {
   manifest?: {
     plans?: SetupInstallPlan[];
+  };
+}
+
+interface SetupDryRunResult {
+  decision: "allow" | "deny" | "requires_approval" | "unavailable";
+  risk: "safe" | "approval-required" | "blocked";
+  note: string;
+}
+
+interface SetupDryRunResponse {
+  dryRun?: {
+    decision: {
+      decision: "allow" | "deny" | "requires_approval";
+      risk: "safe" | "approval-required" | "blocked";
+    };
+    notes?: string[];
   };
 }
 
