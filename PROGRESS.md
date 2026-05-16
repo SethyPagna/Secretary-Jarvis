@@ -206,9 +206,15 @@ Protocol:
 - [x] 26.3 Add run/wake/runtime repair documentation - commit `aedc7fc`
 - [x] 26.4 Verify wake/runtime activation with tests, builds, startup check-only scripts, and runtime smoke - commit `2a269fd`
 
+## Phase 27 - Approval-Gated Runtime Repair Actions
+- [ ] 27.1 Add runtime adapter repair dry-run domain logic and endpoint
+- [ ] 27.2 Surface runtime adapter repair dry-run buttons in HUD Settings
+- [ ] 27.3 Add runtime repair approval documentation
+- [ ] 27.4 Verify runtime repair dry-runs with tests, builds, startup check-only scripts, and runtime smoke
+
 ## Current Priority
 
-Next task: Plan the next refinement phase for packaged HUD installer polish, hotword dependency validation, or local model adapter execution.
+Next task: Implement Phase 27.1 runtime adapter repair dry-run endpoint.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

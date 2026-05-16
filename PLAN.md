@@ -769,6 +769,18 @@ Goal: make background wake behavior and local model runtime activation obvious, 
 
 26.4 Verify wake/runtime activation with gateway tests, HUD tests, build checks, startup check-only scripts, and runtime smoke checks.
 
+## Extension Phase 27 - Approval-Gated Runtime Repair Actions
+
+Goal: convert wake/runtime repair guidance into concrete dry-run actions. Jarvis should preview repair commands for Ollama PATH, Ollama launch, LM Studio endpoint checks, and hotword enablement, then create approval requests before any local system state, environment variable, endpoint, or microphone behavior can change.
+
+27.1 Add runtime adapter repair dry-run domain logic and endpoint for `ollama-path`, `ollama-launch`, `lmstudio-endpoint`, and `hotword-enable`.
+
+27.2 Surface runtime adapter repair dry-run buttons in HUD Settings inside the wake/runtime activation drawer, keeping commands hidden until a dry-run result exists.
+
+27.3 Add documentation describing which repair actions are reversible, approval-gated, and never silently executed.
+
+27.4 Verify runtime repair dry-runs with gateway tests, HUD tests, builds, startup check-only scripts, and runtime smoke checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb
