@@ -60,6 +60,7 @@ import {
   type WorkflowStep,
 } from "@jarvis/core";
 import { commandVersion, detectToolStatuses } from "./doctor.js";
+import { buildAgentManagerReadiness } from "./agentManagerReadiness.js";
 import { EventHub } from "./eventHub.js";
 import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
@@ -2084,6 +2085,16 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     processVisibilityStatus: () => buildProcessVisibilityStatus({ generatedAt: now() }),
     startupRegistrationPlans: () => buildStartupRegistrationPlans({ root: process.cwd(), generatedAt: now() }),
     wakeRuntimeActivation: runtimeActivationReadiness,
+    agentManagerReadiness: () =>
+      buildAgentManagerReadiness({
+        generatedAt: now(),
+        status,
+        workflows: store.listWorkflows(),
+        workflowRuns: store.listWorkflowRuns(80),
+        tasks: store.listTasks(),
+        queue: store.listQueue(),
+        approvals: status.pendingApprovals,
+      }),
     store,
     approvals: status.pendingApprovals,
   });

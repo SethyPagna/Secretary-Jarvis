@@ -127,6 +127,53 @@ describe("runtime summary routes", () => {
         },
         recommendations: ["Use tray/orb wake."],
       }),
+      agentManagerReadiness: () => ({
+        generatedAt: "2026-05-16T00:00:00.000Z",
+        localOnly: true,
+        manager: {
+          id: "jarvis",
+          label: "Jarvis Manager",
+          role: "manager",
+          connected: true,
+          detail: "connected",
+        },
+        agents: [],
+        voices: {
+          totalAgents: 8,
+          profiles: 8,
+          coveredAgents: 8,
+          distinctProfileCount: 8,
+          ready: 3,
+          staged: 5,
+          missing: 0,
+        },
+        routing: [],
+        workflowAutonomy: {
+          workflows: 4,
+          generatedWorkflows: 0,
+          enabledWorkflows: 4,
+          approvalGatedSteps: 3,
+          blockedSteps: 0,
+          managerWorkflowReady: true,
+          automationNote: "approval-gated",
+        },
+        responseHealth: {
+          runningTasks: 0,
+          queuedItems: 0,
+          waitingApprovals: 0,
+          activeWorkflowRuns: 0,
+          freezeRisk: "low",
+          note: "healthy",
+        },
+        summary: {
+          agentsReady: 8,
+          voicesCovered: true,
+          managerConnected: true,
+          workflowsApprovalGated: true,
+          responsePathHealthy: true,
+        },
+        recommendations: [],
+      }),
       store: emptyStore(),
       approvals: [],
     };
@@ -137,17 +184,19 @@ describe("runtime summary routes", () => {
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/process-visibility" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/packaging-readiness" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/activation-readiness" })).toBe(true);
+    expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/agents/manager-readiness" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, pathname: "/api/runtime/startup-registration-plans" })).toBe(true);
     expect(await tryHandleRuntimeSummaryRoute({ ...params, method: "POST", pathname: "/api/runtime/services" })).toBe(false);
 
-    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200, 200]);
+    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200, 200, 200, 200]);
     expect(JSON.stringify(sent[0]?.body)).toContain("runtime-constellation");
     expect(JSON.stringify(sent[1]?.body)).toContain("passed");
     expect(JSON.stringify(sent[2]?.body)).toContain("read only");
     expect(JSON.stringify(sent[3]?.body)).toContain("visibleInTaskManager");
     expect(JSON.stringify(sent[4]?.body)).toContain("electronShellReady");
     expect(JSON.stringify(sent[5]?.body)).toContain("ollamaUsable");
-    expect(JSON.stringify(sent[6]?.body)).toContain("Dry-run registration");
+    expect(JSON.stringify(sent[6]?.body)).toContain("voicesCovered");
+    expect(JSON.stringify(sent[7]?.body)).toContain("Dry-run registration");
   });
 });
 
