@@ -619,6 +619,20 @@ Goal: move beyond readiness cards into a steerable local multimodal bridge while
 
 15.5 Verify the live voice/vision bridge with unit tests, HUD tests, and runtime smoke checks.
 
+## Extension Phase 16 - Feature Dependency Plug-In Readiness
+
+Goal: make every missing feature dependency a concrete plug-in slot Jarvis can detect, validate, and surface without silently downloading.
+
+16.1 Add a feature plug-in slot manifest endpoint with expected folders, detected files, validation hints, and plug-in status.
+
+16.2 Surface plug-in slots in the HUD settings panel as compact setup cards with paths hidden until expanded.
+
+16.3 Add local validation probes for Piper voices, Vosk models, wake-word profiles, OCR tools, YOLO weights, media runtimes, map data, and connector vaults.
+
+16.4 Add user-facing setup documentation that separates ready model assets, feature dependencies, and future scaling models.
+
+16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

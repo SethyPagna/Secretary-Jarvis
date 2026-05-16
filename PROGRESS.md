@@ -131,9 +131,16 @@ Protocol:
 - [x] 15.4 Add multimodal activity timeline entries for voice transcripts, vision requests, identity dry-runs, and TTS actions - commit `dc9f81e`
 - [x] 15.5 Verify the live voice/vision bridge with unit tests, HUD tests, and runtime smoke checks - commit `7ea1159`
 
+## Phase 16 - Feature Dependency Plug-In Readiness
+- [ ] 16.1 Add a feature plug-in slot manifest endpoint with expected folders, detected files, validation hints, and plug-in status
+- [ ] 16.2 Surface plug-in slots in the HUD settings panel as compact setup cards with paths hidden until expanded
+- [ ] 16.3 Add local validation probes for Piper voices, Vosk models, wake-word profiles, OCR tools, YOLO weights, media runtimes, map data, and connector vaults
+- [ ] 16.4 Add user-facing setup documentation that separates ready model assets, feature dependencies, and future scaling models
+- [ ] 16.5 Verify plug-in readiness with unit tests, HUD tests, and setup doctor checks
+
 ## Current Priority
 
-Next task: Define Phase 16 for live setup actions, dependency plug-in readiness, or the next requested Jarvis refinement.
+Next task: 16.1 Add a feature plug-in slot manifest endpoint with expected folders, detected files, validation hints, and plug-in status.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
