@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "npm run build -w @jarvis/core && npm run build -w @jarvis/gateway && npm run build -w @jarvis/dashboard && npm run build -w @jarvis/hud && npm run build -w @jarvis/desktop",
-    "test": "npm run test -w @jarvis/core",
+    "test": "npm run test -w @jarvis/core && npm run test -w @jarvis/gateway",
     "dev:dashboard": "npm run dev -w @jarvis/dashboard",
     "dev:gateway": "npm run dev -w @jarvis/gateway",
     "dev:brain": "python services/brain/brain_server.py",
