@@ -63,6 +63,7 @@ import {
 import { commandVersion, detectToolStatuses, setupDoctor } from "./doctor.js";
 import { EventHub } from "./eventHub.js";
 import { buildRuntimeEventHealth } from "./eventHealth.js";
+import { buildFeaturePluginSlotManifest } from "./featurePluginSlots.js";
 import { buildRuntimeServicesStatus } from "./liveRuntime.js";
 import { appendLiveTranscriptChunk, commitLiveTranscript, startLiveVoiceSession, stopLiveVoiceSession } from "./liveVoice.js";
 import { createLiveVisionRequest, type LiveVisionMode } from "./liveVision.js";
@@ -2191,6 +2192,16 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
         futureScalingModels,
       }),
       note: "Feature dependencies are actionable setup items. Future scaling models are optional later switch targets.",
+    });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/setup/plugin-slots") {
+    sendJson(response, 200, {
+      manifest: buildFeaturePluginSlotManifest({
+        downloads: hydrateFeatureDownloads(),
+        generatedAt: now(),
+      }),
     });
     return;
   }
