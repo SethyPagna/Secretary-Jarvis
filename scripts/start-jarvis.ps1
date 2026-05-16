@@ -6,6 +6,8 @@ param(
   [switch]$OpenDashboard,
   [switch]$CheckOnly,
   [switch]$SkipBuild,
+  [switch]$ReuseExisting,
+  [switch]$SkipLiveProbe,
   [int]$GatewayPort = 4317,
   [int]$DashboardPort = 5174,
   [int]$HudPort = 5175,
@@ -48,9 +50,15 @@ function Start-JarvisProcess {
   } | Select-Object -First 1
 
   if ($existing) {
-    Write-Host "$Name already running (PID $($existing.ProcessId))."
-    Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $existing.ProcessId
-    return
+    if ($ReuseExisting) {
+      Write-Host "$Name already running (PID $($existing.ProcessId))."
+      Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $existing.ProcessId
+      return
+    }
+
+    Write-Host "Stopping existing $Name process tree (PID $($existing.ProcessId)) for clean app start..."
+    Stop-ProcessTree -ProcessId $existing.ProcessId
+    Start-Sleep -Milliseconds 500
   }
 
   $stdout = Join-Path $LogRoot "$safeName.out.log"
@@ -58,6 +66,20 @@ function Start-JarvisProcess {
   $process = Start-Process -FilePath $FilePath -ArgumentList $Arguments -WorkingDirectory $WorkingDirectory -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
   Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $process.Id
   Write-Host "Started $Name (PID $($process.Id))."
+}
+
+function Stop-ProcessTree {
+  param([int]$ProcessId)
+
+  $children = Get-CimInstance Win32_Process -Filter "ParentProcessId = $ProcessId" -ErrorAction SilentlyContinue
+  foreach ($child in $children) {
+    Stop-ProcessTree -ProcessId $child.ProcessId
+  }
+
+  $process = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+  if ($process) {
+    Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+  }
 }
 
 function Ensure-BuildArtifact {
@@ -86,6 +108,73 @@ function Ensure-BuildArtifact {
   } finally {
     Pop-Location
   }
+}
+
+function Wait-HttpJson {
+  param(
+    [string]$Name,
+    [string]$Url,
+    [int]$TimeoutSeconds = 35
+  )
+
+  if ($CheckOnly) {
+    Write-Host "Would verify $Name at $Url"
+    return $null
+  }
+
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+  $lastError = $null
+  while ((Get-Date) -lt $deadline) {
+    try {
+      $response = Invoke-RestMethod -Uri $Url -Method Get -TimeoutSec 4
+      Write-Host "Ready $Name."
+      return $response
+    } catch {
+      $lastError = $_.Exception.Message
+      Start-Sleep -Milliseconds 700
+    }
+  }
+
+  throw "$Name did not become ready at $Url. Last error: $lastError"
+}
+
+function Invoke-LiveTextProbe {
+  param([int]$TimeoutSeconds = 90)
+
+  if ($CheckOnly) {
+    Write-Host "Would run live text probe through /api/chat."
+    return
+  }
+  if ($SkipLiveProbe) {
+    Write-Host "Live text probe skipped by request."
+    return
+  }
+
+  $chatBody = @{
+    message = "Jarvis startup probe: reply in one short sentence that live text is connected."
+    taskProfile = "daily-assistant"
+  } | ConvertTo-Json -Depth 6
+  $chat = Invoke-RestMethod -Uri "http://127.0.0.1:$GatewayPort/api/chat" -Method Post -ContentType "application/json" -Body $chatBody -TimeoutSec 15
+  if (-not $chat.task.id) {
+    throw "Live text probe did not return a task id."
+  }
+
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+  while ((Get-Date) -lt $deadline) {
+    $tasks = Invoke-RestMethod -Uri "http://127.0.0.1:$GatewayPort/api/tasks" -Method Get -TimeoutSec 5
+    $task = @($tasks.tasks | Where-Object { $_.id -eq $chat.task.id } | Select-Object -First 1)
+    if ($task -and $task.status -eq "completed" -and $task.result) {
+      $preview = ([string]$task.result).Trim()
+      if ($preview.Length -gt 120) {
+        $preview = $preview.Substring(0, 120) + "..."
+      }
+      Write-Host "Live text connected: $preview"
+      return
+    }
+    Start-Sleep -Milliseconds 700
+  }
+
+  throw "Live text probe task $($chat.task.id) did not complete in $TimeoutSeconds seconds."
 }
 
 Add-SessionPath
@@ -138,6 +227,11 @@ if ($OpenDashboard) {
     Start-Process "http://127.0.0.1:$DashboardPort"
   }
 }
+
+Wait-HttpJson -Name "Python Brain" -Url "http://127.0.0.1:$BrainPort/" | Out-Null
+Wait-HttpJson -Name "TypeScript Gateway" -Url "http://127.0.0.1:$GatewayPort/" | Out-Null
+Wait-HttpJson -Name "Gateway status" -Url "http://127.0.0.1:$GatewayPort/api/status" | Out-Null
+Invoke-LiveTextProbe
 
 Write-Host "Jarvis local services requested."
 Write-Host "Gateway:   http://127.0.0.1:$GatewayPort"

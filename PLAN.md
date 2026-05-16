@@ -873,6 +873,22 @@ Goal: stop making Jarvis feel like a browser preview. The default launcher shoul
 
 34.5 Document and verify the app-mode runtime with tests, builds, check-only launch, runtime smoke, and GitHub push.
 
+## Extension Phase 35 - Clean App Start, HF Local Bridge, And Soul Communication
+
+Goal: make the owner-facing launcher behave like one coherent app instead of reusing stale process wrappers. Jarvis should cleanly restart its local services, prove Gateway/Brain/live text are connected before saying ready, route text through Ollama first with a Hugging Face local snapshot bridge as fallback, and keep Python Brain voice profiles aligned with all named souls.
+
+35.1 Make friendly Start perform a clean app start by default so stale Brain/Gateway/HUD wrappers are stopped before new services launch.
+
+35.2 Add a startup live text gate that verifies Brain root, Gateway root, Gateway status, and a real `/api/chat` task completion before reporting Jarvis ready.
+
+35.3 Add a Python Brain Hugging Face local generation endpoint for the five downloaded snapshots. It must never silently load huge weights; it reports ready/staged states and only loads Transformers when explicitly allowed and dependencies exist.
+
+35.4 Bridge Gateway chat routing to the Brain Hugging Face local endpoint when a HF model is selected or Ollama is unavailable, while keeping Ollama as the fast laptop default.
+
+35.5 Align Python Brain voice profiles with all eight named souls: Jarvis, Friday, Daedalus, Argus, Mnemosyne, Sentinel, Vulcan, and Hermes.
+
+35.6 Verify clean app startup, live text, HF snapshot readiness, voice profiles, tests, builds, and push.
+
 ## Jarvis UI - Orb Centered, Clean, Minimalist Design Brief
 
 ### 1. The Jarvis Orb

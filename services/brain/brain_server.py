@@ -16,7 +16,7 @@ from voice import VoiceService
 
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("JARVIS_BRAIN_PORT", "5000"))
-BUILD_ID = "brain-capabilities-v3"
+BUILD_ID = "brain-capabilities-v4"
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SECRETARY_ROOT = PROJECT_ROOT.parent
 HF_SNAPSHOT_ROOT = SECRETARY_ROOT / "models" / "huggingface" / "snapshots"
@@ -24,6 +24,7 @@ DATA_AUDIO_DIR = PROJECT_ROOT / "data" / "audio" / "tts"
 TASKS: dict[str, dict[str, Any]] = {}
 MEMORIES: list[dict[str, Any]] = []
 SOCIAL_DRAFTS: list[dict[str, Any]] = []
+HF_PIPELINES: dict[str, Any] = {}
 IDENTITY = IdentityService(PROJECT_ROOT, SECRETARY_ROOT)
 SYSTEM = SystemControlService(PROJECT_ROOT, SECRETARY_ROOT)
 VISION = VisionService(PROJECT_ROOT, SECRETARY_ROOT)
@@ -107,6 +108,17 @@ def model_readiness_payload() -> dict[str, Any]:
             "sentencepiece": package_available("sentencepiece"),
         },
     }
+
+
+def concise_local_response(prompt: str, model_ref: str, reason: str) -> str:
+    normalized = " ".join(prompt.strip().split())
+    if len(normalized) > 160:
+        normalized = normalized[:157] + "..."
+    return (
+        f"Connected through Jarvis local runtime. {model_ref} is detected as a local snapshot, "
+        f"but direct Transformers generation is {reason}; I can still route fast text through Ollama "
+        f"and keep this task saved in MemoryOS. Prompt: {normalized}"
+    )
 
 
 def json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict[str, Any]) -> None:
@@ -274,6 +286,10 @@ class BrainHandler(BaseHTTPRequestHandler):
             json_response(self, 200, {"probe": match, "runtimePackages": readiness["runtimePackages"]})
             return
 
+        if path == "/models/hf/generate":
+            self.handle_hf_generate(payload)
+            return
+
         if path == "/models/hf/download":
             self.handle_hf_download(payload)
             return
@@ -396,6 +412,120 @@ class BrainHandler(BaseHTTPRequestHandler):
                 "message": "Approved HF download execution is reserved for the next installer slice.",
             },
         )
+
+    def handle_hf_generate(self, payload: dict[str, Any]) -> None:
+        model_ref = str(payload.get("modelRef", "Qwen/Qwen3.5-9B")).strip()
+        prompt = str(payload.get("prompt", "")).strip()
+        allow_load = bool(payload.get("allowLoad", False))
+        max_new_tokens = int(payload.get("maxNewTokens", 160) or 160)
+        folder_name = READY_MODEL_SNAPSHOTS.get(model_ref)
+        if not prompt:
+            json_response(self, 400, {"error": "prompt is required", "buildId": BUILD_ID})
+            return
+        if not folder_name:
+            json_response(self, 404, {"error": "modelRef is not a ready local snapshot", "modelRef": model_ref, "buildId": BUILD_ID})
+            return
+
+        folder = HF_SNAPSHOT_ROOT / folder_name
+        if not folder.exists():
+            json_response(
+                self,
+                404,
+                {
+                    "status": "missing",
+                    "modelRef": model_ref,
+                    "folder": str(folder),
+                    "text": concise_local_response(prompt, model_ref, "missing because the snapshot folder was not found"),
+                    "buildId": BUILD_ID,
+                },
+            )
+            return
+
+        runtime_packages = model_readiness_payload()["runtimePackages"]
+        if not allow_load:
+            json_response(
+                self,
+                200,
+                {
+                    "status": "ready-asset",
+                    "modelRef": model_ref,
+                    "folder": str(folder),
+                    "runtimePackages": runtime_packages,
+                    "loaded": False,
+                    "text": concise_local_response(prompt, model_ref, "staged until you approve/load the Python Transformers runtime"),
+                    "buildId": BUILD_ID,
+                },
+            )
+            return
+
+        if not runtime_packages["transformers"] or not runtime_packages["torch"]:
+            json_response(
+                self,
+                200,
+                {
+                    "status": "staged",
+                    "modelRef": model_ref,
+                    "folder": str(folder),
+                    "runtimePackages": runtime_packages,
+                    "loaded": False,
+                    "text": concise_local_response(prompt, model_ref, "staged because transformers/torch are not installed in this Python environment"),
+                    "buildId": BUILD_ID,
+                },
+            )
+            return
+
+        try:
+            generator = HF_PIPELINES.get(model_ref)
+            if generator is None:
+                from transformers import pipeline  # type: ignore
+
+                kwargs: dict[str, Any] = {"model": str(folder), "trust_remote_code": True}
+                if runtime_packages.get("accelerate"):
+                    kwargs["device_map"] = "auto"
+                else:
+                    kwargs["device"] = -1
+                generator = pipeline("text-generation", **kwargs)
+                HF_PIPELINES[model_ref] = generator
+
+            result = generator(
+                prompt,
+                max_new_tokens=max(16, min(max_new_tokens, 512)),
+                do_sample=False,
+                return_full_text=False,
+            )
+            text = ""
+            if isinstance(result, list) and result:
+                first = result[0]
+                if isinstance(first, dict):
+                    text = str(first.get("generated_text", "")).strip()
+            json_response(
+                self,
+                200,
+                {
+                    "status": "generated",
+                    "modelRef": model_ref,
+                    "folder": str(folder),
+                    "runtimePackages": runtime_packages,
+                    "loaded": True,
+                    "text": text or concise_local_response(prompt, model_ref, "loaded but returned empty text"),
+                    "buildId": BUILD_ID,
+                },
+            )
+        except Exception as error:  # noqa: BLE001 - model loading is hardware/runtime dependent.
+            json_response(
+                self,
+                200,
+                {
+                    "status": "failed",
+                    "modelRef": model_ref,
+                    "folder": str(folder),
+                    "runtimePackages": runtime_packages,
+                    "loaded": False,
+                    "error": str(error),
+                    "text": concise_local_response(prompt, model_ref, f"not active because local loading failed: {error}"),
+                    "buildId": BUILD_ID,
+                },
+            )
 
     def handle_stt_file(self, payload: dict[str, Any]) -> None:
         file_path = str(payload.get("filePath", "")).strip()

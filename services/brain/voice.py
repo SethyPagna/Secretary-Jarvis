@@ -97,11 +97,62 @@ class VoiceService:
     def voice_profiles(self) -> dict[str, Any]:
         return {
             "profiles": [
-                {"id": "voice-profile-jarvis", "agentId": "jarvis", "status": "ready", "engine": "voice-sample"},
-                {"id": "voice-profile-friday", "agentId": "friday", "status": "staged", "engine": "piper"},
-                {"id": "voice-profile-daedalus", "agentId": "daedalus", "status": "staged", "engine": "piper"},
-                {"id": "voice-profile-argus", "agentId": "argus", "status": "staged", "engine": "piper"},
-                {"id": "voice-profile-sentinel", "agentId": "sentinel", "status": "ready", "engine": "windows-sapi"},
+                {
+                    "id": "voice-profile-jarvis",
+                    "agentId": "jarvis",
+                    "status": "ready",
+                    "engine": "voice-sample",
+                    "style": "calm, precise, cinematic, brief",
+                },
+                {
+                    "id": "voice-profile-friday",
+                    "agentId": "friday",
+                    "status": "staged",
+                    "engine": "piper",
+                    "style": "warm operations briefings with crisp next actions",
+                },
+                {
+                    "id": "voice-profile-daedalus",
+                    "agentId": "daedalus",
+                    "status": "staged",
+                    "engine": "piper",
+                    "style": "technical, terse, reviewer-minded",
+                },
+                {
+                    "id": "voice-profile-argus",
+                    "agentId": "argus",
+                    "status": "staged",
+                    "engine": "piper",
+                    "style": "observational, visual, low-noise",
+                },
+                {
+                    "id": "voice-profile-mnemosyne",
+                    "agentId": "mnemosyne",
+                    "status": "staged",
+                    "engine": "future-clone",
+                    "style": "soft archivist cadence, careful provenance, measured recall",
+                },
+                {
+                    "id": "voice-profile-sentinel",
+                    "agentId": "sentinel",
+                    "status": "ready",
+                    "engine": "windows-sapi",
+                    "style": "firm, minimal, approval-focused",
+                },
+                {
+                    "id": "voice-profile-vulcan",
+                    "agentId": "vulcan",
+                    "status": "ready",
+                    "engine": "windows-sapi",
+                    "style": "grounded mechanical cadence, terse status, rollback-aware",
+                },
+                {
+                    "id": "voice-profile-hermes",
+                    "agentId": "hermes",
+                    "status": "staged",
+                    "engine": "future-clone",
+                    "style": "smooth diplomatic cadence, draft-first, approval-aware",
+                },
             ],
             "message": "Agent voice profiles are wired; Piper profiles activate after the feature dependency is installed.",
         }

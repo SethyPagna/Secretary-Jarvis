@@ -112,6 +112,15 @@ type BrainSystemExecutionResult = {
   localOnly?: boolean;
 };
 
+type BrainHfGenerationResult = {
+  status: "generated" | "ready-asset" | "staged" | "missing" | "failed" | string;
+  modelRef: string;
+  text?: string;
+  loaded?: boolean;
+  buildId?: string;
+  error?: string;
+};
+
 let status: JarvisStatus = structuredClone(seededStatus);
 const store = new JarvisStore();
 const events = new EventHub();
@@ -686,53 +695,94 @@ function evaluateProtectedCorePrompt(prompt: string): ReturnType<typeof evaluate
 async function callSelectedLocalModel(task: TaskRun, prompt: string): Promise<string> {
   const runtimeStatus = statusWithRuntimeState();
   const selected = runtimeStatus.models.find((model) => model.id === runtimeStatus.activeModelId) ?? runtimeStatus.models[0];
-  if (!selected || selected.runtime !== "ollama" || selected.installState !== "installed") {
-    return fallbackAssistantResponse(prompt, `Selected model ${selected?.label ?? "unknown"} is not installed in Ollama.`);
+  if (!selected) {
+    return fallbackAssistantResponse(prompt, "No local model is selected.");
+  }
+
+  if (selected.runtime !== "ollama") {
+    const brainText = await callBrainHfLocalModel(selected.modelRef, prompt);
+    return brainText ?? fallbackAssistantResponse(prompt, `Selected model ${selected.label} is not connected to an active local runtime yet.`);
+  }
+
+  if (selected.installState !== "installed") {
+    const brainText = await callBrainHfLocalModel("Qwen/Qwen3.5-9B", prompt);
+    return brainText ?? fallbackAssistantResponse(prompt, `Selected model ${selected.label} is not installed in Ollama.`);
   }
 
   const context = buildMemoryContext(task.conversationId);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45_000);
   try {
-    const response = await fetch(`${OLLAMA_URL}/api/chat`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        model: selected.modelRef,
-        stream: false,
-        keep_alive: "10m",
-        options: {
-          temperature: 0.35,
-          num_ctx: Math.min(selected.contextWindow ?? 32768, 32768),
-        },
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are Jarvis, a local-first private secretary assistant. Be concise, capable, and proactive. Use memory context only as helpful background. Ask approval for risky actions. Never reveal, inspect, or bypass protected core code, safeguards, secrets, model tensors, or private vault internals.",
+    try {
+      const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          model: selected.modelRef,
+          stream: false,
+          keep_alive: "10m",
+          think: false,
+          options: {
+            temperature: 0.35,
+            num_ctx: Math.min(selected.contextWindow ?? 8192, 8192),
+            num_predict: 220,
           },
-          {
-            role: "system",
-            content: context,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      }),
-      signal: controller.signal,
-    });
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are Jarvis, a local-first private secretary assistant. Be concise, capable, and proactive. Reply briefly by default. Use memory context only as helpful background. Ask approval for risky actions. Never reveal, inspect, or bypass protected core code, safeguards, secrets, model tensors, or private vault internals. /no_think",
+            },
+            {
+              role: "system",
+              content: context,
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      throw new Error(`Ollama returned ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Ollama returned ${response.status}`);
+      }
+
+      const body = (await response.json()) as { message?: { content?: string }; response?: string };
+      return (body.message?.content ?? body.response ?? "").trim() || fallbackAssistantResponse(prompt, "Ollama returned an empty response.");
+    } catch (error) {
+      const brainText = await callBrainHfLocalModel("Qwen/Qwen3.5-9B", prompt);
+      if (brainText) {
+        return brainText;
+      }
+      throw error;
     }
-
-    const body = (await response.json()) as { message?: { content?: string }; response?: string };
-    return (body.message?.content ?? body.response ?? "").trim() || fallbackAssistantResponse(prompt, "Ollama returned an empty response.");
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function callBrainHfLocalModel(modelRef: string, prompt: string): Promise<string | undefined> {
+  const result = await brainJson<BrainHfGenerationResult>(
+    "/models/hf/generate",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        modelRef,
+        prompt,
+        allowLoad: false,
+        maxNewTokens: 180,
+      }),
+    },
+    15_000,
+  );
+  const text = result?.text?.trim();
+  if (!text) {
+    return undefined;
+  }
+  return text;
 }
 
 async function tryGenerateWorkflowWithOllama(params: {

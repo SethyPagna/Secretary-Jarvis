@@ -258,9 +258,17 @@ Protocol:
 - [x] 34.4 Extend runtime smoke for live text and root responses - commit `322f820`
 - [x] 34.5 Document and verify app-mode runtime - commits `a11a26f`, `163e50a`
 
+## Phase 35 - Clean App Start, HF Local Bridge, And Soul Communication
+- [ ] 35.1 Clean friendly Start by default
+- [ ] 35.2 Add startup live text gate
+- [ ] 35.3 Add Python Brain HF local generation endpoint
+- [ ] 35.4 Bridge Gateway chat routing to HF local endpoint
+- [ ] 35.5 Align Python Brain voice profiles with all eight souls
+- [ ] 35.6 Verify clean app startup, live text, HF readiness, voices, tests, builds, and push
+
 ## Current Priority
 
-Next task: Continue with the next owner-requested refinement.
+Next task: Complete Phase 35 verification and push.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

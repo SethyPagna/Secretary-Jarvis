@@ -2,7 +2,8 @@ param(
   [ValidateSet("Menu", "Start", "Stop", "Restart", "Verify", "SelfTest", "InstallShortcuts", "RegisterStartup", "UnregisterStartup", "OpenDashboard")]
   [string]$Action = "Menu",
   [switch]$CheckOnly,
-  [switch]$StopOllama
+  [switch]$StopOllama,
+  [switch]$NoCleanStart
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,6 +21,11 @@ function Invoke-JarvisAction {
 
   switch ($SelectedAction) {
     "Start" {
+      if (-not $NoCleanStart) {
+        Write-Host "Cleaning old Jarvis app processes before start..."
+        Invoke-JarvisAction "Stop"
+        Start-Sleep -Seconds 1
+      }
       & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "start-jarvis.ps1") @checkOnlyArgs
     }
     "Stop" {
