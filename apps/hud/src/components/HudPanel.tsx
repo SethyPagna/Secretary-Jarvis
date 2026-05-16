@@ -39,6 +39,10 @@ export function HudPanel({
   const [activationPlans, setActivationPlans] = useState<ModelActivationPlan[]>([]);
   const [smokeStatus, setSmokeStatus] = useState<RuntimeSmokeStatus | null>(null);
   const [runtimeServices, setRuntimeServices] = useState<RuntimeServicesStatus | null>(null);
+  const [architectureSummary, setArchitectureSummary] = useState<ArchitectureSummary | null>(null);
+  const [codeHealth, setCodeHealth] = useState<CodeHealthSummary | null>(null);
+  const [startupReadiness, setStartupReadiness] = useState<StartupReadinessSummary | null>(null);
+  const [authorityReadiness, setAuthorityReadiness] = useState<AuthorityReadinessSummary | null>(null);
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
@@ -140,6 +144,62 @@ export function HudPanel({
       .then((payload: SetupInstallPlansResponse | undefined) => {
         if (!cancelled) {
           setSetupInstallPlans(payload?.manifest?.plans ?? []);
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/architecture/map`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: ArchitectureMapResponse | undefined) => {
+        if (!cancelled && payload?.architecture) {
+          setArchitectureSummary({
+            stackSummary: payload.architecture.stackSummary,
+            subsystemCount: payload.architecture.subsystems.length,
+            languages: [...new Set(payload.architecture.languageStrategy.map((entry) => entry.language))],
+            backlogCount: payload.architecture.improvementBacklog.length
+          });
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/architecture/code-health`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: CodeHealthResponse | undefined) => {
+        if (!cancelled && payload?.codeHealth) {
+          setCodeHealth({
+            scannedFiles: payload.codeHealth.scannedFiles,
+            oversizedFiles: payload.codeHealth.oversizedFiles.length,
+            duplicateBasenames: payload.codeHealth.duplicateBasenames.length,
+            staleMarkers: payload.codeHealth.staleMarkers.length,
+            cleanupBacklog: payload.codeHealth.cleanupBacklog.slice(0, 2)
+          });
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/startup-readiness`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: StartupReadinessResponse | undefined) => {
+        if (!cancelled && payload?.startup) {
+          setStartupReadiness({
+            configured: payload.startup.summary.startupConfigured,
+            scriptsReady: payload.startup.summary.scriptsReady,
+            runningPidFiles: payload.startup.summary.runningPidFiles,
+            backgroundPidFiles: payload.startup.summary.backgroundPidFiles,
+            highTrustMode: payload.startup.authority.highTrustMode
+          });
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/security/authority-readiness`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: AuthorityReadinessResponse | undefined) => {
+        if (!cancelled && payload?.authority) {
+          setAuthorityReadiness({
+            mode: payload.authority.mode,
+            approvalRequired: payload.authority.actionSummary.approvalRequired,
+            adminApproved: payload.authority.actionSummary.adminApproved,
+            reversible: payload.authority.actionSummary.reversible,
+            blockedCategories: payload.authority.blockedCategories.length,
+            guardrail: payload.authority.guardrails[0] ?? "Protected core remains sealed."
+          });
         }
       })
       .catch(() => undefined);
@@ -398,6 +458,44 @@ export function HudPanel({
             <span>Audio <b>local</b></span>
             <span>Theme <b>dark</b></span>
           </div>
+          <div className="hardening-grid" aria-label="Architecture and runtime hardening">
+            <details className="hardening-card">
+              <summary>
+                <Cpu size={15} aria-hidden="true" />
+                <span>Stack</span>
+                <b>{architectureSummary?.subsystemCount ?? "--"}</b>
+              </summary>
+              <small>{architectureSummary?.languages.join(" / ") ?? "Loading language map."}</small>
+              <em>{architectureSummary?.stackSummary ?? "Checking architecture hierarchy."}</em>
+            </details>
+            <details className="hardening-card">
+              <summary>
+                <Play size={15} aria-hidden="true" />
+                <span>Startup</span>
+                <b>{startupReadiness?.configured ? "ready" : "manual"}</b>
+              </summary>
+              <small>{startupReadiness?.scriptsReady ? "scripts ready" : "scripts pending"} / {startupReadiness?.highTrustMode ?? "checking"}</small>
+              <em>{startupReadiness ? `${startupReadiness.runningPidFiles}/${startupReadiness.backgroundPidFiles} runtime PID files alive` : "Checking background runtime."}</em>
+            </details>
+            <details className="hardening-card">
+              <summary>
+                <CheckCircle2 size={15} aria-hidden="true" />
+                <span>Authority</span>
+                <b>{authorityReadiness?.mode ?? "sealed"}</b>
+              </summary>
+              <small>{authorityReadiness ? `${authorityReadiness.approvalRequired} gated / ${authorityReadiness.adminApproved} admin` : "Loading approval hierarchy."}</small>
+              <em>{authorityReadiness?.guardrail ?? "Sensitive actions remain policy-gated."}</em>
+            </details>
+            <details className="hardening-card">
+              <summary>
+                <Cable size={15} aria-hidden="true" />
+                <span>Code health</span>
+                <b>{codeHealth ? `${codeHealth.oversizedFiles}/${codeHealth.scannedFiles}` : "--"}</b>
+              </summary>
+              <small>{codeHealth ? `${codeHealth.duplicateBasenames} dupes / ${codeHealth.staleMarkers} markers` : "Scanning local source."}</small>
+              <em>{codeHealth?.cleanupBacklog[0] ?? "Cleanup hints stay advisory until reviewed."}</em>
+            </details>
+          </div>
           <div className="setup-groups" aria-label="Setup action groups">
             {setupGroups.map((group) => (
               <span key={group.id}>
@@ -546,6 +644,84 @@ interface SetupDryRunResponse {
     };
     notes?: string[];
   };
+}
+
+interface ArchitectureMapResponse {
+  architecture?: {
+    stackSummary: string;
+    subsystems: Array<{ id: string }>;
+    languageStrategy: Array<{ language: string }>;
+    improvementBacklog: string[];
+  };
+}
+
+interface ArchitectureSummary {
+  stackSummary: string;
+  subsystemCount: number;
+  languages: string[];
+  backlogCount: number;
+}
+
+interface CodeHealthResponse {
+  codeHealth?: {
+    scannedFiles: number;
+    oversizedFiles: unknown[];
+    duplicateBasenames: unknown[];
+    staleMarkers: unknown[];
+    cleanupBacklog: string[];
+  };
+}
+
+interface CodeHealthSummary {
+  scannedFiles: number;
+  oversizedFiles: number;
+  duplicateBasenames: number;
+  staleMarkers: number;
+  cleanupBacklog: string[];
+}
+
+interface StartupReadinessResponse {
+  startup?: {
+    summary: {
+      startupConfigured: boolean;
+      scriptsReady: boolean;
+      backgroundPidFiles: number;
+      runningPidFiles: number;
+    };
+    authority: {
+      highTrustMode: "limited" | "approved-admin-ready";
+    };
+  };
+}
+
+interface StartupReadinessSummary {
+  configured: boolean;
+  scriptsReady: boolean;
+  runningPidFiles: number;
+  backgroundPidFiles: number;
+  highTrustMode: "limited" | "approved-admin-ready";
+}
+
+interface AuthorityReadinessResponse {
+  authority?: {
+    mode: "limited-local" | "approved-admin-ready";
+    actionSummary: {
+      approvalRequired: number;
+      adminApproved: number;
+      reversible: number;
+    };
+    blockedCategories: string[];
+    guardrails: string[];
+  };
+}
+
+interface AuthorityReadinessSummary {
+  mode: "limited-local" | "approved-admin-ready";
+  approvalRequired: number;
+  adminApproved: number;
+  reversible: number;
+  blockedCategories: number;
+  guardrail: string;
 }
 
 function Widget({ label, value }: { label: string; value: string }) {

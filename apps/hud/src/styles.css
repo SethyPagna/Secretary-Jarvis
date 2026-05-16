@@ -744,6 +744,73 @@ button {
   margin-top: 14px;
 }
 
+.hardening-grid {
+  width: min(560px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px auto 0;
+}
+
+.hardening-card {
+  overflow: hidden;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(0, 229, 255, 0.08), transparent 38%),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.025);
+}
+
+.hardening-card summary {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 11px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.hardening-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.hardening-card svg {
+  color: var(--hud-cyan);
+  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.42));
+}
+
+.hardening-card span {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hardening-card b {
+  max-width: 120px;
+  overflow: hidden;
+  color: var(--hud-cyan);
+  font: 700 11px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hardening-card small,
+.hardening-card em {
+  display: block;
+  padding: 0 12px 8px;
+  overflow-wrap: anywhere;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.35;
+}
+
 .setup-groups span {
   display: grid;
   gap: 8px;
@@ -1946,6 +2013,7 @@ button {
   .model-manifest-strip,
   .voice-readiness-strip,
   .constellation-grid,
+  .hardening-grid,
   .setup-groups,
   .setup-approval-summary,
   .setup-install-strip,

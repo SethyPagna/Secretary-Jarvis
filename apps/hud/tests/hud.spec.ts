@@ -199,6 +199,74 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/architecture/map")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          architecture: {
+            stackSummary: "TypeScript gateway and HUD, Python brain, native inference, and PowerShell startup.",
+            subsystems: [{ id: "hud" }, { id: "gateway" }, { id: "python-brain" }, { id: "startup" }],
+            languageStrategy: [{ language: "TypeScript" }, { language: "Python" }, { language: "Native/C++" }],
+            improvementBacklog: ["Split oversized gateway routes.", "Share compact HUD cards."],
+          },
+        }),
+      });
+      return;
+    }
+    if (route.request().url().endsWith("/api/architecture/code-health")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          codeHealth: {
+            scannedFiles: 144,
+            oversizedFiles: [{ path: "services/gateway/src/server.ts" }],
+            duplicateBasenames: [{ name: "App.tsx" }],
+            staleMarkers: [{ path: "apps/hud/src/HudApp.tsx" }],
+            cleanupBacklog: ["Split oversized route/service files only after endpoint tests are in place."],
+          },
+        }),
+      });
+      return;
+    }
+    if (route.request().url().endsWith("/api/runtime/startup-readiness")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          startup: {
+            summary: {
+              startupConfigured: true,
+              scriptsReady: true,
+              backgroundPidFiles: 4,
+              runningPidFiles: 3,
+            },
+            authority: { highTrustMode: "approved-admin-ready" },
+          },
+        }),
+      });
+      return;
+    }
+    if (route.request().url().endsWith("/api/security/authority-readiness")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          authority: {
+            mode: "approved-admin-ready",
+            actionSummary: {
+              approvalRequired: 9,
+              adminApproved: 2,
+              reversible: 6,
+            },
+            blockedCategories: ["protected-core-access"],
+            guardrails: ["Protected core code, safeguards, secrets, and raw model internals are denied to runtime agents."],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "POST" && route.request().url().includes("/api/setup/install-plans/install-feature-piper/dry-run")) {
       await route.fulfill({
         status: 202,
@@ -436,4 +504,23 @@ test("settings separates feature downloads from future scaling", async ({ page }
   await panel.locator(".setup-install-card", { hasText: "Piper executable and one voice" }).locator("summary").click();
   await page.getByRole("button", { name: "Dry-run Piper executable and one voice" }).click();
   await expect(panel.getByLabel("Approved setup install plans")).toContainText("requires_approval");
+});
+
+test("settings shows compact architecture and authority hardening summaries", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Jarvis controls" }).click();
+  await page.getByTitle("Settings").click();
+
+  const hardening = page.getByLabel("Architecture and runtime hardening");
+  await expect(hardening).toContainText("Stack");
+  await expect(hardening).toContainText("4");
+  await expect(hardening).toContainText("Startup");
+  await expect(hardening).toContainText("ready");
+  await expect(hardening).toContainText("Authority");
+  await expect(hardening).toContainText("approved-admin-ready");
+  await expect(hardening).toContainText("Code health");
+  await hardening.locator(".hardening-card", { hasText: "Authority" }).locator("summary").click();
+  await expect(hardening).toContainText("9 gated");
+  await hardening.locator(".hardening-card", { hasText: "Code health" }).locator("summary").click();
+  await expect(hardening).toContainText("1 dupes");
 });
