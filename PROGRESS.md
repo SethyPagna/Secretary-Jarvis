@@ -97,7 +97,7 @@ Protocol:
 - [x] 11.1 Model tests - commit `8e51ea9`
 - [x] 11.2 Voice tests - commit `ce7233a`
 - [x] 11.3 Vision tests - commit `46a6879`
-- [ ] 11.4 Memory/undo tests - partial
+- [x] 11.4 Memory/undo tests - commit `d2e841e`
 - [ ] 11.5 Agent/task tests - partial
 - [ ] 11.6 Connector/security tests - partial
 - [ ] 11.7 UI tests
@@ -105,7 +105,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: `11.4 Memory/undo tests`.
+Next task: `11.5 Agent/task tests`.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
