@@ -108,11 +108,11 @@ Protocol:
 - [x] 12.2 Surface model asset manifests in the HUD/dashboard without text stuffing - commit `3610c29`
 - [x] 12.3 Add real voice asset/runtime readiness probes for Whisper/Piper/Vosk/SAPI - commit `e89aa4b`
 - [x] 12.4 Add real vision dependency probes for OCR/YOLO/LLaVA and approval-gated actions - commit `53dacdd`
-- [ ] 12.5 Add one-command local runtime smoke for gateway, brain, and HUD
+- [x] 12.5 Add one-command local runtime smoke for gateway, brain, and HUD - commit `bf5fdab`
 
 ## Current Priority
 
-Next task: `12.5 Add one-command local runtime smoke for gateway, brain, and HUD`.
+Next task: Define the next refinement phase after Phase 12, or continue polishing runtime readiness based on live Jarvis use.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
