@@ -53,6 +53,41 @@ function HudSurface() {
     });
   }, [setHudState]);
 
+  useEffect(() => {
+    const source = new EventSource(`${apiBaseUrl}/api/events`);
+    const onTask = (message: MessageEvent<string>) => {
+      const streamEvent = safeParseStreamEvent(message.data);
+      const task = streamEvent?.payload?.task as { id?: string; title?: string; status?: CommandCapsuleState; result?: string } | undefined;
+      const event = streamEvent?.payload?.event as { kind?: string; message?: string } | undefined;
+      if (!task?.id || !event?.kind) {
+        return;
+      }
+      const taskId = task.id;
+      const eventKind = event.kind;
+      setCommandCapsule((current) => {
+        if (current?.taskId && current.taskId !== taskId) {
+          return current;
+        }
+        const state = capsuleStateForEvent(eventKind, task.status);
+        if (!state) {
+          return current;
+        }
+        return {
+          taskId,
+          state,
+          title: task.title ?? current?.title ?? "Jarvis task",
+          detail: state === "completed" ? compactCapsuleDetail(task.result ?? event.message ?? "Done.") : compactCapsuleDetail(event.message ?? task.title ?? "Working."),
+        };
+      });
+    };
+    source.addEventListener("task", onTask);
+    source.onerror = () => undefined;
+    return () => {
+      source.removeEventListener("task", onTask);
+      source.close();
+    };
+  }, [apiBaseUrl]);
+
   function openPanel(nextPanel: HudPanelName) {
     setPanel(nextPanel);
     setMenuOpen(false);
@@ -226,4 +261,38 @@ function labelForCapsule(state: CommandCapsuleState): string {
     failed: "Needs review",
     cancelled: "Cancelled",
   }[state];
+}
+
+function capsuleStateForEvent(kind: string, taskStatus?: CommandCapsuleState): CommandCapsuleState | undefined {
+  if (taskStatus && ["queued", "running", "completed", "failed", "cancelled"].includes(taskStatus)) {
+    return taskStatus;
+  }
+  if (kind === "queued") {
+    return "queued";
+  }
+  if (kind === "started" || kind === "token" || kind === "tool") {
+    return "running";
+  }
+  if (kind === "completed") {
+    return "completed";
+  }
+  if (kind === "failed") {
+    return "failed";
+  }
+  if (kind === "cancelled") {
+    return "cancelled";
+  }
+  return undefined;
+}
+
+function compactCapsuleDetail(value: string): string {
+  return value.length > 72 ? `${value.slice(0, 69)}...` : value;
+}
+
+function safeParseStreamEvent(data: string): { payload?: Record<string, unknown> } | undefined {
+  try {
+    return JSON.parse(data) as { payload?: Record<string, unknown> };
+  } catch {
+    return undefined;
+  }
 }
