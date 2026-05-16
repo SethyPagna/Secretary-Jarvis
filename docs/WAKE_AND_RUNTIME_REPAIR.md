@@ -67,6 +67,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-jarvis.ps1 -Ch
 
 Jarvis does not change `PATH` by itself. The HUD only previews repair commands until you approve an action path.
 
+For the approval model behind these repair buttons, see `docs\RUNTIME_REPAIR_APPROVALS.md`.
+
 ## Other Local Runtime Adapters
 
 Ollama is not the only path:
