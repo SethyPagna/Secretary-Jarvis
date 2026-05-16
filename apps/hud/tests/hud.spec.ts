@@ -9,7 +9,22 @@ async function mockGateway(page: import("playwright/test").Page) {
       body: JSON.stringify({ ...seededStatus, pendingApprovals: [] }),
     });
   });
+  await page.route("http://127.0.0.1:4317/api/events", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream; charset=utf-8",
+      body: ": connected\n\n",
+    });
+  });
   await page.route("http://127.0.0.1:4317/api/**", async (route) => {
+    if (route.request().url().endsWith("/api/events")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream; charset=utf-8",
+        body: ": connected\n\n",
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/status")) {
       await route.fulfill({
         status: 200,
@@ -201,6 +216,23 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().method() === "POST" && route.request().url().endsWith("/api/chat")) {
+      await route.fulfill({
+        status: 202,
+        contentType: "application/json",
+        body: JSON.stringify({
+          conversation: { id: "conversation-ui", title: "Check status" },
+          task: {
+            id: "task-ui-command",
+            title: "Check status",
+            status: "queued",
+            taskProfile: "daily-assistant",
+          },
+          queued: { kind: "queued", message: "Task queued and ready for local execution." },
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/runtime/smoke-status")) {
       await route.fulfill({
         status: 200,
@@ -356,6 +388,21 @@ test("voice and text panels expose compact interaction states", async ({ page })
   await page.getByRole("button", { name: "Open Jarvis controls" }).click();
   await page.getByTitle("Text").click();
   await expect(page.getByPlaceholder("Ask Jarvis anything...")).toBeFocused();
+});
+
+test("text command closes into a compact command capsule", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Jarvis controls" }).click();
+  await page.getByTitle("Text").click();
+
+  await page.getByPlaceholder("Ask Jarvis anything...").fill("Check status");
+  await page.getByRole("button", { name: "Send to Jarvis" }).click();
+
+  const capsule = page.getByLabel("Jarvis command capsule");
+  await expect(capsule).toBeVisible();
+  await expect(capsule).toContainText("Queued");
+  await expect(capsule).toContainText("Check status");
+  await expect(page.getByRole("dialog", { name: "Jarvis text panel" })).toHaveCount(0);
 });
 
 test("mobile HUD avoids horizontal overflow with open radial menu and panel", async ({ page }) => {
