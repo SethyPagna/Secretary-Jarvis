@@ -223,12 +223,12 @@ Protocol:
 - [x] 29.1 Add interaction health endpoint - commit `70cfa7f`
 - [x] 29.2 Surface interaction health in HUD Settings - commit `1ac3bda`
 - [x] 29.3 Polish workflow console owner-approved automation state - commit `216ccb0`
-- [ ] 29.4 Add run/wake/use flow documentation
+- [x] 29.4 Add run/wake/use flow documentation - commit `70e52f8`
 - [ ] 29.5 Verify interaction health with tests, builds, startup check-only scripts, and runtime smoke
 
 ## Current Priority
 
-Next task: Implement Phase 29.4 run/wake/use flow documentation.
+Next task: Implement Phase 29.5 verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
