@@ -322,7 +322,7 @@ Protocol:
 - [x] 42.5 Verify gateway/HUD builds and tests, setup doctor, runtime live-test, commit, and push - commit `6250008`
 
 ## Phase 43 - Local Voice Runtime Environment
-- [x] 43.1 Add Phase 43 tracking to `PLAN.md` and `PROGRESS.md` - commit `pending`
+- [x] 43.1 Add Phase 43 tracking to `PLAN.md` and `PROGRESS.md` - commit `4d8895f`
 - [ ] 43.2 Prefer local venv Python for Gateway voice/vision probes
 - [ ] 43.3 Add venv lifecycle to voice setup assistant
 - [ ] 43.4 Start Brain with local venv Python and update attention previews
