@@ -3,6 +3,7 @@ param(
   [string]$Action = "Doctor",
   [string]$PythonVersion = "3.11",
   [string]$PipIndexUrl = "",
+  [string]$TorchIndexUrl = "https://download.pytorch.org/whl/cpu",
   [int]$PipGroupTimeoutSeconds = 300,
   [int]$PipUpgradeTimeoutSeconds = 120,
   [switch]$RecreateVenv,
@@ -25,11 +26,14 @@ $WakePath = Join-Path $Parent "models\wake-word"
 
 $CorePythonPackages = @(
   "transformers",
-  "torch",
   "accelerate",
   "sentencepiece",
   "soundfile",
   "Pillow"
+)
+
+$TorchPythonPackages = @(
+  "torch"
 )
 
 $OptionalPythonPackages = @(
@@ -39,7 +43,7 @@ $OptionalPythonPackages = @(
   "vosk"
 )
 
-$PythonPackages = @($CorePythonPackages + $OptionalPythonPackages)
+$PythonPackages = @($CorePythonPackages + $TorchPythonPackages + $OptionalPythonPackages)
 
 function Test-CommandAvailable {
   param([string]$Command)
@@ -179,6 +183,7 @@ function Write-Commands {
     pythonVoiceDeps = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps"
     pythonVoiceDepsBounded = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps -PipGroupTimeoutSeconds 300"
     pythonVoiceDepsWithTrustedIndex = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps -PipIndexUrl `"<trusted-index-url>`""
+    pythonVoiceDepsWithMirror = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps -PipIndexUrl `"https://pypi.tuna.tsinghua.edu.cn/simple`""
     pythonVoiceDepsStrict = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps -StrictInstall"
     requirements = $RequirementsPath
     kokoro = "hf download hexgrad/Kokoro-82M --local-dir `"$KokoroPath`""
@@ -217,29 +222,7 @@ function Ensure-Venv {
 }
 
 function Invoke-PipUpgrade {
-  $job = Start-Job -ScriptBlock {
-    param([string]$PythonPath)
-    $ErrorActionPreference = "Continue"
-    $output = & $PythonPath -m pip install --upgrade pip 2>&1 | Out-String
-    [pscustomobject]@{
-      output = $output
-      exitCode = $LASTEXITCODE
-    }
-  } -ArgumentList $VenvPython
-
-  $completed = Wait-Job -Job $job -Timeout $PipUpgradeTimeoutSeconds
-  if (-not $completed) {
-    Stop-Job -Job $job -ErrorAction SilentlyContinue
-    Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
-    return [pscustomobject]@{
-      status = "attention"
-      exitCode = 124
-      log = "pip upgrade exceeded ${PipUpgradeTimeoutSeconds}s and was skipped. The venv is still usable with its bundled pip."
-    }
-  }
-
-  $result = Receive-Job -Job $job
-  Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+  $result = Invoke-TimedPythonProcess -Arguments @("-m", "pip", "install", "--upgrade", "pip") -TimeoutSeconds $PipUpgradeTimeoutSeconds -Description "pip upgrade"
   return [pscustomobject]@{
     status = if ([int]$result.exitCode -eq 0) { "ready" } else { "attention" }
     exitCode = [int]$result.exitCode
@@ -247,50 +230,68 @@ function Invoke-PipUpgrade {
   }
 }
 
+function Invoke-TimedPythonProcess {
+  param(
+    [string[]]$Arguments,
+    [int]$TimeoutSeconds,
+    [string]$Description
+  )
+
+  $stdout = Join-Path $env:TEMP ("jarvis-python-stdout-{0}.log" -f ([guid]::NewGuid().ToString("N")))
+  $stderr = Join-Path $env:TEMP ("jarvis-python-stderr-{0}.log" -f ([guid]::NewGuid().ToString("N")))
+  $process = Start-Process -FilePath $VenvPython -ArgumentList $Arguments -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -WindowStyle Hidden
+  $timedOut = $false
+  try {
+    Wait-Process -Id $process.Id -Timeout $TimeoutSeconds -ErrorAction Stop
+  } catch {
+    $timedOut = $true
+    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+  }
+
+  $process.Refresh()
+  $outputParts = @()
+  if (Test-Path -LiteralPath $stdout) {
+    $outputParts += Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue
+  }
+  if (Test-Path -LiteralPath $stderr) {
+    $outputParts += Get-Content -LiteralPath $stderr -Raw -ErrorAction SilentlyContinue
+  }
+  Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
+
+  if ($timedOut) {
+    $outputParts += "$Description exceeded ${TimeoutSeconds}s and was stopped. Rerun later or pass a trusted -PipIndexUrl."
+  }
+
+  [pscustomobject]@{
+    output = ($outputParts -join "`n")
+    exitCode = if ($timedOut) { 124 } else { [int]$process.ExitCode }
+  }
+}
+
 function Invoke-PipInstallGroup {
   param(
     [string]$Group,
     [string[]]$Packages,
-    [bool]$Required
+    [bool]$Required,
+    [string]$IndexUrl = $PipIndexUrl
   )
 
   $args = @("-m", "pip", "install", "--timeout", "60", "--retries", "5")
-  if ($PipIndexUrl.Trim().Length -gt 0) {
-    $args += @("--index-url", $PipIndexUrl)
+  if ($IndexUrl.Trim().Length -gt 0) {
+    $args += @("--index-url", $IndexUrl)
   }
   $args += $Packages
 
-  $job = Start-Job -ScriptBlock {
-    param(
-      [string]$PythonPath,
-      [string[]]$PipArgs
-    )
-    $ErrorActionPreference = "Continue"
-    $output = & $PythonPath @PipArgs 2>&1 | Out-String
-    [pscustomobject]@{
-      output = $output
-      exitCode = $LASTEXITCODE
-    }
-  } -ArgumentList $VenvPython, $args
-
-  $completed = Wait-Job -Job $job -Timeout $PipGroupTimeoutSeconds
-  if (-not $completed) {
-    Stop-Job -Job $job -ErrorAction SilentlyContinue
-    Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
-    $output = "pip install group '$Group' exceeded ${PipGroupTimeoutSeconds}s and was stopped. Rerun later or pass a trusted -PipIndexUrl."
-    $exitCode = 124
-  } else {
-    $result = Receive-Job -Job $job
-    Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
-    $output = ($result.output | Out-String)
-    $exitCode = [int]$result.exitCode
-  }
+  $result = Invoke-TimedPythonProcess -Arguments $args -TimeoutSeconds $PipGroupTimeoutSeconds -Description "pip install group '$Group'"
+  $output = $result.output
+  $exitCode = [int]$result.exitCode
 
   [pscustomobject]@{
     group = $Group
     required = $Required
     status = if ($exitCode -eq 0) { "installed" } elseif ($Required) { "failed" } else { "attention" }
     exitCode = $exitCode
+    indexUrl = if ($IndexUrl.Trim().Length -gt 0) { $IndexUrl } else { "default" }
     packages = $Packages
     log = ($output -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 } | Select-Object -Last 30)
   }
@@ -317,6 +318,7 @@ if ($Action -eq "InstallPythonVoiceDeps") {
   }
   $results = @(
     Invoke-PipInstallGroup -Group "core-stt-tts" -Packages $CorePythonPackages -Required $true
+    Invoke-PipInstallGroup -Group "torch-cpu" -Packages $TorchPythonPackages -Required $true -IndexUrl $TorchIndexUrl
     Invoke-PipInstallGroup -Group "optional-streaming-wake" -Packages $OptionalPythonPackages -Required $false
   )
   $doctor = Write-Doctor | ConvertFrom-Json
