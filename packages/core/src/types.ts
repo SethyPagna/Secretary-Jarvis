@@ -146,6 +146,9 @@ export interface ModelReadiness {
   runtimeProbe?: RuntimeProbe;
 }
 
+export type ModelAssetIntegrity = "complete" | "incomplete" | "pointer-only" | "metadata-only" | "missing";
+export type RuntimeRunnableState = "runnable" | "downloaded" | "staged" | "incomplete" | "future-scaling";
+
 export interface ModelAssetManifest {
   id: string;
   catalog: "ready" | "future-scaling";
@@ -165,6 +168,22 @@ export interface ModelAssetManifest {
   missingIndexedShards: string[];
   requiredFilesMissing: string[];
   notes: string[];
+  integrity?: ModelAssetIntegrity;
+  runnableState?: RuntimeRunnableState;
+  partialReasons?: string[];
+  pointerFileCount?: number;
+  partialDownloadFileCount?: number;
+  runtimeRecommendation?: string;
+}
+
+export interface UnifiedReadinessItem {
+  id: string;
+  category: "models" | "voice" | "vision" | "media" | "maps" | "connectors" | "runtime";
+  label: string;
+  state: "Downloaded" | "Runnable" | "Needs install" | "Needs approval" | "Future scaling" | "Incomplete";
+  detail: string;
+  expectedPath?: string;
+  actionHint: string;
 }
 
 export type RuntimeProbeStatus =

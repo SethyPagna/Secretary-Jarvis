@@ -11,8 +11,8 @@ describe("catalog routes", () => {
       sendJson: (statusCode: number, body: unknown) => sent.push({ statusCode, body }),
       statusWithRuntimeState: () => seededStatus,
       localModelAssetManifests: () => ({
-        ready: [{ id: "ready-qwen", status: "complete" }],
-        futureScaling: [{ id: "future-deepseek", status: "missing" }],
+        ready: [{ id: "ready-qwen", status: "complete", integrity: "complete", runnableState: "downloaded" }],
+        futureScaling: [{ id: "future-deepseek", status: "missing", integrity: "pointer-only", runnableState: "future-scaling", pointerFileCount: 1 }],
       }),
       modelActivationPlans: () => [
         { status: "ready-to-use" },
@@ -28,12 +28,14 @@ describe("catalog routes", () => {
     expect(tryHandleCatalogRoute({ ...params, pathname: "/api/models/activation-plans" })).toBe(true);
     expect(tryHandleCatalogRoute({ ...params, pathname: "/api/setup/action-groups" })).toBe(true);
     expect(tryHandleCatalogRoute({ ...params, pathname: "/api/models/future-scaling" })).toBe(true);
+    expect(tryHandleCatalogRoute({ ...params, pathname: "/api/models/assets/scan" })).toBe(true);
     expect(tryHandleCatalogRoute({ ...params, method: "POST", pathname: "/api/models" })).toBe(false);
 
-    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200]);
+    expect(sent.map((entry) => entry.statusCode)).toEqual([200, 200, 200, 200, 200]);
     expect(JSON.stringify(sent[0]?.body)).toContain("toolStatuses");
     expect(JSON.stringify(sent[1]?.body)).toContain("readyToUse");
     expect(JSON.stringify(sent[2]?.body)).toContain("Feature");
     expect(JSON.stringify(sent[3]?.body)).toContain("optional future");
+    expect(JSON.stringify(sent[4]?.body)).toContain("pointerOnly");
   });
 });

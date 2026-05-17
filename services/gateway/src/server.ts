@@ -53,6 +53,7 @@ import {
   type SystemAction,
   type TtsRequest,
   type UndoJournalEntry,
+  type UnifiedReadinessItem,
   type VisionInsight,
   type WorkflowDefinition,
   type WorkflowRun,
@@ -289,6 +290,83 @@ function visionRuntimeReadiness() {
     screenEnabled: status.connectors.some((connector) => connector.id === "screen" && connector.enabled),
     cameraEnabled: status.connectors.some((connector) => connector.id === "camera" && connector.enabled),
   });
+}
+
+function unifiedReadiness(): UnifiedReadinessItem[] {
+  const manifests = localModelAssetManifests();
+  const voice = voiceRuntimeReadiness();
+  const vision = visionRuntimeReadiness();
+  const modelItems: UnifiedReadinessItem[] = [...manifests.ready, ...manifests.futureScaling].map((manifest) => {
+    const state =
+      manifest.catalog === "future-scaling"
+        ? "Future scaling"
+        : manifest.integrity === "complete" && manifest.modelRef.toLowerCase().includes("whisper") && voice.primaryStt.status === "ready"
+          ? "Runnable"
+          : manifest.integrity === "complete"
+            ? "Downloaded"
+            : manifest.integrity === "missing"
+              ? "Needs install"
+              : "Incomplete";
+    return {
+      id: manifest.id,
+      category: "models",
+      label: manifest.label,
+      state,
+      detail: manifest.partialReasons?.length ? manifest.partialReasons.join(", ") : manifest.runtimeRecommendation ?? manifest.notes[0] ?? "Local model asset inspected.",
+      expectedPath: manifest.localPath,
+      actionHint: manifest.runtimeRecommendation ?? "Probe a local endpoint before loading raw Hugging Face weights.",
+    };
+  });
+  const voiceItems: UnifiedReadinessItem[] = [
+    {
+      id: "voice-stt-primary",
+      category: "voice",
+      label: voice.primaryStt.label,
+      state: voice.primaryStt.status === "ready" ? "Runnable" : voice.primaryStt.status === "ready-asset" ? "Downloaded" : "Needs install",
+      detail: voice.primaryStt.notes[0] ?? "Primary STT path.",
+      expectedPath: HF_SNAPSHOT_ROOT,
+      actionHint: "Use Whisper for STT; keep chat/coding routed through endpoint-first text models.",
+    },
+    {
+      id: "voice-tts-local",
+      category: "voice",
+      label: "Local TTS",
+      state: voice.summary.ttsReady ? "Runnable" : "Needs install",
+      detail: voice.tts.map((engine) => `${engine.label}: ${engine.status}`).join(" / "),
+      expectedPath: "C:/Users/user/Downloads/Secretary Jarvis/tools/piper",
+      actionHint: "Windows SAPI works now; Piper becomes the production local voice after install.",
+    },
+    {
+      id: "voice-wake-word",
+      category: "voice",
+      label: "Wake word",
+      state: voice.wakeWord.status === "ready" ? "Runnable" : "Needs approval",
+      detail: voice.wakeWord.notes[0] ?? "Wake-word capture stays approval-gated.",
+      expectedPath: "C:/Users/user/Downloads/Secretary Jarvis/models/wake-word",
+      actionHint: "Install Porcupine/Vosk wake profile, then approve continuous mic mode.",
+    },
+  ];
+  const visionItems: UnifiedReadinessItem[] = [
+    {
+      id: "vision-runtime",
+      category: "vision",
+      label: "Vision/OCR",
+      state: vision.summary.localVisionAssets > 0 ? "Downloaded" : "Needs install",
+      detail: `${vision.summary.localVisionAssets} local assets / ${vision.summary.missingFeatureDependencies} missing / ${vision.summary.approvalGatedSensors} approval gated`,
+      expectedPath: "C:/Users/user/Downloads/Secretary Jarvis/models/vision",
+      actionHint: "Use selected-image analysis first; continuous screen/camera requires approval.",
+    },
+  ];
+  const featureItems: UnifiedReadinessItem[] = hydrateFeatureDownloads().map((download) => ({
+    id: download.id,
+    category: download.category === "connector" ? "connectors" : download.category,
+    label: download.label,
+    state: download.status === "detected" ? "Downloaded" : download.status === "optional" ? "Needs install" : "Needs install",
+    detail: download.purpose,
+    expectedPath: download.expectedPath,
+    actionHint: download.installHint,
+  }));
+  return [...modelItems, ...voiceItems, ...visionItems, ...featureItems];
 }
 
 function runtimeConstellation() {
@@ -1728,6 +1806,23 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/readiness/unified") {
+    const items = unifiedReadiness();
+    sendJson(response, 200, {
+      items,
+      summary: {
+        runnable: items.filter((item) => item.state === "Runnable").length,
+        downloaded: items.filter((item) => item.state === "Downloaded").length,
+        incomplete: items.filter((item) => item.state === "Incomplete").length,
+        needsInstall: items.filter((item) => item.state === "Needs install").length,
+        needsApproval: items.filter((item) => item.state === "Needs approval").length,
+        futureScaling: items.filter((item) => item.state === "Future scaling").length,
+      },
+      note: "Unified readiness uses truthful states: Downloaded is not the same as Runnable.",
+    });
+    return;
+  }
+
   if (
     tryHandleReadinessRoute({
       method: request.method,
@@ -2393,7 +2488,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
-  if (request.method === "POST" && url.pathname.startsWith("/api/models/") && url.pathname.endsWith("/probe")) {
+  if (
+    request.method === "POST" &&
+    url.pathname.startsWith("/api/models/") &&
+    (url.pathname.endsWith("/probe") || url.pathname.endsWith("/runtime-probe"))
+  ) {
     const parts = url.pathname.split("/").filter(Boolean);
     const modelId = decodeURIComponent(parts[2] ?? "");
     const body = (await readBody(request)) as { runtime?: RuntimeKind; safeMode?: boolean };

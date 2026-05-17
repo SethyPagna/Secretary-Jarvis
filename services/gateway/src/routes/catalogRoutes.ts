@@ -82,6 +82,25 @@ export function tryHandleCatalogRoute(params: {
     return true;
   }
 
+  if (params.pathname === "/api/models/assets/scan") {
+    const assetManifests = params.localModelAssetManifests() as {
+      ready?: Array<{ status: string; integrity?: string; runnableState?: string; partialDownloadFileCount?: number; pointerFileCount?: number }>;
+      futureScaling?: Array<{ status: string; integrity?: string; runnableState?: string; partialDownloadFileCount?: number; pointerFileCount?: number }>;
+    };
+    const allAssets = [...(assetManifests.ready ?? []), ...(assetManifests.futureScaling ?? [])];
+    params.sendJson(200, {
+      ...assetManifests,
+      summary: {
+        downloaded: allAssets.filter((manifest) => manifest.integrity === "complete").length,
+        incomplete: allAssets.filter((manifest) => manifest.integrity === "incomplete" || manifest.partialDownloadFileCount).length,
+        pointerOnly: allAssets.filter((manifest) => manifest.integrity === "pointer-only" || manifest.pointerFileCount).length,
+        futureScaling: (assetManifests.futureScaling ?? []).length,
+      },
+      note: "Scanner validates local files only: config/tokenizer presence, full weight shards, pointer files, and partial browser downloads. It does not load model weights.",
+    });
+    return true;
+  }
+
   if (params.pathname === "/api/setup/needed-feature-downloads") {
     params.sendJson(200, {
       downloads: params.hydrateFeatureDownloads(),

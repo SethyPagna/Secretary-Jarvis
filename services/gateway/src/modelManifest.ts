@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
-import type { FutureScalingModel, ModelAssetManifest, ReadyModelAsset } from "@jarvis/core";
+import type { FutureScalingModel, ModelAssetIntegrity, ModelAssetManifest, ReadyModelAsset, RuntimeRunnableState } from "@jarvis/core";
 
 export function inspectReadyModelAsset(asset: ReadyModelAsset): ModelAssetManifest {
   return inspectModelPath({
@@ -45,6 +45,12 @@ function inspectModelPath(input: {
       missingIndexedShards: [],
       requiredFilesMissing: ["model folder"],
       notes: ["Expected local model folder is missing. No download was attempted."],
+      integrity: "missing",
+      runnableState: input.catalog === "future-scaling" ? "future-scaling" : "incomplete",
+      partialReasons: ["model folder missing"],
+      pointerFileCount: 0,
+      partialDownloadFileCount: 0,
+      runtimeRecommendation: "Download or point Jarvis at the local model folder before probing runtimes.",
     };
   }
 
@@ -52,6 +58,8 @@ function inspectModelPath(input: {
   const relativeFiles = files.map((filePath) => normalize(relative(input.localPath!, filePath)));
   const names = relativeFiles.map((filePath) => basename(filePath).toLowerCase());
   const weightFiles = relativeFiles.filter((filePath) => /\.(safetensors|bin|gguf)$/i.test(filePath));
+  const partialDownloadFiles = relativeFiles.filter((filePath) => /\.crdownload$|\.part$|\.tmp$/i.test(filePath));
+  const pointerFiles = weightFiles.filter((filePath) => isPointerFile(join(input.localPath!, filePath)));
   const indexFiles = relativeFiles.filter((filePath) => /index\.json$/i.test(filePath));
   const indexedShards = indexFiles.flatMap((filePath) => readIndexedShardNames(join(input.localPath!, filePath)));
   const missingIndexedShards = indexedShards.filter((shard) => !existsSync(join(input.localPath!, dirname(shard), basename(shard))));
@@ -63,9 +71,19 @@ function inspectModelPath(input: {
     hasTokenizer ? undefined : "tokenizer/vocab",
     weightFiles.length > 0 ? undefined : "model weights",
     missingIndexedShards.length > 0 ? "indexed shards" : undefined,
+    partialDownloadFiles.length > 0 ? "partial downloads" : undefined,
+    pointerFiles.length > 0 ? "full model weights (Git/Xet pointers detected)" : undefined,
   ].filter((item): item is string => Boolean(item));
   const sizeBytes = files.reduce((total, filePath) => total + statSync(filePath).size, 0);
   const status = statusFor(requiredFilesMissing, weightFiles.length, hasConfig || hasTokenizer || hasProcessor);
+  const integrity = integrityFor({
+    exists: true,
+    status,
+    pointerFileCount: pointerFiles.length,
+    partialDownloadFileCount: partialDownloadFiles.length,
+    weightFileCount: weightFiles.length,
+  });
+  const runnableState = runnableStateFor(input.catalog, integrity);
 
   return {
     ...input,
@@ -83,9 +101,17 @@ function inspectModelPath(input: {
     requiredFilesMissing,
     notes: [
       "Safe manifest inspected local files only; model weights were not loaded.",
-      status === "complete" ? "Required config/tokenizer/weight files are present." : "One or more required local model files are missing.",
+      status === "complete" ? "Required config/tokenizer/weight files are present." : "One or more required local model files are missing or incomplete.",
       input.catalog === "future-scaling" ? "Future scaling asset remains separate from laptop default routing." : "Ready asset remains subject to runtime probe before use.",
-    ],
+      pointerFiles.length > 0 ? "Git/Xet pointer-sized weight files were detected; pull full weights before use." : undefined,
+      partialDownloadFiles.length > 0 ? "Partial browser downloads were detected; resume or restart the download before use." : undefined,
+    ].filter((note): note is string => Boolean(note)),
+    integrity,
+    runnableState,
+    partialReasons: requiredFilesMissing,
+    pointerFileCount: pointerFiles.length,
+    partialDownloadFileCount: partialDownloadFiles.length,
+    runtimeRecommendation: runtimeRecommendationFor(input.catalog, integrity, input.modelRef),
   };
 }
 
@@ -97,6 +123,72 @@ function statusFor(requiredFilesMissing: string[], weightFileCount: number, hasM
     return "metadata-only";
   }
   return "partial";
+}
+
+function integrityFor(input: {
+  exists: boolean;
+  status: ModelAssetManifest["status"];
+  pointerFileCount: number;
+  partialDownloadFileCount: number;
+  weightFileCount: number;
+}): ModelAssetIntegrity {
+  if (!input.exists) {
+    return "missing";
+  }
+  if (input.partialDownloadFileCount > 0) {
+    return "incomplete";
+  }
+  if (input.pointerFileCount > 0 && input.pointerFileCount >= input.weightFileCount) {
+    return "pointer-only";
+  }
+  if (input.pointerFileCount > 0) {
+    return "incomplete";
+  }
+  if (input.status === "metadata-only") {
+    return "metadata-only";
+  }
+  return input.status === "complete" ? "complete" : "incomplete";
+}
+
+function runnableStateFor(catalog: ModelAssetManifest["catalog"], integrity: ModelAssetIntegrity): RuntimeRunnableState {
+  if (catalog === "future-scaling") {
+    return "future-scaling";
+  }
+  if (integrity === "complete") {
+    return "downloaded";
+  }
+  if (integrity === "metadata-only") {
+    return "staged";
+  }
+  return "incomplete";
+}
+
+function runtimeRecommendationFor(catalog: ModelAssetManifest["catalog"], integrity: ModelAssetIntegrity, modelRef: string): string {
+  if (catalog === "future-scaling") {
+    return integrity === "complete"
+      ? "Use only after a workstation/homelab endpoint is configured."
+      : "Future scaling target is not a laptop default; finish the model download before endpoint setup.";
+  }
+  if (integrity !== "complete") {
+    return "Repair the local asset before probing runtime adapters.";
+  }
+  if (modelRef.toLowerCase().includes("whisper")) {
+    return "Use Python Transformers STT probe first; do not route chat through this asset.";
+  }
+  return "Prefer Ollama/GGUF/LM Studio/vLLM endpoint routing before raw Hugging Face loading on this laptop.";
+}
+
+function isPointerFile(filePath: string): boolean {
+  try {
+    const size = statSync(filePath).size;
+    if (size > 4096) {
+      return false;
+    }
+    const content = readFileSync(filePath, "utf8");
+    return content.includes("version https://git-lfs.github.com/spec") || content.includes("https://git-lfs.github.com") || content.includes("xet");
+  } catch {
+    return false;
+  }
 }
 
 function collectFiles(folderPath: string): string[] {
