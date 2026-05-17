@@ -4,6 +4,7 @@ param(
   [string]$PythonVersion = "3.11",
   [string]$PipIndexUrl = "",
   [int]$PipGroupTimeoutSeconds = 300,
+  [int]$PipUpgradeTimeoutSeconds = 120,
   [switch]$RecreateVenv,
   [switch]$StrictInstall
 )
@@ -132,6 +133,7 @@ function Get-FolderState {
 function Write-Doctor {
   $pythonCommand = Resolve-JarvisPython
   $python = if ($pythonCommand) { (& $pythonCommand --version 2>&1 | Out-String).Trim() } else { "missing" }
+  $pip = if ($pythonCommand) { (& $pythonCommand -m pip --version 2>&1 | Out-String).Trim() } else { "missing" }
   $hf = if (Test-CommandAvailable "hf") { "present" } else { "missing" }
   $hfToken = if ($env:HF_TOKEN) { "set" } else { "not set" }
 
@@ -155,6 +157,7 @@ function Write-Doctor {
     preferredPythonVersion = $PythonVersion
     basePython = Get-BasePythonLabel
     python = $python
+    pip = $pip
     pythonCommand = if ($pythonCommand) { $pythonCommand } else { "missing" }
     venvPath = $VenvRoot
     venvStatus = if (Test-Path -LiteralPath $VenvPython) { "ready" } else { "missing" }
@@ -206,11 +209,42 @@ function Ensure-Venv {
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
   }
-  & $VenvPython -m pip install --upgrade pip
-  if ($LASTEXITCODE -ne 0) {
-    exit $LASTEXITCODE
+  $pipUpgrade = Invoke-PipUpgrade
+  if ($pipUpgrade.status -eq "attention") {
+    Write-Warning $pipUpgrade.log
   }
   Write-Doctor
+}
+
+function Invoke-PipUpgrade {
+  $job = Start-Job -ScriptBlock {
+    param([string]$PythonPath)
+    $ErrorActionPreference = "Continue"
+    $output = & $PythonPath -m pip install --upgrade pip 2>&1 | Out-String
+    [pscustomobject]@{
+      output = $output
+      exitCode = $LASTEXITCODE
+    }
+  } -ArgumentList $VenvPython
+
+  $completed = Wait-Job -Job $job -Timeout $PipUpgradeTimeoutSeconds
+  if (-not $completed) {
+    Stop-Job -Job $job -ErrorAction SilentlyContinue
+    Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    return [pscustomobject]@{
+      status = "attention"
+      exitCode = 124
+      log = "pip upgrade exceeded ${PipUpgradeTimeoutSeconds}s and was skipped. The venv is still usable with its bundled pip."
+    }
+  }
+
+  $result = Receive-Job -Job $job
+  Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+  return [pscustomobject]@{
+    status = if ([int]$result.exitCode -eq 0) { "ready" } else { "attention" }
+    exitCode = [int]$result.exitCode
+    log = (($result.output | Out-String) -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 } | Select-Object -Last 20)
+  }
 }
 
 function Invoke-PipInstallGroup {
