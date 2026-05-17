@@ -317,13 +317,13 @@ Protocol:
 ## Phase 42 - Runtime Attention Resolver And Voice Setup Assistant
 - [x] 42.1 Add Phase 42 tracking to `PLAN.md` and `PROGRESS.md` - commit `66be90d`
 - [x] 42.2 Add Gateway runtime attention resolver and endpoint - commit `ea3e2be`
-- [ ] 42.3 Add local voice setup assistant script
+- [x] 42.3 Add local voice setup assistant script - commit `pending`
 - [ ] 42.4 Surface runtime attention in HUD Settings
 - [ ] 42.5 Verify gateway/HUD builds and tests, setup doctor, runtime live-test, commit, and push
 
 ## Current Priority
 
-Next task: Phase 42.3, add the local voice setup assistant script for safe doctor checks and command previews.
+Next task: Phase 42.4, surface runtime attention in HUD Settings.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
