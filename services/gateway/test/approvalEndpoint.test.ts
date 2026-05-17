@@ -1,10 +1,20 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
-import { startGateway } from "../src/server.js";
 
 describe("approval endpoints", () => {
   let server: Server | undefined;
+  let tempRoot: string;
+  let startGateway: typeof import("../src/server.js").startGateway;
+
+  beforeAll(async () => {
+    tempRoot = mkdtempSync(join(tmpdir(), "jarvis-approval-endpoint-"));
+    process.env.JARVIS_DB_PATH = join(tempRoot, "jarvis.sqlite");
+    ({ startGateway } = await import("../src/server.js"));
+  });
 
   afterEach(async () => {
     if (server) {

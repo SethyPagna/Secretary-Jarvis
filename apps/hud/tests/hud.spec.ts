@@ -978,7 +978,7 @@ test("voice and text panels expose compact interaction states", async ({ page })
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("ready-asset");
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("4");
   await expect(voicePanel.getByLabel("Wake activation readiness")).toContainText("3/1");
-  await expect(voicePanel.getByLabel("Wake activation readiness")).toContainText("missing");
+  await expect(voicePanel.getByLabel("Wake activation readiness")).toContainText("push-to-talk");
   await expect(voicePanel.getByLabel("Agent voice matrix")).toContainText("Jarvis");
   await expect(voicePanel.getByLabel("Agent voice matrix")).toContainText("Sentinel");
   await expect(voicePanel.getByLabel("Agent voice matrix")).toContainText("future-clone");
