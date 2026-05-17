@@ -325,7 +325,7 @@ Protocol:
 - [x] 43.1 Add Phase 43 tracking to `PLAN.md` and `PROGRESS.md` - commit `4d8895f`
 - [x] 43.2 Prefer local venv Python for Gateway voice/vision probes - commit `a9b39b5`
 - [x] 43.3 Add venv lifecycle to voice setup assistant - commit `5133b65`
-- [x] 43.4 Start Brain with local venv Python and update attention previews - commit `pending`
+- [x] 43.4 Start Brain with local venv Python and update attention previews - commit `c9ef9de`
 - [ ] 43.5 Verify tests/builds/setup doctor/runtime live-test and push
 
 ## Current Priority
