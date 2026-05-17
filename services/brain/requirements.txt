@@ -1,7 +1,10 @@
 # Core Brain sidecar currently runs on the Python standard library.
 # Optional local upgrades:
-# transformers
-# torch
-# pillow
-# webrtcvad
-# vosk
+transformers
+torch
+accelerate
+sentencepiece
+soundfile
+Pillow
+webrtcvad
+vosk

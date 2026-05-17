@@ -23,3 +23,5 @@ apps/hud/test-results/
 apps/hud/playwright-report/
 __pycache__/
 *.pyc
+.venv/
+services/brain/.venv/
