@@ -1035,3 +1035,16 @@ Tasks:
 - 39.6 Add a safe outer-folder organization dry-run for `Secretary Jarvis` assets, references, installers, voice files, and local model folders.
 - 39.7 Harden the Electron preload bridge so app controls work in production file mode.
 - 39.8 Verify with HUD UI tests, full TypeScript build, core/gateway tests, runtime status, Electron visual smoke, commit, and push.
+
+## Extension Phase 41 - Voice Model Expansion, Approval Fixes, Sidebar Polish, And Verification
+
+Goal: Fix broken daily-use interactions and make voice/readiness more truthful while preserving strict local privacy.
+
+Tasks:
+- 41.1 Add Phase 41 tracking to `PLAN.md` and `PROGRESS.md`.
+- 41.2 Fix approval routing so sensor/timeline, model-download, connector, and workflow approvals use the right Gateway endpoint and surface loading/success/error state in the HUD.
+- 41.3 Polish the desktop sidebar into a slimmer icon rail that expands as an overlay without moving the centered orb, radial menu, approval chip, or panels.
+- 41.4 Add Kokoro-82M as the preferred lightweight local neural TTS feature dependency, and OmniVoice as an optional advanced voice dependency.
+- 41.5 Extend voice readiness so Whisper, SAPI, Jarvis samples, Piper, Kokoro, OmniVoice, Vosk, VAD, and wake-word states are separately visible.
+- 41.6 Keep automatic wake/listening approval-gated while exposing clear wake states and push-to-talk fallback.
+- 41.7 Verify core/gateway/HUD builds, tests, HUD UI interactions, runtime start/status/live-test, duplicate-start behavior, and push.
