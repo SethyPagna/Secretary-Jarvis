@@ -347,7 +347,7 @@ Acceptance for the next UI slice:
 - Dashboard remains a secondary control room.
 
 ## Phase 45 - Unified Roadmap, Sidebar Contract, Compact Voice HUD, And Code Schema Sweep
-- [ ] 45.1 Save the unified execution roadmap and update `PLAN.md` / `PROGRESS.md`
+- [x] 45.1 Save the unified execution roadmap and update `PLAN.md` / `PROGRESS.md` - commit `87010fb`
 - [ ] 45.2 Fix sidebar/content synchronization and minimized icon alignment
 - [ ] 45.3 Re-anchor orb, radial menu, approval chips, and panels to the usable stage center
 - [ ] 45.4 Minimize voice metering into compact legend and collapsible runtime details
