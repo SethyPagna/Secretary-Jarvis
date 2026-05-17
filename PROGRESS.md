@@ -328,9 +328,16 @@ Protocol:
 - [x] 43.4 Start Brain with local venv Python and update attention previews - commit `c9ef9de`
 - [x] 43.5 Verify tests/builds/setup doctor/runtime live-test and push - commit `21b6859`
 
+## Phase 44 - Python 3.11 Voice Runtime And Resumable ML Setup
+- [ ] 44.1 Add Phase 44 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 44.2 Prefer Python 3.11 and safely recreate the Jarvis-owned Brain venv
+- [ ] 44.3 Add resumable package install controls and clear JSON output
+- [ ] 44.4 Recreate the Brain venv with Python 3.11, retry voice packages, and verify doctor output
+- [ ] 44.5 Restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push
+
 ## Current Priority
 
-Next task: Phase 44, continue from the latest user priority after reviewing `PLAN.md` and this tracker.
+Next task: Phase 44.1, add Phase 44 tracking commits, then repair the voice runtime with Python 3.11.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

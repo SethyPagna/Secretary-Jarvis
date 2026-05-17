@@ -1070,3 +1070,14 @@ Tasks:
 - 43.3 Update `scripts/setup-voice-runtime.ps1` with `EnsureVenv`, venv-aware doctor output, and venv-targeted package install previews.
 - 43.4 Start Python Brain with the local venv Python when present, and update runtime attention previews to reference the setup assistant.
 - 43.5 Verify tests/builds/setup doctor/runtime live-test, commit, and push.
+
+## Extension Phase 44 - Python 3.11 Voice Runtime And Resumable ML Setup
+
+Goal: Make the voice runtime actually installable and stable by preferring Python 3.11 for ML packages, avoiding Python 3.13 wheel friction, and keeping all installs bounded, resumable, and visible in Jarvis.
+
+Tasks:
+- 44.1 Add Phase 44 tracking to `PLAN.md` and `PROGRESS.md`.
+- 44.2 Update the voice setup assistant to prefer `py -3.11`, report the venv Python version, and safely recreate only the Jarvis-owned `services/brain/.venv` when requested.
+- 44.3 Add resumable package install controls: package groups, timeout, optional trusted index URL, and clear JSON output for ready/attention/failed states.
+- 44.4 Recreate the local Brain venv with Python 3.11, retry voice package installation, and verify the doctor output.
+- 44.5 Restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push.
