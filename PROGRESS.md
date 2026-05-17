@@ -333,11 +333,11 @@ Protocol:
 - [x] 44.2 Prefer Python 3.11 and safely recreate the Jarvis-owned Brain venv - commits `3ad877d`, `772bd9e`
 - [x] 44.3 Add resumable package install controls and clear JSON output - commits `b4f90dd`, `9370b8d`
 - [x] 44.4 Recreate the Brain venv with Python 3.11, retry voice packages, and verify doctor output - commit `5873896`
-- [ ] 44.5 Restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push
+- [x] 44.5 Restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push - commit `pending`
 
 ## Current Priority
 
-Next task: Phase 44.5, restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push.
+Next task: Phase 45, continue with actual Kokoro TTS execution and approval-gated wake activation after reviewing `PLAN.md` and this tracker.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
