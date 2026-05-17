@@ -7,4 +7,6 @@ sentencepiece
 soundfile
 Pillow
 webrtcvad
+silero-vad
+pvporcupine
 vosk

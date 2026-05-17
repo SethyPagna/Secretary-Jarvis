@@ -1,6 +1,9 @@
 param(
   [ValidateSet("Doctor", "ShowCommands", "EnsureVenv", "ProbePythonVoiceDeps", "InstallPythonVoiceDeps")]
-  [string]$Action = "Doctor"
+  [string]$Action = "Doctor",
+  [string]$PipIndexUrl = "",
+  [int]$PipGroupTimeoutSeconds = 300,
+  [switch]$StrictInstall
 )
 
 $ErrorActionPreference = "Stop"
@@ -17,15 +20,23 @@ $PiperPath = Join-Path $Parent "tools\piper"
 $VoskPath = Join-Path $Parent "models\vosk"
 $WakePath = Join-Path $Parent "models\wake-word"
 
-$PythonPackages = @(
+$CorePythonPackages = @(
   "transformers",
   "torch",
   "accelerate",
   "sentencepiece",
   "soundfile",
+  "Pillow"
+)
+
+$OptionalPythonPackages = @(
   "webrtcvad",
+  "silero-vad",
+  "pvporcupine",
   "vosk"
 )
+
+$PythonPackages = @($CorePythonPackages + $OptionalPythonPackages)
 
 function Test-CommandAvailable {
   param([string]$Command)
@@ -140,6 +151,55 @@ function Ensure-Venv {
   Write-Doctor
 }
 
+function Invoke-PipInstallGroup {
+  param(
+    [string]$Group,
+    [string[]]$Packages,
+    [bool]$Required
+  )
+
+  $args = @("-m", "pip", "install", "--timeout", "60", "--retries", "5")
+  if ($PipIndexUrl.Trim().Length -gt 0) {
+    $args += @("--index-url", $PipIndexUrl)
+  }
+  $args += $Packages
+
+  $job = Start-Job -ScriptBlock {
+    param(
+      [string]$PythonPath,
+      [string[]]$PipArgs
+    )
+    $ErrorActionPreference = "Continue"
+    $output = & $PythonPath @PipArgs 2>&1 | Out-String
+    [pscustomobject]@{
+      output = $output
+      exitCode = $LASTEXITCODE
+    }
+  } -ArgumentList $VenvPython, $args
+
+  $completed = Wait-Job -Job $job -Timeout $PipGroupTimeoutSeconds
+  if (-not $completed) {
+    Stop-Job -Job $job -ErrorAction SilentlyContinue
+    Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    $output = "pip install group '$Group' exceeded ${PipGroupTimeoutSeconds}s and was stopped. Rerun later or pass a trusted -PipIndexUrl."
+    $exitCode = 124
+  } else {
+    $result = Receive-Job -Job $job
+    Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+    $output = ($result.output | Out-String)
+    $exitCode = [int]$result.exitCode
+  }
+
+  [pscustomobject]@{
+    group = $Group
+    required = $Required
+    status = if ($exitCode -eq 0) { "installed" } elseif ($Required) { "failed" } else { "attention" }
+    exitCode = $exitCode
+    packages = $Packages
+    log = ($output -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 } | Select-Object -Last 30)
+  }
+}
+
 if ($Action -eq "Doctor" -or $Action -eq "ProbePythonVoiceDeps") {
   Write-Doctor
   exit 0
@@ -159,6 +219,30 @@ if ($Action -eq "InstallPythonVoiceDeps") {
   if (-not (Test-Path -LiteralPath $VenvPython)) {
     Ensure-Venv
   }
-  & $VenvPython -m pip install -r $RequirementsPath
-  exit $LASTEXITCODE
+  $results = @(
+    Invoke-PipInstallGroup -Group "core-stt-tts" -Packages $CorePythonPackages -Required $true
+    Invoke-PipInstallGroup -Group "optional-streaming-wake" -Packages $OptionalPythonPackages -Required $false
+  )
+  $doctor = Write-Doctor | ConvertFrom-Json
+  $failedRequired = @($results | Where-Object { $_.required -and $_.status -eq "failed" })
+  $summary = [pscustomobject]@{
+    action = "InstallPythonVoiceDeps"
+    status = if ($failedRequired.Count -gt 0) { "attention" } else { "ready" }
+    strict = [bool]$StrictInstall
+    python = $doctor.python
+    pythonCommand = $doctor.pythonCommand
+    venvPath = $VenvRoot
+    results = $results
+    doctor = $doctor
+    next = if ($failedRequired.Count -gt 0) {
+      "Core packages could not be installed. Check network/PyPI access, then rerun this action. You may pass -PipIndexUrl to use a trusted mirror."
+    } else {
+      "Core packages are installed. Optional wake/VAD/Vosk packages can be retried later if any remain missing."
+    }
+  }
+  $summary | ConvertTo-Json -Depth 8
+  if ($StrictInstall -and $failedRequired.Count -gt 0) {
+    exit 1
+  }
+  exit 0
 }
