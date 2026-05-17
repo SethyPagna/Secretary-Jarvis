@@ -321,9 +321,16 @@ Protocol:
 - [x] 42.4 Surface runtime attention in HUD Settings - commit `1b3621e`
 - [x] 42.5 Verify gateway/HUD builds and tests, setup doctor, runtime live-test, commit, and push - commit `6250008`
 
+## Phase 43 - Local Voice Runtime Environment
+- [x] 43.1 Add Phase 43 tracking to `PLAN.md` and `PROGRESS.md` - commit `pending`
+- [ ] 43.2 Prefer local venv Python for Gateway voice/vision probes
+- [ ] 43.3 Add venv lifecycle to voice setup assistant
+- [ ] 43.4 Start Brain with local venv Python and update attention previews
+- [ ] 43.5 Verify tests/builds/setup doctor/runtime live-test and push
+
 ## Current Priority
 
-Next task: Continue production polish with the runtime attention list: install/probe Python STT packages, Kokoro/Piper/wake dependencies, and remaining vision/media feature dependencies after owner approval.
+Next task: Phase 43.2, make Gateway voice and vision readiness probes prefer the local Jarvis Python runtime.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

@@ -1059,3 +1059,14 @@ Tasks:
 - 42.3 Add a local `scripts/setup-voice-runtime.ps1` assistant for voice dependency doctor checks and command previews. It must not store or echo Hugging Face tokens.
 - 42.4 Surface the runtime attention resolver in the HUD Settings panel as compact grouped cards with dry-run states.
 - 42.5 Verify gateway/HUD builds and tests, voice setup doctor, runtime status/live-test, commit, and push.
+
+## Extension Phase 43 - Local Voice Runtime Environment
+
+Goal: Make Jarvis use a project-local Python voice runtime for STT/TTS/VAD probes and Brain startup, so setup is repeatable and does not pollute global Python.
+
+Tasks:
+- 43.1 Add Phase 43 tracking to `PLAN.md` and `PROGRESS.md`.
+- 43.2 Teach Gateway readiness probes to prefer `JARVIS_PYTHON`, then `services/brain/.venv/Scripts/python.exe`, then system Python.
+- 43.3 Update `scripts/setup-voice-runtime.ps1` with `EnsureVenv`, venv-aware doctor output, and venv-targeted package install previews.
+- 43.4 Start Python Brain with the local venv Python when present, and update runtime attention previews to reference the setup assistant.
+- 43.5 Verify tests/builds/setup doctor/runtime live-test, commit, and push.
