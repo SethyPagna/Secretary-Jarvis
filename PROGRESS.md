@@ -299,7 +299,7 @@ Protocol:
 - [x] 39.8 Verify HUD UI tests, full build, core/gateway tests, runtime status, Electron visual smoke, and push - commits `5655544`, `f2b78c7`, `3701f33`
 
 ## Phase 40 - Production Jarvis Stability, Responsiveness, Runtime Activation, And Workflow Studio
-- [x] 40.1 Add single-instance Electron lifecycle and runtime supervisor lock - commit `ce451e9`
+- [x] 40.1 Add single-instance Electron lifecycle and runtime supervisor lock - commit `45f4dbe`
 - [ ] 40.2 Repair HUD responsiveness, sidebar/radial alignment, and button states
 - [ ] 40.3 Add truthful model asset scanner and unified readiness states
 - [ ] 40.4 Upgrade workflow studio editing, persistence, and approval-gated drafts
