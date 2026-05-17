@@ -15,12 +15,22 @@ $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $PSScriptRoot
 $GatewayUrl = "http://127.0.0.1:$GatewayPort"
+$RuntimeRoot = Join-Path $Root "data\runtime"
+New-Item -ItemType Directory -Force -Path $RuntimeRoot | Out-Null
+
+$RuntimeMutex = New-Object System.Threading.Mutex($false, "Local\SecretaryJarvisRuntimeSupervisor")
+$RuntimeMutexAcquired = $false
 
 function Invoke-JarvisRuntimeAction {
   param([string]$SelectedAction)
 
   switch ($SelectedAction) {
     "Start" {
+      if ((Test-JarvisRuntimeReady) -and -not $CheckOnly) {
+        Write-Host "Jarvis already running. Focusing the existing HUD instead of starting a duplicate."
+        Invoke-FocusExistingHud
+        return
+      }
       Invoke-Stop -Quiet
       $args = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "start-jarvis.ps1"), "-GatewayPort", "$GatewayPort")
       if ($CheckOnly) { $args += "-CheckOnly" }
@@ -120,6 +130,39 @@ function Invoke-Status {
   }
 }
 
+function Test-JarvisRuntimeReady {
+  $electronPidFile = Join-Path $RuntimeRoot "electron-hud.pid"
+  if (-not (Test-Path -LiteralPath $electronPidFile)) {
+    return $false
+  }
+  $pidText = Get-Content -LiteralPath $electronPidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+  $processId = 0
+  if (-not [int]::TryParse($pidText, [ref]$processId)) {
+    return $false
+  }
+  if (-not (Get-Process -Id $processId -ErrorAction SilentlyContinue)) {
+    return $false
+  }
+  try {
+    Invoke-RestMethod -Uri "$GatewayUrl/api/status" -Method Get -TimeoutSec 3 | Out-Null
+    return $true
+  } catch {
+    return $false
+  }
+}
+
+function Invoke-FocusExistingHud {
+  $electronExe = Join-Path $Root "node_modules\electron\dist\electron.exe"
+  $mainScript = Join-Path $Root "apps\hud\dist-electron\main.js"
+  if ((Test-Path -LiteralPath $electronExe) -and (Test-Path -LiteralPath $mainScript)) {
+    $env:JARVIS_HUD_MODE = "app"
+    $env:JARVIS_WINDOW_MODE = "desktop"
+    $env:JARVIS_START_MINIMIZED = "0"
+    $env:JARVIS_GATEWAY_URL = $GatewayUrl
+    Start-Process -FilePath $electronExe -ArgumentList "dist-electron/main.js" -WorkingDirectory (Join-Path $Root "apps\hud") -WindowStyle Hidden | Out-Null
+  }
+}
+
 function Show-Menu {
   Write-Host ""
   Write-Host "Jarvis Runtime"
@@ -158,4 +201,16 @@ function Show-Menu {
 }
 
 Set-Location -LiteralPath $Root
-Invoke-JarvisRuntimeAction $Action
+try {
+  $RuntimeMutexAcquired = $RuntimeMutex.WaitOne(0)
+  if (-not $RuntimeMutexAcquired) {
+    Write-Host "Another Jarvis runtime supervisor action is already running. Try again after it finishes."
+    exit 2
+  }
+  Invoke-JarvisRuntimeAction $Action
+} finally {
+  if ($RuntimeMutexAcquired) {
+    $RuntimeMutex.ReleaseMutex()
+  }
+  $RuntimeMutex.Dispose()
+}

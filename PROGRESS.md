@@ -298,9 +298,16 @@ Protocol:
 - [x] 39.7 Harden Electron preload bridge for production app controls - commit `f2b78c7`
 - [x] 39.8 Verify HUD UI tests, full build, core/gateway tests, runtime status, Electron visual smoke, and push - commits `5655544`, `f2b78c7`, `3701f33`
 
+## Phase 40 - Production Jarvis Stability, Responsiveness, Runtime Activation, And Workflow Studio
+- [x] 40.1 Add single-instance Electron lifecycle and runtime supervisor lock - commit `ce451e9`
+- [ ] 40.2 Repair HUD responsiveness, sidebar/radial alignment, and button states
+- [ ] 40.3 Add truthful model asset scanner and unified readiness states
+- [ ] 40.4 Upgrade workflow studio editing, persistence, and approval-gated drafts
+- [ ] 40.5 Verify runtime, UI, models, voice, workflow, performance, commit, and push
+
 ## Current Priority
 
-Next task: Continue production hardening with real voice/model runtime probes, richer workflow editing persistence, and live Electron visual verification.
+Next task: Continue Phase 40 production hardening with responsive HUD controls, truthful readiness, workflow editing, and live Electron visual verification.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

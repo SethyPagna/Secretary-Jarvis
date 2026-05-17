@@ -9,4 +9,16 @@ contextBridge.exposeInMainWorld("jarvisDesktop", {
   runTrayCommand(type) {
     return ipcRenderer.invoke("jarvis:tray-command", type);
   },
+  showApp() {
+    return ipcRenderer.invoke("app:show");
+  },
+  hideApp() {
+    return ipcRenderer.invoke("app:hide");
+  },
+  focusExisting() {
+    return ipcRenderer.invoke("app:focus-existing");
+  },
+  quitApp() {
+    return ipcRenderer.invoke("app:quit");
+  },
 });

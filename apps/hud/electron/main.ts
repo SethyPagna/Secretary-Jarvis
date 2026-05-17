@@ -17,6 +17,7 @@ const ELECTRON_DEBUG_LOG = path.join(ROOT_DIR, "data", "logs", "electron-main.de
 
 let hudWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+let isQuitting = false;
 
 function logElectron(message: string): void {
   try {
@@ -48,6 +49,7 @@ function createHudWindow(): BrowserWindow {
   const desktopMode = WINDOW_MODE === "desktop";
   let revealed = false;
   logElectron(`creating-window mode=${WINDOW_MODE} hudMode=${HUD_MODE} cwd=${process.cwd()}`);
+  const trayImage = createTrayImage();
   const window = new BrowserWindow({
     width: desktopMode ? 1180 : undefined,
     height: desktopMode ? 760 : undefined,
@@ -61,6 +63,7 @@ function createHudWindow(): BrowserWindow {
     skipTaskbar: false,
     hasShadow: desktopMode,
     title: "Secretary Jarvis",
+    icon: trayImage,
     titleBarStyle: desktopMode ? "hidden" : "default",
     titleBarOverlay: desktopMode
       ? {
@@ -120,11 +123,30 @@ function createHudWindow(): BrowserWindow {
     logElectron("window-closed");
     hudWindow = null;
   });
+  window.on("close", (event) => {
+    if (isQuitting) {
+      return;
+    }
+    event.preventDefault();
+    window.hide();
+    logElectron("window-close-hidden-to-tray");
+  });
+  window.on("minimize" as never, (event: { preventDefault: () => void }) => {
+    if (isQuitting) {
+      return;
+    }
+    event.preventDefault();
+    window.hide();
+    logElectron("window-minimize-hidden-to-tray");
+  });
   return window;
 }
 
 function showHud(): void {
   hudWindow ??= createHudWindow();
+  if (hudWindow.isMinimized()) {
+    hudWindow.restore();
+  }
   hudWindow.show();
   hudWindow.focus();
 }
@@ -285,9 +307,9 @@ function createTray(): void {
       { label: "Pause Agents", click: () => void runTrayAction("pause-agents") },
       { label: "Run Live Test", click: () => void runTrayAction("live-test") },
       { label: "Emergency Stop", click: () => void runTrayAction("emergency-stop") },
-      { label: "Stop Local Services", click: () => void runTrayAction("stop-services") },
+      { label: "Stop Jarvis Services", click: () => void runTrayAction("stop-services") },
       { type: "separator" },
-      { label: "Quit", click: () => void stopLocalServices().finally(() => app.quit()) }
+      { label: "Quit Jarvis", click: () => void stopLocalServices().finally(() => quitJarvisApp()) }
     ])
   );
   tray.on("click", () => void runTrayAction("open-hud"));
@@ -311,14 +333,37 @@ ipcMain.handle("jarvis:tray-command", async (_event, type: TrayActionType) => {
   await runTrayAction(type);
 });
 
+ipcMain.handle("app:show", () => showHud());
+ipcMain.handle("app:hide", () => hudWindow?.hide());
+ipcMain.handle("app:focus-existing", () => showHud());
+ipcMain.handle("app:quit", () => quitJarvisApp());
+
+function quitJarvisApp(): void {
+  isQuitting = true;
+  app.quit();
+}
+
 logElectron(`main-start electron=${process.versions.electron ?? "unknown"} mode=${HUD_MODE}/${WINDOW_MODE}`);
-void app.whenReady().then(() => {
-  logElectron("app-ready");
-  createTray();
-  showHud();
-}).catch((error) => logElectron(`app-ready-error ${String(error)}`));
+const singleInstanceLock = app.requestSingleInstanceLock();
+if (!singleInstanceLock) {
+  logElectron("single-instance-lock-denied");
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    logElectron("second-instance-focus-existing");
+    showHud();
+  });
+  void app.whenReady().then(() => {
+    logElectron("app-ready");
+    createTray();
+    showHud();
+  }).catch((error) => logElectron(`app-ready-error ${String(error)}`));
+}
 
 app.on("activate", showHud);
+app.on("before-quit", () => {
+  isQuitting = true;
+});
 app.on("window-all-closed", () => {
   hudWindow?.hide();
 });

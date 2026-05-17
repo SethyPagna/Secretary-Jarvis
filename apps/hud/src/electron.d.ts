@@ -19,5 +19,9 @@ interface Window {
   jarvisDesktop?: {
     onTrayAction(callback: (action: JarvisTrayAction) => void): () => void;
     runTrayCommand(type: JarvisTrayActionType): Promise<void>;
+    showApp(): Promise<void>;
+    hideApp(): Promise<void>;
+    focusExisting(): Promise<void>;
+    quitApp(): Promise<void>;
   };
 }
