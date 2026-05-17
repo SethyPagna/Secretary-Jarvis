@@ -303,11 +303,11 @@ Protocol:
 - [x] 40.2 Repair HUD responsiveness, sidebar/radial alignment, and button states - commit `d02c86e`
 - [x] 40.3 Add truthful model asset scanner and unified readiness states - commit `3885c12`
 - [x] 40.4 Upgrade workflow studio editing, persistence, and approval-gated drafts - commit `77ee1a7`
-- [ ] 40.5 Verify runtime, UI, models, voice, workflow, performance, commit, and push
+- [x] 40.5 Verify runtime, UI, models, voice, workflow, performance, commit, and push - commit `49f46a6`
 
 ## Current Priority
 
-Next task: Continue Phase 40 production hardening with responsive HUD controls, truthful readiness, workflow editing, and live Electron visual verification.
+Next task: Continue post-Phase 40 production polish with deeper voice/runtime activation and any user-reported desktop UX issues.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
