@@ -323,7 +323,7 @@ Protocol:
 
 ## Phase 43 - Local Voice Runtime Environment
 - [x] 43.1 Add Phase 43 tracking to `PLAN.md` and `PROGRESS.md` - commit `4d8895f`
-- [x] 43.2 Prefer local venv Python for Gateway voice/vision probes - commit `pending`
+- [x] 43.2 Prefer local venv Python for Gateway voice/vision probes - commit `a9b39b5`
 - [ ] 43.3 Add venv lifecycle to voice setup assistant
 - [ ] 43.4 Start Brain with local venv Python and update attention previews
 - [ ] 43.5 Verify tests/builds/setup doctor/runtime live-test and push
