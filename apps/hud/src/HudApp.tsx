@@ -38,7 +38,9 @@ function HudSurface() {
   const [serviceIntent, setServiceIntent] = useState<"stop-services" | "restart-services" | null>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [busyControl, setBusyControl] = useState<string | null>(null);
-  const pendingApproval = status?.pendingApprovals?.[0];
+  const [approvalBusyId, setApprovalBusyId] = useState<string | null>(null);
+  const [clearedApprovalIds, setClearedApprovalIds] = useState<Set<string>>(() => new Set());
+  const pendingApproval = status?.pendingApprovals?.find((approval) => !clearedApprovalIds.has(approval.id));
   const workflowApproval = pendingApproval?.connectorId === "workflow-engine" ? pendingApproval : undefined;
   const visualState = pendingApproval ? "approval" : state;
   const active = visualState !== "idle";
@@ -111,20 +113,34 @@ function HudSurface() {
     if (!pendingApproval) {
       return;
     }
-    const systemAction =
-      pendingApproval.agentId === "vulcan" ||
-      pendingApproval.connectorId === "filesystem" ||
-      ["write-local", "delete-local", "run-script", "service-control", "device-control", "sensor-capture"].includes(pendingApproval.category);
+    const systemAction = isSystemActionApproval(pendingApproval.category);
     const endpoint =
       outcome === "approve" && systemAction
         ? `/api/system/actions/${pendingApproval.id}/approve`
         : `/api/approvals/${pendingApproval.id}/${outcome}`;
+    setApprovalBusyId(pendingApproval.id);
     setHudState(outcome === "approve" ? "executing" : "idle", outcome === "approve" ? "Executing approved action." : "Approval denied.");
-    await fetch(`${apiBaseUrl}${endpoint}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: "{}"
-    }).catch(() => setHudState("error", "Approval action failed."));
+    try {
+      const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}"
+      });
+      if (!response.ok) {
+        throw new Error(`Approval request failed with ${response.status}`);
+      }
+      setClearedApprovalIds((current) => new Set([...current, pendingApproval.id]));
+      setCommandCapsule({
+        state: outcome === "approve" ? "completed" : "cancelled",
+        title: pendingApproval.title,
+        detail: outcome === "approve" ? "Approved." : "Denied.",
+      });
+      setHudState(outcome === "approve" ? "executing" : "idle", outcome === "approve" ? "Approval accepted." : "Approval denied.");
+    } catch {
+      setHudState("error", "Approval action failed.");
+    } finally {
+      setApprovalBusyId(null);
+    }
   }
 
   function requestServiceAction(intent: "stop-services" | "restart-services") {
@@ -268,10 +284,10 @@ function HudSurface() {
                 <button className="details" type="button" onClick={() => setPanel("workflows")} aria-label="Open workflow details">
                   Flow
                 </button>
-                <button className="approve" type="button" onClick={() => void decideApproval("approve")} aria-label="Approve workflow">
-                  <Check size={15} aria-hidden="true" />
+                <button className="approve" type="button" onClick={() => void decideApproval("approve")} disabled={approvalBusyId === workflowApproval.id} aria-label="Approve workflow">
+                  {approvalBusyId === workflowApproval.id ? <Activity size={15} aria-hidden="true" /> : <Check size={15} aria-hidden="true" />}
                 </button>
-                <button className="deny" type="button" onClick={() => void decideApproval("deny")} aria-label="Deny workflow">
+                <button className="deny" type="button" onClick={() => void decideApproval("deny")} disabled={approvalBusyId === workflowApproval.id} aria-label="Deny workflow">
                   <X size={15} aria-hidden="true" />
                 </button>
               </>
@@ -282,10 +298,10 @@ function HudSurface() {
                   <b>{pendingApproval.category}</b>
                   <small>{pendingApproval.target}</small>
                 </span>
-                <button className="approve" type="button" onClick={() => void decideApproval("approve")} aria-label="Approve action">
-                  <Check size={15} aria-hidden="true" />
+                <button className="approve" type="button" onClick={() => void decideApproval("approve")} disabled={approvalBusyId === pendingApproval.id} aria-label="Approve action">
+                  {approvalBusyId === pendingApproval.id ? <Activity size={15} aria-hidden="true" /> : <Check size={15} aria-hidden="true" />}
                 </button>
-                <button className="deny" type="button" onClick={() => void decideApproval("deny")} aria-label="Deny action">
+                <button className="deny" type="button" onClick={() => void decideApproval("deny")} disabled={approvalBusyId === pendingApproval.id} aria-label="Deny action">
                   <X size={15} aria-hidden="true" />
                 </button>
               </>
@@ -351,6 +367,10 @@ function HudSurface() {
       </button>
     </main>
   );
+}
+
+function isSystemActionApproval(category: string): boolean {
+  return ["write-local", "delete-local", "run-script", "service-control", "device-control", "irreversible-edit"].includes(category);
 }
 
 function DesktopAppChrome({

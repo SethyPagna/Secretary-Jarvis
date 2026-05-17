@@ -1127,3 +1127,51 @@ test("settings shows compact architecture and authority hardening summaries", as
   await hardening.locator(".hardening-card", { hasText: "Code health" }).locator("summary").click();
   await expect(hardening).toContainText("1 dupes");
 });
+
+test("sensor approval chip uses generic approval endpoint and clears after success", async ({ page }) => {
+  const calls: string[] = [];
+  await page.route("http://127.0.0.1:4317/api/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ...seededStatus,
+        pendingApprovals: [
+          {
+            id: "approval-001",
+            title: "Enable continuous screen timeline capture",
+            category: "sensor-capture",
+            target: "screen timeline",
+            reason: "Required for rewind views.",
+            connectorId: "filesystem",
+            agentId: "jarvis",
+            dataTouched: ["screen content", "timeline"],
+          },
+        ],
+      }),
+    });
+  });
+  await page.route("http://127.0.0.1:4317/api/system/actions/approval-001/approve", async (route) => {
+    calls.push(route.request().url());
+    await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "wrong endpoint" }) });
+  });
+  await page.route("http://127.0.0.1:4317/api/approvals/approval-001/approve", async (route) => {
+    calls.push(route.request().url());
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        approval: { id: "approval-001", category: "sensor-capture", target: "screen timeline" },
+        memoryWrite: { id: "memory-approval", content: "Approval approved", tags: ["approval", "approved", "sensor-capture"] },
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await expect(page.getByText("screen timeline")).toBeVisible();
+  await page.getByRole("button", { name: "Approve action" }).click();
+
+  await expect(page.getByLabel("Jarvis command capsule")).toContainText("Approved.");
+  await expect(page.getByText("screen timeline")).toHaveCount(0);
+  expect(calls).toEqual(["http://127.0.0.1:4317/api/approvals/approval-001/approve"]);
+});

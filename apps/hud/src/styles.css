@@ -686,8 +686,10 @@ html[data-shell="desktop"] .hud-corner-control {
   grid-template-columns: 20px minmax(0, 1fr) 34px 34px;
   align-items: center;
   width: min(430px, 88vw);
+  max-width: calc(100vw - 32px);
   gap: 10px;
   padding: 10px 12px;
+  box-sizing: border-box;
   border: 1px solid rgba(255, 209, 102, 0.34);
   border-radius: 999px;
   color: white;
@@ -700,6 +702,7 @@ html[data-shell="desktop"] .hud-corner-control {
     0 0 28px rgba(255, 209, 102, 0.12),
     inset 0 0 18px rgba(255, 209, 102, 0.07);
   backdrop-filter: blur(18px);
+  translate: -50% 0;
 }
 
 .workflow-approval-popup {
@@ -711,8 +714,10 @@ html[data-shell="desktop"] .hud-corner-control {
   grid-template-columns: 40px minmax(0, 1fr) 52px 34px 34px;
   align-items: center;
   width: min(560px, 92vw);
+  max-width: calc(100vw - 32px);
   gap: 10px;
   padding: 11px 12px;
+  box-sizing: border-box;
   border: 1px solid rgba(255, 209, 102, 0.34);
   border-radius: 24px;
   color: white;
@@ -725,6 +730,7 @@ html[data-shell="desktop"] .hud-corner-control {
     0 0 34px rgba(255, 209, 102, 0.12),
     inset 0 0 22px rgba(255, 209, 102, 0.07);
   backdrop-filter: blur(20px);
+  translate: -50% 0;
 }
 
 .service-confirmation {
@@ -748,6 +754,7 @@ html[data-shell="desktop"] .hud-corner-control {
   pointer-events: auto;
   box-shadow: 0 0 34px rgba(255, 209, 102, 0.13);
   backdrop-filter: blur(20px);
+  translate: -50% 0;
 }
 
 .service-confirmation span {
@@ -844,6 +851,7 @@ html[data-shell="desktop"] .hud-corner-control {
 .workflow-approval-popup button {
   width: 34px;
   height: 34px;
+  min-width: 34px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -908,6 +916,7 @@ html[data-shell="desktop"] .hud-corner-control {
     inset 0 0 24px rgba(0, 229, 255, 0.035);
   transform: translateX(-50%);
   backdrop-filter: blur(18px);
+  translate: -50% 0;
 }
 
 .command-capsule i {
@@ -3248,6 +3257,38 @@ html[data-shell="desktop"] .hud-panel {
 
   .workflow-activity-log {
     grid-template-columns: 1fr;
+  }
+
+  .approval-chip {
+    top: calc(50% + clamp(96px, 20vh, 132px));
+    width: calc(100vw - 28px);
+    max-width: calc(100vw - 28px);
+    grid-template-columns: 20px minmax(0, 1fr) 40px 40px;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 22px;
+  }
+
+  .workflow-approval-popup {
+    top: calc(50% + clamp(92px, 18vh, 126px));
+    width: calc(100vw - 28px);
+    max-width: calc(100vw - 28px);
+    grid-template-columns: 34px minmax(0, 1fr) 48px 40px 40px;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .approval-chip button,
+  .workflow-approval-popup button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .approval-chip small,
+  .workflow-approval-popup small {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
