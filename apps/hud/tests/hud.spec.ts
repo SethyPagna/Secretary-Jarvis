@@ -1098,6 +1098,7 @@ test("desktop icon rail expands without moving the orb", async ({ page }, testIn
   const orb = page.getByRole("button", { name: "Open Jarvis controls" });
   await expect(rail).toBeVisible();
   await expect(rail).toHaveAttribute("data-expanded", "false");
+  await expect(orb.locator("canvas")).toBeVisible();
 
   const collapsedWidth = await rail.evaluate((element) => element.getBoundingClientRect().width);
   const collapsedButton = await page.getByRole("button", { name: "Open Home panel" }).evaluate((element) => {
