@@ -330,8 +330,8 @@ Protocol:
 
 ## Phase 44 - Python 3.11 Voice Runtime And Resumable ML Setup
 - [x] 44.1 Add Phase 44 tracking to `PLAN.md` and `PROGRESS.md` - commit `230b027`
-- [x] 44.2 Prefer Python 3.11 and safely recreate the Jarvis-owned Brain venv - commit `3ad877d`
-- [x] 44.3 Add resumable package install controls and clear JSON output - commit `b4f90dd`
+- [x] 44.2 Prefer Python 3.11 and safely recreate the Jarvis-owned Brain venv - commits `3ad877d`, `772bd9e`
+- [x] 44.3 Add resumable package install controls and clear JSON output - commits `b4f90dd`, `9370b8d`
 - [ ] 44.4 Recreate the Brain venv with Python 3.11, retry voice packages, and verify doctor output
 - [ ] 44.5 Restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push
 
