@@ -312,11 +312,11 @@ Protocol:
 - [x] 41.4 Add Kokoro-82M and OmniVoice feature dependency wiring - commit `fb23005`
 - [x] 41.5 Extend voice readiness and per-agent voice status - commit `b5b995f`
 - [x] 41.6 Keep automatic wake/listening approval-gated with clear states - commit `b5b995f`
-- [ ] 41.7 Verify runtime, UI, models, voice, workflow, performance, commit, and push
+- [x] 41.7 Verify runtime, UI, models, voice, workflow, performance, commit, and push - commit `034cf3a`
 
 ## Current Priority
 
-Next task: Execute Phase 41 approval, sidebar, and voice readiness polish.
+Next task: Continue production polish after Phase 41 with runtime attention items: install/probe STT Python packages, Kokoro/Piper/wake dependencies, and remaining vision/media feature dependencies.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
