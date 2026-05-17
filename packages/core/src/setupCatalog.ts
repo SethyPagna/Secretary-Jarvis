@@ -65,6 +65,17 @@ export const readyModelAssets: ReadyModelAsset[] = [
 
 export const neededFeatureDownloads: NeededFeatureDownload[] = [
   {
+    id: "feature-kokoro-82m",
+    category: "voice",
+    label: "Kokoro-82M local neural TTS",
+    purpose: "Preferred lightweight local neural text-to-speech for Jarvis and agent voices on the laptop.",
+    expectedPath: `${SNAPSHOT_ROOT}/hexgrad__Kokoro-82M`,
+    installHint:
+      "Use HF CLI with HF_TOKEN from your environment or the local vault: hf download hexgrad/Kokoro-82M --local-dir \"C:/Users/user/Downloads/Secretary Jarvis/models/huggingface/snapshots/hexgrad__Kokoro-82M\". Do not paste tokens into commands or files.",
+    status: "needed",
+    plugsInto: ["Voice Loop", "Agent voice profiles", "HUD speaking animation", "Kokoro preferred TTS route"],
+  },
+  {
     id: "feature-piper",
     category: "voice",
     label: "Piper executable and one voice",
@@ -83,6 +94,17 @@ export const neededFeatureDownloads: NeededFeatureDownload[] = [
     installHint: "Use Porcupine or a local Vosk wake profile; keep credentials/config local.",
     status: "needed",
     plugsInto: ["Voice Loop", "HUD wake animation"],
+  },
+  {
+    id: "feature-omnivoice",
+    category: "voice",
+    label: "OmniVoice advanced voice dependency",
+    purpose: "Optional advanced omni-speech and voice experimentation after the Kokoro path is stable.",
+    expectedPath: `${SNAPSHOT_ROOT}/k2-fsa__OmniVoice`,
+    installHint:
+      "Use HF CLI with HF_TOKEN from your environment or the local vault: hf download k2-fsa/OmniVoice --local-dir \"C:/Users/user/Downloads/Secretary Jarvis/models/huggingface/snapshots/k2-fsa__OmniVoice\". Keep tokens out of chat, logs, and source files.",
+    status: "optional",
+    plugsInto: ["Advanced voice experiments", "Future cloned/omni voice profiles", "Agent voice profiles"],
   },
   {
     id: "feature-vosk",

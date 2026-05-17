@@ -8,6 +8,7 @@ describe("setup install plans", () => {
     const generatedAt = "2026-05-16T00:00:00.000Z";
     const slotManifest = buildFeaturePluginSlotManifest({
       downloads: [
+        download("feature-kokoro-82m", "voice", "needed", "C:/jarvis/models/huggingface/snapshots/hexgrad__Kokoro-82M"),
         download("feature-piper", "voice", "needed", "C:/jarvis/tools/piper"),
         download("feature-social-credentials", "connector", "needed", "C:/jarvis/data/vault"),
         download("feature-map-data", "maps", "optional", "C:/jarvis/data/maps"),
@@ -22,7 +23,7 @@ describe("setup install plans", () => {
 
     const manifest = buildSetupInstallPlanManifest({ slotManifest, generatedAt });
 
-    expect(manifest.summary).toMatchObject({ ready: 1, optional: 1, approvalRequired: 2 });
+    expect(manifest.summary).toMatchObject({ ready: 1, optional: 1, approvalRequired: 3 });
     expect(manifest.note).toContain("never downloads");
 
     const piper = manifest.plans.find((plan) => plan.slotId === "feature-piper");
@@ -30,6 +31,11 @@ describe("setup install plans", () => {
     expect(piper?.approvalRequired).toBe(false);
     expect(piper?.commandPreview).toContain("manual extract");
     expect(piper?.manualSteps.join(" ")).toContain("Piper");
+
+    const kokoro = manifest.plans.find((plan) => plan.slotId === "feature-kokoro-82m");
+    expect(kokoro?.commandPreview).toContain("hf download hexgrad/Kokoro-82M");
+    expect(kokoro?.manualSteps.join(" ")).toContain("HF_TOKEN");
+    expect(kokoro?.manualSteps.join(" ")).not.toContain("hf_q");
 
     const vault = manifest.plans.find((plan) => plan.slotId === "feature-social-credentials");
     expect(vault?.actionCategory).toBe("credential-access");

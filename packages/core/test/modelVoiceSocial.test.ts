@@ -74,6 +74,7 @@ describe("model readiness catalogs", () => {
       ]),
     );
     expect(futureScalingModels.map((model) => model.modelRef)).toContain("deepseek-ai/DeepSeek-V4-Flash");
+    expect(neededFeatureDownloads.some((download) => download.id === "feature-kokoro-82m")).toBe(true);
     expect(neededFeatureDownloads.some((download) => download.id === "feature-piper")).toBe(true);
     expect(neededFeatureDownloads.some((download) => download.label.includes("DeepSeek"))).toBe(false);
   });
@@ -82,6 +83,8 @@ describe("model readiness catalogs", () => {
     const featureRefs = new Set(neededFeatureDownloads.map((download) => download.id));
     const scalingRefs = new Set(futureScalingModels.map((model) => model.modelRef));
 
+    expect(featureRefs.has("feature-kokoro-82m")).toBe(true);
+    expect(featureRefs.has("feature-omnivoice")).toBe(true);
     expect(featureRefs.has("feature-piper")).toBe(true);
     expect(featureRefs.has("feature-yolo")).toBe(true);
     expect(scalingRefs.has("deepseek-ai/DeepSeek-V4-Flash")).toBe(true);
@@ -208,12 +211,14 @@ describe("voice session helpers", () => {
     });
   });
 
-  it("lists Piper and Vosk as missing voice feature dependencies", () => {
+  it("lists Kokoro, OmniVoice, Piper, and Vosk as voice feature dependencies", () => {
     const voiceDownloads = neededFeatureDownloads.filter((download) => download.category === "voice");
 
     expect(voiceDownloads.map((download) => download.id)).toEqual(
-      expect.arrayContaining(["feature-piper", "feature-wake-word", "feature-vosk"]),
+      expect.arrayContaining(["feature-kokoro-82m", "feature-omnivoice", "feature-piper", "feature-wake-word", "feature-vosk"]),
     );
+    expect(voiceDownloads.find((download) => download.id === "feature-kokoro-82m")?.installHint).toContain("HF_TOKEN");
+    expect(voiceDownloads.find((download) => download.id === "feature-omnivoice")?.status).toBe("optional");
     expect(seededStatus.audioEngines?.find((engine) => engine.id === "piper-local")?.status).toBe("planned");
     expect(seededStatus.audioEngines?.find((engine) => engine.id === "vosk-streaming")?.status).toBe("planned");
   });

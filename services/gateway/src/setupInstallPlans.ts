@@ -195,6 +195,32 @@ function profileFor(slot: FeaturePluginSlot): {
       uninstallPreview: `Remove-Item -LiteralPath ${expected} -Recurse`,
     };
   }
+  if (slot.id === "feature-kokoro-82m") {
+    return {
+      commandPreview: `hf download hexgrad/Kokoro-82M --local-dir ${expected}`,
+      manualSteps: [
+        "Install or verify the Hugging Face CLI yourself if needed.",
+        "Set HF_TOKEN in your user environment or Jarvis encrypted vault; do not paste tokens into commands, logs, or source.",
+        `Run: hf download hexgrad/Kokoro-82M --local-dir ${slot.expectedPath}`,
+        "Run voice readiness; Kokoro becomes Jarvis' preferred neural TTS only after the local snapshot and runtime probe pass.",
+      ],
+      rollbackNote: "Remove the Kokoro snapshot folder; Jarvis will keep using SAPI/voice samples or Piper fallback.",
+      uninstallPreview: `Remove-Item -LiteralPath ${expected} -Recurse`,
+    };
+  }
+  if (slot.id === "feature-omnivoice") {
+    return {
+      commandPreview: `hf download k2-fsa/OmniVoice --local-dir ${expected}`,
+      manualSteps: [
+        "Install or verify the Hugging Face CLI yourself if needed.",
+        "Set HF_TOKEN in your user environment or Jarvis encrypted vault; keep tokens out of plaintext files.",
+        `Run: hf download k2-fsa/OmniVoice --local-dir ${slot.expectedPath}`,
+        "Keep OmniVoice staged until Kokoro is stable and you explicitly run an advanced voice probe.",
+      ],
+      rollbackNote: "Remove the OmniVoice snapshot folder; advanced omni-speech profiles remain staged.",
+      uninstallPreview: `Remove-Item -LiteralPath ${expected} -Recurse`,
+    };
+  }
   if (slot.id === "feature-wake-word") {
     return {
       commandPreview: `manual configure: place Porcupine or Vosk wake profile files under ${expected}`,

@@ -127,6 +127,21 @@ function checksFor(download: NeededFeatureDownload, folderExists: boolean, files
       check("piper-config", "Voice config", true, hasFile((file) => file.endsWith(".json"))),
     ];
   }
+  if (download.id === "feature-kokoro-82m") {
+    return [
+      folderCheck,
+      check("kokoro-config", "Kokoro config", true, hasFile((file) => file.endsWith("config.json") || file.includes("config"))),
+      check("kokoro-weights", "Kokoro model weights", true, hasFile(isModelWeightFile)),
+      check("kokoro-tokenizer", "Kokoro tokenizer/voices", false, hasFile((file) => file.includes("tokenizer") || file.includes("voices"))),
+    ];
+  }
+  if (download.id === "feature-omnivoice") {
+    return [
+      folderCheck,
+      check("omnivoice-config", "OmniVoice config", false, hasFile((file) => file.endsWith("config.json") || file.includes("config"))),
+      check("omnivoice-weights", "OmniVoice weights", false, hasFile(isModelWeightFile)),
+    ];
+  }
   if (download.id === "feature-vosk") {
     return [
       folderCheck,
@@ -171,6 +186,12 @@ function validationHintFor(download: NeededFeatureDownload): string {
   if (download.id === "feature-piper") {
     return "Expected: piper.exe plus at least one voices/*.onnx and matching JSON config.";
   }
+  if (download.id === "feature-kokoro-82m") {
+    return "Expected: local HF snapshot with config/tokenizer files and model weights; use HF_TOKEN from the environment or vault only.";
+  }
+  if (download.id === "feature-omnivoice") {
+    return "Expected: local HF snapshot with OmniVoice config and weights; advanced voice remains staged until explicitly probed.";
+  }
   if (download.id === "feature-vosk") {
     return "Expected: extracted Vosk model files such as am/final.mdl or model.conf.";
   }
@@ -193,6 +214,10 @@ function validationHintFor(download: NeededFeatureDownload): string {
     return "Expected: connector-scoped vault entry created through Jarvis settings.";
   }
   return "Expected: local files in the declared folder; no cloud inference is enabled by default.";
+}
+
+function isModelWeightFile(file: string): boolean {
+  return file.endsWith(".safetensors") || file.endsWith(".bin") || file.endsWith(".onnx") || file.endsWith(".pt") || file.endsWith(".gguf");
 }
 
 function safeListFiles(folderPath: string): string[] {
