@@ -326,11 +326,11 @@ Protocol:
 - [x] 43.2 Prefer local venv Python for Gateway voice/vision probes - commit `a9b39b5`
 - [x] 43.3 Add venv lifecycle to voice setup assistant - commits `5133b65`, `d1d8ed7`
 - [x] 43.4 Start Brain with local venv Python and update attention previews - commit `c9ef9de`
-- [ ] 43.5 Verify tests/builds/setup doctor/runtime live-test and push
+- [x] 43.5 Verify tests/builds/setup doctor/runtime live-test and push - commit `21b6859`
 
 ## Current Priority
 
-Next task: Phase 43.5, verify tests/builds/setup doctor/runtime live-test and push.
+Next task: Phase 44, continue from the latest user priority after reviewing `PLAN.md` and this tracker.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
