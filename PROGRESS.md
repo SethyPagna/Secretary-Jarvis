@@ -310,8 +310,8 @@ Protocol:
 - [x] 41.2 Fix approval routing and sensor/timeline approval button states - commit `9cb1260`
 - [x] 41.3 Polish collapsed/expanded sidebar responsiveness - commit `007a8ed`
 - [x] 41.4 Add Kokoro-82M and OmniVoice feature dependency wiring - commit `fb23005`
-- [ ] 41.5 Extend voice readiness and per-agent voice status
-- [ ] 41.6 Keep automatic wake/listening approval-gated with clear states
+- [x] 41.5 Extend voice readiness and per-agent voice status - commit `b5b995f`
+- [x] 41.6 Keep automatic wake/listening approval-gated with clear states - commit `b5b995f`
 - [ ] 41.7 Verify runtime, UI, models, voice, workflow, performance, commit, and push
 
 ## Current Priority
