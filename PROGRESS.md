@@ -300,7 +300,7 @@ Protocol:
 
 ## Phase 40 - Production Jarvis Stability, Responsiveness, Runtime Activation, And Workflow Studio
 - [x] 40.1 Add single-instance Electron lifecycle and runtime supervisor lock - commit `45f4dbe`
-- [x] 40.2 Repair HUD responsiveness, sidebar/radial alignment, and button states - commit `pending`
+- [x] 40.2 Repair HUD responsiveness, sidebar/radial alignment, and button states - commit `d02c86e`
 - [ ] 40.3 Add truthful model asset scanner and unified readiness states
 - [ ] 40.4 Upgrade workflow studio editing, persistence, and approval-gated drafts
 - [ ] 40.5 Verify runtime, UI, models, voice, workflow, performance, commit, and push
