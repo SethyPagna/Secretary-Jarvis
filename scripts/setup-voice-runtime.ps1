@@ -1,8 +1,10 @@
 param(
   [ValidateSet("Doctor", "ShowCommands", "EnsureVenv", "ProbePythonVoiceDeps", "InstallPythonVoiceDeps")]
   [string]$Action = "Doctor",
+  [string]$PythonVersion = "3.11",
   [string]$PipIndexUrl = "",
   [int]$PipGroupTimeoutSeconds = 300,
+  [switch]$RecreateVenv,
   [switch]$StrictInstall
 )
 
@@ -42,6 +44,52 @@ function Test-CommandAvailable {
   param([string]$Command)
   $found = Get-Command $Command -ErrorAction SilentlyContinue
   return [bool]$found
+}
+
+function Test-BasePython {
+  if (Test-CommandAvailable "py") {
+    & py "-$PythonVersion" --version *> $null
+    if ($LASTEXITCODE -eq 0) {
+      return $true
+    }
+  }
+  if (Test-CommandAvailable "python") {
+    & python --version *> $null
+    return $LASTEXITCODE -eq 0
+  }
+  return $false
+}
+
+function Get-BasePythonLabel {
+  if (Test-CommandAvailable "py") {
+    $version = (& py "-$PythonVersion" --version 2>&1 | Out-String).Trim()
+    if ($LASTEXITCODE -eq 0) {
+      $exe = (& py "-$PythonVersion" -c "import sys; print(sys.executable)" 2>&1 | Out-String).Trim()
+      return "py -$PythonVersion ($version, $exe)"
+    }
+  }
+  if (Test-CommandAvailable "python") {
+    $version = (& python --version 2>&1 | Out-String).Trim()
+    $exe = (& python -c "import sys; print(sys.executable)" 2>&1 | Out-String).Trim()
+    return "python ($version, $exe)"
+  }
+  return "missing"
+}
+
+function Invoke-BasePython {
+  param([string[]]$Arguments)
+  if (Test-CommandAvailable "py") {
+    & py "-$PythonVersion" --version *> $null
+    if ($LASTEXITCODE -eq 0) {
+      & py "-$PythonVersion" @Arguments
+      return
+    }
+  }
+  if (Test-CommandAvailable "python") {
+    & python @Arguments
+    return
+  }
+  throw "No usable base Python found."
 }
 
 function Test-PythonPackage {
@@ -104,6 +152,8 @@ function Write-Doctor {
 
   [pscustomobject]@{
     action = "Doctor"
+    preferredPythonVersion = $PythonVersion
+    basePython = Get-BasePythonLabel
     python = $python
     pythonCommand = if ($pythonCommand) { $pythonCommand } else { "missing" }
     venvPath = $VenvRoot
@@ -122,6 +172,7 @@ function Write-Commands {
     action = "ShowCommands"
     tokenPolicy = "Set HF_TOKEN in your user environment or Jarvis vault. Do not paste tokens into commands, code, commits, or logs."
     ensureVenv = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action EnsureVenv"
+    recreateVenv = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action EnsureVenv -PythonVersion 3.11 -RecreateVenv"
     pythonVoiceDeps = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps"
     requirements = $RequirementsPath
     kokoro = "hf download hexgrad/Kokoro-82M --local-dir `"$KokoroPath`""
@@ -133,14 +184,22 @@ function Write-Commands {
 }
 
 function Ensure-Venv {
-  if (Test-Path -LiteralPath $VenvPython) {
+  if ((Test-Path -LiteralPath $VenvPython) -and -not $RecreateVenv) {
     Write-Doctor
     return
   }
-  if (-not (Test-CommandAvailable "python")) {
-    throw "Python is not available on PATH; cannot create services\brain\.venv."
+  if (-not (Test-BasePython)) {
+    throw "Python is not available; cannot create services\brain\.venv. Install Python $PythonVersion or make python available on PATH."
   }
-  & python -m venv $VenvRoot
+  if ((Test-Path -LiteralPath $VenvRoot) -and $RecreateVenv) {
+    $resolvedVenv = (Resolve-Path -LiteralPath $VenvRoot).Path
+    $expectedVenv = Join-Path (Resolve-Path -LiteralPath $Root).Path "services\brain\.venv"
+    if ($resolvedVenv -ne $expectedVenv) {
+      throw "Refusing to recreate unexpected venv path: $resolvedVenv"
+    }
+    Remove-Item -LiteralPath $resolvedVenv -Recurse -Force
+  }
+  Invoke-BasePython -Arguments @("-m", "venv", $VenvRoot)
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
   }
