@@ -132,6 +132,7 @@ const events = new EventHub();
 const socialDrafts: OutboundMessageDraft[] = [];
 const mobilePairings: MobilePairing[] = [];
 const pendingSystemActions = new Map<string, SystemAction>();
+let ollamaListCache: { checkedAt: number; result: { ok: boolean; output: string } } | undefined;
 
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
   response.writeHead(statusCode, JSON_HEADERS);
@@ -309,6 +310,44 @@ function statusWithRuntimeState(): JarvisStatus {
     visionInsights: status.visionInsights ?? [],
     devices: hydrateDevices(),
     performance: buildPerformanceSnapshot(),
+  };
+}
+
+function compactStatusWithRuntimeState(): JarvisStatus {
+  const full = statusWithRuntimeState();
+  const allTasks = full.tasks ?? [];
+  const allQueue = full.queue ?? [];
+  const activeTasks = allTasks.filter((task) => task.status === "running" || task.status === "queued" || task.status === "waiting-approval");
+  const recentTasks = allTasks.slice(-8);
+  const taskMap = new Map([...activeTasks, ...recentTasks].map((task) => [task.id, task]));
+  const tasks = [...taskMap.values()].slice(-12);
+  const taskIds = new Set(tasks.map((task) => task.id));
+
+  return {
+    ...full,
+    conversations: (full.conversations ?? []).slice(-5),
+    tasks,
+    queue: allQueue.filter((item) => taskIds.has(item.taskId)).slice(-12),
+    undoJournal: (full.undoJournal ?? []).filter((entry) => entry.status === "available").slice(-6),
+    socialDrafts: (full.socialDrafts ?? []).slice(-6),
+    memories: full.memories.slice(-6),
+    mapOverlays: (full.mapOverlays ?? []).slice(0, 3),
+    visionInsights: (full.visionInsights ?? []).slice(-4),
+  };
+}
+
+function compactStreamStatus(): Record<string, unknown> {
+  const next = compactStatusWithRuntimeState();
+  const tasks = next.tasks ?? [];
+  return {
+    privacyMode: next.privacyMode,
+    activeModelId: next.activeModelId,
+    activeModel: next.models.find((model) => model.id === next.activeModelId)?.label ?? "Local model",
+    runningTasks: tasks.filter((task) => task.status === "running").length,
+    queuedTasks: tasks.filter((task) => task.status === "queued").length,
+    pendingApprovals: next.pendingApprovals.length,
+    startupMode: next.startup?.mode ?? "unknown",
+    updatedAt: now(),
   };
 }
 
@@ -1086,8 +1125,19 @@ function hydrateAudioEngineState(engine: NonNullable<JarvisStatus["audioEngines"
 }
 
 function ollamaModelInstalled(modelRef: string): boolean {
-  const result = commandVersion("ollama", ["list"]);
+  const result = cachedOllamaList();
   return result.ok && result.output.toLowerCase().includes(modelRef.toLowerCase());
+}
+
+function cachedOllamaList(): { ok: boolean; output: string } {
+  const nowMs = Date.now();
+  if (ollamaListCache && nowMs - ollamaListCache.checkedAt < 30_000) {
+    return ollamaListCache.result;
+  }
+
+  const result = commandVersion("ollama", ["list"]);
+  ollamaListCache = { checkedAt: nowMs, result };
+  return result;
 }
 
 function runtimeForSource(source: ModelSource): RuntimeKind {
@@ -1841,12 +1891,12 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
 
   if (request.method === "GET" && url.pathname === "/api/events") {
     events.addClient(response);
-    events.publish("status", { status: statusWithRuntimeState() });
+    events.publish("status", { status: compactStreamStatus() });
     return;
   }
 
   if (request.method === "GET" && url.pathname === "/api/status") {
-    sendJson(response, 200, statusWithRuntimeState());
+    sendJson(response, 200, compactStatusWithRuntimeState());
     return;
   }
 
