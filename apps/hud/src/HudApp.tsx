@@ -37,6 +37,7 @@ function HudSurface() {
   const [commandCapsule, setCommandCapsule] = useState<CommandCapsule | null>(null);
   const [serviceIntent, setServiceIntent] = useState<"stop-services" | "restart-services" | null>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [busyControl, setBusyControl] = useState<string | null>(null);
   const pendingApproval = status?.pendingApprovals?.[0];
   const workflowApproval = pendingApproval?.connectorId === "workflow-engine" ? pendingApproval : undefined;
   const visualState = pendingApproval ? "approval" : state;
@@ -137,8 +138,30 @@ function HudSurface() {
     }
     const action = serviceIntent;
     setServiceIntent(null);
+    setBusyControl(action);
     setHudState(action === "stop-services" ? "approval" : "planning", action === "stop-services" ? "Stopping Jarvis. Ollama stays running." : "Restarting Jarvis.");
-    await window.jarvisDesktop?.runTrayCommand(action);
+    await window.jarvisDesktop?.runTrayCommand(action).catch(() => setHudState("error", "Runtime control failed."));
+    setBusyControl(null);
+  }
+
+  async function runLiveTestFromApp() {
+    setBusyControl("live-test");
+    setPanel("settings");
+    setHudState("planning", "Running production live test.");
+    await window.jarvisDesktop?.runTrayCommand("live-test").catch(() => setHudState("error", "Live test failed to start."));
+    setBusyControl(null);
+  }
+
+  async function runEmergencyStopFromApp() {
+    setBusyControl("emergency-stop");
+    await fetch(`${apiBaseUrl}/api/emergency-stop`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: "Desktop app emergency stop" })
+    })
+      .then((response) => setHudState(response.ok ? "error" : "approval", response.ok ? "Emergency stop sent." : "Emergency stop needs local supervisor."))
+      .catch(() => setHudState("error", "Emergency stop failed."));
+    setBusyControl(null);
   }
 
   return (
@@ -152,22 +175,13 @@ function HudSurface() {
         activeModel={status?.models?.find((model) => model.id === status?.activeModelId)?.label ?? "Local model"}
         runningTasks={(status?.tasks ?? []).filter((task) => task.status === "running").length}
         pendingApprovals={status?.pendingApprovals?.length ?? 0}
+        busyControl={busyControl}
         onExpandedChange={setSidebarExpanded}
         onOpenPanel={openPanel}
         onStopJarvis={() => requestServiceAction("stop-services")}
         onRestartJarvis={() => requestServiceAction("restart-services")}
-        onLiveTest={() => {
-          setPanel("settings");
-          setHudState("planning", "Running production live test.");
-          void window.jarvisDesktop?.runTrayCommand("live-test");
-        }}
-        onEmergencyStop={() => {
-          void fetch(`${apiBaseUrl}/api/emergency-stop`, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ reason: "Desktop app emergency stop" })
-          }).finally(() => setHudState("error", "Emergency stop sent."));
-        }}
+        onLiveTest={() => void runLiveTestFromApp()}
+        onEmergencyStop={() => void runEmergencyStopFromApp()}
       />
       <div className="orb-interaction-zone" onMouseEnter={() => setHoveringOrb(true)} onMouseLeave={() => setHoveringOrb(false)}>
         <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} />
@@ -345,6 +359,7 @@ function DesktopAppChrome({
   activeModel,
   runningTasks,
   pendingApprovals,
+  busyControl,
   onExpandedChange,
   onOpenPanel,
   onStopJarvis,
@@ -357,6 +372,7 @@ function DesktopAppChrome({
   activeModel: string;
   runningTasks: number;
   pendingApprovals: number;
+  busyControl: string | null;
   onExpandedChange: (expanded: boolean) => void;
   onOpenPanel: (panel: HudPanelName) => void;
   onStopJarvis: () => void;
@@ -429,21 +445,21 @@ function DesktopAppChrome({
           <b>{pendingApprovals}</b>
         </span>
       </div>
-      <button className="desktop-action" type="button" onClick={onLiveTest} aria-label="Run live test">
+      <button className="desktop-action" type="button" onClick={onLiveTest} disabled={busyControl === "live-test"} aria-label="Run live test">
         <FlaskConical size={17} aria-hidden="true" />
-        <span>Live</span>
+        <span>{busyControl === "live-test" ? "Running" : "Live"}</span>
       </button>
-      <button className="desktop-action" type="button" onClick={onRestartJarvis} aria-label="Restart Jarvis">
+      <button className="desktop-action" type="button" onClick={onRestartJarvis} disabled={busyControl === "restart-services"} aria-label="Restart Jarvis">
         <RefreshCw size={17} aria-hidden="true" />
-        <span>Restart</span>
+        <span>{busyControl === "restart-services" ? "Restarting" : "Restart"}</span>
       </button>
-      <button className="desktop-action" type="button" onClick={onStopJarvis} aria-label="Stop Jarvis">
+      <button className="desktop-action" type="button" onClick={onStopJarvis} disabled={busyControl === "stop-services"} aria-label="Stop Jarvis">
         <Power size={17} aria-hidden="true" />
         <span>Stop Jarvis</span>
       </button>
-      <button className="desktop-stop" type="button" onClick={onEmergencyStop} aria-label="Emergency Stop">
+      <button className="desktop-stop" type="button" onClick={onEmergencyStop} disabled={busyControl === "emergency-stop"} aria-label="Emergency Stop">
         <CircleStop size={17} aria-hidden="true" />
-        <span>Emergency</span>
+        <span>{busyControl === "emergency-stop" ? "Stopping" : "Emergency"}</span>
       </button>
     </aside>
   );

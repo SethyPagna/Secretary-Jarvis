@@ -7,7 +7,7 @@
   --hud-bg: #02070a;
   --hud-text: #ffffff;
   --hud-glass: rgba(4, 12, 15, 0.46);
-  --desktop-rail-width: 72px;
+  --desktop-rail-width: 64px;
   --desktop-rail-expanded-width: 188px;
   font-family: Inter, "Segoe UI", system-ui, sans-serif;
 }
@@ -97,8 +97,8 @@ html[data-shell="desktop"] .desktop-app-chrome {
   width: var(--desktop-rail-width);
   display: grid;
   grid-template-rows: auto auto auto auto auto auto 1fr;
-  gap: 10px;
-  padding: 12px;
+  gap: 9px;
+  padding: 10px;
   border: 1px solid rgba(0, 229, 255, 0.18);
   border-radius: 22px;
   background:
@@ -191,6 +191,7 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
 .desktop-action,
 .desktop-stop {
   min-height: 38px;
+  min-width: 0;
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr);
   align-items: center;
@@ -206,6 +207,13 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
     color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
+}
+
+.desktop-rail button:disabled,
+.desktop-action:disabled,
+.desktop-stop:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .desktop-rail button:hover {
@@ -323,30 +331,13 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-grid {
   color: var(--hud-magenta);
 }
 
-html[data-shell="desktop"] .orb-interaction-zone {
-  left: calc(50% + 36px);
-  transition: left 180ms ease;
-}
-
-html[data-shell="desktop"] .hud-stage.sidebar-expanded .orb-interaction-zone {
-  left: calc(50% + 94px);
-}
-
+html[data-shell="desktop"] .orb-interaction-zone,
 html[data-shell="desktop"] .hud-activation-line,
 html[data-shell="desktop"] .command-capsule,
 html[data-shell="desktop"] .approval-chip,
 html[data-shell="desktop"] .workflow-approval-popup,
 html[data-shell="desktop"] .service-confirmation {
-  left: calc(50% + 36px);
-  transition: left 180ms ease;
-}
-
-html[data-shell="desktop"] .hud-stage.sidebar-expanded .hud-activation-line,
-html[data-shell="desktop"] .hud-stage.sidebar-expanded .command-capsule,
-html[data-shell="desktop"] .hud-stage.sidebar-expanded .approval-chip,
-html[data-shell="desktop"] .hud-stage.sidebar-expanded .workflow-approval-popup,
-html[data-shell="desktop"] .hud-stage.sidebar-expanded .service-confirmation {
-  left: calc(50% + 94px);
+  left: 50%;
 }
 
 html[data-shell="desktop"] .hud-corner-control {
@@ -1069,15 +1060,15 @@ html[data-shell="desktop"] .hud-corner-control {
   display: grid;
   place-items: center;
   pointer-events: auto;
-  z-index: 6;
+  z-index: 24;
 }
 
 .hud-panel {
   position: relative;
-  width: min(85vw, 1100px);
-  max-height: min(72vh, 640px);
+  width: min(86vw, 1100px);
+  max-height: calc(100vh - 112px);
   overflow: auto;
-  padding: 22px;
+  padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 22px;
   background:
@@ -1085,6 +1076,19 @@ html[data-shell="desktop"] .hud-corner-control {
     rgba(3, 10, 13, 0.68);
   box-shadow: 0 0 70px rgba(0, 229, 255, 0.12);
   backdrop-filter: blur(24px);
+}
+
+html[data-shell="desktop"] .hud-panel {
+  width: min(calc(100vw - 132px), 1120px);
+}
+
+.hud-panel-settings {
+  width: min(calc(100vw - 132px), 980px);
+}
+
+.hud-panel-workflows {
+  width: min(calc(100vw - 104px), 1220px);
+  max-height: calc(100vh - 86px);
 }
 
 .hud-panel header {
@@ -1151,9 +1155,9 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 .hardening-grid {
-  width: min(560px, 100%);
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 8px;
   margin: 12px auto 0;
 }
@@ -1235,9 +1239,9 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 .startup-control-strip {
-  width: min(560px, 100%);
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 8px;
   margin: 10px auto 0;
 }
@@ -1274,11 +1278,15 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 .runtime-command-grid {
-  width: min(560px, 100%);
+  width: min(720px, 100%);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(126px, 1fr));
   gap: 8px;
   margin: 10px auto 0;
+}
+
+.hud-panel-settings .setting-list {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
 .runtime-command-grid button {
@@ -1293,6 +1301,11 @@ html[data-shell="desktop"] .hud-corner-control {
     rgba(0, 0, 0, 0.22);
   color: rgba(255, 255, 255, 0.88);
   cursor: pointer;
+}
+
+.runtime-command-grid button:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .runtime-command-grid button:hover {
@@ -1320,7 +1333,7 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 .packaging-readiness-card {
-  width: min(560px, 100%);
+  width: 100%;
   margin: 10px auto 0;
   background:
     radial-gradient(circle at 20% 0%, rgba(0, 229, 255, 0.08), transparent 40%),
@@ -1332,7 +1345,7 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 .activation-readiness-card {
-  width: min(560px, 100%);
+  width: 100%;
   margin: 10px auto 0;
   background:
     radial-gradient(circle at 82% 0%, rgba(255, 0, 127, 0.075), transparent 36%),
@@ -1359,7 +1372,7 @@ html[data-shell="desktop"] .hud-corner-control {
 
 .adapter-repair-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
   gap: 8px;
   margin: 0 12px 12px;
 }
@@ -1414,7 +1427,7 @@ html[data-shell="desktop"] .hud-corner-control {
 
 .runtime-self-test-card,
 .runtime-live-test-card {
-  width: min(560px, 100%);
+  width: 100%;
   margin-top: 10px;
   border-color: rgba(0, 229, 255, 0.18);
 }
@@ -1452,7 +1465,7 @@ html[data-shell="desktop"] .hud-corner-control {
 .runtime-self-test-checks,
 .runtime-self-test-fixes {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   gap: 8px;
   margin-top: 10px;
 }
@@ -1517,9 +1530,9 @@ html[data-shell="desktop"] .hud-corner-control {
 .agent-voice-strip,
 .interaction-health-strip,
 .interaction-metrics-strip {
-  width: min(560px, 100%);
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px;
   margin: 10px auto 0;
 }
@@ -1596,7 +1609,7 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 .setup-approval-summary {
-  width: min(560px, 100%);
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
@@ -1639,9 +1652,9 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 .plugin-slot-grid {
-  width: min(560px, 100%);
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 8px;
   margin: 12px auto 0;
 }
@@ -1676,9 +1689,9 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 .setup-install-strip {
-  width: min(560px, 100%);
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 8px;
   margin-top: 10px;
 }
