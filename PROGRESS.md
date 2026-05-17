@@ -333,7 +333,7 @@ Protocol:
 - [x] 44.2 Prefer Python 3.11 and safely recreate the Jarvis-owned Brain venv - commits `3ad877d`, `772bd9e`
 - [x] 44.3 Add resumable package install controls and clear JSON output - commits `b4f90dd`, `9370b8d`
 - [x] 44.4 Recreate the Brain venv with Python 3.11, retry voice packages, and verify doctor output - commit `5873896`
-- [x] 44.5 Restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push - commit `pending`
+- [x] 44.5 Restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push - commit `d7e2e01`
 
 ## Current Priority
 
