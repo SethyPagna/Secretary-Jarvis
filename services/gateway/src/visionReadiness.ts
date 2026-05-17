@@ -3,6 +3,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { readyModelAssets, type ReadyModelAsset, type VisionRuntimeProbe, type VisionRuntimeReadiness } from "@jarvis/core";
 import { inspectReadyModelAsset } from "./modelManifest.js";
+import { resolveJarvisPython } from "./pythonRuntime.js";
 
 const PROJECT_PARENT = "C:\\Users\\user\\Downloads\\Secretary Jarvis";
 const HF_SNAPSHOT_ROOT = `${PROJECT_PARENT}\\models\\huggingface\\snapshots`;
@@ -22,13 +23,15 @@ export interface VisionReadinessOptions {
   listFiles?: (path: string) => string[];
   runCommand?: (command: string, args: string[]) => { ok: boolean; output: string };
   pythonPackageAvailable?: (packageName: string) => boolean;
+  pythonCommand?: string;
 }
 
 export function buildVisionRuntimeReadiness(options: VisionReadinessOptions = {}): VisionRuntimeReadiness {
   const pathExists = options.pathExists ?? existsSync;
   const listFiles = options.listFiles ?? safeListFiles;
   const runCommand = options.runCommand ?? commandOk;
-  const pythonPackageAvailable = options.pythonPackageAvailable ?? pythonPackageProbe;
+  const pythonCommand = resolveJarvisPython(options.pythonCommand);
+  const pythonPackageAvailable = options.pythonPackageAvailable ?? ((packageName) => pythonPackageProbe(packageName, pythonCommand));
   const hfRoot = options.hfSnapshotRoot ?? HF_SNAPSHOT_ROOT;
   const llavaPath = options.llavaPath ?? LLAVA_PATH;
   const yoloRoot = options.yoloRoot ?? YOLO_ROOT;
@@ -226,8 +229,8 @@ function commandOk(command: string, args: string[]): { ok: boolean; output: stri
   }
 }
 
-function pythonPackageProbe(packageName: string): boolean {
-  const probe = commandOk("python", [
+function pythonPackageProbe(packageName: string, pythonCommand: string): boolean {
+  const probe = commandOk(pythonCommand, [
     "-c",
     `import importlib.util; raise SystemExit(0 if importlib.util.find_spec(${JSON.stringify(packageName)}) else 1)`,
   ]);

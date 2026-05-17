@@ -3,6 +3,7 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 import type { VoiceAsset, VoiceRuntimeProbe, VoiceRuntimeReadiness } from "@jarvis/core";
 import { inspectReadyModelAsset } from "./modelManifest.js";
+import { jarvisPythonRuntimeLabel, resolveJarvisPython } from "./pythonRuntime.js";
 
 const PROJECT_PARENT = "C:\\Users\\user\\Downloads\\Secretary Jarvis";
 const PROJECT_ROOT = `${PROJECT_PARENT}\\jarvis`;
@@ -29,13 +30,15 @@ export interface VoiceReadinessOptions {
   listFiles?: (path: string) => string[];
   runCommand?: (command: string, args: string[]) => { ok: boolean; output: string };
   pythonPackageAvailable?: (packageName: string) => boolean;
+  pythonCommand?: string;
 }
 
 export function buildVoiceRuntimeReadiness(options: VoiceReadinessOptions): VoiceRuntimeReadiness {
   const pathExists = options.pathExists ?? existsSync;
   const listFiles = options.listFiles ?? safeListFiles;
   const runCommand = options.runCommand ?? commandOk;
-  const pythonPackageAvailable = options.pythonPackageAvailable ?? pythonPackageProbe;
+  const pythonCommand = resolveJarvisPython(options.pythonCommand);
+  const pythonPackageAvailable = options.pythonPackageAvailable ?? ((packageName) => pythonPackageProbe(packageName, pythonCommand));
   const hfRoot = options.hfSnapshotRoot ?? HF_SNAPSHOT_ROOT;
   const voiceRoot = options.voiceAssetRoot ?? DEFAULT_VOICE_ASSET_ROOT;
   const importedVoiceRoot = options.importedVoiceRoot ?? IMPORTED_VOICE_ROOT;
@@ -74,7 +77,7 @@ export function buildVoiceRuntimeReadiness(options: VoiceReadinessOptions): Voic
         : whisperAssetReady
           ? "Whisper snapshot is present; install/verify transformers and torch before live STT."
           : "Expected Whisper snapshot is missing or incomplete.",
-      `Transformers: ${transformersReady ? "ready" : "missing"}. Torch: ${torchReady ? "ready" : "missing"}.`,
+      `Transformers: ${transformersReady ? "ready" : "missing"}. Torch: ${torchReady ? "ready" : "missing"}. Python: ${jarvisPythonRuntimeLabel(options.pythonCommand)}.`,
     ],
   };
 
@@ -319,8 +322,8 @@ function commandOk(command: string, args: string[]): { ok: boolean; output: stri
   }
 }
 
-function pythonPackageProbe(packageName: string): boolean {
-  const probe = commandOk("python", [
+function pythonPackageProbe(packageName: string, pythonCommand: string): boolean {
+  const probe = commandOk(pythonCommand, [
     "-c",
     `import importlib.util; raise SystemExit(0 if importlib.util.find_spec(${JSON.stringify(packageName)}) else 1)`,
   ]);
