@@ -226,6 +226,14 @@ function Invoke-LiveTextProbe {
   throw "Live text probe task $($chat.task.id) did not complete in $TimeoutSeconds seconds."
 }
 
+function Resolve-JarvisBrainPython {
+  $venvPython = Join-Path $Root "services\brain\.venv\Scripts\python.exe"
+  if (Test-Path -LiteralPath $venvPython) {
+    return $venvPython
+  }
+  return "python"
+}
+
 Add-SessionPath
 
 Ensure-BuildArtifact -Name "Gateway" -Path (Join-Path $Root "services\gateway\dist\server.js") -Command "npm.cmd run build -w @jarvis/gateway"
@@ -252,8 +260,10 @@ if (Get-Command ollama -ErrorAction SilentlyContinue) {
   Write-Host "Ollama is not on PATH. Install/open Ollama before local LLM calls."
 }
 
-Start-JarvisProcess -Name "Python Brain" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_BRAIN_PORT=$BrainPort&& python services\brain\brain_server.py" -WorkingDirectory $Root
-Start-JarvisProcess -Name "TypeScript Gateway" -FilePath "cmd.exe" -Arguments "/d /s /c set JARVIS_GATEWAY_PORT=$GatewayPort&& set JARVIS_BRAIN_URL=http://127.0.0.1:$BrainPort&& node services\gateway\dist\server.js" -WorkingDirectory $Root
+$BrainPython = Resolve-JarvisBrainPython
+$BrainPythonCommand = if ($BrainPython -eq "python") { "python" } else { "`"$BrainPython`"" }
+Start-JarvisProcess -Name "Python Brain" -FilePath "cmd.exe" -Arguments "/d /s /c set `"JARVIS_BRAIN_PORT=$BrainPort`"&& set `"JARVIS_PYTHON=$BrainPython`"&& $BrainPythonCommand services\brain\brain_server.py" -WorkingDirectory $Root
+Start-JarvisProcess -Name "TypeScript Gateway" -FilePath "cmd.exe" -Arguments "/d /s /c set `"JARVIS_GATEWAY_PORT=$GatewayPort`"&& set `"JARVIS_BRAIN_URL=http://127.0.0.1:$BrainPort`"&& set `"JARVIS_PYTHON=$BrainPython`"&& node services\gateway\dist\server.js" -WorkingDirectory $Root
 
 if (($WithDashboard -or $OpenDashboard) -and -not $NoDashboard) {
   Start-JarvisProcess -Name "Dashboard" -FilePath "cmd.exe" -Arguments "/d /s /c npm.cmd run dev:dashboard -- --host 127.0.0.1 --port $DashboardPort" -WorkingDirectory $Root

@@ -147,7 +147,7 @@ function voicePrimaryStt(voice: VoiceRuntimeReadiness): RuntimeAttentionItem {
         ? "Whisper STT is runnable."
         : "Install or verify Python packages for the local Whisper snapshot before enabling live STT.",
     expectedPath: voice.primaryStt.path,
-    commandPreview: "python -m pip install transformers torch accelerate sentencepiece soundfile",
+    commandPreview: "scripts\\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps",
     approvalRequired: state !== "ready",
     dataTouched: ["Python environment", "local Whisper snapshot"],
   };
@@ -206,7 +206,7 @@ function voiceVad(voice: VoiceRuntimeReadiness): RuntimeAttentionItem {
     state: voice.vad.status === "ready" ? "ready" : "attention",
     reason: voice.vad.notes[0] ?? "VAD path.",
     nextAction: voice.vad.status === "ready" ? "VAD is available." : "Install webrtcvad or silero-vad for production microphone segmentation.",
-    commandPreview: "python -m pip install webrtcvad",
+    commandPreview: "scripts\\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps",
     approvalRequired: voice.vad.status !== "ready",
     dataTouched: ["Python environment"],
   };
