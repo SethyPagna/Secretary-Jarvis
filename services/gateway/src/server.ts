@@ -77,6 +77,7 @@ import { probeModelRuntime } from "./modelProbe.js";
 import { buildPackagingReadiness } from "./packagingReadiness.js";
 import { buildProcessVisibilityStatus } from "./processVisibility.js";
 import { createRuntimeAdapterRepairDryRun, isRuntimeAdapterRepairKind } from "./runtimeAdapterRepair.js";
+import { buildRuntimeAttention, createRuntimeAttentionDryRun } from "./runtimeAttention.js";
 import { createRuntimeControlDryRun, isRuntimeControlKind } from "./runtimeControl.js";
 import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeLiveTestStatus, runRuntimeLiveTest } from "./runtimeLiveTest.js";
@@ -462,6 +463,15 @@ function runtimeConstellation() {
     neededFeatureDownloads: hydrateFeatureDownloads(),
     privacyMode: status.privacyMode,
     updatedAt: now(),
+  });
+}
+
+function runtimeAttention() {
+  return buildRuntimeAttention({
+    generatedAt: now(),
+    voice: voiceRuntimeReadiness(),
+    modelManifests: localModelAssetManifests(),
+    featureDownloads: hydrateFeatureDownloads(),
   });
 }
 
@@ -2458,6 +2468,18 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     approvals: status.pendingApprovals,
   });
   if (runtimeSummaryHandled) {
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/runtime/attention") {
+    sendJson(response, 200, { attention: runtimeAttention() });
+    return;
+  }
+
+  const attentionDryRunMatch = url.pathname.match(/^\/api\/runtime\/attention\/([^/]+)\/dry-run$/);
+  if (request.method === "POST" && attentionDryRunMatch) {
+    const itemId = decodeURIComponent(attentionDryRunMatch[1] ?? "");
+    sendJson(response, 200, { dryRun: createRuntimeAttentionDryRun(runtimeAttention(), itemId) });
     return;
   }
 
