@@ -1048,3 +1048,14 @@ Tasks:
 - 41.5 Extend voice readiness so Whisper, SAPI, Jarvis samples, Piper, Kokoro, OmniVoice, Vosk, VAD, and wake-word states are separately visible.
 - 41.6 Keep automatic wake/listening approval-gated while exposing clear wake states and push-to-talk fallback.
 - 41.7 Verify core/gateway/HUD builds, tests, HUD UI interactions, runtime start/status/live-test, duplicate-start behavior, and push.
+
+## Extension Phase 42 - Runtime Attention Resolver And Voice Setup Assistant
+
+Goal: Turn remaining runtime "attention" states into clear, app-visible next actions without pretending missing STT/TTS/wake dependencies are runnable.
+
+Tasks:
+- 42.1 Add Phase 42 tracking to `PLAN.md` and `PROGRESS.md`.
+- 42.2 Add a Gateway runtime attention resolver that summarizes missing or staged voice, model, wake, and feature dependencies with safe command previews.
+- 42.3 Add a local `scripts/setup-voice-runtime.ps1` assistant for voice dependency doctor checks and command previews. It must not store or echo Hugging Face tokens.
+- 42.4 Surface the runtime attention resolver in the HUD Settings panel as compact grouped cards with dry-run states.
+- 42.5 Verify gateway/HUD builds and tests, voice setup doctor, runtime status/live-test, commit, and push.

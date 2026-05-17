@@ -314,9 +314,16 @@ Protocol:
 - [x] 41.6 Keep automatic wake/listening approval-gated with clear states - commit `b5b995f`
 - [x] 41.7 Verify runtime, UI, models, voice, workflow, performance, commit, and push - commit `034cf3a`
 
+## Phase 42 - Runtime Attention Resolver And Voice Setup Assistant
+- [x] 42.1 Add Phase 42 tracking to `PLAN.md` and `PROGRESS.md` - commit `pending`
+- [ ] 42.2 Add Gateway runtime attention resolver and endpoint
+- [ ] 42.3 Add local voice setup assistant script
+- [ ] 42.4 Surface runtime attention in HUD Settings
+- [ ] 42.5 Verify gateway/HUD builds and tests, setup doctor, runtime live-test, commit, and push
+
 ## Current Priority
 
-Next task: Continue production polish after Phase 41 with runtime attention items: install/probe STT Python packages, Kokoro/Piper/wake dependencies, and remaining vision/media feature dependencies.
+Next task: Phase 42.2, add the Gateway runtime attention resolver so voice/model/setup gaps become concise app-visible next actions.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
