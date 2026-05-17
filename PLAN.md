@@ -1081,3 +1081,15 @@ Tasks:
 - 44.3 Add resumable package install controls: package groups, timeout, optional trusted index URL, and clear JSON output for ready/attention/failed states.
 - 44.4 Recreate the local Brain venv with Python 3.11, retry voice package installation, and verify the doctor output.
 - 44.5 Restart Jarvis, verify voice readiness/runtime attention/live-test, run tests/builds, commit, and push.
+
+## Extension Phase 45 - Unified Roadmap, Sidebar Contract, Compact Voice HUD, And Code Schema Sweep
+
+Goal: Merge the latest Jarvis directive into the master plan, enforce the current dark glass design language, fix the desktop sidebar/content synchronization bug, reduce the voice page to compact controls, and begin the deep architecture/code-schema sweep before more feature work.
+
+Tasks:
+- 45.1 Save the unified execution roadmap and update `PLAN.md` / `PROGRESS.md`.
+- 45.2 Fix sidebar/content synchronization so expanded and minimized rails push the usable stage instead of covering panels, with centered 48px icon rows and stable 36px active frames.
+- 45.3 Re-anchor the orb, radial menu, approval chips, and panels to the usable stage center across desktop and narrow windows.
+- 45.4 Replace giant voice metering with a compact voice status legend and collapsible runtime details while keeping push-to-talk, transcript, STT/TTS, wake, and per-agent voice controls working.
+- 45.5 Add the first architecture/schema sweep document mapping Electron main/preload, renderer state, Gateway routes, Python Brain, runtime scripts, IPC/event flows, and initial refactor/security findings.
+- 45.6 Verify HUD UI tests, TypeScript build, core/gateway tests, runtime live test, commit each completed slice, and push.

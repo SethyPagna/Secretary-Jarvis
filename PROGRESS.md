@@ -337,7 +337,7 @@ Protocol:
 
 ## Current Priority
 
-Next task: Phase 45, continue with actual Kokoro TTS execution and approval-gated wake activation after reviewing `PLAN.md` and this tracker.
+Next task: Phase 45, continue with the unified roadmap merge, sidebar/content contract repair, compact voice HUD, and first code-schema sweep.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.
@@ -345,3 +345,11 @@ Acceptance for the next UI slice:
 - Hover/touch shows compact metrics.
 - Click/tap opens radial controls.
 - Dashboard remains a secondary control room.
+
+## Phase 45 - Unified Roadmap, Sidebar Contract, Compact Voice HUD, And Code Schema Sweep
+- [ ] 45.1 Save the unified execution roadmap and update `PLAN.md` / `PROGRESS.md`
+- [ ] 45.2 Fix sidebar/content synchronization and minimized icon alignment
+- [ ] 45.3 Re-anchor orb, radial menu, approval chips, and panels to the usable stage center
+- [ ] 45.4 Minimize voice metering into compact legend and collapsible runtime details
+- [ ] 45.5 Add first architecture/schema sweep document
+- [ ] 45.6 Verify HUD UI tests, builds, core/gateway tests, runtime live test, commit, and push
