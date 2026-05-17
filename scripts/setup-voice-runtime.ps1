@@ -174,6 +174,9 @@ function Write-Commands {
     ensureVenv = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action EnsureVenv"
     recreateVenv = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action EnsureVenv -PythonVersion 3.11 -RecreateVenv"
     pythonVoiceDeps = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps"
+    pythonVoiceDepsBounded = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps -PipGroupTimeoutSeconds 300"
+    pythonVoiceDepsWithTrustedIndex = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps -PipIndexUrl `"<trusted-index-url>`""
+    pythonVoiceDepsStrict = "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup-voice-runtime.ps1 -Action InstallPythonVoiceDeps -StrictInstall"
     requirements = $RequirementsPath
     kokoro = "hf download hexgrad/Kokoro-82M --local-dir `"$KokoroPath`""
     omniVoice = "hf download k2-fsa/OmniVoice --local-dir `"$OmniVoicePath`""
