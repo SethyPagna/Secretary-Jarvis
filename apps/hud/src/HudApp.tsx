@@ -441,6 +441,7 @@ function DesktopAppChrome({
               type="button"
               onClick={() => onOpenPanel(control.panel)}
               aria-label={`Open ${control.label} panel`}
+              data-label={control.label}
             >
               <Icon size={18} aria-hidden="true" />
               <span>{control.label}</span>
@@ -465,19 +466,19 @@ function DesktopAppChrome({
           <b>{pendingApprovals}</b>
         </span>
       </div>
-      <button className="desktop-action" type="button" onClick={onLiveTest} disabled={busyControl === "live-test"} aria-label="Run live test">
+      <button className="desktop-action" type="button" onClick={onLiveTest} disabled={busyControl === "live-test"} aria-label="Run live test" title="Live test" data-label="Live test">
         <FlaskConical size={17} aria-hidden="true" />
         <span>{busyControl === "live-test" ? "Running" : "Live"}</span>
       </button>
-      <button className="desktop-action" type="button" onClick={onRestartJarvis} disabled={busyControl === "restart-services"} aria-label="Restart Jarvis">
+      <button className="desktop-action" type="button" onClick={onRestartJarvis} disabled={busyControl === "restart-services"} aria-label="Restart Jarvis" title="Restart Jarvis" data-label="Restart Jarvis">
         <RefreshCw size={17} aria-hidden="true" />
         <span>{busyControl === "restart-services" ? "Restarting" : "Restart"}</span>
       </button>
-      <button className="desktop-action" type="button" onClick={onStopJarvis} disabled={busyControl === "stop-services"} aria-label="Stop Jarvis">
+      <button className="desktop-action" type="button" onClick={onStopJarvis} disabled={busyControl === "stop-services"} aria-label="Stop Jarvis" title="Stop Jarvis" data-label="Stop Jarvis">
         <Power size={17} aria-hidden="true" />
         <span>Stop Jarvis</span>
       </button>
-      <button className="desktop-stop" type="button" onClick={onEmergencyStop} disabled={busyControl === "emergency-stop"} aria-label="Emergency Stop">
+      <button className="desktop-stop" type="button" onClick={onEmergencyStop} disabled={busyControl === "emergency-stop"} aria-label="Emergency Stop" title="Emergency Stop" data-label="Emergency Stop">
         <CircleStop size={17} aria-hidden="true" />
         <span>{busyControl === "emergency-stop" ? "Stopping" : "Emergency"}</span>
       </button>

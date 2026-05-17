@@ -1046,6 +1046,43 @@ test("mobile HUD avoids horizontal overflow with open radial menu and panel", as
   expect(panelOverflow).toBeLessThanOrEqual(1);
 });
 
+test("desktop icon rail expands without moving the orb", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Desktop rail exists only in desktop shell.");
+  await page.goto("/?shell=desktop");
+
+  const rail = page.getByLabel("Jarvis desktop shell");
+  const orb = page.getByRole("button", { name: "Open Jarvis controls" });
+  await expect(rail).toBeVisible();
+  await expect(rail).toHaveAttribute("data-expanded", "false");
+
+  const collapsedWidth = await rail.evaluate((element) => element.getBoundingClientRect().width);
+  const collapsedButton = await page.getByRole("button", { name: "Open Home panel" }).evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  });
+  const orbBefore = await orb.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  });
+
+  expect(collapsedWidth).toBeLessThanOrEqual(58);
+  expect(collapsedButton.width).toBeLessThanOrEqual(42);
+  expect(collapsedButton.height).toBeLessThanOrEqual(42);
+
+  await rail.hover();
+  await expect(rail).toHaveAttribute("data-expanded", "true");
+  await expect.poll(() => rail.evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThan(150);
+  const expandedWidth = await rail.evaluate((element) => element.getBoundingClientRect().width);
+  const orbAfter = await orb.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  });
+
+  expect(expandedWidth).toBeGreaterThan(150);
+  expect(Math.abs(orbAfter.x - orbBefore.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(orbAfter.y - orbBefore.y)).toBeLessThanOrEqual(1);
+});
+
 test("settings separates feature downloads from future scaling", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Jarvis controls" }).click();
