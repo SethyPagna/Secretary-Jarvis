@@ -302,7 +302,7 @@ Protocol:
 - [x] 40.1 Add single-instance Electron lifecycle and runtime supervisor lock - commit `45f4dbe`
 - [x] 40.2 Repair HUD responsiveness, sidebar/radial alignment, and button states - commit `d02c86e`
 - [x] 40.3 Add truthful model asset scanner and unified readiness states - commit `3885c12`
-- [x] 40.4 Upgrade workflow studio editing, persistence, and approval-gated drafts - commit `pending`
+- [x] 40.4 Upgrade workflow studio editing, persistence, and approval-gated drafts - commit `77ee1a7`
 - [ ] 40.5 Verify runtime, UI, models, voice, workflow, performance, commit, and push
 
 ## Current Priority
