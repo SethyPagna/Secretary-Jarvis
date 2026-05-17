@@ -26,14 +26,18 @@ class VoiceService:
 
     def capabilities(self) -> list[dict[str, Any]]:
         whisper_snapshot = self.snapshot_available("openai__whisper-large-v3-turbo")
+        whisper_runtime_ready = whisper_snapshot and self.package_available("transformers") and self.package_available("torch")
+        vosk_package_ready = self.package_available("vosk")
+        vosk_model_ready = (self.secretary_root / "models" / "vosk").exists()
+        vad_ready = self.package_available("webrtcvad") or self.package_available("silero_vad")
         return [
             {
                 "id": "stt-whisper-transformers",
                 "label": "Whisper large-v3-turbo",
                 "kind": "stt",
-                "status": "ready" if whisper_snapshot and self.package_available("transformers") else "staged" if whisper_snapshot else "missing",
+                "status": "ready" if whisper_runtime_ready else "staged" if whisper_snapshot else "missing",
                 "installed": whisper_snapshot,
-                "details": "Snapshot detected locally; install transformers/torch to run this Python path.",
+                "details": "Whisper snapshot and Python runtime packages are present." if whisper_runtime_ready else "Snapshot detected locally; install transformers and torch to run this Python path.",
             },
             {
                 "id": "stt-whisper-cpp",
@@ -47,9 +51,9 @@ class VoiceService:
                 "id": "stt-vosk-fallback",
                 "label": "Vosk streaming fallback",
                 "kind": "stt",
-                "status": "ready" if self.package_available("vosk") and (self.secretary_root / "models" / "vosk").exists() else "staged",
-                "installed": self.package_available("vosk"),
-                "details": "Low-resource streaming STT fallback after the Vosk model folder is downloaded.",
+                "status": "ready" if vosk_package_ready and vosk_model_ready else "staged",
+                "installed": vosk_package_ready,
+                "details": "Vosk package and model folder are present." if vosk_package_ready and vosk_model_ready else "Vosk package is installed; add a local model folder for streaming fallback.",
             },
             {
                 "id": "tts-piper",
@@ -71,13 +75,14 @@ class VoiceService:
                 "id": "vad-webrtc-target",
                 "label": "Package-backed VAD",
                 "kind": "vad",
-                "status": "ready" if self.package_available("webrtcvad") else "staged",
-                "installed": self.package_available("webrtcvad"),
+                "status": "ready" if vad_ready else "staged",
+                "installed": vad_ready,
                 "details": "Production path uses package-backed VAD; handwritten MFCC remains a learning reference only.",
             },
         ]
 
     def audio_status(self) -> dict[str, Any]:
+        vad_ready = self.package_available("webrtcvad") or self.package_available("silero_vad")
         return {
             "stt": {
                 "engine": "openai/whisper-large-v3-turbo",
@@ -89,7 +94,7 @@ class VoiceService:
             },
             "tts": {"engine": "piper", "installed": bool(shutil.which("piper"))},
             "ttsFallback": {"engine": "windows-sapi", "installed": os.name == "nt"},
-            "vad": {"engine": "package-backed-vad", "enabled": True, "installed": self.package_available("webrtcvad")},
+            "vad": {"engine": "package-backed-vad", "enabled": True, "installed": vad_ready},
             "speaking": self.speaking_state,
             "capabilities": self.capabilities(),
         }
