@@ -318,12 +318,12 @@ Protocol:
 - [x] 42.1 Add Phase 42 tracking to `PLAN.md` and `PROGRESS.md` - commit `66be90d`
 - [x] 42.2 Add Gateway runtime attention resolver and endpoint - commit `ea3e2be`
 - [x] 42.3 Add local voice setup assistant script - commit `8d06b59`
-- [ ] 42.4 Surface runtime attention in HUD Settings
+- [x] 42.4 Surface runtime attention in HUD Settings - commit `pending`
 - [ ] 42.5 Verify gateway/HUD builds and tests, setup doctor, runtime live-test, commit, and push
 
 ## Current Priority
 
-Next task: Phase 42.4, surface runtime attention in HUD Settings.
+Next task: Phase 42.5, verify builds/tests/setup doctor/runtime live-test and push.
 
 Acceptance for the next UI slice:
 - The default HUD screen shows only a centered orb.

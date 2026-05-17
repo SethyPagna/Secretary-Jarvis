@@ -57,8 +57,10 @@ export function HudPanel({
   const [interactionHealth, setInteractionHealth] = useState<InteractionHealthSummary | null>(null);
   const [runtimeSelfTest, setRuntimeSelfTest] = useState<RuntimeSelfTestSummary | null>(null);
   const [runtimeLiveTest, setRuntimeLiveTest] = useState<RuntimeLiveTestStatus | null>(null);
+  const [runtimeAttention, setRuntimeAttention] = useState<RuntimeAttentionSummary | null>(null);
   const [liveTestRunning, setLiveTestRunning] = useState(false);
   const [runtimeSelfTestFixes, setRuntimeSelfTestFixes] = useState<Record<string, string>>({});
+  const [runtimeAttentionDryRuns, setRuntimeAttentionDryRuns] = useState<Record<string, RuntimeAttentionDryRunSummary>>({});
   const [adapterRepairDryRuns, setAdapterRepairDryRuns] = useState<Record<string, AdapterRepairDryRunSummary>>({});
   const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
   const models = status?.models ?? [];
@@ -386,6 +388,18 @@ export function HudPanel({
         }
       })
       .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/runtime/attention`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: RuntimeAttentionResponse | undefined) => {
+        if (!cancelled && payload?.attention) {
+          setRuntimeAttention({
+            summary: payload.attention.summary,
+            priority: payload.attention.priority.slice(0, 5),
+            note: payload.attention.note
+          });
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -595,6 +609,41 @@ export function HudPanel({
     setRuntimeSelfTestFixes((current) => ({
       ...current,
       [fix.id]: payload?.dryRun?.decision?.decision ?? (payload?.manifest ? "preview" : "unavailable")
+    }));
+  }
+
+  async function dryRunRuntimeAttention(item: RuntimeAttentionItemSummary) {
+    setRuntimeAttentionDryRuns((current) => ({
+      ...current,
+      [item.id]: {
+        decision: "checking",
+        risk: "approval-required",
+        commandPreview: "checking",
+        message: "Checking runtime attention preview."
+      }
+    }));
+    const payload = await fetch(`${apiBaseUrl}/api/runtime/attention/${encodeURIComponent(item.id)}/dry-run`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ source: "hud-settings" })
+    })
+      .then((response) => (response.ok ? response.json() : undefined))
+      .catch(() => undefined) as RuntimeAttentionDryRunResponse | undefined;
+    setRuntimeAttentionDryRuns((current) => ({
+      ...current,
+      [item.id]: payload?.dryRun
+        ? {
+            decision: payload.dryRun.decision,
+            risk: payload.dryRun.risk,
+            commandPreview: payload.dryRun.commandPreview,
+            message: payload.dryRun.message
+          }
+        : {
+            decision: "unavailable",
+            risk: "blocked",
+            commandPreview: "runtime attention dry-run unavailable",
+            message: "Gateway did not return an attention preview."
+          }
     }));
   }
 
@@ -889,6 +938,36 @@ export function HudPanel({
                 </button>
               ))}
             </div>
+          </details>
+          <details className={`runtime-attention-card compact-card status-${runtimeAttentionStatus(runtimeAttention)}`} aria-label="Runtime attention resolver">
+            <summary>
+              <CheckCircle2 size={15} aria-hidden="true" />
+              <span>Attention</span>
+              <b>{runtimeAttentionStatus(runtimeAttention)}</b>
+            </summary>
+            <small>
+              {runtimeAttention
+                ? `${runtimeAttention.summary.ready} ready / ${runtimeAttention.summary.attention} attention / ${runtimeAttention.summary.blocked} blocked`
+                : "Checking runtime attention."}
+            </small>
+            <em>{runtimeAttention?.note ?? "Voice, model, wake, and feature gaps load here as compact next actions."}</em>
+            <div className="runtime-attention-grid" aria-label="Runtime attention items">
+              {(runtimeAttention?.priority ?? []).map((item) => {
+                const dryRun = runtimeAttentionDryRuns[item.id];
+                return (
+                  <button key={item.id} type="button" className={`attention-${item.state}`} onClick={() => void dryRunRuntimeAttention(item)}>
+                    <small>{item.category}</small>
+                    <strong>{item.label}</strong>
+                    <b>{dryRun?.decision ?? item.state}</b>
+                  </button>
+                );
+              })}
+            </div>
+            {Object.entries(runtimeAttentionDryRuns).slice(-1).map(([itemId, dryRun]) => (
+              <code key={itemId} className={`runtime-attention-preview risk-${dryRun.risk}`}>
+                {dryRun.commandPreview}
+              </code>
+            ))}
           </details>
           <details className="packaging-readiness-card compact-card" aria-label="Packaging and wake readiness">
             <summary>
@@ -1544,6 +1623,40 @@ interface RuntimeSelfTestSummary {
   recommendation: string;
 }
 
+type RuntimeAttentionState = "ready" | "attention" | "blocked" | "staged";
+
+interface RuntimeAttentionItemSummary {
+  id: string;
+  category: string;
+  label: string;
+  state: RuntimeAttentionState;
+}
+
+interface RuntimeAttentionSummary {
+  summary: Record<RuntimeAttentionState, number>;
+  priority: RuntimeAttentionItemSummary[];
+  note: string;
+}
+
+interface RuntimeAttentionResponse {
+  attention?: {
+    summary: Record<RuntimeAttentionState, number>;
+    priority: RuntimeAttentionItemSummary[];
+    note: string;
+  };
+}
+
+interface RuntimeAttentionDryRunResponse {
+  dryRun?: RuntimeAttentionDryRunSummary;
+}
+
+interface RuntimeAttentionDryRunSummary {
+  decision: "allow" | "deny" | "requires_approval" | "unavailable" | "checking";
+  risk: "safe" | "approval-required" | "blocked";
+  commandPreview: string;
+  message: string;
+}
+
 function Widget({ label, value }: { label: string; value: string }) {
   return (
     <span className="hud-widget">
@@ -1586,4 +1699,20 @@ function interactionLabel(surfaceId: InteractionSurfaceId): string {
     "emergency-stop": "Stop",
   };
   return labels[surfaceId];
+}
+
+function runtimeAttentionStatus(attention: RuntimeAttentionSummary | null): RuntimeAttentionState {
+  if (!attention) {
+    return "staged";
+  }
+  if (attention.summary.blocked > 0) {
+    return "blocked";
+  }
+  if (attention.summary.attention > 0) {
+    return "attention";
+  }
+  if (attention.summary.staged > 0) {
+    return "staged";
+  }
+  return "ready";
 }

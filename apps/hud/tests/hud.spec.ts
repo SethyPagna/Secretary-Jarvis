@@ -536,6 +536,44 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().method() === "GET" && route.request().url().endsWith("/api/runtime/attention")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          attention: {
+            generatedAt: "2026-05-16T00:00:00.000Z",
+            localOnly: true,
+            summary: { ready: 2, attention: 3, blocked: 1, staged: 2 },
+            priority: [
+              { id: "attention-whisper-python-runtime", category: "voice", label: "Whisper STT runtime", state: "attention" },
+              { id: "attention-tts-kokoro-82m", category: "voice", label: "Kokoro neural TTS", state: "attention" },
+              { id: "attention-model-ready-gemma-26b", category: "models", label: "Gemma 26B", state: "blocked" },
+            ],
+            note: "Runtime attention is read-only; commands are previews.",
+          },
+        }),
+      });
+      return;
+    }
+    if (route.request().method() === "POST" && route.request().url().includes("/api/runtime/attention/attention-tts-kokoro-82m/dry-run")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          dryRun: {
+            itemId: "attention-tts-kokoro-82m",
+            decision: "requires_approval",
+            risk: "approval-required",
+            commandPreview: "hf download hexgrad/Kokoro-82M --local-dir C:/models/hexgrad__Kokoro-82M",
+            message: "Preview only; use HF_TOKEN from the environment.",
+            dataTouched: ["models/huggingface/snapshots/hexgrad__Kokoro-82M"],
+            localOnly: true,
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().method() === "GET" && route.request().url().endsWith("/api/runtime/live-test/latest")) {
       await route.fulfill({
         status: 200,
@@ -1143,6 +1181,13 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(selfTest.getByLabel("Runtime self-test fixes")).toContainText("Ollama PATH");
   await selfTest.getByLabel("Runtime self-test fixes").getByRole("button", { name: "Ollama PATH dry-run", exact: true }).click();
   await expect(selfTest.getByLabel("Runtime self-test fixes")).toContainText("requires_approval");
+  const attention = panel.getByRole("group", { name: "Runtime attention resolver" });
+  await expect(attention).toContainText("blocked");
+  await attention.locator("summary").click();
+  await expect(attention.getByLabel("Runtime attention items")).toContainText("Whisper STT runtime");
+  await expect(attention.getByLabel("Runtime attention items")).toContainText("Kokoro neural TTS");
+  await attention.getByLabel("Runtime attention items").getByRole("button", { name: /Kokoro neural TTS/i }).click();
+  await expect(attention).toContainText("hf download hexgrad/Kokoro-82M");
   await expect(panel.getByLabel("Packaging and wake readiness")).toContainText("ready");
   await panel.getByLabel("Packaging and wake readiness").locator("summary").click();
   await expect(panel.getByLabel("Packaging and wake readiness")).toContainText("2 wake ready / 1 staged");
