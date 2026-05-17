@@ -45,6 +45,11 @@ $OptionalPythonPackages = @(
 
 $PythonPackages = @($CorePythonPackages + $TorchPythonPackages + $OptionalPythonPackages)
 
+$PythonImportNames = @{
+  "Pillow" = "PIL"
+  "silero-vad" = "silero_vad"
+}
+
 function Test-CommandAvailable {
   param([string]$Command)
   $found = Get-Command $Command -ErrorAction SilentlyContinue
@@ -105,7 +110,8 @@ function Test-PythonPackage {
   if (-not $PythonCommand) {
     return $false
   }
-  & $PythonCommand -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('$PackageName') else 1)" *> $null
+  $importName = if ($PythonImportNames.ContainsKey($PackageName)) { $PythonImportNames[$PackageName] } else { $PackageName }
+  & $PythonCommand -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('$importName') else 1)" *> $null
   return $LASTEXITCODE -eq 0
 }
 
