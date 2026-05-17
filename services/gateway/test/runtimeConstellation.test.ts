@@ -33,9 +33,11 @@ function voiceReadiness(summary: VoiceRuntimeReadiness["summary"]): VoiceRuntime
   return {
     primaryStt: { id: "stt", label: "STT", kind: "stt", status: "ready", installed: true, notes: [] },
     tts: [],
+    ttsPreferredEngine: "voice-sample",
     fallbackStt: [],
     vad: { id: "vad", label: "VAD", kind: "vad", status: "staged", installed: false, notes: [] },
     wakeWord: { id: "wake", label: "Wake", kind: "wake-word", status: "missing", installed: false, notes: [] },
+    wakeState: "push-to-talk",
     identitySamples: [],
     summary,
     privacy: { micCaptureActive: false, speakingActive: false, note: "test" },

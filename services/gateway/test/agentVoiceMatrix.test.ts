@@ -18,6 +18,7 @@ describe("agent voice matrix", () => {
     expect(matrix.entries.map((entry) => entry.agentId).sort()).toEqual(defaultAgentSouls.map((agent) => agent.id).sort());
     expect(matrix.entries.find((entry) => entry.agentId === "sentinel")).toMatchObject({
       enginePreference: "windows-sapi",
+      runtimeStatus: "sapi-fallback",
       status: "ready",
       ttsRequest: {
         agentId: "sentinel",
@@ -31,10 +32,12 @@ describe("agent voice matrix", () => {
 function readyVoiceRuntime(): VoiceRuntimeReadiness {
   return {
     primaryStt: { id: "stt-whisper", label: "Whisper", kind: "stt", status: "ready-asset", installed: true, notes: [] },
-    tts: [{ id: "tts-sapi", label: "Windows SAPI", kind: "tts", status: "ready", installed: true, notes: [] }],
+    tts: [{ id: "tts-windows-sapi", label: "Windows SAPI", kind: "tts", status: "ready", installed: true, notes: [] }],
+    ttsPreferredEngine: "tts-windows-sapi",
     fallbackStt: [],
     vad: { id: "vad", label: "VAD", kind: "vad", status: "staged", installed: false, notes: [] },
     wakeWord: { id: "wake", label: "Wake", kind: "wake-word", status: "staged", installed: false, notes: [] },
+    wakeState: "wake-ready",
     identitySamples: [],
     summary: { sttReady: true, ttsReady: true, sampleCount: 4, missingRequired: 0 },
     privacy: { micCaptureActive: false, speakingActive: false, note: "test" },

@@ -703,20 +703,20 @@ export function HudPanel({
           </form>
           <div className="voice-readiness-strip" aria-label="Voice runtime readiness">
             <span><small>STT</small><strong>{voiceReadiness?.primaryStt.status ?? "--"}</strong></span>
-            <span><small>TTS</small><strong>{voiceReadiness?.summary.ttsReady ? "ready" : "staged"}</strong></span>
+            <span><small>TTS</small><strong>{voiceReadiness?.ttsPreferredEngine ?? (voiceReadiness?.summary.ttsReady ? "ready" : "staged")}</strong></span>
             <span><small>Voice</small><strong>{voiceReadiness ? `${voiceReadiness.summary.sampleCount}` : "--"}</strong></span>
             <span><small>Needs</small><strong>{voiceReadiness?.summary.missingRequired ?? "--"}</strong></span>
           </div>
           <div className="wake-activation-strip" aria-label="Wake activation readiness">
             <span><small>Wake</small><strong>{activationReadiness ? `${activationReadiness.wakeReady}/${activationReadiness.wakeStaged}` : "--"}</strong></span>
-            <span><small>Hotword</small><strong>{activationReadiness?.hotwordStatus ?? "staged"}</strong></span>
+            <span><small>Hotword</small><strong>{voiceReadiness?.wakeState ?? activationReadiness?.hotwordStatus ?? "staged"}</strong></span>
             <span><small>VAD</small><strong>{activationReadiness?.vad ?? "--"}</strong></span>
           </div>
           <div className="agent-voice-matrix" aria-label="Agent voice matrix">
             {agentVoiceMatrix.slice(0, 8).map((agent) => (
               <button key={agent.agentId} type="button" onClick={() => void testAgentVoice(agent)} aria-label={`Test ${agent.agentName} voice`}>
                 <small>{agent.agentName}</small>
-                <strong>{agentVoiceTests[agent.agentId] ?? agent.status}</strong>
+                <strong>{agentVoiceTests[agent.agentId] ?? agent.runtimeStatus ?? agent.status}</strong>
                 <em>{agent.enginePreference}</em>
               </button>
             ))}
@@ -1101,6 +1101,7 @@ interface AgentVoiceEntry {
   agentId: string;
   agentName: string;
   status: "ready" | "staged" | "missing" | "missing-dependency";
+  runtimeStatus?: "sample-fallback" | "sapi-fallback" | "kokoro-ready" | "piper-ready" | "staged-clone" | "missing";
   enginePreference: "windows-sapi" | "piper" | "voice-sample" | "future-clone" | "missing";
   ttsRequest: {
     agentId: string;

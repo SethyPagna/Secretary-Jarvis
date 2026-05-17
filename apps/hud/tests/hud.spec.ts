@@ -63,10 +63,16 @@ async function mockGateway(page: import("playwright/test").Page) {
         body: JSON.stringify({
           readiness: {
             primaryStt: { id: "stt-whisper", label: "Whisper", kind: "stt", status: "ready-asset", installed: true, notes: [] },
-            tts: [{ id: "tts-sapi", label: "SAPI", kind: "tts", status: "ready", installed: true, notes: [] }],
+            tts: [
+              { id: "tts-kokoro-82m", label: "Kokoro-82M", kind: "tts", status: "missing", installed: false, notes: [] },
+              { id: "tts-sapi", label: "SAPI", kind: "tts", status: "ready", installed: true, notes: [] },
+              { id: "tts-omnivoice", label: "OmniVoice", kind: "tts", status: "missing", installed: false, notes: [] },
+            ],
+            ttsPreferredEngine: "tts-sapi",
             fallbackStt: [],
             vad: { id: "vad", label: "VAD", kind: "vad", status: "staged", installed: false, notes: [] },
             wakeWord: { id: "wake", label: "Wake", kind: "wake-word", status: "missing", installed: false, notes: [] },
+            wakeState: "push-to-talk",
             identitySamples: Array.from({ length: 4 }, (_, index) => ({
               id: `sample-${index}`,
               label: `Sample ${index}`,

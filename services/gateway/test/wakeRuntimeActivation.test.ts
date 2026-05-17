@@ -63,6 +63,7 @@ function voiceReadiness(params: { wakeWordStatus: "ready" | "staged" | "missing"
       notes: [],
     },
     tts: [],
+    ttsPreferredEngine: "voice-sample",
     fallbackStt: [],
     vad: {
       id: "vad",
@@ -80,6 +81,7 @@ function voiceReadiness(params: { wakeWordStatus: "ready" | "staged" | "missing"
       installed: params.wakeWordStatus !== "missing",
       notes: [],
     },
+    wakeState: params.wakeWordStatus === "missing" ? "push-to-talk" : "wake-ready",
     identitySamples: [],
     summary: {
       sttReady: params.sttReady,

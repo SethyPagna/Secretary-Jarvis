@@ -12,6 +12,8 @@ const IMPORTED_VOICE_ROOT = `${PROJECT_PARENT}\\voice`;
 const PIPER_ROOT = `${PROJECT_PARENT}\\tools\\piper`;
 const VOSK_ROOT = `${PROJECT_PARENT}\\models\\vosk`;
 const WAKE_ROOT = `${PROJECT_PARENT}\\models\\wake-word`;
+const KOKORO_ROOT = `${HF_SNAPSHOT_ROOT}\\hexgrad__Kokoro-82M`;
+const OMNIVOICE_ROOT = `${HF_SNAPSHOT_ROOT}\\k2-fsa__OmniVoice`;
 
 export interface VoiceReadinessOptions {
   voiceAssets: VoiceAsset[];
@@ -19,6 +21,8 @@ export interface VoiceReadinessOptions {
   importedVoiceRoot?: string;
   hfSnapshotRoot?: string;
   piperRoot?: string;
+  kokoroRoot?: string;
+  omniVoiceRoot?: string;
   voskRoot?: string;
   wakeRoot?: string;
   pathExists?: (path: string) => boolean;
@@ -36,6 +40,8 @@ export function buildVoiceRuntimeReadiness(options: VoiceReadinessOptions): Voic
   const voiceRoot = options.voiceAssetRoot ?? DEFAULT_VOICE_ASSET_ROOT;
   const importedVoiceRoot = options.importedVoiceRoot ?? IMPORTED_VOICE_ROOT;
   const piperRoot = options.piperRoot ?? PIPER_ROOT;
+  const kokoroRoot = options.kokoroRoot ?? KOKORO_ROOT;
+  const omniVoiceRoot = options.omniVoiceRoot ?? OMNIVOICE_ROOT;
   const voskRoot = options.voskRoot ?? VOSK_ROOT;
   const wakeRoot = options.wakeRoot ?? WAKE_ROOT;
 
@@ -111,6 +117,46 @@ export function buildVoiceRuntimeReadiness(options: VoiceReadinessOptions): Voic
     notes: [sapi.ok ? "Windows SAPI can initialize locally without speaking." : `Windows SAPI probe failed: ${sapi.output}`],
   };
 
+  const kokoroFiles = listFiles(kokoroRoot);
+  const kokoroInstalled = kokoroFiles.length > 0;
+  const kokoroHasWeights = hasModelWeights(kokoroFiles);
+  const kokoroHasConfig = hasConfigFile(kokoroFiles);
+  const kokoroReady = kokoroInstalled && kokoroHasWeights && kokoroHasConfig && transformersReady && torchReady;
+  const kokoroProbe: VoiceRuntimeProbe = {
+    id: "tts-kokoro-82m",
+    label: "Kokoro-82M local neural TTS",
+    kind: "tts",
+    status: kokoroReady ? "ready" : kokoroInstalled ? "staged" : "missing",
+    installed: kokoroInstalled,
+    path: kokoroRoot,
+    runtime: "python-transformers",
+    notes: [
+      kokoroReady
+        ? "Kokoro snapshot and Python runtime packages are present; this is the preferred neural TTS route."
+        : kokoroInstalled
+          ? "Kokoro files are present; verify config, weights, transformers, and torch before using it for speech."
+          : "Kokoro-82M is not installed yet; use SAPI/voice samples until you download the local snapshot.",
+      `Config: ${kokoroHasConfig ? "ready" : "missing"}. Weights: ${kokoroHasWeights ? "ready" : "missing"}. Transformers: ${transformersReady ? "ready" : "missing"}. Torch: ${torchReady ? "ready" : "missing"}.`,
+    ],
+  };
+
+  const omniVoiceFiles = listFiles(omniVoiceRoot);
+  const omniVoiceInstalled = omniVoiceFiles.length > 0;
+  const omniVoiceProbe: VoiceRuntimeProbe = {
+    id: "tts-omnivoice",
+    label: "OmniVoice advanced voice",
+    kind: "tts",
+    status: omniVoiceInstalled ? "staged" : "missing",
+    installed: omniVoiceInstalled,
+    path: omniVoiceRoot,
+    runtime: "python-advanced-voice",
+    notes: [
+      omniVoiceInstalled
+        ? "OmniVoice files are present but remain staged until an explicit advanced voice probe is approved."
+        : "OmniVoice is optional advanced voice tooling; Kokoro is the first neural TTS path to stabilize.",
+    ],
+  };
+
   const voskModelFiles = listFiles(voskRoot);
   const voskPackage = pythonPackageAvailable("vosk");
   const voskProbe: VoiceRuntimeProbe = {
@@ -182,16 +228,37 @@ export function buildVoiceRuntimeReadiness(options: VoiceReadinessOptions): Voic
   });
 
   const missingRequired = [primaryStt, piperProbe, ...identitySamples].filter((probe) => probe.status === "missing").length;
+  const tts = [kokoroProbe, piperProbe, sapiProbe, omniVoiceProbe];
+  const ttsPreferredEngine =
+    kokoroProbe.status === "ready"
+      ? kokoroProbe.id
+      : piperProbe.status === "ready"
+        ? piperProbe.id
+        : sapiProbe.status === "ready"
+          ? sapiProbe.id
+          : identitySamples.some((sample) => sample.status === "ready")
+            ? "voice-sample"
+            : "none";
+  const wakeState =
+    wakeProbe.status === "ready"
+      ? "wake-ready"
+      : wakeProbe.status === "staged"
+        ? "wake-ready"
+        : primaryStt.status === "ready" || primaryStt.status === "ready-asset"
+          ? "push-to-talk"
+          : "blocked";
   return {
     primaryStt,
-    tts: [piperProbe, sapiProbe],
+    tts,
+    ttsPreferredEngine,
     fallbackStt: [voskProbe],
     vad: vadProbe,
     wakeWord: wakeProbe,
+    wakeState,
     identitySamples,
     summary: {
       sttReady: primaryStt.status === "ready" || primaryStt.status === "ready-asset",
-      ttsReady: piperProbe.status === "ready" || sapiProbe.status === "ready" || identitySamples.some((sample) => sample.status === "ready"),
+      ttsReady: ttsPreferredEngine !== "none",
       sampleCount: identitySamples.filter((sample) => sample.status === "ready").length,
       missingRequired,
     },
@@ -201,6 +268,20 @@ export function buildVoiceRuntimeReadiness(options: VoiceReadinessOptions): Voic
       note: "Readiness probes inspect files and runtime availability only; they do not open the microphone or play speech.",
     },
   };
+}
+
+function hasConfigFile(files: string[]): boolean {
+  return files.some((file) => {
+    const lower = file.replaceAll("\\", "/").toLowerCase();
+    return lower.endsWith("config.json") || lower.includes("/config");
+  });
+}
+
+function hasModelWeights(files: string[]): boolean {
+  return files.some((file) => {
+    const lower = file.replaceAll("\\", "/").toLowerCase();
+    return lower.endsWith(".safetensors") || lower.endsWith(".bin") || lower.endsWith(".onnx") || lower.endsWith(".pt") || lower.endsWith(".gguf");
+  });
 }
 
 function firstExisting(paths: string[], pathExists: (path: string) => boolean): string | undefined {

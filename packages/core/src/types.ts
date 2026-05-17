@@ -641,6 +641,7 @@ export interface VoiceProfile {
 }
 
 export type VoiceProbeStatus = "ready" | "ready-asset" | "staged" | "missing" | "unavailable";
+export type VoiceWakeState = "off" | "push-to-talk" | "wake-ready" | "wake-armed" | "listening" | "speaking" | "blocked";
 
 export interface VoiceRuntimeProbe {
   id: string;
@@ -656,9 +657,11 @@ export interface VoiceRuntimeProbe {
 export interface VoiceRuntimeReadiness {
   primaryStt: VoiceRuntimeProbe;
   tts: VoiceRuntimeProbe[];
+  ttsPreferredEngine: string;
   fallbackStt: VoiceRuntimeProbe[];
   vad: VoiceRuntimeProbe;
   wakeWord: VoiceRuntimeProbe;
+  wakeState: VoiceWakeState;
   identitySamples: VoiceRuntimeProbe[];
   summary: {
     sttReady: boolean;

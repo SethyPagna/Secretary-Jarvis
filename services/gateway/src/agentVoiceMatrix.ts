@@ -35,6 +35,7 @@ export interface AgentVoiceEntry {
   label: string;
   style: string;
   enginePreference: VoiceProfile["enginePreference"] | "missing";
+  runtimeStatus: "sample-fallback" | "sapi-fallback" | "kokoro-ready" | "piper-ready" | "staged-clone" | "missing";
   status: VoiceProfile["status"] | "missing";
   sampleAssetId?: string;
   samplePath?: string;
@@ -55,10 +56,12 @@ export function buildAgentVoiceMatrix(params: {
 }): AgentVoiceMatrix {
   const profileById = new Map(params.voiceProfiles.map((profile) => [profile.id, profile]));
   const assetById = new Map(params.voiceAssets.map((asset) => [asset.id, asset]));
+  const ttsById = new Map(params.readiness.tts.map((probe) => [probe.id, probe]));
   const entries = params.agents.map((agent) => {
     const profile = profileById.get(agent.voiceProfileId);
     const sample = profile?.sampleAssetId ? assetById.get(profile.sampleAssetId) : undefined;
     const testPhrase = TEST_LINES[agent.id] ?? `${agent.name} voice profile is ready for a local test.`;
+    const runtimeStatus = resolveAgentRuntimeStatus(profile, sample, ttsById);
     return {
       agentId: agent.id,
       agentName: agent.name,
@@ -68,6 +71,7 @@ export function buildAgentVoiceMatrix(params: {
       label: profile?.label ?? "Missing voice profile",
       style: profile?.style ?? "No voice style configured.",
       enginePreference: profile?.enginePreference ?? "missing",
+      runtimeStatus,
       status: profile?.status ?? "missing",
       sampleAssetId: sample?.id,
       samplePath: sample?.localPath,
@@ -92,6 +96,32 @@ export function buildAgentVoiceMatrix(params: {
       missing: entries.filter((entry) => entry.status === "missing" || entry.status === "missing-dependency").length,
       ttsReady: params.readiness.summary.ttsReady,
     },
-    note: "Each soul has a distinct voice profile; staged profiles become fully spoken after Piper or future clone assets are installed.",
+    note: "Each soul has a distinct voice profile; Jarvis reports whether it is using a sample fallback, SAPI fallback, Kokoro, Piper, or staged clone route.",
   };
+}
+
+function resolveAgentRuntimeStatus(
+  profile: VoiceProfile | undefined,
+  sample: VoiceAsset | undefined,
+  ttsById: Map<string, VoiceRuntimeReadiness["tts"][number]>,
+): AgentVoiceEntry["runtimeStatus"] {
+  if (!profile) {
+    return "missing";
+  }
+  if (profile.enginePreference === "voice-sample" && sample) {
+    return "sample-fallback";
+  }
+  if (profile.enginePreference === "future-clone") {
+    return "staged-clone";
+  }
+  if (ttsById.get("tts-kokoro-82m")?.status === "ready") {
+    return "kokoro-ready";
+  }
+  if (ttsById.get("tts-piper")?.status === "ready") {
+    return "piper-ready";
+  }
+  if (ttsById.get("tts-windows-sapi")?.status === "ready") {
+    return "sapi-fallback";
+  }
+  return "missing";
 }
