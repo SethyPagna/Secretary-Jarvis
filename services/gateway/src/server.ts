@@ -2879,13 +2879,16 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   if (request.method === "POST" && url.pathname === "/api/voice/stt/probe") {
     const brainProbe = await brainJson<Record<string, unknown>>("/voice/stt/probe", { method: "POST", body: "{}" }, 5000);
     const whisperReady = existsSync(`${HF_SNAPSHOT_ROOT}\\openai__whisper-large-v3-turbo`);
+    const runtimeReady = Boolean(brainProbe && brainProbe.status === "ready");
     const result = {
       primary: "openai/whisper-large-v3-turbo",
-      status: whisperReady ? "ready-asset" : "missing",
-      runtimeReady: Boolean(brainProbe && (brainProbe.status === "ready" || brainProbe.status === "ready-asset")),
+      status: runtimeReady ? "ready" : whisperReady ? "ready-asset" : "missing",
+      runtimeReady,
       fallback: "Vosk streaming after feature download",
       brain: brainProbe,
-      nextAction: whisperReady
+      nextAction: runtimeReady
+        ? "Whisper STT runtime is ready."
+        : whisperReady
         ? "Install/verify transformers+torch or whisper.cpp to run the ready Whisper asset."
         : "Place Whisper large-v3-turbo in the expected snapshot folder.",
     };
