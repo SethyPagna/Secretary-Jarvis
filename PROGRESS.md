@@ -306,7 +306,7 @@ Protocol:
 - [x] 40.5 Verify runtime, UI, models, voice, workflow, performance, commit, and push - commit `49f46a6`
 
 ## Phase 41 - Voice Model Expansion, Approval Fixes, Sidebar Polish, And End-to-End Verification
-- [x] 41.1 Add Phase 41 tracking to `PLAN.md` and `PROGRESS.md` - commit pending
+- [x] 41.1 Add Phase 41 tracking to `PLAN.md` and `PROGRESS.md` - commit `fdb4750`
 - [ ] 41.2 Fix approval routing and sensor/timeline approval button states
 - [ ] 41.3 Polish collapsed/expanded sidebar responsiveness
 - [ ] 41.4 Add Kokoro-82M and OmniVoice feature dependency wiring
