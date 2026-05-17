@@ -2780,11 +2780,13 @@ html[data-shell="desktop"] .hud-panel {
 
 .workflow-canvas-toolbar div {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .workflow-canvas-toolbar button {
   min-height: 32px;
+  min-width: 34px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -2995,6 +2997,55 @@ html[data-shell="desktop"] .hud-panel {
 .workflow-variable-grid b {
   color: white;
   font-size: 12px;
+}
+
+.workflow-node-editor {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.workflow-node-editor label {
+  display: grid;
+  gap: 6px;
+}
+
+.workflow-node-editor small {
+  color: rgba(255, 255, 255, 0.56);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.workflow-node-editor input,
+.workflow-node-editor textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 12px;
+  padding: 9px 10px;
+  color: white;
+  background: rgba(0, 0, 0, 0.26);
+  outline: none;
+  resize: vertical;
+}
+
+.workflow-node-editor input:focus,
+.workflow-node-editor textarea:focus {
+  border-color: rgba(0, 229, 255, 0.48);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.12);
+}
+
+.workflow-node-editor button {
+  min-height: 36px;
+  border: 1px solid rgba(0, 255, 136, 0.24);
+  border-radius: 999px;
+  color: white;
+  background: rgba(0, 255, 136, 0.08);
+}
+
+.workflow-node-editor button:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 @keyframes orb-breathe {

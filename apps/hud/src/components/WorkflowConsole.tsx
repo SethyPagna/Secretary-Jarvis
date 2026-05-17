@@ -6,6 +6,7 @@ interface WorkflowPayload {
   workflows: WorkflowDefinition[];
   runs: WorkflowRun[];
   dryRuns: WorkflowDryRun[];
+  layouts?: Record<string, { nodes: NodePositions; zoom: number; updatedAt: string }>;
 }
 
 interface CanvasNode {
@@ -44,10 +45,14 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
   const [executingRunId, setExecutingRunId] = useState("");
   const [selectedNodeId, setSelectedNodeId] = useState("trigger");
   const [positions, setPositions] = useState<NodePositions>({});
+  const [zoom, setZoom] = useState(1);
   const [drag, setDrag] = useState<{ id: string; clientX: number; clientY: number; originX: number; originY: number } | null>(null);
+  const [nodeTitleDraft, setNodeTitleDraft] = useState("");
+  const [nodeSummaryDraft, setNodeSummaryDraft] = useState("");
+  const [layoutStatus, setLayoutStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
 
   async function load() {
-    const response = await fetch(`${apiBaseUrl}/api/workflows`);
+    const response = await fetch(`${apiBaseUrl}/api/workflows/studio`);
     if (!response.ok) {
       throw new Error(`Workflow API ${response.status}`);
     }
@@ -75,8 +80,15 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
       return;
     }
     setSelectedNodeId("trigger");
-    setPositions((current) => seedMissingPositions(activeWorkflow, current));
+    const savedLayout = payload.layouts?.[activeWorkflow.id];
+    setPositions((current) => seedMissingPositions(activeWorkflow, savedLayout?.nodes ?? current));
+    setZoom(savedLayout?.zoom ?? 1);
   }, [activeWorkflow?.id]);
+
+  useEffect(() => {
+    setNodeTitleDraft(selectedNode?.title ?? "");
+    setNodeSummaryDraft(selectedNode?.step?.summary ?? "");
+  }, [selectedNode?.id, selectedNode?.title, selectedNode?.step?.summary]);
 
   useEffect(() => {
     if (!drag) {
@@ -163,7 +175,42 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
       return;
     }
     setPositions(createDefaultPositions(activeWorkflow));
+    setZoom(1);
     setSelectedNodeId("trigger");
+  }
+
+  async function saveLayout() {
+    if (!activeWorkflow) {
+      return;
+    }
+    setLayoutStatus("saving");
+    const response = await fetch(`${apiBaseUrl}/api/workflows/${encodeURIComponent(activeWorkflow.id)}/layout`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ nodes: positions, zoom }),
+    }).catch(() => undefined);
+    setLayoutStatus(response?.ok ? "saved" : "failed");
+  }
+
+  async function saveSelectedDraft() {
+    if (!activeWorkflow || !selectedNode?.step) {
+      return;
+    }
+    setBusyId(selectedNode.id);
+    const response = await fetch(`${apiBaseUrl}/api/workflows/${encodeURIComponent(activeWorkflow.id)}/draft-edit`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        workflowId: activeWorkflow.id,
+        stepId: selectedNode.id,
+        title: nodeTitleDraft,
+        summary: nodeSummaryDraft,
+      }),
+    }).catch(() => undefined);
+    if (response?.ok) {
+      await load().catch(() => undefined);
+    }
+    setBusyId("");
   }
 
   function startDrag(event: PointerEvent<HTMLButtonElement>, node: CanvasNode) {
@@ -238,7 +285,17 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
             <div>
               <button type="button" onClick={resetLayout}>
                 <SlidersHorizontal size={14} aria-hidden="true" />
-                Layout
+                Fit
+              </button>
+              <button type="button" onClick={() => setZoom((value) => clamp(Number((value - 0.1).toFixed(2)), 0.5, 1.6))}>
+                -
+              </button>
+              <button type="button" onClick={() => setZoom((value) => clamp(Number((value + 0.1).toFixed(2)), 0.5, 1.6))}>
+                +
+              </button>
+              <button type="button" onClick={() => void saveLayout()} disabled={!activeWorkflow || layoutStatus === "saving"}>
+                <Save size={14} aria-hidden="true" />
+                {layoutStatus === "saving" ? "Saving" : layoutStatus === "saved" ? "Saved" : "Layout"}
               </button>
               <button type="button" onClick={() => activeWorkflow && void startWorkflow(activeWorkflow.id)} disabled={!activeWorkflow?.enabled || busyId === activeWorkflow?.id}>
                 <Play size={14} aria-hidden="true" />
@@ -248,7 +305,7 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
           </div>
 
           <div className="workflow-canvas-scroll">
-            <div className="workflow-canvas" style={{ width: canvasWidth, height: canvasHeight }}>
+            <div className="workflow-canvas" style={{ width: canvasWidth, height: canvasHeight, transform: `scale(${zoom})`, transformOrigin: "0 0" }}>
               <svg className="workflow-link-layer" viewBox={`0 0 ${canvasWidth} ${canvasHeight}`} aria-hidden="true">
                 <defs>
                   <marker id="workflow-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
@@ -338,6 +395,21 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
                   <b>{selectedNode.step?.reversible ? "20 min" : "not reversible"}</b>
                 </span>
               </div>
+              {selectedNode.step && (
+                <form className="workflow-node-editor" aria-label="Workflow node editor" onSubmit={(event) => { event.preventDefault(); void saveSelectedDraft(); }}>
+                  <label>
+                    <small>Name</small>
+                    <input value={nodeTitleDraft} onChange={(event) => setNodeTitleDraft(event.target.value)} />
+                  </label>
+                  <label>
+                    <small>Summary</small>
+                    <textarea value={nodeSummaryDraft} onChange={(event) => setNodeSummaryDraft(event.target.value)} rows={3} />
+                  </label>
+                  <button type="submit" disabled={busyId === selectedNode.id || !nodeTitleDraft.trim()}>
+                    {busyId === selectedNode.id ? "Saving draft" : "Save disabled draft"}
+                  </button>
+                </form>
+              )}
             </>
           ) : (
             <span className="workflow-empty">Select a node.</span>

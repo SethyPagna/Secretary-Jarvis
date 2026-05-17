@@ -97,6 +97,23 @@ export interface WorkflowGenerationResult {
   note: string;
 }
 
+export interface WorkflowCanvasLayout {
+  workflowId: string;
+  nodes: Record<string, { x: number; y: number }>;
+  zoom: number;
+  updatedAt: string;
+}
+
+export interface WorkflowDraftEdit {
+  workflowId: string;
+  workflowName?: string;
+  stepId?: string;
+  title?: string;
+  summary?: string;
+  expectedInputs?: string[];
+  expectedOutputs?: string[];
+}
+
 const blockedCategories = new Set<ActionCategory>(["protected-core-access", "credential-access", "purchase"]);
 const approvalCategories = new Set<ActionCategory>([
   "write-local",

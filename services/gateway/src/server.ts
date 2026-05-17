@@ -56,6 +56,8 @@ import {
   type UnifiedReadinessItem,
   type VisionInsight,
   type WorkflowDefinition,
+  type WorkflowCanvasLayout,
+  type WorkflowDraftEdit,
   type WorkflowRun,
   type WorkflowRunEvent,
   type WorkflowStep,
@@ -96,6 +98,7 @@ const HF_SNAPSHOT_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\models\\
 const VOICE_ASSET_ROOT = "C:\\Users\\user\\Downloads\\Secretary Jarvis\\jarvis\\assets\\voice";
 const OLLAMA_URL = process.env.JARVIS_OLLAMA_URL ?? "http://127.0.0.1:11434";
 const BRAIN_URL = process.env.JARVIS_BRAIN_URL ?? "http://127.0.0.1:5000";
+const WORKFLOW_LAYOUT_PATH = join(process.cwd(), "data", "runtime", "workflow-layouts.json");
 const JSON_HEADERS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET,POST,OPTIONS",
@@ -233,6 +236,47 @@ function now(): string {
 
 function id(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function readWorkflowLayouts(): Record<string, WorkflowCanvasLayout> {
+  try {
+    if (!existsSync(WORKFLOW_LAYOUT_PATH)) {
+      return {};
+    }
+    return JSON.parse(readFileSync(WORKFLOW_LAYOUT_PATH, "utf8")) as Record<string, WorkflowCanvasLayout>;
+  } catch {
+    return {};
+  }
+}
+
+function writeWorkflowLayout(layout: WorkflowCanvasLayout): void {
+  const layouts = readWorkflowLayouts();
+  mkdirSync(dirname(WORKFLOW_LAYOUT_PATH), { recursive: true });
+  writeFileSync(WORKFLOW_LAYOUT_PATH, JSON.stringify({ ...layouts, [layout.workflowId]: layout }, null, 2), "utf8");
+}
+
+function applyWorkflowDraftEdit(workflow: WorkflowDefinition, edit: WorkflowDraftEdit): WorkflowDefinition {
+  const editedSteps = workflow.steps.map((step) => {
+    if (!edit.stepId || step.id !== edit.stepId) {
+      return step;
+    }
+    return {
+      ...step,
+      title: edit.title?.trim() || step.title,
+      summary: edit.summary?.trim() || step.summary,
+      expectedInputs: edit.expectedInputs?.map((value) => value.trim()).filter(Boolean) ?? step.expectedInputs,
+      expectedOutputs: edit.expectedOutputs?.map((value) => value.trim()).filter(Boolean) ?? step.expectedOutputs,
+    };
+  });
+  return {
+    ...workflow,
+    name: edit.workflowName?.trim() || workflow.name,
+    enabled: false,
+    owner: workflow.owner === "jarvis" ? "generated" : workflow.owner,
+    version: workflow.version + 1,
+    steps: editedSteps,
+    tags: [...new Set([...workflow.tags, "draft-edit", "approval-required"])],
+  };
 }
 
 function estimateTokens(content: string): number {
@@ -2075,6 +2119,19 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/workflows/studio") {
+    const workflows = store.listWorkflows();
+    sendJson(response, 200, {
+      workflows,
+      runs: store.listWorkflowRuns(40),
+      dryRuns: workflows.map((workflow) => dryRunWorkflow(workflow)),
+      layouts: readWorkflowLayouts(),
+      palette: ["trigger", "agent", "condition", "memory", "connector", "system-action", "approval", "sub-workflow"],
+      note: "Workflow Studio edits create disabled drafts until owner approval enables execution.",
+    });
+    return;
+  }
+
   if (request.method === "POST" && url.pathname === "/api/workflows") {
     const body = (await readBody(request)) as { workflow?: WorkflowDefinition } & Partial<WorkflowDefinition>;
     const workflow = (body.workflow ?? body) as WorkflowDefinition;
@@ -2187,6 +2244,40 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       const dryRun = dryRunWorkflow(workflow);
       events.publish("task", { workflowId, dryRun, kind: "workflow-dry-run" });
       sendJson(response, 200, { workflow, dryRun });
+      return;
+    }
+
+    if (request.method === "POST" && action === "layout") {
+      const body = (await readBody(request)) as Partial<WorkflowCanvasLayout>;
+      const layout: WorkflowCanvasLayout = {
+        workflowId,
+        nodes: body.nodes ?? {},
+        zoom: typeof body.zoom === "number" ? Math.min(1.6, Math.max(0.5, body.zoom)) : 1,
+        updatedAt: now(),
+      };
+      writeWorkflowLayout(layout);
+      events.publish("task", { workflowId, layout, kind: "workflow-layout-saved" });
+      sendJson(response, 200, { workflow, layout, message: "Workflow canvas layout saved locally." });
+      return;
+    }
+
+    if (request.method === "POST" && action === "draft-edit") {
+      const body = (await readBody(request)) as WorkflowDraftEdit;
+      const edited = applyWorkflowDraftEdit(workflow, { ...body, workflowId });
+      const issues = validateWorkflowDefinition(edited);
+      if (issues.some((issue) => issue.severity === "error")) {
+        sendJson(response, 400, { error: "Workflow edit validation failed", issues });
+        return;
+      }
+      store.upsertWorkflow(edited, now());
+      const dryRun = dryRunWorkflow(edited);
+      events.publish("task", { workflow: edited, dryRun, kind: "workflow-draft-edited" });
+      sendJson(response, 200, {
+        workflow: edited,
+        dryRun,
+        issues,
+        message: "Draft edit saved locally and disabled until owner approval.",
+      });
       return;
     }
 

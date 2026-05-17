@@ -572,7 +572,7 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
-    if (route.request().method() === "GET" && route.request().url().endsWith("/api/workflows")) {
+    if (route.request().method() === "GET" && (route.request().url().endsWith("/api/workflows") || route.request().url().endsWith("/api/workflows/studio"))) {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -622,7 +622,35 @@ async function mockGateway(page: import("playwright/test").Page) {
               ],
             },
           ],
+          layouts: {
+            "workflow-generated-ui": {
+              workflowId: "workflow-generated-ui",
+              zoom: 1,
+              updatedAt: "2026-05-16T00:00:00.000Z",
+              nodes: {
+                trigger: { x: 48, y: 210 },
+                "step-review": { x: 268, y: 108 },
+              },
+            },
+          },
+          palette: ["trigger", "agent", "condition", "memory", "connector", "system-action", "approval", "sub-workflow"],
         }),
+      });
+      return;
+    }
+    if (route.request().method() === "POST" && route.request().url().includes("/api/workflows/workflow-generated-ui/layout")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "Workflow canvas layout saved locally." }),
+      });
+      return;
+    }
+    if (route.request().method() === "POST" && route.request().url().includes("/api/workflows/workflow-generated-ui/draft-edit")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "Draft edit saved locally and disabled until owner approval." }),
       });
       return;
     }
@@ -986,8 +1014,13 @@ test("workflow console keeps generated automations approval-gated", async ({ pag
   await panel.getByLabel("Workflow node Owner approval").click();
   await expect(panel.getByLabel("Workflow node details")).toContainText("Owner approval");
   await expect(panel.getByLabel("Workflow variables")).toContainText("approval");
+  await expect(panel.getByLabel("Workflow node editor")).toBeVisible();
+  await panel.getByLabel("Workflow node editor").locator("input").fill("Owner approval reviewed");
+  await panel.getByRole("button", { name: "Save disabled draft" }).click();
   await expect(panel.getByLabel("Workflow manager delegation")).toContainText("Jarvis");
   await expect(panel.getByLabel("Workflow manager delegation")).toContainText("Sentinel");
+  await panel.getByRole("button", { name: "Layout" }).click();
+  await expect(panel.getByRole("button", { name: "Saved" })).toBeVisible();
   await expect(panel.getByRole("button", { name: "Approval needed", exact: true })).toBeDisabled();
 
   await panel.getByLabel("Describe a workflow").fill("Create my morning brief");
