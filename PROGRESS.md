@@ -409,4 +409,4 @@ Acceptance for the next UI slice:
 - [x] 53.2 Create refined roadmap that merges redundant requirements without deleting details - commit `67bcb4b`
 - [x] 53.3 Create relational codebase schema/audit with multi-pass verification notes - commit `67bcb4b`
 - [x] 53.4 Add reusable HUD panel cache for always-present panel data and faster reloads - commit `13ef002`
-- [ ] 53.5 Verify builds/tests/runtime live test, commit, and push
+- [x] 53.5 Verify builds/tests/runtime live test, commit, and push - `npm.cmd run build -w @jarvis/hud`; `npm.cmd run test:ui -w @jarvis/hud` (27 passed, 1 skipped); `npm.cmd test` (core 64 passed, gateway 67 passed); core/gateway builds passed; supervisor live test `attention` with all checks passed
