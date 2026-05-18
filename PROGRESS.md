@@ -398,8 +398,8 @@ Acceptance for the next UI slice:
 - [x] 51.6 Commit and push - pushed `d50f844`
 
 ## Phase 52 - Permission Memory UI Surface
-- [ ] 52.1 Add Phase 52 tracking to `PLAN.md` and `PROGRESS.md`
-- [ ] 52.2 Fetch `GET /api/permissions` only when Settings is open
-- [ ] 52.3 Add compact Permission Memory card to Settings/Security
-- [ ] 52.4 Add HUD UI coverage and verify builds/tests
+- [x] 52.1 Add Phase 52 tracking to `PLAN.md` and `PROGRESS.md` - commit `4a7da50`
+- [x] 52.2 Fetch `GET /api/permissions` only when Settings is open - commit `42ce31d`
+- [x] 52.3 Add compact Permission Memory card to Settings/Security - commit `42ce31d`
+- [x] 52.4 Add HUD UI coverage and verify builds/tests - `npm run build -w @jarvis/hud`; `npm run test:ui -w @jarvis/hud` (27 passed, 1 skipped)
 - [ ] 52.5 Commit and push
