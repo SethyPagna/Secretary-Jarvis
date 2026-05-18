@@ -388,3 +388,11 @@ Acceptance for the next UI slice:
 - [x] 50.3 Toggle orb interactivity from `shell=orb` hover/focus state - commit `32f0335`
 - [x] 50.4 Add/keep tests and builds green - `npm run build -w @jarvis/hud`; `npm run test:ui -w @jarvis/hud` (27 passed, 1 skipped); `npm test`; `npm run build -w @jarvis/core`; `npm run build -w @jarvis/gateway`; supervisor restart + live test `attention` with all checks passed
 - [x] 50.5 Commit and push - pushed `8ad3c63`
+
+## Phase 51 - Persistent Permission Memory And Approval Recall
+- [ ] 51.1 Add Phase 51 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 51.2 Add local permission store backed by `%USERPROFILE%\.jarvis\permissions.json`
+- [ ] 51.3 Wire approval completion into the permission store and expose `GET /api/permissions`
+- [ ] 51.4 Skip exact remembered grants when recording pending approvals
+- [ ] 51.5 Add tests and verify builds/runtime
+- [ ] 51.6 Commit and push

@@ -1148,3 +1148,15 @@ Tasks:
 - 50.3 Teach the `shell=orb` renderer to toggle orb interactivity on hover/focus/leave so only the visible orb/HUD captures input.
 - 50.4 Add tests covering compact orb shell behavior and keep Electron/HUD builds green.
 - 50.5 Commit and push.
+
+## Extension Phase 51 - Persistent Permission Memory And Approval Recall
+
+Goal: Make Jarvis remember owner approval decisions locally so repeated permission prompts do not feel broken, while still keeping sensitive actions capability-scoped and auditable. The permission memory lives outside the renderer, is stored locally under the user profile, and every decision also writes to MemoryOS/timeline.
+
+Tasks:
+- 51.1 Add Phase 51 tracking to `PLAN.md` and `PROGRESS.md`.
+- 51.2 Add a local permission store backed by `%USERPROFILE%\.jarvis\permissions.json`, with safe JSON recovery, exact action-key matching, granted/denied status, remember flag, source approval id, agent/connector scope, and data-touched metadata.
+- 51.3 Wire approval completion into the permission store so sensor timeline, connector, workflow, and other approval decisions are remembered and exposed through a `GET /api/permissions` endpoint.
+- 51.4 Teach pending approval recording to skip exact remembered grants while still emitting memory/security events and leaving protected-core/irreversible actions guarded.
+- 51.5 Add gateway tests for permission persistence, remembered grants, denied outcomes, and approval endpoint behavior; run builds/tests/live-test.
+- 51.6 Commit and push.
