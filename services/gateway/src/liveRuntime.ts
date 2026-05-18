@@ -116,7 +116,7 @@ function isPidAlive(pid: number): boolean {
 
 async function probeHttp(url: string): Promise<boolean> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 1200);
+  const timeout = setTimeout(() => controller.abort(), 4000);
   try {
     const response = await fetch(url, { signal: controller.signal });
     return response.ok;
