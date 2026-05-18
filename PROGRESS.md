@@ -368,3 +368,10 @@ Acceptance for the next UI slice:
 - [x] 47.3 Replace generic bot/gear identity controls with orb mark - commit `86c9f70`
 - [x] 47.4 Add mini-HUD/sidebar behavior tests - commit `86c9f70`
 - [x] 47.5 Verify HUD UI tests, builds, runtime live test, commit, and push - commit `146548f`
+
+## Phase 48 - Floating Orb Window And App Shell Bridge
+- [ ] 48.1 Add Phase 48 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 48.2 Add a separate Electron floating orb BrowserWindow
+- [ ] 48.3 Add compact `shell=orb` renderer mode
+- [ ] 48.4 Bridge orb quick actions to the main app via IPC/tray actions
+- [ ] 48.5 Verify Electron/HUD builds and HUD UI tests, commit, and push

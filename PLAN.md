@@ -1116,3 +1116,14 @@ Tasks:
 - 47.3 Replace generic bot/gear identity controls with a reusable orb mark in the sidebar brand and top-right titlebar button.
 - 47.4 Keep sidebar expansion/content shifting responsive and add tests that the mini-HUD quick actions open the correct panels.
 - 47.5 Verify HUD UI tests, builds, runtime live test, commit, and push.
+
+## Extension Phase 48 - Floating Orb Window And App Shell Bridge
+
+Goal: Make Jarvis feel more like one native app by adding a separate always-on-top floating orb window that stays visible while the main desktop control room can hide to tray. The orb shell should be compact, transparent, and able to summon the main app panels without rendering the full dashboard inside the floating orb.
+
+Tasks:
+- 48.1 Add Phase 48 tracking to `PLAN.md` and `PROGRESS.md`.
+- 48.2 Add a second Electron `BrowserWindow` for the floating orb, with transparent frame, always-on-top behavior, skip-taskbar, all-workspaces visibility, and the shared orb icon identity.
+- 48.3 Add `shell=orb` renderer mode so the floating orb hides the sidebar/title controls, stays compact, and keeps the orb/radial/mini-HUD as the only visible surface.
+- 48.4 Bridge floating-orb quick actions to the main app through Electron IPC/tray actions so voice, text, workflow, devices, dashboard, and settings open in the main Jarvis window.
+- 48.5 Verify Electron/HUD builds and HUD UI tests, then commit and push.
