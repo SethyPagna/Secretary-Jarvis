@@ -410,3 +410,10 @@ Acceptance for the next UI slice:
 - [x] 53.3 Create relational codebase schema/audit with multi-pass verification notes - commit `67bcb4b`
 - [x] 53.4 Add reusable HUD panel cache for always-present panel data and faster reloads - commit `13ef002`
 - [x] 53.5 Verify builds/tests/runtime live test, commit, and push - `npm.cmd run build -w @jarvis/hud`; `npm.cmd run test:ui -w @jarvis/hud` (27 passed, 1 skipped); `npm.cmd test` (core 64 passed, gateway 67 passed); core/gateway builds passed; supervisor live test `attention` with all checks passed
+
+## Phase 54 - HUD Shell Repair, Command Center Merge, And Runtime Interaction Polish
+- [ ] 54.1 Add Phase 54 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 54.2 Repair desktop sidebar rail geometry, click-away collapse, active item state, Stop Jarvis, and Emergency Stop visibility
+- [ ] 54.3 Merge text, voice, terminal snippet, model, queue, and runtime heartbeat into one Command Center
+- [ ] 54.4 Reduce the System panel first screen into compact status cards while keeping details available below
+- [ ] 54.5 Verify HUD build/UI tests, supervisor restart, runtime live test, commit, and push

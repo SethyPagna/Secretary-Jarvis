@@ -1195,3 +1195,14 @@ Tasks:
 - 53.3 Create a relational codebase schema/audit document covering folders, modules, IPC, HTTP/SSE routes, state stores, permissions, runtime scripts, voice/model/workflow flows, loops, security boundaries, and optimization findings.
 - 53.4 Add a reusable HUD panel cache layer so dashboard, voice, settings, and workflow readiness data can show last-known local data immediately and refresh with bounded network calls.
 - 53.5 Verify builds/tests/runtime live test, commit each completed slice, and push.
+
+## Extension Phase 54 - HUD Shell Repair, Command Center Merge, And Runtime Interaction Polish
+
+Goal: Repair the daily-use HUD defects reported from the latest screenshots. The sidebar must stay aligned in collapsed and expanded modes, collapse naturally when focus leaves it, keep Stop Jarvis and Emergency Stop visible, and stop covering panel content. Voice, terminal, model, queue, and system heartbeats should appear together in one concise Command Center instead of separate wordy pages.
+
+Tasks:
+- 54.1 Add Phase 54 tracking to `PLAN.md` and `PROGRESS.md`.
+- 54.2 Repair the desktop sidebar rail geometry: slimmer collapsed rail, centered icon frames, active item highlight, click-away collapse, visible Stop Jarvis and Emergency Stop controls, and panel z-order that prevents sidebar/content overlap.
+- 54.3 Merge the default command surface into a Command Center with text input, compact voice controls, voice legend, runtime service count, model, queue, and terminal snippet.
+- 54.4 Reduce the System panel’s first screen into compact status cards and keep deeper runtime/permission/readiness details below the fold.
+- 54.5 Verify HUD build and UI tests, then restart Jarvis through the supervisor and run live test so the actual Electron app picks up the new shell.
