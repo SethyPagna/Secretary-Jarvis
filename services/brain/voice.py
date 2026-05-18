@@ -27,6 +27,9 @@ class VoiceService:
     def capabilities(self) -> list[dict[str, Any]]:
         whisper_snapshot = self.snapshot_available("openai__whisper-large-v3-turbo")
         whisper_runtime_ready = whisper_snapshot and self.package_available("transformers") and self.package_available("torch")
+        kokoro_snapshot = self.snapshot_available("hexgrad__Kokoro-82M")
+        kokoro_runtime_ready = kokoro_snapshot and self.package_available("transformers") and self.package_available("torch")
+        omnivoice_snapshot = self.snapshot_available("k2-fsa__OmniVoice")
         vosk_package_ready = self.package_available("vosk")
         vosk_model_ready = (self.secretary_root / "models" / "vosk").exists()
         vad_ready = self.package_available("webrtcvad") or self.package_available("silero_vad")
@@ -56,12 +59,28 @@ class VoiceService:
                 "details": "Vosk package and model folder are present." if vosk_package_ready and vosk_model_ready else "Vosk package is installed; add a local model folder for streaming fallback.",
             },
             {
+                "id": "tts-kokoro-82m",
+                "label": "Kokoro-82M",
+                "kind": "tts",
+                "status": "ready" if kokoro_runtime_ready else "staged" if kokoro_snapshot else "missing",
+                "installed": kokoro_snapshot,
+                "details": "Preferred lightweight local neural TTS route is present." if kokoro_runtime_ready else "Kokoro files are staged until Transformers/Torch probing passes.",
+            },
+            {
                 "id": "tts-piper",
                 "label": "Piper",
                 "kind": "tts",
                 "status": "ready" if shutil.which("piper") else "missing",
                 "installed": bool(shutil.which("piper")),
-                "details": "Preferred fast local TTS engine.",
+                "details": "Optional fast local TTS fallback; Kokoro is preferred when available.",
+            },
+            {
+                "id": "tts-omnivoice",
+                "label": "OmniVoice",
+                "kind": "tts",
+                "status": "staged" if omnivoice_snapshot else "missing",
+                "installed": omnivoice_snapshot,
+                "details": "Advanced voice experiment slot; explicit probe required before it becomes runnable.",
             },
             {
                 "id": "tts-windows-sapi",
@@ -83,6 +102,8 @@ class VoiceService:
 
     def audio_status(self) -> dict[str, Any]:
         vad_ready = self.package_available("webrtcvad") or self.package_available("silero_vad")
+        kokoro_ready = self.snapshot_available("hexgrad__Kokoro-82M") and self.package_available("transformers") and self.package_available("torch")
+        piper_ready = bool(shutil.which("piper"))
         return {
             "stt": {
                 "engine": "openai/whisper-large-v3-turbo",
@@ -92,7 +113,15 @@ class VoiceService:
                 "whisperCppInstalled": bool(shutil.which("whisper-cli")),
                 "voskInstalled": self.package_available("vosk"),
             },
-            "tts": {"engine": "piper", "installed": bool(shutil.which("piper"))},
+            "tts": {
+                "engine": "kokoro-82m" if kokoro_ready else "piper" if piper_ready else "windows-sapi",
+                "installed": kokoro_ready or piper_ready or os.name == "nt",
+                "preferred": "kokoro-82m",
+                "kokoroInstalled": self.snapshot_available("hexgrad__Kokoro-82M"),
+                "kokoroRunnable": kokoro_ready,
+                "piperInstalled": piper_ready,
+                "omnivoiceInstalled": self.snapshot_available("k2-fsa__OmniVoice"),
+            },
             "ttsFallback": {"engine": "windows-sapi", "installed": os.name == "nt"},
             "vad": {"engine": "package-backed-vad", "enabled": True, "installed": vad_ready},
             "speaking": self.speaking_state,
@@ -100,6 +129,9 @@ class VoiceService:
         }
 
     def voice_profiles(self) -> dict[str, Any]:
+        kokoro_ready = self.snapshot_available("hexgrad__Kokoro-82M") and self.package_available("transformers") and self.package_available("torch")
+        neural_status = "ready" if kokoro_ready else "staged"
+        neural_engine = "kokoro-82m" if kokoro_ready else "kokoro-82m-staged"
         return {
             "profiles": [
                 {
@@ -112,22 +144,22 @@ class VoiceService:
                 {
                     "id": "voice-profile-friday",
                     "agentId": "friday",
-                    "status": "staged",
-                    "engine": "piper",
+                    "status": neural_status,
+                    "engine": neural_engine,
                     "style": "warm operations briefings with crisp next actions",
                 },
                 {
                     "id": "voice-profile-daedalus",
                     "agentId": "daedalus",
-                    "status": "staged",
-                    "engine": "piper",
+                    "status": neural_status,
+                    "engine": neural_engine,
                     "style": "technical, terse, reviewer-minded",
                 },
                 {
                     "id": "voice-profile-argus",
                     "agentId": "argus",
-                    "status": "staged",
-                    "engine": "piper",
+                    "status": neural_status,
+                    "engine": neural_engine,
                     "style": "observational, visual, low-noise",
                 },
                 {
@@ -140,15 +172,15 @@ class VoiceService:
                 {
                     "id": "voice-profile-sentinel",
                     "agentId": "sentinel",
-                    "status": "ready",
-                    "engine": "windows-sapi",
+                    "status": neural_status,
+                    "engine": neural_engine if kokoro_ready else "windows-sapi",
                     "style": "firm, minimal, approval-focused",
                 },
                 {
                     "id": "voice-profile-vulcan",
                     "agentId": "vulcan",
-                    "status": "ready",
-                    "engine": "windows-sapi",
+                    "status": neural_status,
+                    "engine": neural_engine if kokoro_ready else "windows-sapi",
                     "style": "grounded mechanical cadence, terse status, rollback-aware",
                 },
                 {
@@ -159,7 +191,7 @@ class VoiceService:
                     "style": "smooth diplomatic cadence, draft-first, approval-aware",
                 },
             ],
-            "message": "Agent voice profiles are wired; Piper profiles activate after the feature dependency is installed.",
+            "message": "Agent voice profiles are wired; Kokoro is the preferred local neural route, with Windows SAPI and voice samples as immediate fallbacks.",
         }
 
     def stt_probe(self) -> dict[str, Any]:
