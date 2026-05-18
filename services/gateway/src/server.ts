@@ -778,7 +778,9 @@ function queueChatMessage(params: {
   store.addTaskEvent(queued);
   events.publish("conversation", { conversation, task });
   events.publish("task", { task, event: queued });
-  void runAssistantTask(task, params.message);
+  setTimeout(() => {
+    void runAssistantTask(task, params.message);
+  }, 0);
   return { conversation, task, queued };
 }
 
