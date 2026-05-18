@@ -360,4 +360,4 @@ Acceptance for the next UI slice:
 - [x] 46.3 Update setup/doctor discovery for organized installers - commit `eaaea60`
 - [x] 46.4 Apply organization to outer `Secretary Jarvis` assets while leaving models stable - commit `6c5264b`
 - [x] 46.5 Verify model/voice readiness and Gemma 26B staged auto-connect path - commit `6c5264b`
-- [x] 46.6 Run tests/builds/runtime live test, commit, and push - commit pending
+- [x] 46.6 Run tests/builds/runtime live test, commit, and push - commit `1c401c9`
