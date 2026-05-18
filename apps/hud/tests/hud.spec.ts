@@ -1003,6 +1003,28 @@ test("orb click opens radial controls and dashboard stays grouped", async ({ pag
   await expect(panel.getByLabel("Model activation plans")).toContainText("asset-ready");
 });
 
+test("orb hover opens compact mini HUD with quick actions", async ({ page }) => {
+  await page.goto("/");
+  const orb = page.getByRole("button", { name: "Open Jarvis controls" });
+  await orb.hover();
+
+  const miniHud = page.getByLabel("Jarvis orb mini HUD");
+  await expect(miniHud).toBeVisible();
+  await expect(miniHud.getByLabel("Jarvis compact metrics")).toContainText("GB");
+  await expect(miniHud.getByLabel("Jarvis compact voice state")).toContainText("listen");
+  await expect(miniHud.getByLabel("Jarvis terminal snippet")).toContainText("model:");
+
+  await miniHud.getByRole("button", { name: "Open voice command" }).click();
+  await expect(page.getByRole("dialog", { name: "Jarvis voice panel" })).toBeVisible();
+});
+
+test("top-right orb identity button opens the same radial controls", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Jarvis orb menu" }).click();
+  await expect(page.getByTitle("Dashboard")).toBeVisible();
+  await expect(page.getByTitle("Voice")).toBeVisible();
+});
+
 test("voice and text panels expose compact interaction states", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Jarvis controls" }).click();

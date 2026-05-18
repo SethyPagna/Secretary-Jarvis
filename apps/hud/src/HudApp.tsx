@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, Bot, Check, CircleStop, Cpu, FlaskConical, LayoutDashboard, Mic, Power, RefreshCw, Route, Settings, ShieldAlert, TerminalSquare, Waypoints, X } from "lucide-react";
+import { Activity, Check, CircleStop, Cpu, FlaskConical, LayoutDashboard, Mic, Power, RefreshCw, Route, Settings, ShieldAlert, TerminalSquare, Waypoints, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useState, type CSSProperties, type FocusEvent } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
@@ -200,7 +200,7 @@ function HudSurface() {
         onEmergencyStop={() => void runEmergencyStopFromApp()}
       />
       <div className="orb-interaction-zone" onMouseEnter={() => setHoveringOrb(true)} onMouseLeave={() => setHoveringOrb(false)}>
-        <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} />
+        <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} onOpenPanel={openPanel} />
         <Suspense
           fallback={
             <OrbFallback
@@ -362,8 +362,17 @@ function HudSurface() {
           </motion.div>
         )}
       </AnimatePresence>
-      <button className="hud-corner-control" type="button" aria-label="Jarvis settings" onClick={() => openPanel("settings")}>
-        <Settings size={18} aria-hidden="true" />
+      <button
+        className="hud-corner-control orb-title-control"
+        type="button"
+        aria-label="Open Jarvis orb menu"
+        onClick={() => {
+          setPanel(null);
+          setMenuOpen((value) => !value);
+          setHudState(menuOpen ? "idle" : "wake", "Jarvis ready.");
+        }}
+      >
+        <span className="orb-mark" aria-hidden="true" />
       </button>
     </main>
   );
@@ -428,7 +437,7 @@ function DesktopAppChrome({
       data-expanded={expanded ? "true" : "false"}
     >
       <div className="desktop-brand">
-        <span><Bot size={18} aria-hidden="true" /></span>
+        <span className="desktop-brand-orb"><span className="orb-mark" aria-hidden="true" /></span>
         <b>Jarvis</b>
         <small>{online ? "online" : "offline"}</small>
       </div>
