@@ -367,4 +367,4 @@ Acceptance for the next UI slice:
 - [x] 47.2 Replace metrics-only hover card with orb mini-HUD - commit `86c9f70`
 - [x] 47.3 Replace generic bot/gear identity controls with orb mark - commit `86c9f70`
 - [x] 47.4 Add mini-HUD/sidebar behavior tests - commit `86c9f70`
-- [x] 47.5 Verify HUD UI tests, builds, runtime live test, commit, and push - commit `85a6b43`
+- [x] 47.5 Verify HUD UI tests, builds, runtime live test, commit, and push - commit `146548f`
