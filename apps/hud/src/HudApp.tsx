@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, Check, CircleStop, Cpu, FlaskConical, LayoutDashboard, Mic, Power, RefreshCw, Route, Settings, ShieldAlert, TerminalSquare, Waypoints, X } from "lucide-react";
-import { lazy, Suspense, useEffect, useState, type CSSProperties, type FocusEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type FocusEvent } from "react";
 import { HudPanel } from "./components/HudPanel";
 import { MetricsCard } from "./components/MetricsCard";
 import { RadialMenu } from "./components/RadialMenu";
@@ -200,7 +200,7 @@ function HudSurface() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ reason: "Desktop app emergency stop" })
     })
-      .then((response) => setHudState(response.ok ? "error" : "approval", response.ok ? "Emergency stop sent." : "Emergency stop needs local supervisor."))
+      .then((response) => setHudState(response.ok ? "approval" : "error", response.ok ? "Emergency stop sent." : "Emergency stop needs local supervisor."))
       .catch(() => setHudState("error", "Emergency stop failed."));
     setBusyControl(null);
   }
@@ -220,6 +220,7 @@ function HudSurface() {
       {!isOrbShell && (
         <DesktopAppChrome
           expanded={sidebarExpanded}
+          activePanel={panel}
           online={online}
           activeModel={status?.models?.find((model) => model.id === status?.activeModelId)?.label ?? "Local model"}
           runningTasks={(status?.tasks ?? []).filter((task) => task.status === "running").length}
@@ -452,6 +453,7 @@ function panelToTrayAction(panel: HudPanelName): JarvisTrayActionType | null {
 
 function DesktopAppChrome({
   expanded,
+  activePanel,
   online,
   activeModel,
   runningTasks,
@@ -465,6 +467,7 @@ function DesktopAppChrome({
   onEmergencyStop
 }: {
   expanded: boolean;
+  activePanel: HudPanelName | null;
   online: boolean;
   activeModel: string;
   runningTasks: number;
@@ -477,14 +480,28 @@ function DesktopAppChrome({
   onLiveTest: () => void;
   onEmergencyStop: () => void;
 }) {
+  const chromeRef = useRef<HTMLElement | null>(null);
   const controls: Array<{ panel: HudPanelName; label: string; icon: typeof LayoutDashboard }> = [
-    { panel: "dashboard", label: "Home", icon: LayoutDashboard },
-    { panel: "text", label: "Terminal", icon: TerminalSquare },
-    { panel: "voice", label: "Voice", icon: Mic },
+    { panel: "text", label: "Command", icon: TerminalSquare },
     { panel: "workflows", label: "Flows", icon: Waypoints },
-    { panel: "devices", label: "Devices", icon: Cpu },
+    { panel: "devices", label: "Control", icon: Cpu },
     { panel: "settings", label: "System", icon: Settings },
   ];
+
+  useEffect(() => {
+    if (!expanded) {
+      return;
+    }
+    function collapseWhenPointerLeavesChrome(event: globalThis.PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && chromeRef.current?.contains(target)) {
+        return;
+      }
+      onExpandedChange(false);
+    }
+    window.addEventListener("pointerdown", collapseWhenPointerLeavesChrome, true);
+    return () => window.removeEventListener("pointerdown", collapseWhenPointerLeavesChrome, true);
+  }, [expanded, onExpandedChange]);
 
   function collapseAfterFocusLeaves(event: FocusEvent<HTMLElement>) {
     const nextTarget = event.relatedTarget;
@@ -496,6 +513,7 @@ function DesktopAppChrome({
 
   return (
     <aside
+      ref={chromeRef}
       className={`desktop-app-chrome ${expanded ? "expanded" : "collapsed"}`}
       aria-label="Jarvis desktop shell"
       onMouseEnter={() => onExpandedChange(true)}
@@ -516,6 +534,7 @@ function DesktopAppChrome({
             <button
               key={control.panel}
               type="button"
+              className={activePanel === control.panel ? "active" : ""}
               onClick={() => onOpenPanel(control.panel)}
               aria-label={`Open ${control.label} panel`}
               data-label={control.label}

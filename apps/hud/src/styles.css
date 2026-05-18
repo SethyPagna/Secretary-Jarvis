@@ -8,11 +8,12 @@
   --hud-bg: #0a0a0c;
   --hud-text: #e0e0e0;
   --hud-glass: rgba(4, 12, 15, 0.46);
-  --desktop-rail-width: 56px;
-  --desktop-rail-expanded-width: 172px;
+  --desktop-rail-width: 52px;
+  --desktop-rail-expanded-width: 164px;
   --desktop-shell-left: 16px;
   --desktop-content-gap-collapsed: 16px;
   --desktop-content-gap-expanded: 24px;
+  --desktop-titlebar-height: 34px;
   --desktop-content-left: calc(var(--desktop-shell-left) + var(--desktop-rail-width) + var(--desktop-content-gap-collapsed));
   --desktop-content-right: 16px;
   --desktop-stage-center-x: calc(var(--desktop-content-left) + ((100vw - var(--desktop-content-left) - var(--desktop-content-right)) / 2));
@@ -61,7 +62,7 @@ html[data-shell="desktop"] .hud-stage {
   --desktop-content-left: calc(var(--desktop-shell-left) + var(--desktop-active-rail-width) + var(--desktop-active-content-gap));
   --desktop-stage-center-x: calc(var(--desktop-content-left) + ((100vw - var(--desktop-content-left) - var(--desktop-content-right)) / 2));
   overflow: hidden;
-  padding-top: 34px;
+  padding-top: var(--desktop-titlebar-height);
   border: 1px solid rgba(0, 229, 255, 0.16);
   background:
     linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px),
@@ -98,11 +99,11 @@ html[data-shell="desktop"] .hud-stage.sidebar-expanded {
 html[data-shell="desktop"] .hud-stage::after {
   content: "";
   position: fixed;
-  inset: 0 138px auto var(--desktop-content-left);
-  height: 34px;
+  inset: 0 138px auto 0;
+  height: var(--desktop-titlebar-height);
   z-index: 30;
   background:
-    linear-gradient(90deg, rgba(0, 229, 255, 0.12), transparent 48%),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.1), transparent 34%, rgba(0, 229, 255, 0.06)),
     var(--hud-bg);
   border-bottom: 1px solid rgba(0, 229, 255, 0.18);
   -webkit-app-region: drag;
@@ -128,14 +129,14 @@ html[data-shell="desktop"] .hud-stage::before {
 html[data-shell="desktop"] .desktop-app-chrome {
   position: fixed;
   left: var(--desktop-shell-left);
-  top: 58px;
+  top: 52px;
   bottom: 16px;
   z-index: 26;
   width: var(--desktop-rail-width);
-  display: grid;
-  grid-template-rows: auto auto auto auto auto auto auto 1fr;
-  gap: 7px;
-  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 7px 5px;
   border: 1px solid rgba(0, 229, 255, 0.18);
   border-radius: 19px;
   background:
@@ -247,7 +248,7 @@ html[data-shell="desktop"] .desktop-app-chrome:focus-within {
 }
 
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand {
-  grid-template-columns: 36px 0;
+  grid-template-columns: 42px 0;
   justify-content: center;
 }
 
@@ -260,15 +261,15 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
 
 .desktop-rail {
   display: grid;
-  gap: 7px;
+  gap: 8px;
 }
 
 .desktop-rail button,
 .desktop-action,
 .desktop-stop {
   position: relative;
-  height: 48px;
-  min-height: 48px;
+  height: 44px;
+  min-height: 44px;
   min-width: 0;
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr);
@@ -276,7 +277,7 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
   gap: 8px;
   padding: 0 10px;
   border: 1px solid rgba(0, 229, 255, 0.13);
-  border-radius: 13px;
+  border-radius: 14px;
   color: rgba(255, 255, 255, 0.82);
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
@@ -321,6 +322,15 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
   box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.06);
 }
 
+.desktop-rail button.active,
+.desktop-rail button.active::before {
+  opacity: 1;
+  border-color: rgba(74, 158, 255, 0.66);
+  color: var(--hud-blue);
+  background: rgba(74, 158, 255, 0.11);
+  box-shadow: 0 0 20px rgba(74, 158, 255, 0.14), inset 0 0 18px rgba(74, 158, 255, 0.1);
+}
+
 .desktop-rail button:hover::before,
 .desktop-rail button:focus-visible::before,
 .desktop-action:hover::before,
@@ -345,11 +355,17 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-rail button,
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-action,
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop {
   width: 42px;
-  height: 48px;
-  min-height: 48px;
+  height: 44px;
+  min-height: 44px;
   grid-template-columns: 1fr;
   justify-items: center;
   padding-inline: 0;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-rail svg,
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-action svg,
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop svg {
+  justify-self: center;
 }
 
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-rail span,
@@ -362,7 +378,7 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop span {
 }
 
 .desktop-status-card {
-  min-height: 48px;
+  min-height: 44px;
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   gap: 8px;
@@ -386,8 +402,8 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop span {
 
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-card {
   width: 42px;
-  height: 48px;
-  min-height: 48px;
+  height: 44px;
+  min-height: 44px;
   grid-template-columns: 1fr;
   justify-items: center;
   padding: 0;
@@ -435,7 +451,7 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-grid {
 }
 
 .desktop-stop {
-  align-self: end;
+  margin-top: auto;
   border-color: rgba(255, 0, 127, 0.24);
   color: white;
   background: rgba(255, 0, 127, 0.08);
@@ -471,6 +487,10 @@ html[data-shell="desktop"] .radial-menu {
 
 .hud-stage.panel-open {
   background: rgba(0, 0, 0, 0.8);
+}
+
+html[data-shell="desktop"] .hud-stage.panel-open .desktop-app-chrome {
+  z-index: 22;
 }
 
 .orb-interaction-zone {
@@ -1416,7 +1436,7 @@ html[data-shell="desktop"] .hud-panel {
 }
 
 .hud-panel-settings {
-  width: min(calc(100vw - var(--desktop-content-left) - var(--desktop-content-right) - 28px), 980px);
+  width: min(calc(100vw - var(--desktop-content-left) - var(--desktop-content-right) - 28px), 860px);
 }
 
 .hud-panel-workflows {
@@ -1683,6 +1703,18 @@ html[data-shell="desktop"] .hud-panel {
 
 .hud-panel-settings .setting-list {
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.compact-system-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.compact-system-list span {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .runtime-command-grid button {
@@ -2520,6 +2552,11 @@ html[data-shell="desktop"] .hud-panel {
   margin-top: 10px;
 }
 
+.service-pulses.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0;
+}
+
 .service-pulses span {
   min-width: 0;
   display: grid;
@@ -2881,6 +2918,95 @@ html[data-shell="desktop"] .hud-panel {
   grid-template-columns: minmax(0, 1fr) 42px;
   gap: 10px;
   width: min(760px, 82vw);
+}
+
+.command-center-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.command-primary-card,
+.command-side-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(0, 229, 255, 0.1), transparent 42%),
+    rgba(255, 255, 255, 0.035);
+}
+
+.command-primary-card {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+}
+
+.command-primary-card .voice-session-card,
+.command-primary-card .hud-input-form {
+  width: 100%;
+}
+
+.voice-control-row.compact {
+  margin-top: 0;
+}
+
+.command-side-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.command-side-card > span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.command-side-card small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.52);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.command-side-card strong {
+  overflow: hidden;
+  color: white;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-snippet,
+.command-side-card .service-pulses {
+  grid-column: 1 / -1;
+}
+
+.terminal-snippet {
+  display: grid;
+  gap: 6px;
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid rgba(0, 255, 136, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.terminal-snippet code {
+  overflow: hidden;
+  color: rgba(0, 255, 136, 0.78);
+  font: 700 11px/1.4 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hud-input-form input {
@@ -3791,6 +3917,8 @@ html[data-shell="desktop"] .hud-panel {
   }
 
   .widget-grid,
+  .command-center-grid,
+  .command-side-card,
   .model-manifest-strip,
   .voice-readiness-strip,
   .agent-voice-matrix,

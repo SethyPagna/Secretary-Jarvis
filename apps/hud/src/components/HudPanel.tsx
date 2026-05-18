@@ -1,4 +1,4 @@
-import { Cable, CheckCircle2, Cpu, Mic, Play, Send, Settings, Square, UserCheck, X } from "lucide-react";
+import { Cable, CheckCircle2, Cpu, Mic, Play, Send, Settings, Square, TerminalSquare, UserCheck, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import type {
   JarvisStatus,
@@ -738,7 +738,7 @@ export function HudPanel({
       </button>
       {panel === "dashboard" && (
         <>
-          <header><Cpu size={18} /><strong>Dashboard</strong></header>
+          <header><Cpu size={18} /><strong>Command Center</strong></header>
           <div className="widget-grid">
             <Widget label="Model" value={activeModel?.label ?? "offline"} />
             <Widget label="Mode" value={status?.privacyMode ?? "strict-local"} />
@@ -850,10 +850,68 @@ export function HudPanel({
         </>
       )}
       {panel === "text" && (
-        <form className="hud-input-form" onSubmit={submitText}>
-          <input value={text} onChange={(event) => setText(event.target.value)} placeholder="Ask Jarvis anything..." autoFocus />
-          <button type="submit" aria-label="Send to Jarvis"><Send size={17} /></button>
-        </form>
+        <>
+          <header><TerminalSquare size={18} /><strong>Command Center</strong></header>
+          <div className="command-center-grid" aria-label="Merged voice terminal and system command center">
+            <section className="command-primary-card" aria-label="Live command input">
+              <div className={`voice-session-card state-${voiceSession?.state ?? "idle"}`} aria-label="Live voice session">
+                <div className="voice-orb-row">
+                  <div className="mic-pulse"><Mic size={18} /></div>
+                  <span>
+                    <strong>{voiceSession?.state ?? (voiceReadiness?.summary.sttReady ? "ready" : "staged")}</strong>
+                    <small>{voiceSession?.transcript.at(-1)?.text ?? (voiceReadiness?.summary.sttReady ? "Push to talk or type below." : "Voice staged")}</small>
+                  </span>
+                </div>
+                <div className="voice-mini-legend" aria-label="Voice status legend" title="Listening / processing / error">
+                  <span><i className="dot-listening" />listen</span>
+                  <span><i className="dot-processing" />work</span>
+                  <span><i className="dot-error" />error</span>
+                </div>
+              </div>
+              <div className="voice-control-row compact" aria-label="Voice session controls">
+                <button type="button" onClick={startVoiceListening} aria-label="Start listening"><Play size={15} /></button>
+                <button type="button" onClick={stopVoiceListening} aria-label="Stop listening"><Square size={14} /></button>
+                <button type="button" onClick={commitVoiceTranscript} aria-label="Commit transcript"><CheckCircle2 size={15} /></button>
+              </div>
+              <form className="hud-input-form" onSubmit={submitText}>
+                <input value={text} onChange={(event) => setText(event.target.value)} placeholder="Ask Jarvis anything..." autoFocus />
+                <button type="submit" aria-label="Send to Jarvis"><Send size={17} /></button>
+              </form>
+            </section>
+            <section className="command-side-card" aria-label="Live terminal and system status">
+              <span>
+                <small>Runtime</small>
+                <strong>{runtimeServices ? `${runtimeServices.summary.online}/${runtimeServiceTotal(runtimeServices)}` : "--"}</strong>
+              </span>
+              <span>
+                <small>Model</small>
+                <strong>{activeModel?.label ?? "offline"}</strong>
+              </span>
+              <span>
+                <small>Voice</small>
+                <strong>{voiceReadiness?.ttsPreferredEngine ?? "local"}</strong>
+              </span>
+              <span>
+                <small>Queue</small>
+                <strong>{tasks.length}</strong>
+              </span>
+              <div className="terminal-snippet" aria-label="Terminal snippet">
+                {(tasks.length ? tasks : status?.tasks?.slice(0, 2) ?? []).slice(0, 2).map((task) => (
+                  <code key={task.id}>{task.status}: {compactDetail(task.title)}</code>
+                ))}
+                {!tasks.length && <code>system: ready</code>}
+              </div>
+              <div className="service-pulses compact" aria-label="Live service heartbeats">
+                {(runtimeServices?.services ?? []).slice(0, 4).map((service) => (
+                  <span key={service.id} className={`service-${service.status}`} title={service.detail}>
+                    <i />
+                    <small>{service.label}</small>
+                  </span>
+                ))}
+              </div>
+            </section>
+          </div>
+        </>
       )}
       {panel === "devices" && (
         <>
@@ -874,8 +932,8 @@ export function HudPanel({
       )}
       {panel === "settings" && (
         <>
-          <header><Settings size={18} /><strong>Settings</strong></header>
-          <div className="setting-list">
+          <header><Settings size={18} /><strong>System</strong></header>
+          <div className="setting-list compact-system-list">
             <span>Privacy <b>{status?.privacyMode ?? "strict-local"}</b></span>
             <span>Audio <b>local</b></span>
             <span>Theme <b>dark</b></span>
@@ -1790,6 +1848,10 @@ function Widget({ label, value }: { label: string; value: string }) {
 
 function compactDetail(value: string): string {
   return value.length > 64 ? `${value.slice(0, 61)}...` : value;
+}
+
+function runtimeServiceTotal(runtime: RuntimeServicesStatus): number {
+  return runtime.summary.online + runtime.summary.degraded + runtime.summary.offline + runtime.summary.unknown;
 }
 
 function controlLabel(control: RuntimeControlKind): string {

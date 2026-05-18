@@ -1020,7 +1020,7 @@ test("orb click opens radial controls and dashboard stays grouped", async ({ pag
   await page.getByTitle("Dashboard").click();
   const panel = page.getByRole("dialog", { name: "Jarvis dashboard panel" });
   await expect(panel).toBeVisible();
-  await expect(panel.locator("header").getByText("Dashboard")).toBeVisible();
+  await expect(panel.locator("header").getByText("Command Center")).toBeVisible();
   await expect(panel.getByText("Model", { exact: true })).toBeVisible();
   await expect(panel.getByText("Tasks")).toBeVisible();
   await expect(panel.locator(".widget-grid")).toBeVisible();
@@ -1195,7 +1195,7 @@ test("desktop icon rail expands and shifts the usable stage cleanly", async ({ p
   await expect(orb.locator("canvas")).toBeVisible();
 
   const collapsedWidth = await rail.evaluate((element) => element.getBoundingClientRect().width);
-  const collapsedButton = await page.getByRole("button", { name: "Open Home panel" }).evaluate((element) => {
+  const collapsedButton = await page.getByRole("button", { name: "Open Command panel" }).evaluate((element) => {
     const rect = element.getBoundingClientRect();
     return { width: rect.width, height: rect.height };
   });
@@ -1206,7 +1206,7 @@ test("desktop icon rail expands and shifts the usable stage cleanly", async ({ p
 
   expect(collapsedWidth).toBeLessThanOrEqual(58);
   expect(collapsedButton.width).toBeLessThanOrEqual(44);
-  expect(collapsedButton.height).toBe(48);
+  expect(collapsedButton.height).toBe(44);
 
   await rail.hover();
   await expect(rail).toHaveAttribute("data-expanded", "true");
