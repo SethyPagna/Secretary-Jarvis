@@ -1,6 +1,7 @@
 import { AlertTriangle, Bot, CheckCircle2, GitBranch, Play, Route, Save, ShieldAlert, SlidersHorizontal, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type PointerEvent } from "react";
 import type { WorkflowDefinition, WorkflowDryRun, WorkflowGenerationResult, WorkflowRun, WorkflowStep } from "@jarvis/core";
+import { fetchPanelJson, panelCacheKey, readPanelCache } from "../lib/panelCache";
 
 interface WorkflowPayload {
   workflows: WorkflowDefinition[];
@@ -51,17 +52,24 @@ export function WorkflowConsole({ apiBaseUrl }: { apiBaseUrl: string }) {
   const [nodeSummaryDraft, setNodeSummaryDraft] = useState("");
   const [layoutStatus, setLayoutStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
 
-  async function load() {
-    const response = await fetch(`${apiBaseUrl}/api/workflows/studio`);
-    if (!response.ok) {
-      throw new Error(`Workflow API ${response.status}`);
-    }
-    const next = (await response.json()) as WorkflowPayload;
+  function applyPayload(next: WorkflowPayload) {
     setPayload(next);
     setActiveId((current) => current || next.workflows[0]?.id || "");
   }
 
+  async function load() {
+    const next = await fetchPanelJson<WorkflowPayload>(apiBaseUrl, "/api/workflows/studio");
+    if (!next) {
+      throw new Error("Workflow API unavailable");
+    }
+    applyPayload(next);
+  }
+
   useEffect(() => {
+    const cached = readPanelCache<WorkflowPayload>(panelCacheKey(apiBaseUrl, "/api/workflows/studio"));
+    if (cached) {
+      applyPayload(cached);
+    }
     void load().catch(() => undefined);
   }, [apiBaseUrl]);
 

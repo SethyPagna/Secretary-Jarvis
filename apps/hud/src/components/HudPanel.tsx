@@ -13,8 +13,33 @@ import type {
   VoiceRuntimeReadiness
 } from "@jarvis/core";
 import type { HudPanel as HudPanelName } from "../types";
+import { fetchPanelJson, panelCacheKey, readPanelCache } from "../lib/panelCache";
 
 const WorkflowConsole = lazy(() => import("./WorkflowConsole").then((module) => ({ default: module.WorkflowConsole })));
+
+function loadPanelResource<T>({
+  apiBaseUrl,
+  path,
+  isCancelled,
+  apply
+}: {
+  apiBaseUrl: string;
+  path: string;
+  isCancelled: () => boolean;
+  apply: (payload: T) => void;
+}) {
+  const cached = readPanelCache<T>(panelCacheKey(apiBaseUrl, path));
+  if (cached && !isCancelled()) {
+    apply(cached);
+  }
+  void fetchPanelJson<T>(apiBaseUrl, path)
+    .then((payload) => {
+      if (!isCancelled() && payload) {
+        apply(payload);
+      }
+    })
+    .catch(() => undefined);
+}
 
 export function HudPanel({
   panel,
@@ -76,38 +101,43 @@ export function HudPanel({
       return;
     }
     let cancelled = false;
-    fetch(`${apiBaseUrl}/api/runtime/constellation`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: RuntimeConstellationResponse | undefined) => {
-        if (!cancelled && payload?.constellation) {
+    const isCancelled = () => cancelled;
+    loadPanelResource<RuntimeConstellationResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/constellation",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.constellation) {
           setConstellation(payload.constellation);
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/smoke-status`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: RuntimeSmokeResponse | undefined) => {
-        if (!cancelled && payload?.smoke) {
+      }
+    });
+    loadPanelResource<RuntimeSmokeResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/smoke-status",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.smoke) {
           setSmokeStatus(payload.smoke);
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/services`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: RuntimeServicesResponse | undefined) => {
-        if (!cancelled && payload?.runtime) {
+      }
+    });
+    loadPanelResource<RuntimeServicesResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/services",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.runtime) {
           setRuntimeServices(payload.runtime);
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/models/activation-plans`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: ModelActivationPlansResponse | undefined) => {
-        if (!cancelled) {
-          setActivationPlans(payload?.plans ?? []);
-        }
-      })
-      .catch(() => undefined);
+      }
+    });
+    loadPanelResource<ModelActivationPlansResponse>({
+      apiBaseUrl,
+      path: "/api/models/activation-plans",
+      isCancelled,
+      apply: (payload) => setActivationPlans(payload?.plans ?? [])
+    });
     return () => {
       cancelled = true;
     };
@@ -118,30 +148,33 @@ export function HudPanel({
       return;
     }
     let cancelled = false;
-    fetch(`${apiBaseUrl}/api/voice/readiness`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: VoiceReadinessResponse | undefined) => {
-        if (!cancelled && payload?.readiness) {
+    const isCancelled = () => cancelled;
+    loadPanelResource<VoiceReadinessResponse>({
+      apiBaseUrl,
+      path: "/api/voice/readiness",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.readiness) {
           setVoiceReadiness(payload.readiness);
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/voice/session`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: VoiceSessionResponse | undefined) => {
-        if (!cancelled && payload?.voiceSession) {
+      }
+    });
+    loadPanelResource<VoiceSessionResponse>({
+      apiBaseUrl,
+      path: "/api/voice/session",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.voiceSession) {
           setVoiceSession(payload.voiceSession);
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/voice/agent-matrix`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: AgentVoiceMatrixResponse | undefined) => {
-        if (!cancelled) {
-          setAgentVoiceMatrix(payload?.matrix?.entries ?? []);
-        }
-      })
-      .catch(() => undefined);
+      }
+    });
+    loadPanelResource<AgentVoiceMatrixResponse>({
+      apiBaseUrl,
+      path: "/api/voice/agent-matrix",
+      isCancelled,
+      apply: (payload) => setAgentVoiceMatrix(payload?.matrix?.entries ?? [])
+    });
     return () => {
       cancelled = true;
     };
@@ -152,10 +185,13 @@ export function HudPanel({
       return;
     }
     let cancelled = false;
-    fetch(`${apiBaseUrl}/api/runtime/activation-readiness`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: WakeRuntimeActivationResponse | undefined) => {
-        if (!cancelled && payload?.activation) {
+    const isCancelled = () => cancelled;
+    loadPanelResource<WakeRuntimeActivationResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/activation-readiness",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.activation) {
           setActivationReadiness({
             wakeReady: payload.activation.wake.summary.ready,
             wakeStaged: payload.activation.wake.summary.staged,
@@ -170,8 +206,8 @@ export function HudPanel({
             recommendation: payload.activation.recommendations[0] ?? "Use tray/orb wake for reliable background access today."
           });
         }
-      })
-      .catch(() => undefined);
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -182,42 +218,37 @@ export function HudPanel({
       return;
     }
     let cancelled = false;
-    fetch(`${apiBaseUrl}/api/setup/action-groups`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: SetupActionGroupsResponse | undefined) => {
-        if (!cancelled) {
-          setSetupGroups(payload?.groups ?? []);
-        }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/setup/plugin-slots`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: FeaturePluginSlotsResponse | undefined) => {
-        if (!cancelled) {
-          setPluginSlots(payload?.manifest?.slots ?? []);
-        }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/setup/install-plans`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: SetupInstallPlansResponse | undefined) => {
-        if (!cancelled) {
-          setSetupInstallPlans(payload?.manifest?.plans ?? []);
-        }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/permissions`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: PermissionMemoryResponse | undefined) => {
-        if (!cancelled) {
-          setPermissionMemory(payload?.permissions ?? null);
-        }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/architecture/map`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: ArchitectureMapResponse | undefined) => {
-        if (!cancelled && payload?.architecture) {
+    const isCancelled = () => cancelled;
+    loadPanelResource<SetupActionGroupsResponse>({
+      apiBaseUrl,
+      path: "/api/setup/action-groups",
+      isCancelled,
+      apply: (payload) => setSetupGroups(payload?.groups ?? [])
+    });
+    loadPanelResource<FeaturePluginSlotsResponse>({
+      apiBaseUrl,
+      path: "/api/setup/plugin-slots",
+      isCancelled,
+      apply: (payload) => setPluginSlots(payload?.manifest?.slots ?? [])
+    });
+    loadPanelResource<SetupInstallPlansResponse>({
+      apiBaseUrl,
+      path: "/api/setup/install-plans",
+      isCancelled,
+      apply: (payload) => setSetupInstallPlans(payload?.manifest?.plans ?? [])
+    });
+    loadPanelResource<PermissionMemoryResponse>({
+      apiBaseUrl,
+      path: "/api/permissions",
+      isCancelled,
+      apply: (payload) => setPermissionMemory(payload?.permissions ?? null)
+    });
+    loadPanelResource<ArchitectureMapResponse>({
+      apiBaseUrl,
+      path: "/api/architecture/map",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.architecture) {
           setArchitectureSummary({
             stackSummary: payload.architecture.stackSummary,
             subsystemCount: payload.architecture.subsystems.length,
@@ -225,12 +256,14 @@ export function HudPanel({
             backlogCount: payload.architecture.improvementBacklog.length
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/architecture/code-health`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: CodeHealthResponse | undefined) => {
-        if (!cancelled && payload?.codeHealth) {
+      }
+    });
+    loadPanelResource<CodeHealthResponse>({
+      apiBaseUrl,
+      path: "/api/architecture/code-health",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.codeHealth) {
           setCodeHealth({
             scannedFiles: payload.codeHealth.scannedFiles,
             oversizedFiles: payload.codeHealth.oversizedFiles.length,
@@ -239,12 +272,14 @@ export function HudPanel({
             cleanupBacklog: payload.codeHealth.cleanupBacklog.slice(0, 2)
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/startup-readiness`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: StartupReadinessResponse | undefined) => {
-        if (!cancelled && payload?.startup) {
+      }
+    });
+    loadPanelResource<StartupReadinessResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/startup-readiness",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.startup) {
           setStartupReadiness({
             configured: payload.startup.summary.startupConfigured,
             scriptsReady: payload.startup.summary.scriptsReady,
@@ -253,12 +288,14 @@ export function HudPanel({
             highTrustMode: payload.startup.authority.highTrustMode
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/security/authority-readiness`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: AuthorityReadinessResponse | undefined) => {
-        if (!cancelled && payload?.authority) {
+      }
+    });
+    loadPanelResource<AuthorityReadinessResponse>({
+      apiBaseUrl,
+      path: "/api/security/authority-readiness",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.authority) {
           setAuthorityReadiness({
             mode: payload.authority.mode,
             approvalRequired: payload.authority.actionSummary.approvalRequired,
@@ -268,12 +305,14 @@ export function HudPanel({
             guardrail: payload.authority.guardrails[0] ?? "Protected core remains sealed."
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/process-visibility`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: ProcessVisibilityResponse | undefined) => {
-        if (!cancelled && payload?.visibility) {
+      }
+    });
+    loadPanelResource<ProcessVisibilityResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/process-visibility",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.visibility) {
           setProcessVisibility({
             tracked: payload.visibility.summary.tracked,
             alive: payload.visibility.summary.alive,
@@ -286,27 +325,27 @@ export function HudPanel({
             }))
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/startup-registration-plans`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: StartupRegistrationPlansResponse | undefined) => {
-        if (!cancelled) {
-          setStartupPlans((payload?.manifest?.plans ?? []).map((plan) => ({
-            id: plan.id,
-            label: plan.label,
-            mode: plan.mode,
-            runLevel: plan.runLevel,
-            status: plan.status,
-            approvalRequired: plan.approvalRequired
-          })));
-        }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/packaging-readiness`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: PackagingReadinessResponse | undefined) => {
-        if (!cancelled && payload?.packaging) {
+      }
+    });
+    loadPanelResource<StartupRegistrationPlansResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/startup-registration-plans",
+      isCancelled,
+      apply: (payload) => setStartupPlans((payload?.manifest?.plans ?? []).map((plan) => ({
+        id: plan.id,
+        label: plan.label,
+        mode: plan.mode,
+        runLevel: plan.runLevel,
+        status: plan.status,
+        approvalRequired: plan.approvalRequired
+      })))
+    });
+    loadPanelResource<PackagingReadinessResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/packaging-readiness",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.packaging) {
           setPackagingReadiness({
             electronShellReady: payload.packaging.summary.electronShellReady,
             startupScriptsReady: payload.packaging.summary.startupScriptsReady,
@@ -316,12 +355,14 @@ export function HudPanel({
             packageCommand: payload.packaging.electron.commands.at(-1) ?? "npm.cmd run dist:hud"
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/agents/manager-readiness`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: AgentManagerReadinessResponse | undefined) => {
-        if (!cancelled && payload?.manager) {
+      }
+    });
+    loadPanelResource<AgentManagerReadinessResponse>({
+      apiBaseUrl,
+      path: "/api/agents/manager-readiness",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.manager) {
           setAgentManagerReadiness({
             connected: payload.manager.manager.connected,
             agentCount: payload.manager.summary.agentsReady,
@@ -343,12 +384,14 @@ export function HudPanel({
             }))
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/interaction-health`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: InteractionHealthResponse | undefined) => {
-        if (!cancelled && payload?.interaction) {
+      }
+    });
+    loadPanelResource<InteractionHealthResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/interaction-health",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.interaction) {
           setInteractionHealth({
             surfaces: payload.interaction.surfaces.map((surface) => ({
               id: surface.id,
@@ -369,12 +412,14 @@ export function HudPanel({
             freezeRisk: payload.interaction.summary.freezeRisk
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/self-test`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: RuntimeSelfTestResponse | undefined) => {
-        if (!cancelled && payload?.selfTest) {
+      }
+    });
+    loadPanelResource<RuntimeSelfTestResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/self-test",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.selfTest) {
           setRuntimeSelfTest({
             topStatus: payload.selfTest.summary.topStatus,
             connected: payload.selfTest.summary.connected,
@@ -387,28 +432,32 @@ export function HudPanel({
             recommendation: payload.selfTest.recommendations[0] ?? "Runtime self-test keeps fixes dry-run or approval-gated."
           });
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/live-test/latest`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: RuntimeLiveTestResponse | undefined) => {
-        if (!cancelled && payload?.liveTest) {
+      }
+    });
+    loadPanelResource<RuntimeLiveTestResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/live-test/latest",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.liveTest) {
           setRuntimeLiveTest(payload.liveTest);
         }
-      })
-      .catch(() => undefined);
-    fetch(`${apiBaseUrl}/api/runtime/attention`)
-      .then((response) => (response.ok ? response.json() : undefined))
-      .then((payload: RuntimeAttentionResponse | undefined) => {
-        if (!cancelled && payload?.attention) {
+      }
+    });
+    loadPanelResource<RuntimeAttentionResponse>({
+      apiBaseUrl,
+      path: "/api/runtime/attention",
+      isCancelled,
+      apply: (payload) => {
+        if (payload?.attention) {
           setRuntimeAttention({
             summary: payload.attention.summary,
             priority: payload.attention.priority.slice(0, 5),
             note: payload.attention.note
           });
         }
-      })
-      .catch(() => undefined);
+      }
+    });
     return () => {
       cancelled = true;
     };
