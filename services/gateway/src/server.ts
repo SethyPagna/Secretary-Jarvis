@@ -83,6 +83,7 @@ import { buildRuntimeConstellation } from "./runtimeConstellation.js";
 import { readRuntimeLiveTestStatus, runRuntimeLiveTest } from "./runtimeLiveTest.js";
 import { buildRuntimeSelfTest } from "./runtimeSelfTest.js";
 import { readRuntimeSmokeStatus } from "./runtimeSmoke.js";
+import { PermissionStore, type PermissionRecord } from "./permissionStore.js";
 import { buildStartupRegistrationPlans } from "./startupRegistrationPlans.js";
 import { tryHandleCatalogRoute } from "./routes/catalogRoutes.js";
 import { tryHandleRuntimeSummaryRoute } from "./routes/runtimeSummaryRoutes.js";
@@ -130,6 +131,7 @@ type BrainHfGenerationResult = {
 let status: JarvisStatus = structuredClone(seededStatus);
 const store = new JarvisStore();
 const events = new EventHub();
+const permissionStore = new PermissionStore();
 const socialDrafts: OutboundMessageDraft[] = [];
 const mobilePairings: MobilePairing[] = [];
 const pendingSystemActions = new Map<string, SystemAction>();
@@ -1398,6 +1400,26 @@ async function brainJson<T>(path: string, init?: RequestInit, timeoutMs = 3500):
 }
 
 function recordPendingApproval(action: ActionRequest): ActionRequest {
+  if (permissionStore.isRememberedGrant(action)) {
+    applyApprovalSideEffects(action, "approved");
+    const memoryWrite: MemoryWrite = {
+      id: id("memory"),
+      kind: "decision",
+      content: `Remembered approval grant used: ${action.title}. Target: ${action.target}.`,
+      importance: 0.72,
+      createdAt: now(),
+      tags: ["approval", "remembered", action.category],
+    };
+    store.addMemoryWrite(memoryWrite);
+    events.publish("approval", {
+      approval: action,
+      outcome: "remembered-grant",
+      permission: permissionStore.recordForAction(action),
+      memoryWrite,
+    });
+    events.publish("memory", { memoryWrite });
+    return action;
+  }
   const existing = status.pendingApprovals.find((approval) => approval.id === action.id);
   if (!existing) {
     status = {
@@ -1408,30 +1430,21 @@ function recordPendingApproval(action: ActionRequest): ActionRequest {
   return existing ?? action;
 }
 
-function completeApproval(approvalId: string, outcome: "approved" | "denied"): {
-  approval?: ActionRequest;
-  memoryWrite?: MemoryWrite;
-  workflowRun?: WorkflowRun;
-  workflowRunEvent?: WorkflowRunEvent;
-} {
-  const approval = status.pendingApprovals.find((candidate) => candidate.id === approvalId);
-  if (!approval) {
-    return {};
+function applyApprovalSideEffects(approval: ActionRequest, outcome: "approved" | "denied"): void {
+  if (outcome !== "approved") {
+    return;
   }
 
-  const timestamp = now();
-  const shouldEnableConnector = outcome === "approved" && approval.connectorId;
-  status = {
-    ...status,
-    pendingApprovals: status.pendingApprovals.filter((candidate) => candidate.id !== approvalId),
-    connectors: shouldEnableConnector
-      ? status.connectors.map((connector) =>
-          connector.id === approval.connectorId ? { ...connector, enabled: true } : connector,
-        )
-      : status.connectors,
-  };
+  if (approval.connectorId) {
+    status = {
+      ...status,
+      connectors: status.connectors.map((connector) =>
+        connector.id === approval.connectorId ? { ...connector, enabled: true } : connector,
+      ),
+    };
+  }
 
-  if (outcome === "approved" && /screen/i.test(approval.target)) {
+  if (/screen/i.test(approval.target)) {
     status = {
       ...status,
       connectors: status.connectors.map((connector) =>
@@ -1447,7 +1460,7 @@ function completeApproval(approvalId: string, outcome: "approved" | "denied"): {
     };
   }
 
-  if (outcome === "approved" && /camera/i.test(approval.target)) {
+  if (/camera/i.test(approval.target)) {
     status = {
       ...status,
       connectors: status.connectors.map((connector) =>
@@ -1458,6 +1471,26 @@ function completeApproval(approvalId: string, outcome: "approved" | "denied"): {
       ),
     };
   }
+}
+
+function completeApproval(approvalId: string, outcome: "approved" | "denied"): {
+  approval?: ActionRequest;
+  memoryWrite?: MemoryWrite;
+  permissionRecord?: PermissionRecord;
+  workflowRun?: WorkflowRun;
+  workflowRunEvent?: WorkflowRunEvent;
+} {
+  const approval = status.pendingApprovals.find((candidate) => candidate.id === approvalId);
+  if (!approval) {
+    return {};
+  }
+
+  const timestamp = now();
+  status = {
+    ...status,
+    pendingApprovals: status.pendingApprovals.filter((candidate) => candidate.id !== approvalId),
+  };
+  applyApprovalSideEffects(approval, outcome);
 
   const memoryWrite: MemoryWrite = {
     id: id("memory"),
@@ -1468,9 +1501,10 @@ function completeApproval(approvalId: string, outcome: "approved" | "denied"): {
     tags: ["approval", outcome, approval.category],
   };
   store.addMemoryWrite(memoryWrite);
+  const permissionRecord = permissionStore.rememberDecision(approval, outcome === "approved" ? "granted" : "denied", timestamp);
   const workflowResult =
     approval.connectorId === "workflow-engine" ? completeWorkflowApproval(approval, outcome, timestamp) : {};
-  return { approval, memoryWrite, ...workflowResult };
+  return { approval, memoryWrite, permissionRecord, ...workflowResult };
 }
 
 function completeWorkflowApproval(
@@ -2037,6 +2071,14 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/permissions") {
+    sendJson(response, 200, {
+      permissions: permissionStore.snapshot(),
+      note: "Permission memory is local, capability-scoped, and stored under the owner profile. Protected-core, credential, purchase, delete, and irreversible actions remain guarded.",
+    });
+    return;
+  }
+
   if (request.method === "POST" && url.pathname.startsWith("/api/approvals/")) {
     const parts = url.pathname.split("/").filter(Boolean);
     const approvalId = parts[2];
@@ -2054,6 +2096,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       approval: result.approval,
       outcome: action,
       memoryWrite: result.memoryWrite,
+      permissionRecord: result.permissionRecord,
       workflowRun: result.workflowRun,
       workflowRunEvent: result.workflowRunEvent,
     });
@@ -2069,6 +2112,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
       approval: result.approval,
       outcome: action,
       memoryWrite: result.memoryWrite,
+      permissionRecord: result.permissionRecord,
       workflowRun: result.workflowRun,
       workflowRunEvent: result.workflowRunEvent,
     });
