@@ -377,7 +377,7 @@ Acceptance for the next UI slice:
 - [x] 48.5 Verify Electron/HUD builds and HUD UI tests, commit, and push - commit `7c81ee4`
 
 ## Phase 49 - Nonblocking Chat Dispatch And Runtime Responsiveness
-- [ ] 49.1 Add Phase 49 tracking to `PLAN.md` and `PROGRESS.md`
+- [x] 49.1 Add Phase 49 tracking to `PLAN.md` and `PROGRESS.md` - commit `ea80044`
 - [ ] 49.2 Defer assistant task execution outside the `/api/chat` request path
 - [ ] 49.3 Verify gateway tests/builds and runtime live test after restarting services
 - [ ] 49.4 Commit and push
