@@ -355,7 +355,7 @@ Acceptance for the next UI slice:
 - [x] 45.6 Verify HUD UI tests, builds, core/gateway tests, runtime live test, commit, and push - commit `3fc488a`
 
 ## Phase 46 - Workspace Organization, Compatibility Paths, And Production Readiness Cleanup
-- [ ] 46.1 Add Phase 46 tracking to `PLAN.md` and `PROGRESS.md`
+- [x] 46.1 Add Phase 46 tracking to `PLAN.md` and `PROGRESS.md` - commit `292fae4`
 - [ ] 46.2 Upgrade outer-folder organizer with applyable moves and compatibility links
 - [ ] 46.3 Update setup/doctor discovery for organized installers
 - [ ] 46.4 Apply organization to outer `Secretary Jarvis` assets while leaving models stable
