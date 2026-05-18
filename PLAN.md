@@ -1127,3 +1127,13 @@ Tasks:
 - 48.3 Add `shell=orb` renderer mode so the floating orb hides the sidebar/title controls, stays compact, and keeps the orb/radial/mini-HUD as the only visible surface.
 - 48.4 Bridge floating-orb quick actions to the main app through Electron IPC/tray actions so voice, text, workflow, devices, dashboard, and settings open in the main Jarvis window.
 - 48.5 Verify Electron/HUD builds and HUD UI tests, then commit and push.
+
+## Extension Phase 49 - Nonblocking Chat Dispatch And Runtime Responsiveness
+
+Goal: Keep Jarvis responsive when a text command, live test, or model route starts a slow local model/runtime probe. The Gateway must return queue acknowledgements immediately and run model work in the background so the app does not freeze or time out.
+
+Tasks:
+- 49.1 Add Phase 49 tracking to `PLAN.md` and `PROGRESS.md`.
+- 49.2 Defer assistant task execution outside the `/api/chat` request path so `POST /api/chat` returns `202` before any slow model routing or runtime probe starts.
+- 49.3 Verify gateway tests/builds and runtime live test after restarting services.
+- 49.4 Commit and push.
