@@ -52,3 +52,8 @@ The outer `C:\Users\user\Downloads\Secretary Jarvis` folder has been organized w
 - `/api/models/assets/scan` still detects ready model assets and keeps Gemma 26B staged until weights are complete.
 - `/api/voice/readiness` reports Whisper, Kokoro, SAPI, VAD, and voice samples as ready.
 - `/api/runtime/attention` reports remaining optional dependencies as setup tasks, not runtime failures.
+- `npm.cmd test` passed: core 64 tests and gateway 64 tests.
+- `npm.cmd run build` passed for core, gateway, dashboard, HUD, and desktop.
+- `npm.cmd run test:ui -w @jarvis/hud` passed: 21 tests, 1 skipped.
+- `scripts\jarvis-runtime.ps1 -Action Status` reported Brain, Gateway, Electron HUD, and Ollama online.
+- `scripts\jarvis-runtime.ps1 -Action LiveTest` passed with `attention` only for optional/future setup items.
