@@ -2208,9 +2208,23 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse):
   }
 
   if (request.method === "GET" && url.pathname === "/api/tasks") {
+    const requestedLimit = Number.parseInt(url.searchParams.get("limit") ?? "20", 10);
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 20;
+    const includeQueue = url.searchParams.get("includeQueue") === "full";
+    const allTasks = store.listTasks();
+    const tasks = allTasks.slice(0, limit);
+    const queue = includeQueue
+      ? store.listQueue().slice(0, 100)
+      : store
+          .listQueue()
+          .filter((item) => item.status === "queued" || item.status === "running" || item.status === "paused" || item.status === "waiting-approval")
+          .slice(0, 40);
     sendJson(response, 200, {
-      tasks: store.listTasks(),
-      queue: store.listQueue(),
+      tasks,
+      queue,
+      limit,
+      hasMore: allTasks.length > tasks.length,
+      queueMode: includeQueue ? "full" : "active",
     });
     return;
   }
