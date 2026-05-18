@@ -1025,6 +1025,20 @@ test("top-right orb identity button opens the same radial controls", async ({ pa
   await expect(page.getByTitle("Voice")).toBeVisible();
 });
 
+test("floating orb shell stays compact and forwards actions", async ({ page }) => {
+  await page.goto("/?shell=orb");
+  await expect(page.getByLabel("Jarvis desktop shell")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Open Jarvis orb menu" })).toHaveCount(0);
+
+  const orb = page.getByRole("button", { name: "Open Jarvis controls" });
+  await expect(orb).toBeVisible();
+  await orb.click();
+  await expect(page.getByTitle("Voice")).toBeVisible();
+  await page.getByTitle("Voice").click();
+  await expect(orb).toHaveAttribute("data-state", "listening");
+  await expect(page.getByRole("dialog", { name: "Jarvis voice panel" })).toHaveCount(0);
+});
+
 test("voice and text panels expose compact interaction states", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Open Jarvis controls" }).click();

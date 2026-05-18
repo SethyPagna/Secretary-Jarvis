@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage, shell } from "electron";
+import { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage } from "electron";
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -9,13 +9,14 @@ const HUD_URL = process.env.JARVIS_HUD_URL;
 const HUD_MODE = process.env.JARVIS_HUD_MODE ?? "dev";
 const WINDOW_MODE = process.env.JARVIS_WINDOW_MODE ?? (HUD_MODE === "app" ? "desktop" : "overlay");
 const START_MINIMIZED = process.env.JARVIS_START_MINIMIZED === "1";
-const DASHBOARD_URL = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:5174";
+const FLOATING_ORB_ENABLED = process.env.JARVIS_FLOATING_ORB !== "0";
 const GATEWAY_URL = process.env.JARVIS_GATEWAY_URL ?? "http://127.0.0.1:4317";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "../../..");
 const ELECTRON_DEBUG_LOG = path.join(ROOT_DIR, "data", "logs", "electron-main.debug.log");
 
 let hudWindow: BrowserWindow | null = null;
+let orbWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
 
@@ -31,6 +32,11 @@ function logElectron(message: string): void {
 type TrayActionType =
   | "open-hud"
   | "open-dashboard"
+  | "open-voice"
+  | "open-text"
+  | "open-workflows"
+  | "open-devices"
+  | "open-settings"
   | "mute-mic"
   | "pause-agents"
   | "emergency-stop"
@@ -41,7 +47,7 @@ type TrayActionType =
 interface TrayAction {
   type: TrayActionType;
   label: string;
-  state: "wake" | "planning" | "approval" | "error";
+  state: "wake" | "listening" | "planning" | "approval" | "error";
   message: string;
 }
 
@@ -142,8 +148,87 @@ function createHudWindow(): BrowserWindow {
   return window;
 }
 
+function createFloatingOrbWindow(): BrowserWindow {
+  logElectron("creating-floating-orb-window");
+  const trayImage = createTrayImage();
+  const window = new BrowserWindow({
+    width: 320,
+    height: 320,
+    minWidth: 220,
+    minHeight: 220,
+    show: false,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    movable: true,
+    hasShadow: false,
+    title: "Jarvis Orb",
+    icon: trayImage,
+    backgroundColor: "#00000000",
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      preload: path.join(__dirname, "preload.cjs")
+    }
+  });
+
+  window.setAlwaysOnTop(true, "screen-saver");
+  window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  window.setPosition(32, 32);
+
+  if (HUD_URL) {
+    const url = new URL(HUD_URL);
+    url.searchParams.set("shell", "orb");
+    void window.loadURL(url.toString()).then(() => logElectron(`loaded-orb-url ${url.toString()}`)).catch((error) => logElectron(`load-orb-url-error ${String(error)}`));
+  } else if (HUD_MODE === "app" || app.isPackaged) {
+    const rendererPath = path.join(__dirname, "../dist/index.html");
+    void window.loadFile(rendererPath, { query: { shell: "orb" } }).then(() => logElectron(`loaded-orb-file ${rendererPath}`)).catch((error) => logElectron(`load-orb-file-error ${String(error)}`));
+  } else {
+    const url = new URL(DEV_HUD_URL);
+    url.searchParams.set("shell", "orb");
+    void window.loadURL(url.toString()).then(() => logElectron(`loaded-orb-dev-url ${url.toString()}`)).catch((error) => logElectron(`load-orb-dev-error ${String(error)}`));
+  }
+
+  window.once("ready-to-show", () => {
+    logElectron("floating-orb-ready-to-show");
+    window.showInactive();
+  });
+  window.webContents.on("did-finish-load", () => {
+    logElectron("floating-orb-did-finish-load");
+    setTimeout(() => {
+      if (!window.isDestroyed() && !window.isVisible()) {
+        window.showInactive();
+      }
+    }, 250);
+  });
+  window.webContents.on("render-process-gone", (_event, details) => logElectron(`floating-orb-render-process-gone ${details.reason}`));
+  window.webContents.on("did-fail-load", (_event, code, description) => logElectron(`floating-orb-did-fail-load ${code} ${description}`));
+  window.on("closed", () => {
+    logElectron("floating-orb-window-closed");
+    orbWindow = null;
+  });
+  window.on("close", (event) => {
+    if (isQuitting) {
+      return;
+    }
+    event.preventDefault();
+    window.hide();
+    logElectron("floating-orb-close-hidden");
+  });
+  return window;
+}
+
 function showHud(): void {
   hudWindow ??= createHudWindow();
+  if (FLOATING_ORB_ENABLED) {
+    orbWindow ??= createFloatingOrbWindow();
+    if (!orbWindow.isVisible()) {
+      orbWindow.showInactive();
+    }
+  }
   if (hudWindow.isMinimized()) {
     hudWindow.restore();
   }
@@ -181,6 +266,36 @@ async function runTrayAction(type: TrayActionType): Promise<void> {
       label: "Open Dashboard",
       state: "wake",
       message: "Opening dashboard."
+    },
+    "open-voice": {
+      type,
+      label: "Open Voice",
+      state: "listening",
+      message: "Opening voice command."
+    },
+    "open-text": {
+      type,
+      label: "Open Text",
+      state: "wake",
+      message: "Opening text input."
+    },
+    "open-workflows": {
+      type,
+      label: "Open Workflows",
+      state: "planning",
+      message: "Opening workflow studio."
+    },
+    "open-devices": {
+      type,
+      label: "Open Devices",
+      state: "wake",
+      message: "Opening devices and integrations."
+    },
+    "open-settings": {
+      type,
+      label: "Open Settings",
+      state: "wake",
+      message: "Opening system settings."
     },
     "mute-mic": {
       type,
@@ -224,8 +339,7 @@ async function runTrayAction(type: TrayActionType): Promise<void> {
   showHud();
   emitTrayAction(action);
 
-  if (type === "open-dashboard") {
-    void shell.openExternal(DASHBOARD_URL);
+  if (type.startsWith("open-")) {
     return;
   }
 
@@ -337,6 +451,11 @@ ipcMain.handle("app:show", () => showHud());
 ipcMain.handle("app:hide", () => hudWindow?.hide());
 ipcMain.handle("app:focus-existing", () => showHud());
 ipcMain.handle("app:quit", () => quitJarvisApp());
+ipcMain.handle("orb:show", () => {
+  orbWindow ??= createFloatingOrbWindow();
+  orbWindow.showInactive();
+});
+ipcMain.handle("orb:hide", () => orbWindow?.hide());
 
 function quitJarvisApp(): void {
   isQuitting = true;
@@ -366,4 +485,5 @@ app.on("before-quit", () => {
 });
 app.on("window-all-closed", () => {
   hudWindow?.hide();
+  orbWindow?.hide();
 });

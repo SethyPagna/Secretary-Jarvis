@@ -1,6 +1,11 @@
 type JarvisTrayActionType =
   | "open-hud"
   | "open-dashboard"
+  | "open-voice"
+  | "open-text"
+  | "open-workflows"
+  | "open-devices"
+  | "open-settings"
   | "mute-mic"
   | "pause-agents"
   | "emergency-stop"
@@ -11,7 +16,7 @@ type JarvisTrayActionType =
 interface JarvisTrayAction {
   type: JarvisTrayActionType;
   label: string;
-  state: "wake" | "planning" | "approval" | "error";
+  state: "wake" | "listening" | "planning" | "approval" | "error";
   message: string;
 }
 
@@ -23,5 +28,7 @@ interface Window {
     hideApp(): Promise<void>;
     focusExisting(): Promise<void>;
     quitApp(): Promise<void>;
+    showOrb(): Promise<void>;
+    hideOrb(): Promise<void>;
   };
 }

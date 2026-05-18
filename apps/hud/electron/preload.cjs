@@ -21,4 +21,10 @@ contextBridge.exposeInMainWorld("jarvisDesktop", {
   quitApp() {
     return ipcRenderer.invoke("app:quit");
   },
+  showOrb() {
+    return ipcRenderer.invoke("orb:show");
+  },
+  hideOrb() {
+    return ipcRenderer.invoke("orb:hide");
+  },
 });

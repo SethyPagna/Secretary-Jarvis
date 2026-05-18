@@ -69,6 +69,27 @@ html[data-shell="desktop"] .hud-stage {
   background-size: 32px 32px;
 }
 
+html[data-shell="orb"] .hud-stage {
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+}
+
+html[data-shell="orb"] .hud-stage::before,
+html[data-shell="orb"] .hud-stage::after,
+html[data-shell="orb"] .desktop-app-chrome,
+html[data-shell="orb"] .hud-corner-control,
+html[data-shell="orb"] .panel-backdrop,
+html[data-shell="orb"] .approval-chip,
+html[data-shell="orb"] .workflow-approval-popup,
+html[data-shell="orb"] .service-confirmation,
+html[data-shell="orb"] .command-capsule {
+  display: none;
+}
+
 html[data-shell="desktop"] .hud-stage.sidebar-expanded {
   --desktop-active-rail-width: var(--desktop-rail-expanded-width);
   --desktop-active-content-gap: var(--desktop-content-gap-expanded);
@@ -492,6 +513,17 @@ html[data-shell="desktop"] .radial-menu {
   outline-offset: 8px;
 }
 
+html[data-shell="orb"] .orb-button {
+  width: 92px;
+  height: 92px;
+  -webkit-app-region: drag;
+}
+
+html[data-shell="orb"] .orb-button:hover,
+html[data-shell="orb"] .orb-button:focus-visible {
+  -webkit-app-region: no-drag;
+}
+
 .orb-aura {
   position: absolute;
   inset: 7px;
@@ -794,6 +826,15 @@ html[data-shell="desktop"] .radial-menu {
   box-shadow:
     0 0 28px rgba(0, 229, 255, 0.22),
     inset 0 0 18px rgba(255, 255, 255, 0.06);
+}
+
+html[data-shell="orb"] .hud-activation-line {
+  top: calc(50% + 68px);
+  left: 50%;
+  min-width: 136px;
+  padding: 7px 12px;
+  font-size: 10px;
+  transform: translateX(-50%);
 }
 
 .approval-chip {
@@ -1115,6 +1156,32 @@ html[data-shell="desktop"] .radial-menu {
   pointer-events: auto;
 }
 
+html[data-shell="orb"] .metrics-card {
+  bottom: auto;
+  top: 50%;
+  width: min(218px, calc(100vw - 20px));
+  padding: 10px;
+  transform: translate(-50%, -50%) scale(0.94);
+}
+
+html[data-shell="orb"] .metrics-card.visible {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+html[data-shell="orb"] .orb-mini-terminal {
+  max-height: 36px;
+}
+
+html[data-shell="orb"] .orb-mini-actions {
+  grid-template-columns: repeat(4, 30px);
+  gap: 7px;
+}
+
+html[data-shell="orb"] .orb-mini-actions button {
+  width: 30px;
+  height: 30px;
+}
+
 .orb-mini-metrics,
 .orb-mini-voice,
 .orb-mini-actions {
@@ -1286,6 +1353,14 @@ html[data-shell="desktop"] .radial-menu {
 .radial-menu.open .radial-item {
   opacity: 1;
   transform: rotate(var(--angle)) translateY(-118px) rotate(calc(var(--angle) * -1)) scale(1);
+}
+
+html[data-shell="orb"] .radial-menu.open .radial-item {
+  transform: rotate(var(--angle)) translateY(-104px) rotate(calc(var(--angle) * -1)) scale(0.92);
+}
+
+html[data-shell="orb"] .radial-close {
+  transform: translateY(106px) scale(0.92);
 }
 
 .radial-item:hover,

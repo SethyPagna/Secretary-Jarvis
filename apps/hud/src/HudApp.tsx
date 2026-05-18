@@ -29,6 +29,8 @@ export function HudApp() {
 }
 
 function HudSurface() {
+  const shell = document.documentElement.dataset.shell ?? "overlay";
+  const isOrbShell = shell === "orb";
   const { state, caption, setHudState, resetHud } = useHudState();
   const { status, online, apiBaseUrl } = useJarvisStatus();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -51,6 +53,16 @@ function HudSurface() {
       setMenuOpen(false);
       if (action.type === "open-dashboard") {
         setPanel("dashboard");
+      } else if (action.type === "open-voice") {
+        setPanel("voice");
+      } else if (action.type === "open-text") {
+        setPanel("text");
+      } else if (action.type === "open-workflows") {
+        setPanel("workflows");
+      } else if (action.type === "open-devices") {
+        setPanel("devices");
+      } else if (action.type === "open-settings") {
+        setPanel("settings");
       } else if (action.type === "mute-mic") {
         setPanel("settings");
       } else if (action.type === "pause-agents" || action.type === "emergency-stop") {
@@ -98,6 +110,17 @@ function HudSurface() {
   }, [apiBaseUrl]);
 
   function openPanel(nextPanel: HudPanelName) {
+    if (isOrbShell) {
+      const action = panelToTrayAction(nextPanel);
+      if (action) {
+        void window.jarvisDesktop?.runTrayCommand(action);
+      } else {
+        void window.jarvisDesktop?.showApp();
+      }
+      setMenuOpen(false);
+      setHudState(nextPanel === "voice" ? "listening" : nextPanel === "workflows" ? "planning" : "wake", "Opening Jarvis app.");
+      return;
+    }
     setPanel(nextPanel);
     setMenuOpen(false);
     setHudState(nextPanel === "voice" ? "listening" : nextPanel === "dashboard" ? "thinking" : "wake");
@@ -185,20 +208,22 @@ function HudSurface() {
       className={`hud-stage hud-state-${visualState} ${panel ? "panel-open" : ""} ${sidebarExpanded ? "sidebar-expanded" : "sidebar-collapsed"}`}
       aria-label="Jarvis centered HUD"
     >
-      <DesktopAppChrome
-        expanded={sidebarExpanded}
-        online={online}
-        activeModel={status?.models?.find((model) => model.id === status?.activeModelId)?.label ?? "Local model"}
-        runningTasks={(status?.tasks ?? []).filter((task) => task.status === "running").length}
-        pendingApprovals={status?.pendingApprovals?.length ?? 0}
-        busyControl={busyControl}
-        onExpandedChange={setSidebarExpanded}
-        onOpenPanel={openPanel}
-        onStopJarvis={() => requestServiceAction("stop-services")}
-        onRestartJarvis={() => requestServiceAction("restart-services")}
-        onLiveTest={() => void runLiveTestFromApp()}
-        onEmergencyStop={() => void runEmergencyStopFromApp()}
-      />
+      {!isOrbShell && (
+        <DesktopAppChrome
+          expanded={sidebarExpanded}
+          online={online}
+          activeModel={status?.models?.find((model) => model.id === status?.activeModelId)?.label ?? "Local model"}
+          runningTasks={(status?.tasks ?? []).filter((task) => task.status === "running").length}
+          pendingApprovals={status?.pendingApprovals?.length ?? 0}
+          busyControl={busyControl}
+          onExpandedChange={setSidebarExpanded}
+          onOpenPanel={openPanel}
+          onStopJarvis={() => requestServiceAction("stop-services")}
+          onRestartJarvis={() => requestServiceAction("restart-services")}
+          onLiveTest={() => void runLiveTestFromApp()}
+          onEmergencyStop={() => void runEmergencyStopFromApp()}
+        />
+      )}
       <div className="orb-interaction-zone" onMouseEnter={() => setHoveringOrb(true)} onMouseLeave={() => setHoveringOrb(false)}>
         <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} onOpenPanel={openPanel} />
         <Suspense
@@ -362,24 +387,38 @@ function HudSurface() {
           </motion.div>
         )}
       </AnimatePresence>
-      <button
-        className="hud-corner-control orb-title-control"
-        type="button"
-        aria-label="Open Jarvis orb menu"
-        onClick={() => {
-          setPanel(null);
-          setMenuOpen((value) => !value);
-          setHudState(menuOpen ? "idle" : "wake", "Jarvis ready.");
-        }}
-      >
-        <span className="orb-mark" aria-hidden="true" />
-      </button>
+      {!isOrbShell && (
+        <button
+          className="hud-corner-control orb-title-control"
+          type="button"
+          aria-label="Open Jarvis orb menu"
+          onClick={() => {
+            setPanel(null);
+            setMenuOpen((value) => !value);
+            setHudState(menuOpen ? "idle" : "wake", "Jarvis ready.");
+          }}
+        >
+          <span className="orb-mark" aria-hidden="true" />
+        </button>
+      )}
     </main>
   );
 }
 
 function isSystemActionApproval(category: string): boolean {
   return ["write-local", "delete-local", "run-script", "service-control", "device-control", "irreversible-edit"].includes(category);
+}
+
+function panelToTrayAction(panel: HudPanelName): JarvisTrayActionType | null {
+  const actions: Partial<Record<HudPanelName, JarvisTrayActionType>> = {
+    dashboard: "open-dashboard",
+    voice: "open-voice",
+    text: "open-text",
+    workflows: "open-workflows",
+    devices: "open-devices",
+    settings: "open-settings",
+  };
+  return actions[panel] ?? null;
 }
 
 function DesktopAppChrome({
