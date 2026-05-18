@@ -395,4 +395,4 @@ Acceptance for the next UI slice:
 - [x] 51.3 Wire approval completion into the permission store and expose `GET /api/permissions` - commit `b4036a6`
 - [x] 51.4 Skip exact remembered grants when recording pending approvals - commit `b4036a6`
 - [x] 51.5 Add tests and verify builds/runtime - gateway tests 38 passed / 67 tests; gateway build passed; supervisor restart + live test `attention` with all checks passed; `/api/permissions` returned local permission store
-- [ ] 51.6 Commit and push
+- [x] 51.6 Commit and push - pushed `d50f844`
