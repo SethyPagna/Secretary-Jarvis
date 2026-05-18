@@ -396,3 +396,10 @@ Acceptance for the next UI slice:
 - [x] 51.4 Skip exact remembered grants when recording pending approvals - commit `b4036a6`
 - [x] 51.5 Add tests and verify builds/runtime - gateway tests 38 passed / 67 tests; gateway build passed; supervisor restart + live test `attention` with all checks passed; `/api/permissions` returned local permission store
 - [x] 51.6 Commit and push - pushed `d50f844`
+
+## Phase 52 - Permission Memory UI Surface
+- [ ] 52.1 Add Phase 52 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 52.2 Fetch `GET /api/permissions` only when Settings is open
+- [ ] 52.3 Add compact Permission Memory card to Settings/Security
+- [ ] 52.4 Add HUD UI coverage and verify builds/tests
+- [ ] 52.5 Commit and push

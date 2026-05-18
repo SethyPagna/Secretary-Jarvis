@@ -1160,3 +1160,14 @@ Tasks:
 - 51.4 Teach pending approval recording to skip exact remembered grants while still emitting memory/security events and leaving protected-core/irreversible actions guarded.
 - 51.5 Add gateway tests for permission persistence, remembered grants, denied outcomes, and approval endpoint behavior; run builds/tests/live-test.
 - 51.6 Commit and push.
+
+## Extension Phase 52 - Permission Memory UI Surface
+
+Goal: Make the new approval memory visible inside the Jarvis desktop app without adding clutter. Settings should show a compact local permission memory card with granted/denied counts, the storage path, the most recent remembered decisions, and a clear reminder that protected-core, credential, purchase, delete, and irreversible actions remain guarded.
+
+Tasks:
+- 52.1 Add Phase 52 tracking to `PLAN.md` and `PROGRESS.md`.
+- 52.2 Fetch `GET /api/permissions` only when Settings is open and store the compact permission snapshot in the HUD panel state.
+- 52.3 Add a glass compact Permission Memory card to Settings/Security with counts, path, recent decisions, and guardrail copy.
+- 52.4 Add Playwright coverage for the Settings permission memory card and keep HUD builds/tests green.
+- 52.5 Commit and push.
