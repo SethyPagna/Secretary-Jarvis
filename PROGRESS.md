@@ -380,4 +380,4 @@ Acceptance for the next UI slice:
 - [x] 49.1 Add Phase 49 tracking to `PLAN.md` and `PROGRESS.md` - commit `ea80044`
 - [x] 49.2 Defer assistant task execution outside the `/api/chat` request path - commit `1b572e5`
 - [x] 49.3 Verify gateway tests/builds and runtime live test after restarting services - commit `1b572e5`
-- [ ] 49.4 Commit and push
+- [x] 49.4 Commit and push - commit `b8a38a4`
