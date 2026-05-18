@@ -417,3 +417,10 @@ Acceptance for the next UI slice:
 - [x] 54.3 Merge text, voice, terminal snippet, model, queue, and runtime heartbeat into one Command Center - commit `8cb3bbb`
 - [x] 54.4 Reduce the System panel first screen into compact status cards while keeping details available below; align Brain voice status with the Kokoro-first route - commits `8cb3bbb`, `4440d08`
 - [x] 54.5 Verify HUD build/UI tests, supervisor restart, runtime live test, capped task payloads, commit, and push - `npm.cmd run build -w @jarvis/hud`; `npm.cmd run test:ui -w @jarvis/hud` (27 passed, 1 skipped); `npm.cmd test` (core 64 passed, gateway 67 passed); core/gateway builds passed; `services\brain\.venv\Scripts\python.exe -m py_compile services\brain\voice.py`; supervisor status 4 online / 0 degraded; live test `attention` with all required checks passed; `/api/tasks?limit=3` returned 3 tasks and active queue only
+
+## Phase 55 - Fresh Runtime Bundles, Compact Rail, Sectioned System, And Live Visual Verification
+- [x] 55.1 Rebuild stale Gateway/HUD bundles automatically when source files are newer than app artifacts, and fail fast if Electron exits immediately - commit `d25b0a3`
+- [x] 55.2 Tighten desktop titlebar and collapsed sidebar rail so icons, frames, Stop Jarvis, and Emergency Stop stay aligned and visible - commit `13f8fec`
+- [x] 55.3 Add performance statistics to the merged Command Center terminal card - commit `13f8fec`
+- [x] 55.4 Split System into internal sections: Overview, Runtime, Voice, Permissions, and Setup - commit `13f8fec`
+- [ ] 55.5 Verify HUD build/UI tests, restart Jarvis, capture live Electron UI, run runtime live test, commit, and push
