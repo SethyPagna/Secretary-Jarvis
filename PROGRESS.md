@@ -358,6 +358,6 @@ Acceptance for the next UI slice:
 - [x] 46.1 Add Phase 46 tracking to `PLAN.md` and `PROGRESS.md` - commit `292fae4`
 - [x] 46.2 Upgrade outer-folder organizer with applyable moves and compatibility links - commit `eaaea60`
 - [x] 46.3 Update setup/doctor discovery for organized installers - commit `eaaea60`
-- [ ] 46.4 Apply organization to outer `Secretary Jarvis` assets while leaving models stable
-- [ ] 46.5 Verify model/voice readiness and Gemma 26B staged auto-connect path
+- [x] 46.4 Apply organization to outer `Secretary Jarvis` assets while leaving models stable - commit pending
+- [x] 46.5 Verify model/voice readiness and Gemma 26B staged auto-connect path - commit pending
 - [ ] 46.6 Run tests/builds/runtime live test, commit, and push

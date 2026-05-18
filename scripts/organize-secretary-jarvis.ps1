@@ -87,25 +87,33 @@ function Move-Safely {
     return
   }
 
-  Move-Item -LiteralPath $Move.source -Destination $Move.destination
-  Write-Host "Moved:" $Move.source "->" $Move.destination
+  try {
+    Move-Item -LiteralPath $Move.source -Destination $Move.destination
+    Write-Host "Moved:" $Move.source "->" $Move.destination
+  } catch {
+    Write-Warning "Skipped locked or unavailable item: $($Move.source) / $($_.Exception.Message)"
+  }
 }
 
 function New-CompatibilityJunction {
-  param([pscustomobject]$Move)
+  param(
+    [string]$Link,
+    [string]$Target,
+    [bool]$Enabled = $true
+  )
 
-  if ($NoCompatibilityLinks -or -not $Move.createCompatibilityLink -or $Move.planOnly) {
+  if ($NoCompatibilityLinks -or -not $Enabled) {
     return
   }
-  if (Test-Path -LiteralPath $Move.source) {
+  if (Test-Path -LiteralPath $Link) {
     return
   }
-  if (-not (Test-Path -LiteralPath $Move.destination -PathType Container)) {
+  if (-not (Test-Path -LiteralPath $Target -PathType Container)) {
     return
   }
 
-  New-Item -ItemType Junction -Path $Move.source -Target $Move.destination | Out-Null
-  Write-Host "Compatibility junction:" $Move.source "->" $Move.destination
+  New-Item -ItemType Junction -Path $Link -Target $Target | Out-Null
+  Write-Host "Compatibility junction:" $Link "->" $Target
 }
 
 $explicitMoves = @(
@@ -137,7 +145,7 @@ foreach ($file in $rootFiles) {
   }
 }
 
-$moves = @($explicitMoves + ($fileMoves | Where-Object { $null -ne $_ }))
+$moves = @($explicitMoves) + @($fileMoves | Where-Object { $null -ne $_ })
 
 $compatibilityLinks = $moves |
   Where-Object { $_.createCompatibilityLink -and -not $_.planOnly } |
@@ -149,6 +157,14 @@ $compatibilityLinks = $moves |
     }
   }
 
+$staticCompatibilityLinks = @(
+  [pscustomobject]@{
+    link = Assert-WithinWorkspace (Join-WorkspacePath "voice")
+    target = Assert-WithinWorkspace (Join-WorkspacePath "assets\voice")
+    enabled = -not [bool]$NoCompatibilityLinks
+  }
+)
+
 $plan = [pscustomobject]@{
   createdAt = (Get-Date).ToString("o")
   workspaceRoot = $workspaceRoot.Path
@@ -156,7 +172,7 @@ $plan = [pscustomobject]@{
   applyRequested = [bool]$Apply
   safety = "Models stay in place. All paths are checked against the workspace root. Compatibility junctions preserve legacy folders."
   moves = @($moves)
-  compatibilityLinks = @($compatibilityLinks)
+  compatibilityLinks = @(@($compatibilityLinks) + @($staticCompatibilityLinks) | Sort-Object link -Unique)
 }
 
 New-Item -ItemType Directory -Force -Path $planDir | Out-Null
@@ -176,7 +192,13 @@ foreach ($move in $plan.moves) {
 }
 
 foreach ($move in $plan.moves) {
-  New-CompatibilityJunction -Move $move
+  if ($move.createCompatibilityLink -and -not $move.planOnly) {
+    New-CompatibilityJunction -Link $move.source -Target $move.destination -Enabled $true
+  }
+}
+
+foreach ($link in $staticCompatibilityLinks) {
+  New-CompatibilityJunction -Link $link.link -Target $link.target -Enabled $link.enabled
 }
 
 $appliedPath = Join-Path $planDir "latest-applied-organization.json"
