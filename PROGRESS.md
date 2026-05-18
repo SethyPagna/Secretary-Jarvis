@@ -390,9 +390,9 @@ Acceptance for the next UI slice:
 - [x] 50.5 Commit and push - pushed `8ad3c63`
 
 ## Phase 51 - Persistent Permission Memory And Approval Recall
-- [ ] 51.1 Add Phase 51 tracking to `PLAN.md` and `PROGRESS.md`
-- [ ] 51.2 Add local permission store backed by `%USERPROFILE%\.jarvis\permissions.json`
-- [ ] 51.3 Wire approval completion into the permission store and expose `GET /api/permissions`
-- [ ] 51.4 Skip exact remembered grants when recording pending approvals
-- [ ] 51.5 Add tests and verify builds/runtime
+- [x] 51.1 Add Phase 51 tracking to `PLAN.md` and `PROGRESS.md` - commit `f570fba`
+- [x] 51.2 Add local permission store backed by `%USERPROFILE%\.jarvis\permissions.json` - commit `b4036a6`
+- [x] 51.3 Wire approval completion into the permission store and expose `GET /api/permissions` - commit `b4036a6`
+- [x] 51.4 Skip exact remembered grants when recording pending approvals - commit `b4036a6`
+- [ ] 51.5 Add tests and verify builds/runtime - permission store unit test and gateway build passed; full verification pending
 - [ ] 51.6 Commit and push
