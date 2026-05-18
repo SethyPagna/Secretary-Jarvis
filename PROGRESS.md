@@ -415,5 +415,5 @@ Acceptance for the next UI slice:
 - [x] 54.1 Add Phase 54 tracking to `PLAN.md` and `PROGRESS.md` - commit `ab3bc09`
 - [x] 54.2 Repair desktop sidebar rail geometry, click-away collapse, active item state, Stop Jarvis, and Emergency Stop visibility - commit `8cb3bbb`
 - [x] 54.3 Merge text, voice, terminal snippet, model, queue, and runtime heartbeat into one Command Center - commit `8cb3bbb`
-- [x] 54.4 Reduce the System panel first screen into compact status cards while keeping details available below - commit `8cb3bbb`
-- [ ] 54.5 Verify HUD build/UI tests, supervisor restart, runtime live test, commit, and push
+- [x] 54.4 Reduce the System panel first screen into compact status cards while keeping details available below; align Brain voice status with the Kokoro-first route - commits `8cb3bbb`, `4440d08`
+- [x] 54.5 Verify HUD build/UI tests, supervisor restart, runtime live test, capped task payloads, commit, and push - `npm.cmd run build -w @jarvis/hud`; `npm.cmd run test:ui -w @jarvis/hud` (27 passed, 1 skipped); `npm.cmd test` (core 64 passed, gateway 67 passed); core/gateway builds passed; `services\brain\.venv\Scripts\python.exe -m py_compile services\brain\voice.py`; supervisor status 4 online / 0 degraded; live test `attention` with all required checks passed; `/api/tasks?limit=3` returned 3 tasks and active queue only
