@@ -115,6 +115,16 @@ function Start-JarvisElectronApp {
   $process = Start-Process -FilePath $electronExe -ArgumentList "dist-electron/main.js" -WorkingDirectory (Join-Path $Root "apps\hud") -PassThru
   Set-Content -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Value $process.Id
   Write-Host "Started Electron HUD app (PID $($process.Id))."
+  Start-Sleep -Seconds 2
+  if (-not (Get-Process -Id $process.Id -ErrorAction SilentlyContinue)) {
+    Remove-Item -LiteralPath (Join-Path $RuntimeRoot "$safeName.pid") -Force -ErrorAction SilentlyContinue
+    $tail = ""
+    $debugLog = Join-Path $LogRoot "electron-main.debug.log"
+    if (Test-Path -LiteralPath $debugLog) {
+      $tail = (Get-Content -LiteralPath $debugLog -Tail 12 -ErrorAction SilentlyContinue | Out-String).Trim()
+    }
+    throw "Electron HUD exited immediately after launch. Last Electron diagnostics: $tail"
+  }
 }
 
 function Stop-ProcessTree {
@@ -135,10 +145,33 @@ function Ensure-BuildArtifact {
   param(
     [string]$Name,
     [string]$Path,
-    [string]$Command
+    [string]$Command,
+    [string[]]$SourcePaths = @()
   )
 
-  if ($SkipBuild -or (Test-Path -LiteralPath $Path)) {
+  if ($SkipBuild) {
+    return
+  }
+
+  $needsBuild = -not (Test-Path -LiteralPath $Path)
+  if (-not $needsBuild -and $SourcePaths.Count -gt 0) {
+    $artifactTime = (Get-Item -LiteralPath $Path).LastWriteTimeUtc
+    foreach ($sourcePath in $SourcePaths) {
+      if (-not (Test-Path -LiteralPath $sourcePath)) {
+        continue
+      }
+      $newerSource = Get-ChildItem -LiteralPath $sourcePath -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch "\\node_modules\\|\\dist\\|\\dist-electron\\|\\release\\|\\test-results\\" } |
+        Sort-Object LastWriteTimeUtc -Descending |
+        Select-Object -First 1
+      if ($newerSource -and $newerSource.LastWriteTimeUtc -gt $artifactTime) {
+        $needsBuild = $true
+        break
+      }
+    }
+  }
+
+  if (-not $needsBuild) {
     return
   }
 
@@ -236,10 +269,10 @@ function Resolve-JarvisBrainPython {
 
 Add-SessionPath
 
-Ensure-BuildArtifact -Name "Gateway" -Path (Join-Path $Root "services\gateway\dist\server.js") -Command "npm.cmd run build -w @jarvis/gateway"
+Ensure-BuildArtifact -Name "Gateway" -Path (Join-Path $Root "services\gateway\dist\server.js") -Command "npm.cmd run build -w @jarvis/gateway" -SourcePaths @((Join-Path $Root "services\gateway\src"), (Join-Path $Root "packages\core\src"))
 if (-not $NoHud -and -not $WebPreview) {
-  Ensure-BuildArtifact -Name "Electron HUD" -Path (Join-Path $Root "apps\hud\dist-electron\main.js") -Command "npm.cmd run build -w @jarvis/hud"
-  Ensure-BuildArtifact -Name "HUD renderer" -Path (Join-Path $Root "apps\hud\dist\index.html") -Command "npm.cmd run build -w @jarvis/hud"
+  Ensure-BuildArtifact -Name "Electron HUD" -Path (Join-Path $Root "apps\hud\dist-electron\main.js") -Command "npm.cmd run build -w @jarvis/hud" -SourcePaths @((Join-Path $Root "apps\hud\electron"), (Join-Path $Root "apps\hud\src"), (Join-Path $Root "packages\core\src"))
+  Ensure-BuildArtifact -Name "HUD renderer" -Path (Join-Path $Root "apps\hud\dist\index.html") -Command "npm.cmd run build -w @jarvis/hud" -SourcePaths @((Join-Path $Root "apps\hud\src"), (Join-Path $Root "packages\core\src"))
 }
 
 if (Get-Command ollama -ErrorAction SilentlyContinue) {
