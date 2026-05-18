@@ -76,7 +76,7 @@ function createHudWindow(): BrowserWindow {
       ? {
           color: "#02070a",
           symbolColor: "#00e5ff",
-          height: 34
+          height: 28
         }
       : false,
     backgroundColor: desktopMode ? "#02070a" : "#00000000",

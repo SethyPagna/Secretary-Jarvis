@@ -8,12 +8,12 @@
   --hud-bg: #0a0a0c;
   --hud-text: #e0e0e0;
   --hud-glass: rgba(4, 12, 15, 0.46);
-  --desktop-rail-width: 52px;
+  --desktop-rail-width: 50px;
   --desktop-rail-expanded-width: 164px;
   --desktop-shell-left: 16px;
   --desktop-content-gap-collapsed: 16px;
   --desktop-content-gap-expanded: 24px;
-  --desktop-titlebar-height: 34px;
+  --desktop-titlebar-height: 28px;
   --desktop-content-left: calc(var(--desktop-shell-left) + var(--desktop-rail-width) + var(--desktop-content-gap-collapsed));
   --desktop-content-right: 16px;
   --desktop-stage-center-x: calc(var(--desktop-content-left) + ((100vw - var(--desktop-content-left) - var(--desktop-content-right)) / 2));
@@ -129,16 +129,16 @@ html[data-shell="desktop"] .hud-stage::before {
 html[data-shell="desktop"] .desktop-app-chrome {
   position: fixed;
   left: var(--desktop-shell-left);
-  top: 52px;
-  bottom: 16px;
+  top: 38px;
+  bottom: 10px;
   z-index: 26;
   width: var(--desktop-rail-width);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 7px 5px;
-  border: 1px solid rgba(0, 229, 255, 0.18);
-  border-radius: 19px;
+  gap: 6px;
+  padding: 6px 4px;
+  border: 1px solid rgba(74, 158, 255, 0.18);
+  border-radius: 18px;
   background:
     radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.12), transparent 42%),
     rgba(2, 8, 11, 0.68);
@@ -176,8 +176,8 @@ html[data-shell="desktop"] .desktop-app-chrome:focus-within {
 
 .desktop-brand > span {
   grid-row: span 2;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(0, 229, 255, 0.34);
@@ -261,7 +261,7 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
 
 .desktop-rail {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .desktop-rail button,
@@ -277,7 +277,7 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
   gap: 8px;
   padding: 0 10px;
   border: 1px solid rgba(0, 229, 255, 0.13);
-  border-radius: 14px;
+  border-radius: 13px;
   color: rgba(255, 255, 255, 0.82);
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
@@ -298,8 +298,8 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
   left: 50%;
   top: 50%;
   z-index: -1;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border: 1px solid rgba(74, 158, 255, 0.22);
   border-radius: 12px;
   background: rgba(74, 158, 255, 0.045);
@@ -354,7 +354,7 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-rail button,
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-action,
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop {
-  width: 42px;
+  width: 40px;
   height: 44px;
   min-height: 44px;
   grid-template-columns: 1fr;
@@ -401,16 +401,14 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop span {
 }
 
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-card {
-  width: 42px;
-  height: 44px;
-  min-height: 44px;
-  grid-template-columns: 1fr;
-  justify-items: center;
-  padding: 0;
+  display: none;
 }
 
-html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-card span,
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-grid {
+  display: none;
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-card span {
   display: none;
 }
 
@@ -451,10 +449,13 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-grid {
 }
 
 .desktop-stop {
-  margin-top: auto;
   border-color: rgba(255, 0, 127, 0.24);
   color: white;
   background: rgba(255, 0, 127, 0.08);
+}
+
+html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-action[data-label="Live test"] {
+  margin-top: auto;
 }
 
 .desktop-stop:hover {
@@ -474,7 +475,7 @@ html[data-shell="desktop"] .service-confirmation {
 
 html[data-shell="desktop"] .hud-corner-control {
   right: 28px;
-  top: 52px;
+  top: 44px;
   bottom: auto;
 }
 
@@ -1715,6 +1716,63 @@ html[data-shell="desktop"] .hud-panel {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.settings-section-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 6px;
+}
+
+.settings-section-tabs button {
+  height: 34px;
+  border: 1px solid rgba(74, 158, 255, 0.14);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.settings-section-tabs button.active,
+.settings-section-tabs button:hover {
+  border-color: rgba(74, 158, 255, 0.48);
+  color: white;
+  background: rgba(74, 158, 255, 0.14);
+  box-shadow: 0 0 18px rgba(74, 158, 255, 0.12);
+}
+
+.settings-section-view > * {
+  display: none;
+}
+
+.settings-section-view.active-overview .hardening-grid,
+.settings-section-view.active-overview .startup-control-strip,
+.settings-section-view.active-overview .permission-memory-card,
+.settings-section-view.active-overview .runtime-command-grid,
+.settings-section-view.active-overview .runtime-live-test-card,
+.settings-section-view.active-overview .runtime-self-test-card,
+.settings-section-view.active-overview .runtime-attention-card,
+.settings-section-view.active-overview .packaging-readiness-card,
+.settings-section-view.active-overview .activation-readiness-card,
+.settings-section-view.active-overview .interaction-health-strip,
+.settings-section-view.active-overview .interaction-metrics-strip,
+.settings-section-view.active-runtime .runtime-command-grid,
+.settings-section-view.active-runtime .runtime-live-test-card,
+.settings-section-view.active-runtime .runtime-self-test-card,
+.settings-section-view.active-runtime .runtime-attention-card,
+.settings-section-view.active-runtime .packaging-readiness-card,
+.settings-section-view.active-runtime .activation-readiness-card,
+.settings-section-view.active-voice .agent-manager-strip,
+.settings-section-view.active-voice .agent-voice-strip,
+.settings-section-view.active-voice .activation-readiness-card,
+.settings-section-view.active-permissions .permission-memory-card,
+.settings-section-view.active-permissions .setup-approval-summary,
+.settings-section-view.active-setup .setup-groups,
+.settings-section-view.active-setup .plugin-slot-grid,
+.settings-section-view.active-setup .setup-install-strip {
+  display: grid;
 }
 
 .runtime-command-grid button {
@@ -2986,9 +3044,43 @@ html[data-shell="desktop"] .hud-panel {
   white-space: nowrap;
 }
 
+.terminal-perf-grid,
 .terminal-snippet,
 .command-side-card .service-pulses {
   grid-column: 1 / -1;
+}
+
+.terminal-perf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.terminal-perf-grid span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid rgba(74, 158, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(74, 158, 255, 0.045);
+}
+
+.terminal-perf-grid small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.5);
+  font: 700 9px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.terminal-perf-grid strong {
+  overflow: hidden;
+  color: var(--hud-cyan);
+  font: 800 11px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .terminal-snippet {

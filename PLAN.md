@@ -1206,3 +1206,14 @@ Tasks:
 - 54.3 Merge the default command surface into a Command Center with text input, compact voice controls, voice legend, runtime service count, model, queue, and terminal snippet.
 - 54.4 Reduce the System panel’s first screen into compact status cards and keep deeper runtime/permission/readiness details below the fold.
 - 54.5 Verify HUD build and UI tests, then restart Jarvis through the supervisor and run live test so the actual Electron app picks up the new shell.
+
+## Extension Phase 55 - Fresh Runtime Bundles, Compact Rail, Sectioned System, And Live Visual Verification
+
+Goal: Fix the still-visible production-app rough edges: stale HUD bundles, clipped sidebar action controls, oversized titlebar space, wordy System content, and missing terminal performance context. The running app must rebuild when sources change, show the current UI after restart, keep Stop Jarvis and Emergency Stop reachable, and expose live runtime/voice/model checks without jitter.
+
+Tasks:
+- 55.1 Rebuild stale Gateway/HUD bundles automatically when source files are newer than the app artifacts, and fail fast if Electron exits immediately.
+- 55.2 Tighten the desktop titlebar and collapsed sidebar rail so icons, frames, Stop Jarvis, and Emergency Stop stay aligned and visible.
+- 55.3 Add performance statistics to the merged Command Center terminal card: CPU profile, RAM, GPU, TPS, queue latency, and memory recall latency.
+- 55.4 Split System into internal sections: Overview, Runtime, Voice, Permissions, and Setup, keeping only the selected section visible.
+- 55.5 Verify HUD build/UI tests, restart Jarvis, capture the live Electron UI, run runtime live test, commit each slice, and push.

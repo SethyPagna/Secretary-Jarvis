@@ -89,6 +89,7 @@ export function HudPanel({
   const [runtimeAttentionDryRuns, setRuntimeAttentionDryRuns] = useState<Record<string, RuntimeAttentionDryRunSummary>>({});
   const [adapterRepairDryRuns, setAdapterRepairDryRuns] = useState<Record<string, AdapterRepairDryRunSummary>>({});
   const [runtimeDryRuns, setRuntimeDryRuns] = useState<Record<string, RuntimeDryRunSummary>>({});
+  const [settingsSection, setSettingsSection] = useState<"overview" | "runtime" | "voice" | "permissions" | "setup">("overview");
   const models = status?.models ?? [];
   const activeModel = models.find((model) => model.id === status?.activeModelId) ?? models[0];
   const tasks = status?.tasks?.slice(0, 3) ?? [];
@@ -895,6 +896,32 @@ export function HudPanel({
                 <small>Queue</small>
                 <strong>{tasks.length}</strong>
               </span>
+              <div className="terminal-perf-grid" aria-label="Local performance statistics">
+                <span>
+                  <small>CPU</small>
+                  <strong>{compactHardwareName(status?.hardwareProfile?.label ?? "local")}</strong>
+                </span>
+                <span>
+                  <small>RAM</small>
+                  <strong>{status?.hardwareProfile?.totalRamGb ? `${status.hardwareProfile.totalRamGb} GB` : "--"}</strong>
+                </span>
+                <span>
+                  <small>GPU</small>
+                  <strong>{compactHardwareName(status?.hardwareProfile?.gpuName ?? "local")}</strong>
+                </span>
+                <span>
+                  <small>TPS</small>
+                  <strong>{status?.performance?.tokensPerSecond?.toFixed?.(1) ?? "--"}</strong>
+                </span>
+                <span>
+                  <small>Latency</small>
+                  <strong>{status?.performance ? `${status.performance.queueLatencyMs} ms` : "--"}</strong>
+                </span>
+                <span>
+                  <small>Recall</small>
+                  <strong>{status?.performance ? `${status.performance.memoryRecallMs} ms` : "--"}</strong>
+                </span>
+              </div>
               <div className="terminal-snippet" aria-label="Terminal snippet">
                 {(tasks.length ? tasks : status?.tasks?.slice(0, 2) ?? []).slice(0, 2).map((task) => (
                   <code key={task.id}>{task.status}: {compactDetail(task.title)}</code>
@@ -938,6 +965,21 @@ export function HudPanel({
             <span>Audio <b>local</b></span>
             <span>Theme <b>dark</b></span>
           </div>
+          <div className="settings-section-tabs" role="tablist" aria-label="System sections">
+            {(["overview", "runtime", "voice", "permissions", "setup"] as const).map((section) => (
+              <button
+                key={section}
+                type="button"
+                className={settingsSection === section ? "active" : ""}
+                onClick={() => setSettingsSection(section)}
+                role="tab"
+                aria-selected={settingsSection === section}
+              >
+                {section}
+              </button>
+            ))}
+          </div>
+          <div className={`settings-section-view active-${settingsSection}`}>
           <div className="hardening-grid" aria-label="Architecture and runtime hardening">
             <details className="hardening-card compact-card">
               <summary>
@@ -1280,6 +1322,7 @@ export function HudPanel({
                 )}
               </details>
             ))}
+          </div>
           </div>
         </>
       )}
@@ -1848,6 +1891,11 @@ function Widget({ label, value }: { label: string; value: string }) {
 
 function compactDetail(value: string): string {
   return value.length > 64 ? `${value.slice(0, 61)}...` : value;
+}
+
+function compactHardwareName(value: string): string {
+  const cleaned = value.replace(/^ASUS ROG\s+/i, "").replace(/^AMD\s+/i, "").trim();
+  return cleaned.length > 18 ? `${cleaned.slice(0, 15)}...` : cleaned;
 }
 
 function runtimeServiceTotal(runtime: RuntimeServicesStatus): number {
