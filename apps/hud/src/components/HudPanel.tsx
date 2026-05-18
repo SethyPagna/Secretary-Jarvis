@@ -734,12 +734,18 @@ export function HudPanel({
         <>
           <header><Mic size={18} /><strong>Voice</strong></header>
           <div className={`voice-session-card state-${voiceSession?.state ?? "idle"}`} aria-label="Live voice session">
-            <div className="mic-pulse"><Mic size={30} /></div>
-            <div className="voice-wave" aria-hidden="true">
-              {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
+            <div className="voice-orb-row">
+              <div className="mic-pulse"><Mic size={18} /></div>
+              <span>
+                <strong>{voiceSession?.state ?? (voiceReadiness?.summary.sttReady ? "ready" : "staged")}</strong>
+                <small>{voiceSession?.transcript.at(-1)?.text ?? (voiceReadiness?.summary.sttReady ? "Say a command..." : "Voice staged")}</small>
+              </span>
             </div>
-            <strong>{voiceSession?.state ?? (voiceReadiness?.summary.sttReady ? "ready" : "staged")}</strong>
-            <small>{voiceSession?.transcript.at(-1)?.text ?? (voiceReadiness?.summary.sttReady ? "Say a command..." : "Voice staged")}</small>
+            <div className="voice-mini-legend" aria-label="Voice status legend" title="Listening / processing / error">
+              <span><i className="dot-listening" />listening</span>
+              <span><i className="dot-processing" />processing</span>
+              <span><i className="dot-error" />error</span>
+            </div>
           </div>
           <div className="voice-control-row" aria-label="Voice session controls">
             <button type="button" onClick={startVoiceListening} aria-label="Start listening"><Play size={15} /></button>
@@ -750,32 +756,38 @@ export function HudPanel({
             <input value={voiceDraft} onChange={(event) => setVoiceDraft(event.target.value)} placeholder="Type heard command..." />
             <button type="submit" aria-label="Add transcript"><Send size={14} /></button>
           </form>
-          <div className="voice-readiness-strip" aria-label="Voice runtime readiness">
-            <span><small>STT</small><strong>{voiceReadiness?.primaryStt.status ?? "--"}</strong></span>
-            <span><small>TTS</small><strong>{voiceReadiness?.ttsPreferredEngine ?? (voiceReadiness?.summary.ttsReady ? "ready" : "staged")}</strong></span>
-            <span><small>Voice</small><strong>{voiceReadiness ? `${voiceReadiness.summary.sampleCount}` : "--"}</strong></span>
-            <span><small>Needs</small><strong>{voiceReadiness?.summary.missingRequired ?? "--"}</strong></span>
-          </div>
-          <div className="wake-activation-strip" aria-label="Wake activation readiness">
-            <span><small>Wake</small><strong>{activationReadiness ? `${activationReadiness.wakeReady}/${activationReadiness.wakeStaged}` : "--"}</strong></span>
-            <span><small>Hotword</small><strong>{voiceReadiness?.wakeState ?? activationReadiness?.hotwordStatus ?? "staged"}</strong></span>
-            <span><small>VAD</small><strong>{activationReadiness?.vad ?? "--"}</strong></span>
-          </div>
-          <div className="agent-voice-matrix" aria-label="Agent voice matrix">
-            {agentVoiceMatrix.slice(0, 8).map((agent) => (
-              <button key={agent.agentId} type="button" onClick={() => void testAgentVoice(agent)} aria-label={`Test ${agent.agentName} voice`}>
-                <small>{agent.agentName}</small>
-                <strong>{agentVoiceTests[agent.agentId] ?? agent.runtimeStatus ?? agent.status}</strong>
-                <em>{agent.enginePreference}</em>
-              </button>
-            ))}
-          </div>
-          <div className="hud-identity-strip">
-            <UserCheck size={16} />
-            <span>{status?.identityReadiness?.voiceVerification.status ?? "staged"}</span>
-            <span>{status?.identityReadiness?.faceRecognition.cameraStatus ?? "locked"}</span>
-            <button type="button" onClick={recognizeOwnerDryRun}>Dry-run</button>
-          </div>
+          <details className="voice-details-drawer">
+            <summary>
+              <span>Runtime details</span>
+              <b>{voiceReadiness?.ttsPreferredEngine ?? (voiceReadiness?.summary.ttsReady ? "ready" : "staged")}</b>
+            </summary>
+            <div className="voice-readiness-strip" aria-label="Voice runtime readiness">
+              <span><small>STT</small><strong>{voiceReadiness?.primaryStt.status ?? "--"}</strong></span>
+              <span><small>TTS</small><strong>{voiceReadiness?.ttsPreferredEngine ?? (voiceReadiness?.summary.ttsReady ? "ready" : "staged")}</strong></span>
+              <span><small>Voice</small><strong>{voiceReadiness ? `${voiceReadiness.summary.sampleCount}` : "--"}</strong></span>
+              <span><small>Needs</small><strong>{voiceReadiness?.summary.missingRequired ?? "--"}</strong></span>
+            </div>
+            <div className="wake-activation-strip" aria-label="Wake activation readiness">
+              <span><small>Wake</small><strong>{activationReadiness ? `${activationReadiness.wakeReady}/${activationReadiness.wakeStaged}` : "--"}</strong></span>
+              <span><small>Hotword</small><strong>{voiceReadiness?.wakeState ?? activationReadiness?.hotwordStatus ?? "staged"}</strong></span>
+              <span><small>VAD</small><strong>{activationReadiness?.vad ?? "--"}</strong></span>
+            </div>
+            <div className="agent-voice-matrix" aria-label="Agent voice matrix">
+              {agentVoiceMatrix.slice(0, 8).map((agent) => (
+                <button key={agent.agentId} type="button" onClick={() => void testAgentVoice(agent)} aria-label={`Test ${agent.agentName} voice`}>
+                  <small>{agent.agentName}</small>
+                  <strong>{agentVoiceTests[agent.agentId] ?? agent.runtimeStatus ?? agent.status}</strong>
+                  <em>{agent.enginePreference}</em>
+                </button>
+              ))}
+            </div>
+            <div className="hud-identity-strip">
+              <UserCheck size={16} />
+              <span>{status?.identityReadiness?.voiceVerification.status ?? "staged"}</span>
+              <span>{status?.identityReadiness?.faceRecognition.cameraStatus ?? "locked"}</span>
+              <button type="button" onClick={recognizeOwnerDryRun}>Dry-run</button>
+            </div>
+          </details>
           <button className="hud-secondary-action" type="button" onClick={stopSpeaking}>Stop speaking</button>
         </>
       )}

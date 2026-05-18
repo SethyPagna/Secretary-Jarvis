@@ -1012,7 +1012,11 @@ test("voice and text panels expose compact interaction states", async ({ page })
   await expect(voicePanel).toBeVisible();
   await expect(voicePanel.getByLabel("Live voice session")).toContainText("listening");
   await expect(voicePanel.getByLabel("Live voice session")).toContainText("Jarvis status");
+  await expect(voicePanel.getByLabel("Voice status legend")).toContainText("listening");
+  await expect(voicePanel.getByLabel("Voice status legend")).toContainText("processing");
+  await expect(voicePanel.getByLabel("Voice status legend")).toContainText("error");
   await expect(voicePanel.getByLabel("Voice session controls")).toBeVisible();
+  await voicePanel.getByText("Runtime details").click();
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("ready-asset");
   await expect(voicePanel.getByLabel("Voice runtime readiness")).toContainText("4");
   await expect(voicePanel.getByLabel("Wake activation readiness")).toContainText("3/1");
@@ -1090,7 +1094,7 @@ test("mobile HUD avoids horizontal overflow with open radial menu and panel", as
   expect(panelOverflow).toBeLessThanOrEqual(1);
 });
 
-test("desktop icon rail expands without moving the orb", async ({ page }, testInfo) => {
+test("desktop icon rail expands and shifts the usable stage cleanly", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "Desktop rail exists only in desktop shell.");
   await page.goto("/?shell=desktop");
 
@@ -1111,8 +1115,8 @@ test("desktop icon rail expands without moving the orb", async ({ page }, testIn
   });
 
   expect(collapsedWidth).toBeLessThanOrEqual(58);
-  expect(collapsedButton.width).toBeLessThanOrEqual(42);
-  expect(collapsedButton.height).toBeLessThanOrEqual(42);
+  expect(collapsedButton.width).toBeLessThanOrEqual(44);
+  expect(collapsedButton.height).toBe(48);
 
   await rail.hover();
   await expect(rail).toHaveAttribute("data-expanded", "true");
@@ -1124,7 +1128,7 @@ test("desktop icon rail expands without moving the orb", async ({ page }, testIn
   });
 
   expect(expandedWidth).toBeGreaterThan(150);
-  expect(Math.abs(orbAfter.x - orbBefore.x)).toBeLessThanOrEqual(1);
+  expect(orbAfter.x - orbBefore.x).toBeGreaterThan(50);
   expect(Math.abs(orbAfter.y - orbBefore.y)).toBeLessThanOrEqual(1);
 });
 

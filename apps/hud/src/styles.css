@@ -1,14 +1,21 @@
 :root {
   color-scheme: dark;
-  --hud-cyan: #00e5ff;
+  --hud-blue: #4a9eff;
+  --hud-cyan: #4a9eff;
   --hud-magenta: #ff007f;
   --hud-green: #00ff88;
-  --hud-amber: #ffd45a;
-  --hud-bg: #02070a;
-  --hud-text: #ffffff;
+  --hud-amber: #ffb347;
+  --hud-bg: #0a0a0c;
+  --hud-text: #e0e0e0;
   --hud-glass: rgba(4, 12, 15, 0.46);
-  --desktop-rail-width: 52px;
+  --desktop-rail-width: 56px;
   --desktop-rail-expanded-width: 172px;
+  --desktop-shell-left: 16px;
+  --desktop-content-gap-collapsed: 16px;
+  --desktop-content-gap-expanded: 24px;
+  --desktop-content-left: calc(var(--desktop-shell-left) + var(--desktop-rail-width) + var(--desktop-content-gap-collapsed));
+  --desktop-content-right: 16px;
+  --desktop-stage-center-x: calc(var(--desktop-content-left) + ((100vw - var(--desktop-content-left) - var(--desktop-content-right)) / 2));
   font-family: Inter, "Segoe UI", system-ui, sans-serif;
 }
 
@@ -49,6 +56,10 @@ button {
 }
 
 html[data-shell="desktop"] .hud-stage {
+  --desktop-active-rail-width: var(--desktop-rail-width);
+  --desktop-active-content-gap: var(--desktop-content-gap-collapsed);
+  --desktop-content-left: calc(var(--desktop-shell-left) + var(--desktop-active-rail-width) + var(--desktop-active-content-gap));
+  --desktop-stage-center-x: calc(var(--desktop-content-left) + ((100vw - var(--desktop-content-left) - var(--desktop-content-right)) / 2));
   overflow: hidden;
   padding-top: 34px;
   border: 1px solid rgba(0, 229, 255, 0.16);
@@ -58,10 +69,15 @@ html[data-shell="desktop"] .hud-stage {
   background-size: 32px 32px;
 }
 
+html[data-shell="desktop"] .hud-stage.sidebar-expanded {
+  --desktop-active-rail-width: var(--desktop-rail-expanded-width);
+  --desktop-active-content-gap: var(--desktop-content-gap-expanded);
+}
+
 html[data-shell="desktop"] .hud-stage::after {
   content: "";
   position: fixed;
-  inset: 0 138px auto 0;
+  inset: 0 138px auto var(--desktop-content-left);
   height: 34px;
   z-index: 30;
   background:
@@ -90,13 +106,13 @@ html[data-shell="desktop"] .hud-stage::before {
 
 html[data-shell="desktop"] .desktop-app-chrome {
   position: fixed;
-  left: 16px;
+  left: var(--desktop-shell-left);
   top: 58px;
   bottom: 16px;
   z-index: 26;
   width: var(--desktop-rail-width);
   display: grid;
-  grid-template-rows: auto auto auto auto auto auto 1fr;
+  grid-template-rows: auto auto auto auto auto auto auto 1fr;
   gap: 7px;
   padding: 7px;
   border: 1px solid rgba(0, 229, 255, 0.18);
@@ -193,7 +209,9 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
 .desktop-rail button,
 .desktop-action,
 .desktop-stop {
-  min-height: 40px;
+  position: relative;
+  height: 48px;
+  min-height: 48px;
   min-width: 0;
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr);
@@ -205,12 +223,32 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
   color: rgba(255, 255, 255, 0.82);
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
+  isolation: isolate;
   transition:
     grid-template-columns 160ms ease,
     border-color 160ms ease,
     color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
+}
+
+.desktop-rail button::before,
+.desktop-action::before,
+.desktop-stop::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(74, 158, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(74, 158, 255, 0.045);
+  box-shadow: inset 0 0 18px rgba(74, 158, 255, 0.04);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .desktop-rail button:disabled,
@@ -226,6 +264,17 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
   box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.06);
 }
 
+.desktop-rail button:hover::before,
+.desktop-rail button:focus-visible::before,
+.desktop-action:hover::before,
+.desktop-action:focus-visible::before,
+.desktop-stop:hover::before,
+.desktop-stop:focus-visible::before {
+  opacity: 1;
+  border-color: rgba(74, 158, 255, 0.48);
+  box-shadow: 0 0 18px rgba(74, 158, 255, 0.12), inset 0 0 18px rgba(74, 158, 255, 0.08);
+}
+
 .desktop-rail span {
   overflow: hidden;
   font-size: 12px;
@@ -238,9 +287,9 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-brand small {
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-rail button,
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-action,
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop {
-  width: 38px;
-  height: 38px;
-  min-height: 38px;
+  width: 42px;
+  height: 48px;
+  min-height: 48px;
   grid-template-columns: 1fr;
   justify-items: center;
   padding-inline: 0;
@@ -279,9 +328,9 @@ html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-stop span {
 }
 
 html[data-shell="desktop"] .desktop-app-chrome.collapsed .desktop-status-card {
-  width: 38px;
-  height: 38px;
-  min-height: 38px;
+  width: 42px;
+  height: 48px;
+  min-height: 48px;
   grid-template-columns: 1fr;
   justify-items: center;
   padding: 0;
@@ -346,7 +395,8 @@ html[data-shell="desktop"] .command-capsule,
 html[data-shell="desktop"] .approval-chip,
 html[data-shell="desktop"] .workflow-approval-popup,
 html[data-shell="desktop"] .service-confirmation {
-  left: 50%;
+  left: var(--desktop-stage-center-x);
+  transition: left 180ms ease;
 }
 
 html[data-shell="desktop"] .hud-corner-control {
@@ -1081,6 +1131,13 @@ html[data-shell="desktop"] .hud-corner-control {
   z-index: 24;
 }
 
+html[data-shell="desktop"] .panel-backdrop {
+  left: var(--desktop-content-left);
+  right: var(--desktop-content-right);
+  width: auto;
+  transition: left 180ms ease;
+}
+
 .hud-panel {
   position: relative;
   width: min(86vw, 1100px);
@@ -1097,15 +1154,15 @@ html[data-shell="desktop"] .hud-corner-control {
 }
 
 html[data-shell="desktop"] .hud-panel {
-  width: min(calc(100vw - 132px), 1120px);
+  width: min(calc(100vw - var(--desktop-content-left) - var(--desktop-content-right) - 28px), 1120px);
 }
 
 .hud-panel-settings {
-  width: min(calc(100vw - 132px), 980px);
+  width: min(calc(100vw - var(--desktop-content-left) - var(--desktop-content-right) - 28px), 980px);
 }
 
 .hud-panel-workflows {
-  width: min(calc(100vw - 104px), 1220px);
+  width: min(calc(100vw - var(--desktop-content-left) - var(--desktop-content-right) - 28px), 1220px);
   max-height: calc(100vh - 86px);
 }
 
@@ -2238,11 +2295,11 @@ html[data-shell="desktop"] .hud-panel {
 }
 
 .mic-pulse {
-  width: 92px;
-  height: 92px;
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
-  margin: 8px auto;
+  margin: 0;
   border: 1px solid rgba(0, 229, 255, 0.24);
   border-radius: 50%;
   color: var(--hud-cyan);
@@ -2253,16 +2310,35 @@ html[data-shell="desktop"] .hud-panel {
 .voice-session-card {
   width: min(460px, 100%);
   display: grid;
-  justify-items: center;
-  gap: 8px;
+  gap: 10px;
   margin: 2px auto 0;
+  padding: 12px;
+  border: 1px solid rgba(74, 158, 255, 0.16);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(74, 158, 255, 0.08), transparent 48%),
+    rgba(255, 255, 255, 0.035);
 }
 
 .voice-session-card .mic-pulse {
-  margin: 0 auto;
+  margin: 0;
 }
 
-.voice-session-card strong {
+.voice-orb-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.voice-orb-row span {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.voice-session-card strong,
+.voice-details-drawer summary b {
   color: white;
   font: 700 13px/1 "JetBrains Mono", Consolas, monospace;
   letter-spacing: 0;
@@ -2270,12 +2346,10 @@ html[data-shell="desktop"] .hud-panel {
 }
 
 .voice-session-card small {
-  max-width: min(420px, 88vw);
-  min-height: 18px;
+  max-width: 100%;
   overflow: hidden;
   color: rgba(255, 255, 255, 0.68);
   font-size: 12px;
-  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2319,6 +2393,49 @@ html[data-shell="desktop"] .hud-panel {
   animation-delay: 0.22s;
 }
 
+.voice-mini-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  opacity: 0.72;
+  transition: opacity 160ms ease;
+}
+
+.voice-mini-legend:hover,
+.voice-mini-legend:focus-within {
+  opacity: 1;
+}
+
+.voice-mini-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.58);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.voice-mini-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hud-green);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.52);
+}
+
+.voice-mini-legend .dot-processing {
+  background: var(--hud-amber);
+  box-shadow: 0 0 10px rgba(255, 179, 71, 0.5);
+}
+
+.voice-mini-legend .dot-error {
+  background: var(--hud-magenta);
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.52);
+}
+
 .voice-control-row {
   display: flex;
   justify-content: center;
@@ -2351,6 +2468,45 @@ html[data-shell="desktop"] .hud-panel {
   grid-template-columns: minmax(0, 1fr) 38px;
   gap: 9px;
   margin: 10px auto 0;
+}
+
+.voice-details-drawer {
+  width: min(520px, 100%);
+  margin: 12px auto 0;
+  border: 1px solid rgba(74, 158, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  overflow: clip;
+}
+
+.voice-details-drawer summary {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.74);
+  list-style: none;
+}
+
+.voice-details-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.voice-details-drawer summary span {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voice-details-drawer[open] {
+  padding-bottom: 12px;
+  background:
+    linear-gradient(135deg, rgba(74, 158, 255, 0.08), transparent 42%),
+    rgba(255, 255, 255, 0.04);
 }
 
 .voice-transcript-form input {
