@@ -1093,3 +1093,15 @@ Tasks:
 - 45.4 Replace giant voice metering with a compact voice status legend and collapsible runtime details while keeping push-to-talk, transcript, STT/TTS, wake, and per-agent voice controls working.
 - 45.5 Add the first architecture/schema sweep document mapping Electron main/preload, renderer state, Gateway routes, Python Brain, runtime scripts, IPC/event flows, and initial refactor/security findings.
 - 45.6 Verify HUD UI tests, TypeScript build, core/gateway tests, runtime live test, commit each completed slice, and push.
+
+## Extension Phase 46 - Workspace Organization, Compatibility Paths, And Production Readiness Cleanup
+
+Goal: Organize the outer `Secretary Jarvis` asset folder and repo-owned `jarvis` folders without breaking active model, voice, installer, reference, or setup paths. Keep downloaded model assets in stable locations, keep Gemma 26B auto-connectable while it finishes, and make missing optional features visible as setup tasks rather than runtime failures.
+
+Tasks:
+- 46.1 Add Phase 46 tracking to `PLAN.md` and `PROGRESS.md`.
+- 46.2 Upgrade `scripts/organize-secretary-jarvis.ps1` to produce an applyable organization plan, move non-model assets into `tools`, `vendor/reference`, `docs/imported`, and `assets/voice`, and create compatibility junctions for legacy paths when needed.
+- 46.3 Update setup/doctor scripts so local installers are found in both the legacy root and the organized `tools/installers` folder.
+- 46.4 Apply the organizer to the outer `Secretary Jarvis` folder while leaving `models` in place; record the resulting manifest and compatibility links.
+- 46.5 Verify model/voice readiness after organization, including Gemma 26B remaining staged/auto-connectable until download completion.
+- 46.6 Run tests/builds/runtime live test, commit each completed slice, and push.
