@@ -1217,3 +1217,14 @@ Tasks:
 - 55.3 Add performance statistics to the merged Command Center terminal card: CPU profile, RAM, GPU, TPS, queue latency, and memory recall latency.
 - 55.4 Split System into internal sections: Overview, Runtime, Voice, Permissions, and Setup, keeping only the selected section visible.
 - 55.5 Verify HUD build/UI tests, restart Jarvis, capture the live Electron UI, run runtime live test, commit each slice, and push.
+
+## Extension Phase 56 - Truthful Ready State, Optional Voice Dependencies, And App-Mode Self-Test
+
+Goal: Stop Jarvis from reporting attention for optional or development-only gaps when the production app path is actually working. Kokoro/Whisper/SAPI/VAD should satisfy daily voice readiness without requiring Piper, optional dev servers should not make Electron app-mode self-test look degraded, and partially downloaded heavy models such as Gemma 26B should remain staged auto-connect assets rather than blockers.
+
+Tasks:
+- 56.1 Update voice readiness so Piper is no longer counted as required when Kokoro/SAPI or voice samples are runnable.
+- 56.2 Update runtime attention so Piper and OmniVoice become staged optional items once a preferred TTS engine is ready.
+- 56.3 Update Gemma 26B attention semantics to staged auto-connect while the user finishes the download.
+- 56.4 Update runtime self-test so optional Dashboard/Vite HUD renderer offline states are ignored when Electron HUD app-mode is online.
+- 56.5 Verify gateway/core tests, runtime live test, voice readiness, self-test ready state, commit, and push.

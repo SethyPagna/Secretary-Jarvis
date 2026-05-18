@@ -230,7 +230,6 @@ export function buildVoiceRuntimeReadiness(options: VoiceReadinessOptions): Voic
     } satisfies VoiceRuntimeProbe;
   });
 
-  const missingRequired = [primaryStt, piperProbe, ...identitySamples].filter((probe) => probe.status === "missing").length;
   const tts = [kokoroProbe, piperProbe, sapiProbe, omniVoiceProbe];
   const ttsPreferredEngine =
     kokoroProbe.status === "ready"
@@ -242,6 +241,11 @@ export function buildVoiceRuntimeReadiness(options: VoiceReadinessOptions): Voic
           : identitySamples.some((sample) => sample.status === "ready")
             ? "voice-sample"
             : "none";
+  const missingRequired = [
+    primaryStt,
+    ...identitySamples,
+    ...(ttsPreferredEngine === "none" ? [kokoroProbe] : []),
+  ].filter((probe) => probe.status === "missing").length;
   const wakeState =
     wakeProbe.status === "ready"
       ? "wake-ready"

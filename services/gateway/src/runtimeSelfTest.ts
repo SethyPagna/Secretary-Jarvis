@@ -131,8 +131,8 @@ function buildChecks(
       id: "background-services",
       label: "Services",
       status: serviceStatus(services),
-      value: `${services.summary.online}/${services.services.length} online`,
-      detail: services.note,
+      value: `${essentialOnlineCount(services)}/${essentialServices(services).length} core`,
+      detail: serviceDetail(services),
       fixIds: startupFixIds,
     },
     {
@@ -197,7 +197,8 @@ function buildFixes(params: Parameters<typeof buildRuntimeSelfTest>[0]): Runtime
     });
   }
 
-  if (params.services.summary.online < params.services.services.length) {
+  const essential = essentialServices(params.services);
+  if (essential.some((service) => service.status !== "online")) {
     fixes.push({
       id: "fix-start-runtime",
       label: "Start runtime",
@@ -224,16 +225,44 @@ function buildFixes(params: Parameters<typeof buildRuntimeSelfTest>[0]): Runtime
 }
 
 function serviceStatus(services: RuntimeServicesStatus): RuntimeSelfTestStatus {
-  if (services.services.length === 0) {
+  const essential = essentialServices(services);
+  if (essential.length === 0) {
     return "staged";
   }
-  if (services.summary.online === services.services.length) {
+  if (essential.every((service) => service.status === "online")) {
     return "ready";
   }
-  if (services.summary.online > 0 || services.summary.degraded > 0) {
+  if (essential.some((service) => service.status === "online" || service.status === "degraded")) {
     return "attention";
   }
   return "blocked";
+}
+
+function essentialServices(services: RuntimeServicesStatus): RuntimeServicesStatus["services"] {
+  const electronHudOnline = services.services.some((service) => service.id === "electron-hud" && service.status === "online");
+  return services.services.filter((service) => {
+    if (service.id === "dashboard") {
+      return false;
+    }
+    if (service.id === "hud-renderer" && electronHudOnline) {
+      return false;
+    }
+    return true;
+  });
+}
+
+function essentialOnlineCount(services: RuntimeServicesStatus): number {
+  return essentialServices(services).filter((service) => service.status === "online").length;
+}
+
+function serviceDetail(services: RuntimeServicesStatus): string {
+  const ignored = services.services
+    .filter((service) => service.id === "dashboard" || service.id === "hud-renderer")
+    .map((service) => service.label);
+  if (ignored.length > 0 && services.services.some((service) => service.id === "electron-hud" && service.status === "online")) {
+    return `${services.note} Optional dev surfaces ignored in Electron app mode: ${ignored.join(", ")}.`;
+  }
+  return services.note;
 }
 
 function topStatus(summary: { blocked: number; attention: number; staged: number }): RuntimeSelfTestStatus {
