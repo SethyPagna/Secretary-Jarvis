@@ -370,7 +370,7 @@ Acceptance for the next UI slice:
 - [x] 47.5 Verify HUD UI tests, builds, runtime live test, commit, and push - commit `146548f`
 
 ## Phase 48 - Floating Orb Window And App Shell Bridge
-- [ ] 48.1 Add Phase 48 tracking to `PLAN.md` and `PROGRESS.md`
+- [x] 48.1 Add Phase 48 tracking to `PLAN.md` and `PROGRESS.md` - commit `fdc431e`
 - [ ] 48.2 Add a separate Electron floating orb BrowserWindow
 - [ ] 48.3 Add compact `shell=orb` renderer mode
 - [ ] 48.4 Bridge orb quick actions to the main app via IPC/tray actions
