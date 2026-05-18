@@ -1105,3 +1105,14 @@ Tasks:
 - 46.4 Apply the organizer to the outer `Secretary Jarvis` folder while leaving `models` in place; record the resulting manifest and compatibility links.
 - 46.5 Verify model/voice readiness after organization, including Gemma 26B remaining staged/auto-connectable until download completion.
 - 46.6 Run tests/builds/runtime live test, commit each completed slice, and push.
+
+## Extension Phase 47 - Unified Orb Shell, Mini HUD, And Sidebar Identity Polish
+
+Goal: Make the orb the permanent face of Jarvis and merge the scattered voice/dashboard/terminal signals into one calm, hoverable mini-HUD. Keep the full dashboard and voice panels as deeper drawers, but the default experience should be a centered orb, slim sidebar, compact top-right orb identity, and no noisy panels until requested.
+
+Tasks:
+- 47.1 Add Phase 47 tracking to `PLAN.md` and `PROGRESS.md`.
+- 47.2 Replace the old metrics-only hover card with an orb mini-HUD showing compact system metrics, voice legend, last two activity lines, and quick actions for voice, text, dashboard, and workflows.
+- 47.3 Replace generic bot/gear identity controls with a reusable orb mark in the sidebar brand and top-right titlebar button.
+- 47.4 Keep sidebar expansion/content shifting responsive and add tests that the mini-HUD quick actions open the correct panels.
+- 47.5 Verify HUD UI tests, builds, runtime live test, commit, and push.

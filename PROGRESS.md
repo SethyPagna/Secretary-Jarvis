@@ -361,3 +361,10 @@ Acceptance for the next UI slice:
 - [x] 46.4 Apply organization to outer `Secretary Jarvis` assets while leaving models stable - commit `6c5264b`
 - [x] 46.5 Verify model/voice readiness and Gemma 26B staged auto-connect path - commit `6c5264b`
 - [x] 46.6 Run tests/builds/runtime live test, commit, and push - commit `1c401c9`
+
+## Phase 47 - Unified Orb Shell, Mini HUD, And Sidebar Identity Polish
+- [ ] 47.1 Add Phase 47 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 47.2 Replace metrics-only hover card with orb mini-HUD
+- [ ] 47.3 Replace generic bot/gear identity controls with orb mark
+- [ ] 47.4 Add mini-HUD/sidebar behavior tests
+- [ ] 47.5 Verify HUD UI tests, builds, runtime live test, commit, and push
