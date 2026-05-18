@@ -352,4 +352,4 @@ Acceptance for the next UI slice:
 - [x] 45.3 Re-anchor orb, radial menu, approval chips, and panels to the usable stage center - commit `b57c3f6`
 - [x] 45.4 Minimize voice metering into compact legend and collapsible runtime details - commit `b57c3f6`
 - [x] 45.5 Add first architecture/schema sweep document - commit `b57c3f6`
-- [ ] 45.6 Verify HUD UI tests, builds, core/gateway tests, runtime live test, commit, and push
+- [x] 45.6 Verify HUD UI tests, builds, core/gateway tests, runtime live test, commit, and push - commit pending
