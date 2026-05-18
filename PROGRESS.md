@@ -402,4 +402,4 @@ Acceptance for the next UI slice:
 - [x] 52.2 Fetch `GET /api/permissions` only when Settings is open - commit `42ce31d`
 - [x] 52.3 Add compact Permission Memory card to Settings/Security - commit `42ce31d`
 - [x] 52.4 Add HUD UI coverage and verify builds/tests - `npm run build -w @jarvis/hud`; `npm run test:ui -w @jarvis/hud` (27 passed, 1 skipped); `npm test`; core/gateway builds; supervisor restart + live test `attention` with all checks passed
-- [x] 52.5 Commit and push - pending final push
+- [x] 52.5 Commit and push - pushed `9a4c83b`
