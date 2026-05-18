@@ -33,6 +33,37 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/permissions")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          permissions: {
+            path: "C:\\Users\\user\\.jarvis\\permissions.json",
+            version: 1,
+            records: [
+              {
+                key: "sensor-capture:screen:any-agent:screen-timeline",
+                category: "sensor-capture",
+                target: "screen timeline",
+                status: "granted",
+                remember: true,
+                updatedAt: "2026-05-18T00:00:00.000Z",
+              },
+              {
+                key: "send-message:email:any-agent:draft-review",
+                category: "send-message",
+                target: "draft review",
+                status: "denied",
+                remember: true,
+                updatedAt: "2026-05-18T00:01:00.000Z",
+              },
+            ],
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/runtime/constellation")) {
       await route.fulfill({
         status: 200,
@@ -1228,6 +1259,11 @@ test("settings shows compact architecture and authority hardening summaries", as
   await expect(hardening).toContainText("Code health");
   await expect(panel.getByLabel("Startup and service manager")).toContainText("3/5");
   await expect(panel.getByLabel("Startup and service manager")).toContainText("highest");
+  const permissionMemory = panel.getByRole("group", { name: "Permission memory" });
+  await expect(permissionMemory).toContainText("2");
+  await expect(permissionMemory).toContainText("permissions.json");
+  await expect(panel.getByLabel("Recent permission decisions")).toContainText("screen timeline");
+  await expect(panel.getByLabel("Recent permission decisions")).toContainText("denied");
   await expect(panel.getByLabel("Runtime install start stop dry-run controls")).toContainText("Start");
   await page.getByRole("button", { name: "Start dry-run", exact: true }).click();
   await expect(panel.getByLabel("Runtime install start stop dry-run controls")).toContainText("requires_approval");

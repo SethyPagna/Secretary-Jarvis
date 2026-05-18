@@ -58,6 +58,7 @@ export function HudPanel({
   const [runtimeSelfTest, setRuntimeSelfTest] = useState<RuntimeSelfTestSummary | null>(null);
   const [runtimeLiveTest, setRuntimeLiveTest] = useState<RuntimeLiveTestStatus | null>(null);
   const [runtimeAttention, setRuntimeAttention] = useState<RuntimeAttentionSummary | null>(null);
+  const [permissionMemory, setPermissionMemory] = useState<PermissionMemorySnapshot | null>(null);
   const [liveTestRunning, setLiveTestRunning] = useState(false);
   const [runtimeSelfTestFixes, setRuntimeSelfTestFixes] = useState<Record<string, string>>({});
   const [runtimeAttentionDryRuns, setRuntimeAttentionDryRuns] = useState<Record<string, RuntimeAttentionDryRunSummary>>({});
@@ -202,6 +203,14 @@ export function HudPanel({
       .then((payload: SetupInstallPlansResponse | undefined) => {
         if (!cancelled) {
           setSetupInstallPlans(payload?.manifest?.plans ?? []);
+        }
+      })
+      .catch(() => undefined);
+    fetch(`${apiBaseUrl}/api/permissions`)
+      .then((response) => (response.ok ? response.json() : undefined))
+      .then((payload: PermissionMemoryResponse | undefined) => {
+        if (!cancelled) {
+          setPermissionMemory(payload?.permissions ?? null);
         }
       })
       .catch(() => undefined);
@@ -890,6 +899,39 @@ export function HudPanel({
               <em>approval still required</em>
             </span>
           </div>
+          <details className="permission-memory-card compact-card" aria-label="Permission memory">
+            <summary>
+              <UserCheck size={15} aria-hidden="true" />
+              <span>Permission memory</span>
+              <b>{permissionMemory ? `${permissionMemory.records.length}` : "--"}</b>
+            </summary>
+            <small>{permissionMemory?.path ?? "Loading local permission store."}</small>
+            <em>Exact grants can be remembered; protected core, credentials, purchases, deletes, and irreversible edits stay guarded.</em>
+            <div className="permission-memory-grid" aria-label="Remembered permission decisions">
+              <span>
+                <small>Granted</small>
+                <strong>{permissionMemory?.records.filter((record) => record.status === "granted").length ?? "--"}</strong>
+              </span>
+              <span>
+                <small>Denied</small>
+                <strong>{permissionMemory?.records.filter((record) => record.status === "denied").length ?? "--"}</strong>
+              </span>
+              <span>
+                <small>Remembered</small>
+                <strong>{permissionMemory?.records.filter((record) => record.remember).length ?? "--"}</strong>
+              </span>
+            </div>
+            <div className="permission-memory-list" aria-label="Recent permission decisions">
+              {(permissionMemory?.records ?? []).slice(0, 3).map((record) => (
+                <span key={record.key} className={`permission-${record.status}`}>
+                  <small>{record.category}</small>
+                  <strong>{record.target}</strong>
+                  <b>{record.status}</b>
+                </span>
+              ))}
+              {permissionMemory?.records.length === 0 && <span><small>quiet</small><strong>No remembered approvals yet.</strong><b>local</b></span>}
+            </div>
+          </details>
           <div className="runtime-command-grid" aria-label="Runtime install start stop dry-run controls">
             {(["start", "stop", "restart", "emergency-stop"] as RuntimeControlKind[]).map((control) => (
               <button key={control} type="button" onClick={() => void dryRunRuntimeControl(control)}>
@@ -1156,6 +1198,25 @@ interface RuntimeServicesResponse {
 
 interface RuntimeControlDryRunResponse {
   dryRun?: RuntimeControlDryRun;
+}
+
+interface PermissionMemoryRecord {
+  key: string;
+  category: string;
+  target: string;
+  status: "granted" | "denied";
+  remember: boolean;
+  updatedAt: string;
+}
+
+interface PermissionMemorySnapshot {
+  path: string;
+  version: number;
+  records: PermissionMemoryRecord[];
+}
+
+interface PermissionMemoryResponse {
+  permissions?: PermissionMemorySnapshot;
 }
 
 interface RuntimeDryRunSummary {

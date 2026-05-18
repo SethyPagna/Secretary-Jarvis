@@ -1610,6 +1610,69 @@ html[data-shell="desktop"] .hud-panel {
   white-space: nowrap;
 }
 
+.permission-memory-card {
+  width: 100%;
+  margin: 10px auto 0;
+}
+
+.permission-memory-grid,
+.permission-memory-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.permission-memory-grid {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.permission-memory-grid span,
+.permission-memory-list span {
+  min-width: 0;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.055), rgba(74, 158, 255, 0.025)),
+    rgba(4, 12, 16, 0.72);
+  padding: 10px 12px;
+}
+
+.permission-memory-list span {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.permission-memory-grid small,
+.permission-memory-list small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.permission-memory-grid strong,
+.permission-memory-list strong {
+  overflow: hidden;
+  color: var(--hud-green);
+  font: 700 12px/1 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.permission-memory-list b {
+  color: var(--hud-green);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.permission-memory-list .permission-denied b {
+  color: var(--hud-magenta);
+}
+
 .runtime-command-grid {
   width: min(720px, 100%);
   display: grid;
@@ -3735,6 +3798,8 @@ html[data-shell="desktop"] .hud-panel {
   .constellation-grid,
   .hardening-grid,
   .startup-control-strip,
+  .permission-memory-grid,
+  .permission-memory-list,
   .runtime-command-grid,
   .runtime-self-test-checks,
   .runtime-self-test-fixes,
