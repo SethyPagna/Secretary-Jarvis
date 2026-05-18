@@ -3,10 +3,23 @@
 This master plan is the single source of truth for building the fully local, futuristic AI assistant. It combines the earlier Jarvis Wings automation vision with the runtime refinement requirements: cinematic HUD, memory, undos, local model hub, AgentOS, guarded system control, voice, vision, workflow automation, and startup sync.
 
 Repo reality note:
-- `apps/hud/` is the target primary Electron + React + Three.js HUD and does not exist yet.
+- `apps/hud/` is the current primary Electron + React + Three.js HUD/app shell.
 - `apps/dashboard/` exists as the Vite fallback full dashboard/control room.
 - `apps/desktop/` exists as the current Electron/Tauri wrapper and remains fallback until `apps/hud` is ready.
 - `services/brain/` is the existing Python brain service and maps to this plan's `services/python/` concept.
+
+## Consolidated Execution Roadmap
+
+This roadmap merges repeated requirements from the original blueprint, runtime refinement phases, UI repair directives, voice/model setup, permission memory, workflow studio, and code-analysis sweep. It does not delete any requirement below; it groups them into the production pillars Jarvis must keep improving.
+
+1. Native app shell and orb presence: Electron HUD is the daily app; the floating orb is always available, click-through outside its visible surface, single-instance, tray-controlled, and backed by the canonical runtime supervisor.
+2. Fast persistent runtime: status is pushed through events where possible, frequently opened panels use persistent stale-while-revalidate caches, and slow probes run only when opened, refreshed, or explicitly requested.
+3. Local model and voice routing: downloaded assets are scanned truthfully as `Downloaded`, `Runnable`, `Staged`, or `Incomplete`; endpoint/quantized routes are preferred for chat/coding speed; Whisper stays primary STT; SAPI/sample voices are immediate fallback; Kokoro/Piper/OmniVoice are staged neural TTS routes.
+4. Approval and authority: Jarvis may operate with high-trust local capabilities, but risky actions pass through Sentinel, capability-scoped permission memory, audit logs, and the 20-minute undo journal when reversible.
+5. AgentOS and souls: Jarvis manages named souls, routes tasks to planner/executor/reviewer/memory/safety roles, and keeps voice/personality/tool scopes visible and testable.
+6. Workflow studio: the n8n-style canvas is the automation surface for triggers, agents, conditions, memory, connectors, system actions, approvals, and sub-workflows; generated workflows remain disabled until owner approval.
+7. Vision/devices/connectors: screen, camera, mic, apps, browser, files, socials, and devices are connector-driven, approval-gated, and surfaced as readiness cards until truly runnable.
+8. Code health and schema: every major phase updates a relational architecture map, removes duplicate/dead paths when safe, preserves protected-core boundaries, and verifies builds/tests/live runtime before pushing.
 
 ## Initiation Phase (Pre-Implementation)
 
@@ -1171,3 +1184,14 @@ Tasks:
 - 52.3 Add a glass compact Permission Memory card to Settings/Security with counts, path, recent decisions, and guardrail copy.
 - 52.4 Add Playwright coverage for the Settings permission memory card and keep HUD builds/tests green.
 - 52.5 Commit and push.
+
+## Extension Phase 53 - Roadmap Consolidation, Relational Code Schema, And Persistent Panel Cache
+
+Goal: Reduce planning drift, map the actual implementation relationships, and make Jarvis feel less slow by keeping recently loaded HUD data present while fresh data reloads in the background.
+
+Tasks:
+- 53.1 Add Phase 53 tracking to `PLAN.md` and `PROGRESS.md`.
+- 53.2 Create a refined roadmap document that merges redundant requirements into capability pillars without deleting the master plan details.
+- 53.3 Create a relational codebase schema/audit document covering folders, modules, IPC, HTTP/SSE routes, state stores, permissions, runtime scripts, voice/model/workflow flows, loops, security boundaries, and optimization findings.
+- 53.4 Add a reusable HUD panel cache layer so dashboard, voice, settings, and workflow readiness data can show last-known local data immediately and refresh with bounded network calls.
+- 53.5 Verify builds/tests/runtime live test, commit each completed slice, and push.
