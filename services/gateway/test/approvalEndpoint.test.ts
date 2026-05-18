@@ -13,6 +13,7 @@ describe("approval endpoints", () => {
   beforeAll(async () => {
     tempRoot = mkdtempSync(join(tmpdir(), "jarvis-approval-endpoint-"));
     process.env.JARVIS_DB_PATH = join(tempRoot, "jarvis.sqlite");
+    process.env.JARVIS_PERMISSION_STORE_PATH = join(tempRoot, "permissions.json");
     ({ startGateway } = await import("../src/server.js"));
   });
 
@@ -36,6 +37,7 @@ describe("approval endpoints", () => {
     const approvalPayload = (await approvalResponse.json()) as {
       approval?: { id: string; category: string; target: string };
       memoryWrite?: { content: string; tags: string[] };
+      permissionRecord?: { status: string; remember: boolean; category: string; target: string };
     };
 
     expect(approvalResponse.status).toBe(200);
@@ -46,6 +48,12 @@ describe("approval endpoints", () => {
     });
     expect(approvalPayload.memoryWrite?.content).toContain("Approval approved");
     expect(approvalPayload.memoryWrite?.tags).toEqual(expect.arrayContaining(["approval", "approved", "sensor-capture"]));
+    expect(approvalPayload.permissionRecord).toMatchObject({
+      status: "granted",
+      remember: true,
+      category: "sensor-capture",
+      target: "screen timeline",
+    });
 
     const approvals = (await fetch(`${baseUrl}/api/approvals`).then((response) => response.json())) as {
       approvals: Array<{ id: string }>;
@@ -56,6 +64,15 @@ describe("approval endpoints", () => {
       connectors: Array<{ id: string; enabled: boolean }>;
     };
     expect(status.connectors.find((connector) => connector.id === "screen")?.enabled).toBe(true);
+
+    const permissions = (await fetch(`${baseUrl}/api/permissions`).then((response) => response.json())) as {
+      permissions: { records: Array<{ category: string; target: string; status: string }> };
+    };
+    expect(permissions.permissions.records).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: "sensor-capture", target: "screen timeline", status: "granted" }),
+      ]),
+    );
   });
 });
 
