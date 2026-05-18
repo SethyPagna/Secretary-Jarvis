@@ -28,9 +28,18 @@ function Test-Command {
 
   $installerPath = ""
   foreach ($installer in $LocalInstallers) {
-    $candidateInstaller = Join-Path $AssetRoot $installer
-    if (Test-Path -LiteralPath $candidateInstaller) {
-      $installerPath = $candidateInstaller
+    $candidateInstallers = @(
+      (Join-Path $AssetRoot $installer),
+      (Join-Path $AssetRoot (Join-Path "tools\installers" $installer)),
+      (Join-Path $AssetRoot (Join-Path "vendor\reference\openclaw-ruflo-rust" $installer))
+    )
+    foreach ($candidateInstaller in $candidateInstallers) {
+      if (Test-Path -LiteralPath $candidateInstaller) {
+        $installerPath = $candidateInstaller
+        break
+      }
+    }
+    if ($installerPath) {
       break
     }
   }
@@ -74,9 +83,15 @@ function Show-Doctor {
   Write-Host "Asset root: $AssetRoot"
   Write-Host "Local setup assets:"
   @("OllamaSetup.exe", "rustup-init.exe", "cargo-master.zip", "openclaw-main.zip", "ruflo-main.zip") | ForEach-Object {
-    $asset = Join-Path $AssetRoot $_
-    if (Test-Path -LiteralPath $asset) {
-      Write-Host " - found $_"
+    $candidates = @(
+      (Join-Path $AssetRoot $_),
+      (Join-Path $AssetRoot (Join-Path "tools\installers" $_)),
+      (Join-Path $AssetRoot (Join-Path "vendor\reference\openclaw-ruflo-rust" $_)),
+      (Join-Path $AssetRoot (Join-Path "vendor\reference\archives" $_))
+    )
+    $found = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if ($found) {
+      Write-Host " - found $_ at $found"
     } else {
       Write-Host " - missing $_"
     }
@@ -100,8 +115,11 @@ function Install-Tooling {
   }
 
   if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
-    $ollamaInstaller = Join-Path $AssetRoot "OllamaSetup.exe"
-    if (Test-Path -LiteralPath $ollamaInstaller) {
+    $ollamaInstaller = @(
+      (Join-Path $AssetRoot "OllamaSetup.exe"),
+      (Join-Path $AssetRoot "tools\installers\OllamaSetup.exe")
+    ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if ($ollamaInstaller -and (Test-Path -LiteralPath $ollamaInstaller)) {
       Write-Host "Found local Ollama installer: $ollamaInstaller"
       Write-Host "Run it manually if the GUI installer is required; Jarvis will not force-launch it."
     } else {
