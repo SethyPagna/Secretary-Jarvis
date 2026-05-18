@@ -387,4 +387,4 @@ Acceptance for the next UI slice:
 - [x] 50.2 Add Electron IPC for orb click-through/interactivity - commit `32f0335`
 - [x] 50.3 Toggle orb interactivity from `shell=orb` hover/focus state - commit `32f0335`
 - [x] 50.4 Add/keep tests and builds green - `npm run build -w @jarvis/hud`; `npm run test:ui -w @jarvis/hud` (27 passed, 1 skipped); `npm test`; `npm run build -w @jarvis/core`; `npm run build -w @jarvis/gateway`; supervisor restart + live test `attention` with all checks passed
-- [x] 50.5 Commit and push - pending final push
+- [x] 50.5 Commit and push - pushed `8ad3c63`
