@@ -19,6 +19,7 @@ let hudWindow: BrowserWindow | null = null;
 let orbWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
+let orbInteractive = false;
 
 function logElectron(message: string): void {
   try {
@@ -177,6 +178,7 @@ function createFloatingOrbWindow(): BrowserWindow {
 
   window.setAlwaysOnTop(true, "screen-saver");
   window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  window.setIgnoreMouseEvents(true, { forward: true });
   window.setPosition(32, 32);
 
   if (HUD_URL) {
@@ -219,6 +221,15 @@ function createFloatingOrbWindow(): BrowserWindow {
     logElectron("floating-orb-close-hidden");
   });
   return window;
+}
+
+function setFloatingOrbInteractive(interactive: boolean): void {
+  if (!orbWindow || orbWindow.isDestroyed() || orbInteractive === interactive) {
+    return;
+  }
+  orbInteractive = interactive;
+  orbWindow.setIgnoreMouseEvents(!interactive, { forward: true });
+  logElectron(`floating-orb-interactive=${interactive ? "on" : "off"}`);
 }
 
 function showHud(): void {
@@ -456,6 +467,13 @@ ipcMain.handle("orb:show", () => {
   orbWindow.showInactive();
 });
 ipcMain.handle("orb:hide", () => orbWindow?.hide());
+ipcMain.handle("orb:set-interactive", (event, interactive: boolean) => {
+  if (event.sender !== orbWindow?.webContents) {
+    return false;
+  }
+  setFloatingOrbInteractive(Boolean(interactive));
+  return true;
+});
 
 function quitJarvisApp(): void {
   isQuitting = true;

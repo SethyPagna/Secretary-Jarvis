@@ -30,5 +30,6 @@ interface Window {
     quitApp(): Promise<void>;
     showOrb(): Promise<void>;
     hideOrb(): Promise<void>;
+    setOrbInteractive(interactive: boolean): Promise<boolean>;
   };
 }

@@ -1026,16 +1026,39 @@ test("top-right orb identity button opens the same radial controls", async ({ pa
 });
 
 test("floating orb shell stays compact and forwards actions", async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as unknown as { __jarvisOrbCalls: string[]; jarvisDesktop: unknown }).__jarvisOrbCalls = [];
+    (window as unknown as { __jarvisOrbCalls: string[]; jarvisDesktop: Record<string, unknown> }).jarvisDesktop = {
+      setOrbInteractive(interactive: boolean) {
+        (window as unknown as { __jarvisOrbCalls: string[] }).__jarvisOrbCalls.push(`interactive:${interactive}`);
+        return Promise.resolve(true);
+      },
+      runTrayCommand(type: string) {
+        (window as unknown as { __jarvisOrbCalls: string[] }).__jarvisOrbCalls.push(`command:${type}`);
+        return Promise.resolve();
+      },
+      showApp() {
+        (window as unknown as { __jarvisOrbCalls: string[] }).__jarvisOrbCalls.push("show");
+        return Promise.resolve();
+      },
+      onTrayAction() {
+        return () => undefined;
+      },
+    };
+  });
   await page.goto("/?shell=orb");
   await expect(page.getByLabel("Jarvis desktop shell")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Open Jarvis orb menu" })).toHaveCount(0);
 
   const orb = page.getByRole("button", { name: "Open Jarvis controls" });
   await expect(orb).toBeVisible();
+  await orb.hover();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __jarvisOrbCalls: string[] }).__jarvisOrbCalls)).toContain("interactive:true");
   await orb.click();
   await expect(page.getByTitle("Voice")).toBeVisible();
   await page.getByTitle("Voice").click();
   await expect(orb).toHaveAttribute("data-state", "listening");
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __jarvisOrbCalls: string[] }).__jarvisOrbCalls)).toContain("command:open-voice");
   await expect(page.getByRole("dialog", { name: "Jarvis voice panel" })).toHaveCount(0);
 });
 

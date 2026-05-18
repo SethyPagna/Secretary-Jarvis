@@ -27,4 +27,7 @@ contextBridge.exposeInMainWorld("jarvisDesktop", {
   hideOrb() {
     return ipcRenderer.invoke("orb:hide");
   },
+  setOrbInteractive(interactive) {
+    return ipcRenderer.invoke("orb:set-interactive", Boolean(interactive));
+  },
 });

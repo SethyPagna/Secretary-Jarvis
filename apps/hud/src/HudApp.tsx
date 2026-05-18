@@ -49,7 +49,7 @@ function HudSurface() {
   const activeCaption = pendingApproval ? "Approval required." : caption;
 
   useEffect(() => {
-    return window.jarvisDesktop?.onTrayAction((action) => {
+    return window.jarvisDesktop?.onTrayAction?.((action) => {
       setMenuOpen(false);
       if (action.type === "open-dashboard") {
         setPanel("dashboard");
@@ -113,11 +113,12 @@ function HudSurface() {
     if (isOrbShell) {
       const action = panelToTrayAction(nextPanel);
       if (action) {
-        void window.jarvisDesktop?.runTrayCommand(action);
+        void window.jarvisDesktop?.runTrayCommand?.(action);
       } else {
-        void window.jarvisDesktop?.showApp();
+        void window.jarvisDesktop?.showApp?.();
       }
       setMenuOpen(false);
+      setOrbNativeInteractivity(false);
       setHudState(nextPanel === "voice" ? "listening" : nextPanel === "workflows" ? "planning" : "wake", "Opening Jarvis app.");
       return;
     }
@@ -129,6 +130,7 @@ function HudSurface() {
   function closeAll() {
     setMenuOpen(false);
     setPanel(null);
+    setOrbNativeInteractivity(false);
     resetHud();
   }
 
@@ -179,7 +181,7 @@ function HudSurface() {
     setServiceIntent(null);
     setBusyControl(action);
     setHudState(action === "stop-services" ? "approval" : "planning", action === "stop-services" ? "Stopping Jarvis. Ollama stays running." : "Restarting Jarvis.");
-    await window.jarvisDesktop?.runTrayCommand(action).catch(() => setHudState("error", "Runtime control failed."));
+    await window.jarvisDesktop?.runTrayCommand?.(action).catch(() => setHudState("error", "Runtime control failed."));
     setBusyControl(null);
   }
 
@@ -187,7 +189,7 @@ function HudSurface() {
     setBusyControl("live-test");
     setPanel("settings");
     setHudState("planning", "Running production live test.");
-    await window.jarvisDesktop?.runTrayCommand("live-test").catch(() => setHudState("error", "Live test failed to start."));
+    await window.jarvisDesktop?.runTrayCommand?.("live-test").catch(() => setHudState("error", "Live test failed to start."));
     setBusyControl(null);
   }
 
@@ -201,6 +203,13 @@ function HudSurface() {
       .then((response) => setHudState(response.ok ? "error" : "approval", response.ok ? "Emergency stop sent." : "Emergency stop needs local supervisor."))
       .catch(() => setHudState("error", "Emergency stop failed."));
     setBusyControl(null);
+  }
+
+  function setOrbNativeInteractivity(interactive: boolean) {
+    if (!isOrbShell) {
+      return;
+    }
+    void window.jarvisDesktop?.setOrbInteractive?.(interactive).catch(() => undefined);
   }
 
   return (
@@ -224,7 +233,19 @@ function HudSurface() {
           onEmergencyStop={() => void runEmergencyStopFromApp()}
         />
       )}
-      <div className="orb-interaction-zone" onMouseEnter={() => setHoveringOrb(true)} onMouseLeave={() => setHoveringOrb(false)}>
+      <div
+        className="orb-interaction-zone"
+        onMouseEnter={() => {
+          setHoveringOrb(true);
+          setOrbNativeInteractivity(true);
+        }}
+        onMouseLeave={() => {
+          setHoveringOrb(false);
+          setOrbNativeInteractivity(menuOpen);
+        }}
+        onFocus={() => setOrbNativeInteractivity(true)}
+        onBlur={() => setOrbNativeInteractivity(menuOpen)}
+      >
         <MetricsCard status={status} visible={hoveringOrb && !menuOpen && !panel} onOpenPanel={openPanel} />
         <Suspense
           fallback={
@@ -234,7 +255,11 @@ function HudSurface() {
               pendingApproval={Boolean(pendingApproval)}
               onClick={() => {
                 setPanel(null);
-                setMenuOpen((value) => !value);
+                setMenuOpen((value) => {
+                  const next = !value;
+                  setOrbNativeInteractivity(next);
+                  return next;
+                });
                 setHudState(menuOpen ? "idle" : "wake", online ? "Jarvis ready." : "Gateway offline.");
               }}
             />
@@ -246,7 +271,11 @@ function HudSurface() {
             pendingApproval={Boolean(pendingApproval)}
             onClick={() => {
               setPanel(null);
-              setMenuOpen((value) => !value);
+              setMenuOpen((value) => {
+                const next = !value;
+                setOrbNativeInteractivity(next);
+                return next;
+              });
               setHudState(menuOpen ? "idle" : "wake", online ? "Jarvis ready." : "Gateway offline.");
             }}
           />
