@@ -381,3 +381,10 @@ Acceptance for the next UI slice:
 - [x] 49.2 Defer assistant task execution outside the `/api/chat` request path - commit `1b572e5`
 - [x] 49.3 Verify gateway tests/builds and runtime live test after restarting services - commit `1b572e5`
 - [x] 49.4 Commit and push - commit `b8a38a4`
+
+## Phase 50 - Floating Orb Pass-Through And Native Interaction Polish
+- [ ] 50.1 Add Phase 50 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 50.2 Add Electron IPC for orb click-through/interactivity
+- [ ] 50.3 Toggle orb interactivity from `shell=orb` hover/focus state
+- [ ] 50.4 Add/keep tests and builds green
+- [ ] 50.5 Commit and push

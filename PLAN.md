@@ -1137,3 +1137,14 @@ Tasks:
 - 49.2 Defer assistant task execution outside the `/api/chat` request path so `POST /api/chat` returns `202` before any slow model routing or runtime probe starts.
 - 49.3 Verify gateway tests/builds and runtime live test after restarting services.
 - 49.4 Commit and push.
+
+## Extension Phase 50 - Floating Orb Pass-Through And Native Interaction Polish
+
+Goal: Make the floating orb behave like a real desktop companion instead of a transparent blocking window. Non-orb pixels should pass through to the desktop, while the orb and mini-HUD become interactive only when hovered/focused. The orb must stay on top, recover cleanly after reloads, and keep using the same main-app action bridge.
+
+Tasks:
+- 50.1 Add Phase 50 tracking to `PLAN.md` and `PROGRESS.md`.
+- 50.2 Add Electron IPC for `orb:set-interactive` and default the floating orb BrowserWindow to click-through with forwarded mouse events.
+- 50.3 Teach the `shell=orb` renderer to toggle orb interactivity on hover/focus/leave so only the visible orb/HUD captures input.
+- 50.4 Add tests covering compact orb shell behavior and keep Electron/HUD builds green.
+- 50.5 Commit and push.
