@@ -413,7 +413,7 @@ Acceptance for the next UI slice:
 
 ## Phase 54 - HUD Shell Repair, Command Center Merge, And Runtime Interaction Polish
 - [x] 54.1 Add Phase 54 tracking to `PLAN.md` and `PROGRESS.md` - commit `ab3bc09`
-- [ ] 54.2 Repair desktop sidebar rail geometry, click-away collapse, active item state, Stop Jarvis, and Emergency Stop visibility
-- [ ] 54.3 Merge text, voice, terminal snippet, model, queue, and runtime heartbeat into one Command Center
-- [ ] 54.4 Reduce the System panel first screen into compact status cards while keeping details available below
+- [x] 54.2 Repair desktop sidebar rail geometry, click-away collapse, active item state, Stop Jarvis, and Emergency Stop visibility - commit `8cb3bbb`
+- [x] 54.3 Merge text, voice, terminal snippet, model, queue, and runtime heartbeat into one Command Center - commit `8cb3bbb`
+- [x] 54.4 Reduce the System panel first screen into compact status cards while keeping details available below - commit `8cb3bbb`
 - [ ] 54.5 Verify HUD build/UI tests, supervisor restart, runtime live test, commit, and push
