@@ -1249,3 +1249,14 @@ Tasks:
 - 58.2 Upgrade the orb mini-HUD with online/offline status, model, voice/TTS readiness, task count, and a System quick action.
 - 58.3 Keep the floating orb shell compact and pass-through-safe while proving quick actions call the Electron bridge.
 - 58.4 Verify HUD build/UI tests, restart app, run live test, commit, and push.
+
+## Extension Phase 59 - Voice Push-To-Talk Activation And Audio Event Bridge
+
+Goal: Make the Voice buttons and floating-orb voice action start a real local voice session instead of only opening a static panel. Continuous microphone capture remains approval-gated, but the reliable push-to-talk/manual transcript path should activate immediately, show state in the orb/HUD, and react to Gateway audio stream events.
+
+Tasks:
+- 59.1 Add Phase 59 tracking to `PLAN.md` and `PROGRESS.md`.
+- 59.2 Start a Gateway live voice session when Voice is opened from the main orb/sidebar, without enabling continuous mic capture.
+- 59.3 Make the floating orb and tray `open-voice` action call the same Gateway voice-session start path before focusing the main app.
+- 59.4 Subscribe the HUD to `audio` SSE events and update the orb state/command capsule for voice listening, transcript, commit, stop, and TTS events.
+- 59.5 Verify HUD build/UI tests, restart app, runtime live test, commit, and push.
