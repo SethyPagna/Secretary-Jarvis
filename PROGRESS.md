@@ -438,3 +438,9 @@ Acceptance for the next UI slice:
 - [x] 57.3 Reduce top chrome/titlebar visual dead space and keep panels inside the usable content area - commit a1564bc
 - [x] 57.4 Make Command Center the merged voice, terminal, and runtime surface while keeping System sectioned and quiet - commit a1564bc
 - [x] 57.5 Verify HUD build/UI tests, restart app, run live test, commit, and push - verified HUD build, HUD UI tests 27 passed / 1 skipped, supervisor restart, runtime status 4 core services online / 0 degraded, self-test ready, live test ready (commit a1564bc)
+
+## Phase 58 - Floating Orb Mini Controller And Live Status Bridge
+- [ ] 58.1 Add Phase 58 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 58.2 Upgrade the orb mini-HUD with online/offline status, model, voice/TTS readiness, task count, and a System quick action
+- [ ] 58.3 Keep the floating orb shell compact and pass-through-safe while proving quick actions call the Electron bridge
+- [ ] 58.4 Verify HUD build/UI tests, restart app, run live test, commit, and push

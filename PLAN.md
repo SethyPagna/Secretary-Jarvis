@@ -1239,3 +1239,13 @@ Tasks:
 - 57.3 Reduce top chrome/titlebar visual dead space and keep panels inside the usable content area.
 - 57.4 Make Command Center the merged voice, terminal, and runtime surface; keep System as sectioned readiness/settings, not a wall of text.
 - 57.5 Verify HUD build/UI tests, restart app, run live test, commit, and push.
+
+## Extension Phase 58 - Floating Orb Mini Controller And Live Status Bridge
+
+Goal: Make the floating orb feel functional instead of decorative. Its hover HUD should expose live model/voice/runtime status, open the main app to the exact surface requested, and provide a compact route to System/Live checks without clutter.
+
+Tasks:
+- 58.1 Add Phase 58 tracking to `PLAN.md` and `PROGRESS.md`.
+- 58.2 Upgrade the orb mini-HUD with online/offline status, model, voice/TTS readiness, task count, and a System quick action.
+- 58.3 Keep the floating orb shell compact and pass-through-safe while proving quick actions call the Electron bridge.
+- 58.4 Verify HUD build/UI tests, restart app, run live test, commit, and push.
