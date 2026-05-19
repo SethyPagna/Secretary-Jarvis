@@ -431,3 +431,10 @@ Acceptance for the next UI slice:
 - [x] 56.3 Update Gemma 26B attention semantics to staged auto-connect while download completes - commit c9ea5be
 - [x] 56.4 Update runtime self-test so optional Dashboard/Vite HUD renderer offline states are ignored when Electron HUD app-mode is online - commits c9ea5be, f71b175
 - [x] 56.5 Verify gateway/core tests, runtime live test, voice readiness, self-test ready state, commit, and push - verified core build, gateway build, npm test, gateway tests, supervisor restart, runtime status 4/4 core online, self-test ready, voice missingRequired 0 with Kokoro preferred, live test ready (commit pending)
+
+## Phase 57 - Desktop Shell Layout, Sidebar Compression, And Merged Command Surface
+- [ ] 57.1 Add Phase 57 tracking to `PLAN.md` and `PROGRESS.md`
+- [ ] 57.2 Compress the desktop sidebar rail so collapsed/expanded icons, active frames, Stop Jarvis, and Emergency remain aligned and visible
+- [ ] 57.3 Reduce top chrome/titlebar visual dead space and keep panels inside the usable content area
+- [ ] 57.4 Make Command Center the merged voice, terminal, and runtime surface while keeping System sectioned and quiet
+- [ ] 57.5 Verify HUD build/UI tests, restart app, run live test, commit, and push

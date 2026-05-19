@@ -1228,3 +1228,14 @@ Tasks:
 - 56.3 Update Gemma 26B attention semantics to staged auto-connect while the user finishes the download.
 - 56.4 Update runtime self-test so optional Dashboard/Vite HUD renderer offline states are ignored when Electron HUD app-mode is online.
 - 56.5 Verify gateway/core tests, runtime live test, voice readiness, self-test ready state, commit, and push.
+
+## Extension Phase 57 - Desktop Shell Layout, Sidebar Compression, And Merged Command Surface
+
+Goal: Fix the still-visible formatting defects in the running Electron app: titlebar dead space, oversized expanded rail, hidden Stop/Emergency controls, panel overlap, and wordy System content. Keep the orb visual direction, but make the app shell tighter, faster, and less jittery.
+
+Tasks:
+- 57.1 Add Phase 57 tracking to `PLAN.md` and `PROGRESS.md`.
+- 57.2 Compress the desktop sidebar rail so collapsed and expanded modes keep icons centered, active frames aligned, and Stop Jarvis plus Emergency visible without clipping.
+- 57.3 Reduce top chrome/titlebar visual dead space and keep panels inside the usable content area.
+- 57.4 Make Command Center the merged voice, terminal, and runtime surface; keep System as sectioned readiness/settings, not a wall of text.
+- 57.5 Verify HUD build/UI tests, restart app, run live test, commit, and push.
