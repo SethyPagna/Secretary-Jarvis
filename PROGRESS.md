@@ -434,7 +434,7 @@ Acceptance for the next UI slice:
 
 ## Phase 57 - Desktop Shell Layout, Sidebar Compression, And Merged Command Surface
 - [x] 57.1 Add Phase 57 tracking to `PLAN.md` and `PROGRESS.md` - commit 51f7d40
-- [x] 57.2 Compress the desktop sidebar rail so collapsed/expanded icons, active frames, Stop Jarvis, and Emergency remain aligned and visible - pending commit
-- [x] 57.3 Reduce top chrome/titlebar visual dead space and keep panels inside the usable content area - pending commit
-- [x] 57.4 Make Command Center the merged voice, terminal, and runtime surface while keeping System sectioned and quiet - pending commit
-- [x] 57.5 Verify HUD build/UI tests, restart app, run live test, commit, and push - verified HUD build, HUD UI tests 27 passed / 1 skipped, supervisor restart, runtime status 4 core services online / 0 degraded, self-test ready, live test ready (pending commit)
+- [x] 57.2 Compress the desktop sidebar rail so collapsed/expanded icons, active frames, Stop Jarvis, and Emergency remain aligned and visible - commit a1564bc
+- [x] 57.3 Reduce top chrome/titlebar visual dead space and keep panels inside the usable content area - commit a1564bc
+- [x] 57.4 Make Command Center the merged voice, terminal, and runtime surface while keeping System sectioned and quiet - commit a1564bc
+- [x] 57.5 Verify HUD build/UI tests, restart app, run live test, commit, and push - verified HUD build, HUD UI tests 27 passed / 1 skipped, supervisor restart, runtime status 4 core services online / 0 degraded, self-test ready, live test ready (commit a1564bc)
