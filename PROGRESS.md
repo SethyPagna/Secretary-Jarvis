@@ -426,8 +426,8 @@ Acceptance for the next UI slice:
 - [x] 55.5 Verify HUD build/UI tests, restart Jarvis, capture live Electron UI, run runtime live test, commit, and push - `npm.cmd run build -w @jarvis/hud`; `npm.cmd run test:ui -w @jarvis/hud` (27 passed, 1 skipped); supervisor restart; status 4 Jarvis services online / 0 degraded with Ollama online; live test `attention` with all required checks passed; voice readiness shows Whisper STT ready, Kokoro TTS ready/preferred, SAPI fallback ready, VAD ready, wake dependency staged/approval-gated; live text completed with result `Jarvis is connected.`; screenshot saved to `data/smoke/hud-live-after-p55.png`; `npm.cmd test` (core 64 passed, gateway 67 passed); core/gateway builds passed
 
 ## Phase 56 - Truthful Ready State, Optional Voice Dependencies, And App-Mode Self-Test
-- [x] 56.1 Update voice readiness so Piper is no longer counted as required when Kokoro/SAPI or voice samples are runnable - pending commit
-- [x] 56.2 Update runtime attention so Piper and OmniVoice become staged optional items once a preferred TTS engine is ready - pending commit
-- [x] 56.3 Update Gemma 26B attention semantics to staged auto-connect while download completes - pending commit
-- [x] 56.4 Update runtime self-test so optional Dashboard/Vite HUD renderer offline states are ignored when Electron HUD app-mode is online - pending commit
-- [ ] 56.5 Verify gateway/core tests, runtime live test, voice readiness, self-test ready state, commit, and push
+- [x] 56.1 Update voice readiness so Piper is no longer counted as required when Kokoro/SAPI or voice samples are runnable - commit c9ea5be
+- [x] 56.2 Update runtime attention so Piper and OmniVoice become staged optional items once a preferred TTS engine is ready - commit c9ea5be
+- [x] 56.3 Update Gemma 26B attention semantics to staged auto-connect while download completes - commit c9ea5be
+- [x] 56.4 Update runtime self-test so optional Dashboard/Vite HUD renderer offline states are ignored when Electron HUD app-mode is online - commits c9ea5be, f71b175
+- [x] 56.5 Verify gateway/core tests, runtime live test, voice readiness, self-test ready state, commit, and push - verified core build, gateway build, npm test, gateway tests, supervisor restart, runtime status 4/4 core online, self-test ready, voice missingRequired 0 with Kokoro preferred, live test ready (commit pending)
