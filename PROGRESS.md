@@ -441,6 +441,6 @@ Acceptance for the next UI slice:
 
 ## Phase 58 - Floating Orb Mini Controller And Live Status Bridge
 - [x] 58.1 Add Phase 58 tracking to `PLAN.md` and `PROGRESS.md` - commit 3fbff56
-- [x] 58.2 Upgrade the orb mini-HUD with online/offline status, model, voice/TTS readiness, task count, and a System quick action - pending commit
-- [x] 58.3 Keep the floating orb shell compact and pass-through-safe while proving quick actions call the Electron bridge - pending commit
-- [x] 58.4 Verify HUD build/UI tests, restart app, run live test, commit, and push - verified HUD build, HUD UI tests 27 passed / 1 skipped, supervisor restart, runtime status 4 core services online / 0 degraded, self-test ready, live test ready (pending commit)
+- [x] 58.2 Upgrade the orb mini-HUD with online/offline status, model, voice/TTS readiness, task count, and a System quick action - commit 5422227
+- [x] 58.3 Keep the floating orb shell compact and pass-through-safe while proving quick actions call the Electron bridge - commit 5422227
+- [x] 58.4 Verify HUD build/UI tests, restart app, run live test, commit, and push - verified HUD build, HUD UI tests 27 passed / 1 skipped, supervisor restart, runtime status 4 core services online / 0 degraded, self-test ready, live test ready (commit 5422227)
