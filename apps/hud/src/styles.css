@@ -1199,7 +1199,7 @@ html[data-shell="orb"] .orb-mini-terminal {
 }
 
 html[data-shell="orb"] .orb-mini-actions {
-  grid-template-columns: repeat(4, 30px);
+  grid-template-columns: repeat(5, 30px);
   gap: 7px;
 }
 
@@ -1209,9 +1209,52 @@ html[data-shell="orb"] .orb-mini-actions button {
 }
 
 .orb-mini-metrics,
+.orb-mini-system,
 .orb-mini-voice,
 .orb-mini-actions {
   display: grid;
+}
+
+.orb-mini-system {
+  grid-template-columns: 0.72fr 1fr;
+  align-items: center;
+  gap: 5px 7px;
+  padding: 5px 6px;
+  border: 1px solid rgba(74, 158, 255, 0.11);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.orb-mini-system span {
+  min-width: 0;
+  justify-content: flex-start;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.68);
+  font: 700 9px/1.2 "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.orb-mini-system span:first-child {
+  gap: 5px;
+  color: var(--hud-green);
+}
+
+.orb-mini-system span:first-child i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hud-green);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.58);
+}
+
+.orb-mini-system span:first-child.offline {
+  color: var(--hud-magenta);
+}
+
+.orb-mini-system span:first-child.offline i {
+  background: var(--hud-magenta);
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.56);
 }
 
 .orb-mini-metrics {
@@ -1288,7 +1331,7 @@ html[data-shell="orb"] .orb-mini-actions button {
 }
 
 .orb-mini-actions {
-  grid-template-columns: repeat(4, 32px);
+  grid-template-columns: repeat(5, 32px);
   justify-content: center;
   gap: 9px;
 }
@@ -4006,6 +4049,10 @@ html[data-shell="desktop"] .hud-panel {
 
   .orb-mini-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .orb-mini-system {
+    grid-template-columns: 1fr;
   }
 
   .hud-panel {

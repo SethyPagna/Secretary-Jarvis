@@ -1,4 +1,4 @@
-import { Activity, Gauge, LayoutDashboard, ListChecks, Mic, TerminalSquare, Waypoints, Wifi } from "lucide-react";
+import { Activity, Gauge, LayoutDashboard, ListChecks, Mic, Settings, TerminalSquare, Waypoints, Wifi } from "lucide-react";
 import type { JarvisStatus } from "@jarvis/core";
 import type { HudPanel } from "../types";
 
@@ -17,9 +17,18 @@ export function MetricsCard({
   const cpu = performance ? `${Math.round(Math.min(98, performance.tokensPerSecond * 3))}%` : "--";
   const net = status ? "12K / 3K" : "--";
   const activityLines = compactActivityLines(status);
+  const activeModel = status?.models?.find((candidate) => candidate.id === status.activeModelId);
+  const ttsEngine = status?.audioEngines?.find((engine) => engine.role === "tts" && (engine.status === "ready" || engine.installed));
+  const voiceState = status?.voiceSession?.state ?? "idle";
 
   return (
     <div className={visible ? "metrics-card orb-mini-hud visible" : "metrics-card orb-mini-hud"} aria-hidden={!visible} aria-label="Jarvis orb mini HUD">
+      <div className="orb-mini-system" aria-label="Jarvis live bridge status">
+        <span className={status ? "online" : "offline"}><i />{status ? "online" : "offline"}</span>
+        <span>{activeModel?.label ?? "local model"}</span>
+        <span>{ttsEngine?.label ?? status?.voiceSession?.ttsEngineId ?? "voice local"}</span>
+        <span>{voiceState}</span>
+      </div>
       <div className="orb-mini-metrics" aria-label="Jarvis compact metrics">
         <span title="CPU"><Gauge size={14} />{cpu}</span>
         <span title="RAM"><Activity size={14} />{ram}</span>
@@ -48,6 +57,9 @@ export function MetricsCard({
         </button>
         <button type="button" onClick={() => onOpenPanel("workflows")} aria-label="Open workflows" data-tooltip="Workflows">
           <Waypoints size={14} aria-hidden="true" />
+        </button>
+        <button type="button" onClick={() => onOpenPanel("settings")} aria-label="Open system status" data-tooltip="System">
+          <Settings size={14} aria-hidden="true" />
         </button>
       </div>
     </div>

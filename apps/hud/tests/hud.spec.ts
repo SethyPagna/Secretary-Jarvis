@@ -1041,6 +1041,7 @@ test("orb hover opens compact mini HUD with quick actions", async ({ page }) => 
 
   const miniHud = page.getByLabel("Jarvis orb mini HUD");
   await expect(miniHud).toBeVisible();
+  await expect(miniHud.getByLabel("Jarvis live bridge status")).toContainText("online");
   await expect(miniHud.getByLabel("Jarvis compact metrics")).toContainText("GB");
   await expect(miniHud.getByLabel("Jarvis compact voice state")).toContainText("listen");
   await expect(miniHud.getByLabel("Jarvis terminal snippet")).toContainText("model:");
@@ -1085,6 +1086,8 @@ test("floating orb shell stays compact and forwards actions", async ({ page }) =
   await expect(orb).toBeVisible();
   await orb.hover();
   await expect.poll(() => page.evaluate(() => (window as unknown as { __jarvisOrbCalls: string[] }).__jarvisOrbCalls)).toContain("interactive:true");
+  await page.getByRole("button", { name: "Open system status" }).click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __jarvisOrbCalls: string[] }).__jarvisOrbCalls)).toContain("command:open-settings");
   await orb.click();
   await expect(page.getByTitle("Voice")).toBeVisible();
   await page.getByTitle("Voice").click();
