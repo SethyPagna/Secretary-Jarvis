@@ -350,6 +350,18 @@ async function runTrayAction(type: TrayActionType): Promise<void> {
   showHud();
   emitTrayAction(action);
 
+  if (type === "open-voice") {
+    const ok = await postGateway("/api/voice/listening/start", {
+      resetTranscript: true,
+      source: "electron-tray"
+    });
+    emitTrayAction({
+      ...action,
+      message: ok ? "Listening locally. Say or type a command." : "Voice panel opened. Gateway voice session unavailable."
+    });
+    return;
+  }
+
   if (type.startsWith("open-")) {
     return;
   }

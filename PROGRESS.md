@@ -446,8 +446,8 @@ Acceptance for the next UI slice:
 - [x] 58.4 Verify HUD build/UI tests, restart app, run live test, commit, and push - verified HUD build, HUD UI tests 27 passed / 1 skipped, supervisor restart, runtime status 4 core services online / 0 degraded, self-test ready, live test ready (commit 5422227)
 
 ## Phase 59 - Voice Push-To-Talk Activation And Audio Event Bridge
-- [x] 59.1 Add Phase 59 tracking to `PLAN.md` and `PROGRESS.md` - pending commit
-- [ ] 59.2 Start a Gateway live voice session when Voice is opened from the main orb/sidebar
-- [ ] 59.3 Make floating orb/tray `open-voice` call the same Gateway voice-session start path
-- [ ] 59.4 Subscribe HUD to `audio` SSE events for voice state/capsule updates
+- [x] 59.1 Add Phase 59 tracking to `PLAN.md` and `PROGRESS.md` - commit `8443692`
+- [x] 59.2 Start a Gateway live voice session when Voice is opened from the main orb/sidebar - pending commit
+- [x] 59.3 Make floating orb/tray `open-voice` call the same Gateway voice-session start path - pending commit
+- [x] 59.4 Subscribe HUD to `audio` SSE events for voice state/capsule updates - pending commit
 - [ ] 59.5 Verify HUD build/UI tests, restart app, runtime live test, commit, and push

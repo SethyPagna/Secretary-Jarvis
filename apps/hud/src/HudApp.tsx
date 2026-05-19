@@ -20,6 +20,12 @@ interface CommandCapsule {
   detail: string;
 }
 
+interface VoiceSessionPayload {
+  state?: string;
+  message?: string;
+  transcript?: Array<{ text?: string; final?: boolean }>;
+}
+
 export function HudApp() {
   return (
     <HudStateProvider>
@@ -101,13 +107,31 @@ function HudSurface() {
         };
       });
     };
+    const onAudio = (message: MessageEvent<string>) => {
+      const streamEvent = safeParseStreamEvent(message.data);
+      const payload = streamEvent?.payload;
+      const kind = typeof payload?.kind === "string" ? payload.kind : undefined;
+      const voiceSession = payload?.voiceSession as VoiceSessionPayload | undefined;
+      if (!kind && !voiceSession) {
+        return;
+      }
+      const messageText = audioEventMessage(kind, voiceSession);
+      setHudState(voiceHudStateForSession(voiceSession?.state, kind), messageText);
+      setCommandCapsule({
+        state: voiceCapsuleStateForSession(voiceSession?.state, kind),
+        title: "Voice command",
+        detail: compactCapsuleDetail(messageText),
+      });
+    };
     source.addEventListener("task", onTask);
+    source.addEventListener("audio", onAudio);
     source.onerror = () => undefined;
     return () => {
       source.removeEventListener("task", onTask);
+      source.removeEventListener("audio", onAudio);
       source.close();
     };
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, setHudState]);
 
   function openPanel(nextPanel: HudPanelName) {
     if (isOrbShell) {
@@ -125,6 +149,9 @@ function HudSurface() {
     setPanel(nextPanel);
     setMenuOpen(false);
     setHudState(nextPanel === "voice" ? "listening" : nextPanel === "dashboard" ? "thinking" : "wake");
+    if (nextPanel === "voice") {
+      void startPushToTalkSession("main-app");
+    }
   }
 
   function closeAll() {
@@ -203,6 +230,40 @@ function HudSurface() {
       .then((response) => setHudState(response.ok ? "approval" : "error", response.ok ? "Emergency stop sent." : "Emergency stop needs local supervisor."))
       .catch(() => setHudState("error", "Emergency stop failed."));
     setBusyControl(null);
+  }
+
+  async function startPushToTalkSession(source: "main-app" | "sidebar" | "orb" = "main-app") {
+    setHudState("listening", "Starting local voice session.");
+    setCommandCapsule({
+      state: "running",
+      title: "Voice command",
+      detail: "Starting local push-to-talk session.",
+    });
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/voice/listening/start`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ resetTranscript: true, source })
+      });
+      const payload = (await response.json().catch(() => ({}))) as { voiceSession?: VoiceSessionPayload; message?: string };
+      if (!response.ok) {
+        throw new Error(payload.message ?? `Voice session failed with ${response.status}`);
+      }
+      const message = payload.voiceSession?.message ?? payload.message ?? "Listening locally. Say a command or type a transcript chunk.";
+      setHudState(voiceHudStateForSession(payload.voiceSession?.state, "voice-listening-started"), message);
+      setCommandCapsule({
+        state: "running",
+        title: "Voice command",
+        detail: compactCapsuleDetail(message),
+      });
+    } catch {
+      setHudState("error", "Voice session could not start.");
+      setCommandCapsule({
+        state: "failed",
+        title: "Voice command",
+        detail: "Gateway voice session unavailable.",
+      });
+    }
   }
 
   function setOrbNativeInteractivity(interactive: boolean) {
@@ -651,6 +712,56 @@ function capsuleStateForEvent(kind: string, taskStatus?: CommandCapsuleState): C
 
 function compactCapsuleDetail(value: string): string {
   return value.length > 72 ? `${value.slice(0, 69)}...` : value;
+}
+
+function voiceHudStateForSession(sessionState?: string, kind?: string): HudState {
+  if (kind?.includes("tts") || sessionState === "speaking") {
+    return "speaking";
+  }
+  if (sessionState === "listening" || kind === "voice-listening-started" || kind === "voice-transcript-updated") {
+    return "listening";
+  }
+  if (sessionState === "processing" || kind === "voice-transcript-committed") {
+    return "thinking";
+  }
+  if (sessionState === "error" || kind?.includes("failed")) {
+    return "error";
+  }
+  return "wake";
+}
+
+function voiceCapsuleStateForSession(sessionState?: string, kind?: string): CommandCapsuleState {
+  if (sessionState === "error" || kind?.includes("failed")) {
+    return "failed";
+  }
+  if (sessionState === "idle" || kind === "voice-listening-stopped" || kind === "voice-transcript-committed") {
+    return "completed";
+  }
+  return "running";
+}
+
+function audioEventMessage(kind?: string, voiceSession?: VoiceSessionPayload): string {
+  if (voiceSession?.message) {
+    return voiceSession.message;
+  }
+  if (kind === "voice-listening-started") {
+    return "Listening locally. Say a command or type a transcript chunk.";
+  }
+  if (kind === "voice-transcript-updated") {
+    const transcript = voiceSession?.transcript ?? [];
+    const latest = transcript[transcript.length - 1]?.text;
+    return latest ? `Heard: ${latest}` : "Transcript updated.";
+  }
+  if (kind === "voice-transcript-committed") {
+    return "Voice command sent to Jarvis.";
+  }
+  if (kind === "voice-listening-stopped") {
+    return "Voice session stopped.";
+  }
+  if (kind?.includes("tts")) {
+    return "Jarvis is speaking.";
+  }
+  return "Voice state updated.";
 }
 
 function safeParseStreamEvent(data: string): { payload?: Record<string, unknown> } | undefined {

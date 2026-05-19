@@ -148,6 +148,25 @@ async function mockGateway(page: import("playwright/test").Page) {
       });
       return;
     }
+    if (route.request().url().endsWith("/api/voice/listening/start")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          voiceSession: {
+            id: "voice-session-ui",
+            state: "listening",
+            sttEngineId: "whisper-large-v3-turbo",
+            ttsEngineId: "windows-sapi",
+            vadEnabled: true,
+            transcript: [],
+            updatedAt: "2026-05-16T00:00:00.000Z",
+            message: "Listening locally. Say a command or type a transcript chunk.",
+          },
+        }),
+      });
+      return;
+    }
     if (route.request().url().endsWith("/api/voice/agent-matrix")) {
       await route.fulfill({
         status: 200,
