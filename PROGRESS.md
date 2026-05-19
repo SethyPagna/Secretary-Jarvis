@@ -450,4 +450,4 @@ Acceptance for the next UI slice:
 - [x] 59.2 Start a Gateway live voice session when Voice is opened from the main orb/sidebar - commit `39e32dc`
 - [x] 59.3 Make floating orb/tray `open-voice` call the same Gateway voice-session start path - commit `39e32dc`
 - [x] 59.4 Subscribe HUD to `audio` SSE events for voice state/capsule updates - commit `39e32dc`
-- [x] 59.5 Verify HUD build/UI tests, restart app, runtime live test, commit, and push - HUD build passed; HUD UI tests 27 passed / 1 skipped; supervisor restart completed; runtime status 4 core services online / 0 degraded; live test ready; live voice start returned `listening` and stop returned `idle` (commit `1281fd4`)
+- [x] 59.5 Verify HUD build/UI tests, restart app, runtime live test, commit, and push - HUD build passed; HUD UI tests 27 passed / 1 skipped; supervisor restart completed; runtime status 4 core services online / 0 degraded; live test ready; live voice start returned `listening` and stop returned `idle` (commit `4d650f2`)
