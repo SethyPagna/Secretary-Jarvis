@@ -9,6 +9,14 @@
 # The entrypoint remaps the internal `jarvis` user to these values via
 # usermod/groupmod + gosu.
 #
+# WSL/Docker Desktop resource policy:
+#   - This compose file intentionally sets no mem_limit, cpus, or deploy
+#     resource limits. Local inference needs burst headroom for llama.cpp,
+#     vLLM, Whisper, Kokoro, and OmniVoice. Docker Desktop/WSL dynamic resource
+#     management should return idle memory to Windows when the app is quiet.
+#   - If a local .wslconfig exists, avoid hard caps for this project unless
+#     you are debugging a host-specific issue.
+#
 # Security notes:
 #   - The dashboard service binds to 127.0.0.1 by default. It stores API
 #     keys; exposing it on LAN without auth is unsafe. If you want remote

@@ -293,7 +293,15 @@ export default function App() {
   const { manifests, loading: pluginsLoading } = usePlugins();
   const { theme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const toggleSidebar = useCallback(() => {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setSidebarCollapsed((collapsed) => !collapsed);
+      return;
+    }
+    setMobileOpen(true);
+  }, []);
   const isDocsRoute = pathname === "/docs" || pathname === "/docs/";
   const normalizedPath = pathname.replace(/\/$/, "") || "/";
   const isChatRoute = normalizedPath === "/chat";
@@ -403,7 +411,10 @@ export default function App() {
       className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-black text-text-primary antialiased"
     >
       <SelectionSwitcher />
-      <DesktopTitleBar onToggleSidebar={() => setMobileOpen(true)} />
+      <DesktopTitleBar
+        onToggleSidebar={toggleSidebar}
+        sidebarCollapsed={sidebarCollapsed}
+      />
       <Backdrop />
       <PluginSlot name="backdrop" />
 
@@ -428,6 +439,7 @@ export default function App() {
             aria-label={t.app.navigation}
             className={cn(
               "fixed top-[42px] left-0 z-50 flex h-[calc(100dvh-42px)] max-h-[calc(100dvh-42px)] w-64 min-h-0 flex-col",
+              sidebarCollapsed ? "lg:w-16" : "lg:w-64",
               "border-r border-current/20",
               "bg-background-base/95 backdrop-blur-sm",
               "transition-transform duration-200 ease-out",
@@ -443,14 +455,23 @@ export default function App() {
             <div
               className={cn(
                 "flex h-14 shrink-0 items-center justify-between gap-2 px-4",
+                sidebarCollapsed && "lg:justify-center lg:px-2",
                 "border-b border-current/20",
               )}
             >
-              <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "flex items-center gap-2",
+                  sidebarCollapsed && "lg:justify-center",
+                )}
+              >
                 <PluginSlot name="header-left" />
 
                 <Typography
-                  className="font-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground uppercase"
+                  className={cn(
+                    "font-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground uppercase",
+                    sidebarCollapsed ? "lg:hidden" : "",
+                  )}
                   style={{ mixBlendMode: "plus-lighter" }}
                 >
                   Jarvis
@@ -480,6 +501,7 @@ export default function App() {
                     closeMobile={closeMobile}
                     item={item}
                     key={item.path}
+                    sidebarCollapsed={sidebarCollapsed}
                     t={t}
                   />
                 ))}
@@ -494,6 +516,7 @@ export default function App() {
                   <span
                     className={cn(
                       "px-5 pt-2.5 pb-1",
+                      sidebarCollapsed ? "lg:hidden" : "",
                       "font-mondwest text-display text-xs tracking-[0.12em] text-text-tertiary",
                     )}
                     id="jarvis-sidebar-plugin-nav-heading"
@@ -507,6 +530,7 @@ export default function App() {
                         closeMobile={closeMobile}
                         item={item}
                         key={item.path}
+                        sidebarCollapsed={sidebarCollapsed}
                         t={t}
                       />
                     ))}
@@ -515,16 +539,25 @@ export default function App() {
               )}
             </nav>
 
-            <SidebarSystemActions onNavigate={closeMobile} />
+            <SidebarSystemActions
+              onNavigate={closeMobile}
+              sidebarCollapsed={sidebarCollapsed}
+            />
 
             <div
               className={cn(
                 "flex shrink-0 items-center justify-between gap-2",
+                sidebarCollapsed && "lg:justify-center",
                 "px-3 py-2",
                 "border-t border-current/20",
               )}
             >
-              <div className="flex min-w-0 items-center gap-2">
+              <div
+                className={cn(
+                  "flex min-w-0 items-center gap-2",
+                  sidebarCollapsed && "lg:justify-center",
+                )}
+              >
                 <PluginSlot name="header-right" />
                 <ThemeSwitcher dropUp />
                 <LanguageSwitcher dropUp />
@@ -606,7 +639,12 @@ export default function App() {
   );
 }
 
-function SidebarNavLink({ closeMobile, item, t }: SidebarNavLinkProps) {
+function SidebarNavLink({
+  closeMobile,
+  item,
+  sidebarCollapsed,
+  t,
+}: SidebarNavLinkProps) {
   const { path, label, labelKey, icon: Icon } = item;
 
   const navLabel = labelKey
@@ -623,6 +661,7 @@ function SidebarNavLink({ closeMobile, item, t }: SidebarNavLinkProps) {
           cn(
             "group relative flex items-center gap-3",
             "px-5 py-2.5",
+            sidebarCollapsed && "lg:justify-center lg:px-0",
             "font-mondwest text-display uppercase text-sm tracking-[0.12em]",
             "whitespace-nowrap transition-colors cursor-pointer",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground",
@@ -638,7 +677,9 @@ function SidebarNavLink({ closeMobile, item, t }: SidebarNavLinkProps) {
         {({ isActive }) => (
           <>
             <Icon className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{navLabel}</span>
+            <span className={cn("truncate", sidebarCollapsed ? "lg:hidden" : "")}>
+              {navLabel}
+            </span>
 
             <span
               aria-hidden
@@ -659,7 +700,13 @@ function SidebarNavLink({ closeMobile, item, t }: SidebarNavLinkProps) {
   );
 }
 
-function SidebarSystemActions({ onNavigate }: { onNavigate: () => void }) {
+function SidebarSystemActions({
+  onNavigate,
+  sidebarCollapsed,
+}: {
+  onNavigate: () => void;
+  sidebarCollapsed: boolean;
+}) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { activeAction, isBusy, isRunning, pendingAction, runAction } =
@@ -700,6 +747,7 @@ function SidebarSystemActions({ onNavigate }: { onNavigate: () => void }) {
       <span
         className={cn(
           "px-5 pt-0.5 pb-0.5",
+          sidebarCollapsed ? "lg:hidden" : "",
           "font-mondwest text-display text-xs tracking-[0.12em] text-text-tertiary",
         )}
       >
@@ -726,6 +774,7 @@ function SidebarSystemActions({ onNavigate }: { onNavigate: () => void }) {
                 active={busy}
                 className={cn(
                   "gap-3 px-5 py-1.5 whitespace-nowrap",
+                  sidebarCollapsed && "lg:justify-center lg:px-0",
                   "font-mondwest text-display text-xs tracking-[0.1em]",
                   "transition-colors",
                   busy
@@ -747,7 +796,9 @@ function SidebarSystemActions({ onNavigate }: { onNavigate: () => void }) {
                   />
                 )}
 
-                <span className="truncate">{displayLabel}</span>
+                <span className={cn("truncate", sidebarCollapsed ? "lg:hidden" : "")}>
+                  {displayLabel}
+                </span>
 
                 <span
                   aria-hidden
@@ -780,6 +831,7 @@ interface NavItem {
 interface SidebarNavLinkProps {
   closeMobile: () => void;
   item: NavItem;
+  sidebarCollapsed: boolean;
   t: Translations;
 }
 

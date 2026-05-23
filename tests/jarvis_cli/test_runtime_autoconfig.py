@@ -29,7 +29,7 @@ class RuntimeAutoconfigTests(unittest.TestCase):
                 {},
                 model_roots=[root],
                 executable_available=lambda name: name == "llama-server",
-                package_available=lambda name: name == "edge_tts",
+                package_available=lambda _name: False,
                 port_available=lambda port: True,
             )
 
@@ -38,9 +38,10 @@ class RuntimeAutoconfigTests(unittest.TestCase):
         self.assertIn("--model", plan["llm"]["start_command"])
         self.assertEqual(plan["config_patch"]["providers"]["llama_cpp_local"]["base_url"], "http://127.0.0.1:8080/v1")
         self.assertEqual(plan["config_patch"]["model"], "qwen3.5-9b-q4_k_m")
-        self.assertEqual(plan["tts"]["provider"], "edge")
+        self.assertEqual(plan["tts"]["provider"], "system")
         self.assertEqual(plan["tts"]["target_provider"], "kokoro")
         self.assertIn("Install Kokoro runtime", plan["tts"]["actions"][0])
+        self.assertEqual(plan["tts"]["fallback_chain"], ["kokoro", "omnivoice", "system"])
         self.assertEqual(plan["stt"]["provider"], "local")
         self.assertEqual(plan["stt"]["selected_model"], "tiny.en")
         self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "tiny.en")

@@ -18,7 +18,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("electron-builder", package["devDependencies"])
         extra_resources = package["build"]["extraResources"]
         self.assertIn(
-            {"from": "dist/jarvis-backend", "to": "backend/jarvis-backend"},
+            {"from": "dist/jarvis-backend", "to": "backend"},
             extra_resources,
         )
 

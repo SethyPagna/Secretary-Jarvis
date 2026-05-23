@@ -37,7 +37,7 @@ Implemented checkpoints:
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
 | Permissions/platforms/workflows/settings | Not started | Planned phases 6-8 |
-| Packaging/installers | Not started | Planned phase 8 |
+| Packaging/installers | In progress | PyInstaller spec and desktop build script are tracked; installer validation is still pending |
 
 ## Production Readiness Gates
 
@@ -106,9 +106,9 @@ Technology stack:
 | Terminal | xterm.js 5, node-pty |
 | Workflow editor | React Flow 12 |
 | Backend | Python 3.12, FastAPI |
-| TTS | Kokoro local, ElevenLabs, OpenAI, system fallback |
-| STT | faster-whisper, whisper.cpp, OpenAI/Groq fallback |
-| Models | llama.cpp default, vLLM throughput tier, Ollama fallback, OpenAI, Anthropic, Gemini, Groq, Together |
+| TTS | Kokoro local, OmniVoice local voice simulation, system fallback |
+| STT | faster-whisper, whisper.cpp, OpenAI Whisper API fallback |
+| Models | llama.cpp default, vLLM throughput tier, Ollama fallback, OpenAI, Anthropic, Gemini, Groq, Together as API-key providers |
 | Packaging | PyInstaller, electron-builder |
 
 Process model:
@@ -126,6 +126,7 @@ Implemented shell files:
 - `electron/main.js` calls `/api/shutdown` before sending `SIGTERM`, with `SIGKILL` as the fixed-timeout fallback.
 - `electron/preload.js` exposes only `jarvisDesktop.getBackendStatus()` and `jarvisDesktop.windowControl(...)` to the renderer.
 - `package.json` declares the Electron 33+ app entrypoint, electron-builder resources, and desktop packaging scripts.
+- The title bar owns desktop sidebar minimization: the sidebar collapses to an icon rail on desktop and opens as a drawer on small screens.
 
 Verification:
 
@@ -156,11 +157,12 @@ Production requirements:
 The Models page manages:
 
 - Local backends in priority order: llama.cpp first, vLLM second, Ollama last.
-- Cloud providers: OpenAI, Anthropic, Gemini, Groq, Together AI.
+- API-key providers: OpenAI, Anthropic, Gemini, Groq, Together AI.
 - Custom OpenAI-compatible endpoints.
 - GGUF, safetensors, ONNX, and registry-managed models.
 - Download queue with pause, resume, cancel, ETA, and checksum verification.
 - Active model hot-swap through config and backend reload.
+- OpenAI, Anthropic, and similar providers are editable on the Models page only after the user supplies API keys.
 
 Required backend APIs:
 
@@ -183,17 +185,32 @@ Each Soul combines:
 Voice engines:
 
 - Kokoro local ONNX
-- ElevenLabs cloud
-- OpenAI TTS
+- OmniVoice local voice simulation from reference samples
 - system TTS
 - custom OpenAI-compatible TTS
+
+Voice asset locations:
+
+- `assets/voices`
+- `assets/voice`
+- `vendor/voices`
+- `vendor/voice`
+- `models/hexgrad__Kokoro-82M/voices`
+- `models/k2-fsa__OmniVoice`
+
+Fallback chain:
+
+- TTS: Kokoro -> OmniVoice -> system
 
 STT engines:
 
 - faster-whisper
 - whisper.cpp
 - OpenAI Whisper API
-- Groq Whisper
+
+Fallback chain:
+
+- STT: faster-whisper -> whisper.cpp -> OpenAI Whisper API
 
 Production requirements:
 
@@ -292,14 +309,22 @@ Development:
 
 - `docker-compose.yml`
 - backend service on 8765/8766/8767
-- optional Ollama service on 11434
+- optional Ollama service on 11434, retained as the last local fallback after llama.cpp and vLLM
 - UI service on 3000
+- Docker and WSL must not use fixed CPU or memory caps in this repo. Docker Desktop/WSL dynamic resource management should be allowed to borrow resources when inference needs them and return idle resources to Windows.
 
 Production packaging:
 
 1. PyInstaller bundles `jarvis_cli/desktop_entry.py` as `jarvis-backend`.
 2. Vite builds the React frontend.
 3. electron-builder packages Electron, frontend assets, and backend binary.
+
+Packaging rules:
+
+- `scripts/build-desktop.ps1` is the Windows build entrypoint.
+- `packaging/jarvis-backend.spec` is the backend PyInstaller spec.
+- The packaged app launches the backend from Electron resources with hidden child windows.
+- The user-facing process should be a single JARVIS desktop app entry. Backend/model children are owned by the app lifecycle and terminated during `/api/shutdown`.
 
 Targets:
 
@@ -393,16 +418,18 @@ The current runtime smoke test verifies "arms and legs" behavior:
 Latest local smoke result from this workspace:
 
 - LLM: ready with llama.cpp on `127.0.0.1:8081` using `qwen3.5-9b-q4_k_m`; smoke returned `ready` in 259.49 ms.
-- TTS: ready with Edge TTS; produced a real 16560 byte MP3 in 2749.11 ms. Kokoro assets are also present.
-- STT: ready with local faster-whisper `tiny.en` on CPU/int8; transcribed `Jarvis runtime smoke ready.` in 2573.88 ms.
-- Production readiness is true for the current configured LLM/TTS/STT smoke path.
+- LLM retest after local voice changes: ready with llama.cpp on `127.0.0.1:8081`; smoke returned `ready` in 236.10 ms at 8.47 tokens/sec for the tiny two-token completion.
+- TTS local fallback retest: ready with system TTS; produced a real 115328 byte WAV in 911.83 ms.
+- STT retest: ready with local faster-whisper `tiny.en` on CPU/int8; transcribed `Jarvis runtime smoke ready.` in 2750.01 ms from the generated WAV.
+- Production readiness is true for the currently verified LLM plus system TTS plus local STT smoke path. Kokoro and OmniVoice assets are discovered, but their Python runtimes are not installed yet in this workspace.
 
 Latest autoconfig result from this workspace:
 
 - Preferred LLM order: llama.cpp with local Q4_K_M GGUF first, vLLM safetensors serving second, Ollama registered models last.
 - Current live LLM smoke: llama.cpp is active on `8081`; autoconfig skipped occupied `8080` and reused the running OpenAI-compatible endpoint.
-- Preferred TTS now: Edge TTS because it is installed and verified.
-- Preferred TTS target: Kokoro local once `kokoro-onnx` and `onnxruntime` are installed.
+- Preferred TTS order: Kokoro local assets first, then OmniVoice local voice simulation, then system TTS. Edge was only a temporary smoke path and is no longer the product fallback.
+- Current autoconfig TTS provider: system TTS, because Kokoro assets are present but `kokoro-onnx` is not installed. Target provider remains Kokoro once the runtime is installed; OmniVoice uses the downloaded `models/k2-fsa__OmniVoice` assets and local reference voices.
 - Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.
 - STT dependency status: `faster-whisper==1.2.1` is installed. Non-interactive pip flags were required: `PIP_NO_INPUT=1` and `PIP_DISABLE_PIP_VERSION_CHECK=1`.
 - STT model cache status: `Systran/faster-whisper-tiny.en` is downloaded. The Hugging Face Xet path stalled on larger model blobs, so first-run downloads should set `HF_HUB_DISABLE_XET=1`.
+- Packaging status: Electron/web/Docker configuration checks pass, but PyInstaller is not installed and `pip` timed out connecting to `pypi.org`, so the final backend binary and NSIS installer were not produced in this workspace yet.

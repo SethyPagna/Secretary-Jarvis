@@ -17,9 +17,17 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function packagedBackendPath() {
+function packagedBackendCandidates() {
   const binaryName = process.platform === 'win32' ? 'jarvis-backend.exe' : 'jarvis-backend'
-  return path.join(process.resourcesPath || '', 'backend', binaryName)
+  const resourcesPath = process.resourcesPath || ''
+  return [
+    path.join(resourcesPath, 'backend', binaryName),
+    path.join(resourcesPath, 'backend', 'jarvis-backend', binaryName)
+  ]
+}
+
+function packagedBackendPath() {
+  return packagedBackendCandidates().find((candidate) => fs.existsSync(candidate)) || packagedBackendCandidates()[0]
 }
 
 function resolveBackendLaunch() {

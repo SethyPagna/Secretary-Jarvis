@@ -58,6 +58,28 @@ def _default_model_roots() -> list[Path]:
     return roots
 
 
+def _default_voice_roots() -> list[Path]:
+    roots = []
+    env_root = os.getenv("JARVIS_VOICES_DIR", "").strip()
+    if env_root:
+        roots.append(Path(env_root))
+    roots.extend([
+        Path.home() / ".jarvis" / "voices",
+        Path.cwd() / "assets" / "voices",
+        Path.cwd() / "assets" / "voice",
+        Path.cwd() / "vendor" / "voices",
+        Path.cwd() / "vendor" / "voice",
+        Path.cwd() / "assets",
+        Path.cwd() / "vendor",
+        Path.cwd().parent / "assets" / "voices",
+        Path.cwd().parent / "assets" / "voice",
+        Path.cwd().parent / "vendor" / "voices",
+        Path.cwd().parent / "vendor" / "voice",
+        Path.cwd().parent / "vendor" / "voice and ui image",
+    ])
+    return roots
+
+
 def _ollama_models() -> list[str]:
     if not shutil.which("ollama"):
         return []
@@ -212,6 +234,42 @@ def _find_kokoro_assets(roots: Iterable[Path]) -> dict[str, Any]:
     return {"model_dir": "", "model_files": [], "voice": "", "voices": []}
 
 
+def _find_omnivoice_assets(roots: Iterable[Path]) -> dict[str, Any]:
+    """Find local OmniVoice reference voices and model assets.
+
+    JARVIS does not use cloud voice cloning. User-provided reference
+    voices under assets/voices and vendor/voices are treated as local assets
+    that Kokoro or OmniVoice-compatible runtimes can simulate offline.
+    """
+    voice_files: list[Path] = []
+    model_files: list[Path] = []
+    for root in roots:
+        try:
+            if not root.exists():
+                continue
+            for path in root.rglob("*"):
+                if not path.is_file():
+                    continue
+                lower = str(path).lower()
+                suffix = path.suffix.lower()
+                if "omnivoice" in lower and suffix in {".onnx", ".pt", ".pth", ".safetensors"}:
+                    model_files.append(path)
+                if suffix in {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".pt"}:
+                    voice_files.append(path)
+        except OSError:
+            continue
+
+    preferred_voice = next(
+        (voice for voice in voice_files if "jarvis" in voice.name.lower()),
+        voice_files[0] if voice_files else None,
+    )
+    return {
+        "model_files": [str(path) for path in model_files[:20]],
+        "voice": preferred_voice.stem if preferred_voice else "",
+        "voices": [str(path) for path in voice_files[:100]],
+    }
+
+
 def _find_whisper_assets(roots: Iterable[Path]) -> list[str]:
     results = []
     for root in roots:
@@ -354,35 +412,55 @@ def _tts_plan(
     roots: list[Path],
     package_available: PackageChecker,
 ) -> dict[str, Any]:
-    kokoro = _find_kokoro_assets(roots)
+    voice_roots = [*roots, *_default_voice_roots()]
+    kokoro = _find_kokoro_assets(voice_roots)
+    omnivoice = _find_omnivoice_assets(voice_roots)
     kokoro_runtime_ready = package_available("kokoro") or package_available("kokoro_onnx")
-    edge_ready = package_available("edge_tts")
+    omnivoice_runtime_ready = package_available("omnivoice") or package_available("omni_voice")
 
     if kokoro["model_files"] and kokoro_runtime_ready:
         provider = "kokoro"
         actions: list[str] = []
-    elif edge_ready:
-        provider = "edge"
+    elif omnivoice["voices"] and omnivoice_runtime_ready:
+        provider = "omnivoice"
         actions = []
         if kokoro["model_files"]:
             actions.append("Install Kokoro runtime for offline low-latency TTS: pip install kokoro-onnx onnxruntime")
+    elif kokoro["model_files"]:
+        provider = "system"
+        actions = ["Install Kokoro runtime for offline low-latency TTS: pip install kokoro-onnx onnxruntime"]
+    elif omnivoice["voices"]:
+        provider = "system"
+        actions = ["Install OmniVoice runtime for local voice simulation from assets/voices or vendor/voices."]
     else:
-        provider = "kokoro" if kokoro["model_files"] else "edge"
-        actions = ["Install a TTS runtime: pip install edge-tts or pip install kokoro-onnx onnxruntime"]
+        provider = "system"
+        actions = ["Add Kokoro or OmniVoice voice assets under assets/voices or vendor/voices for local cloned voices."]
 
     config_patch.setdefault("tts", {})["provider"] = provider
     if kokoro["model_dir"]:
         config_patch["tts"].setdefault("kokoro", {})["model_dir"] = kokoro["model_dir"]
         if kokoro["voice"]:
             config_patch["tts"]["kokoro"]["voice"] = kokoro["voice"]
+    if omnivoice["voices"]:
+        config_patch["tts"].setdefault("omnivoice", {})["voice_assets"] = omnivoice["voices"]
+        if omnivoice["voice"]:
+            config_patch["tts"]["omnivoice"]["voice"] = omnivoice["voice"]
 
     return {
         "provider": provider,
-        "target_provider": "kokoro" if kokoro["model_files"] else provider,
-        "dependency_ready": provider == "edge" and edge_ready or provider == "kokoro" and kokoro_runtime_ready,
-        "assets": kokoro,
+        "target_provider": "kokoro" if kokoro["model_files"] else "omnivoice" if omnivoice["voices"] else provider,
+        "dependency_ready": (
+            provider == "system"
+            or provider == "kokoro" and kokoro_runtime_ready
+            or provider == "omnivoice" and omnivoice_runtime_ready
+        ),
+        "assets": {
+            "kokoro": kokoro,
+            "omnivoice": omnivoice,
+            "voice_roots": [str(root) for root in voice_roots],
+        },
         "actions": actions,
-        "fallback_chain": ["kokoro", "edge", "openai", "elevenlabs", "system"],
+        "fallback_chain": ["kokoro", "omnivoice", "system"],
     }
 
 
@@ -419,7 +497,7 @@ def _stt_plan(
     if assets and not faster_ready:
         actions.append("Use the discovered Whisper assets after converting/downloading a faster-whisper compatible CTranslate2 model.")
     if not assets and not faster_ready and not whisper_cpp_ready:
-        actions.append("Download a Whisper model or configure OpenAI/Groq STT credentials.")
+        actions.append("Download a Whisper model, install whisper.cpp, or configure OpenAI Whisper API credentials.")
 
     return {
         "provider": "local",
@@ -430,7 +508,7 @@ def _stt_plan(
         "selected_model": local_model,
         "assets": assets,
         "actions": actions,
-        "optimization": "Use faster-whisper large-v3 on NVIDIA/CUDA; otherwise use tiny.en on CPU int8 for instant local STT.",
+        "optimization": "Use faster-whisper large-v3 on NVIDIA/CUDA; otherwise use tiny.en on CPU int8 for instant local STT. Fallback order is faster-whisper -> whisper.cpp -> OpenAI Whisper API.",
     }
 
 

@@ -224,6 +224,27 @@ def _kokoro_assets(config: Mapping[str, Any], model_roots: Iterable[Path]) -> di
     return {"model_files": model_files[:10], "voices": voices[:50]}
 
 
+def _omnivoice_assets(config: Mapping[str, Any]) -> dict[str, Any]:
+    configured = _cfg(config, "tts", "omnivoice", "voice_assets", default=[]) or []
+    roots = [
+        Path.cwd() / "assets" / "voices",
+        Path.cwd() / "vendor" / "voices",
+    ]
+    voices = [str(Path(path)) for path in configured if str(path).strip()]
+    for root in roots:
+        try:
+            if not root.exists():
+                continue
+            voices.extend(
+                str(path)
+                for path in root.rglob("*")
+                if path.is_file() and path.suffix.lower() in {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".pt"}
+            )
+        except OSError:
+            continue
+    return {"voices": voices[:100]}
+
+
 def _tts_status(
     config: Mapping[str, Any],
     env: Mapping[str, str],
@@ -231,12 +252,10 @@ def _tts_status(
     package_available: PackageChecker,
     executable_available: ExecutableChecker,
 ) -> dict[str, Any]:
-    provider = str(_cfg(config, "tts", "provider", default="edge") or "edge").strip().lower()
+    provider = str(_cfg(config, "tts", "provider", default="kokoro") or "kokoro").strip().lower()
     engine = {
         "kokoro": "kokoro",
-        "edge": "edge-tts",
-        "openai": "openai-tts",
-        "elevenlabs": "elevenlabs",
+        "omnivoice": "omnivoice",
         "system": "system-tts",
         "piper": "piper",
         "neutts": "neutts",
@@ -252,15 +271,12 @@ def _tts_status(
             issues.append("Kokoro Python package is not installed.")
         if not assets["model_files"] or not assets["voices"]:
             issues.append("Kokoro model or voice assets are missing.")
-    elif provider == "edge":
-        if not package_available("edge_tts"):
-            issues.append("edge-tts is not installed.")
-    elif provider == "openai":
-        if not _env_has(env, "OPENAI_API_KEY"):
-            issues.append("OPENAI_API_KEY is required for OpenAI TTS.")
-    elif provider == "elevenlabs":
-        if not _env_has(env, "ELEVENLABS_API_KEY"):
-            issues.append("ELEVENLABS_API_KEY is required for ElevenLabs TTS.")
+    elif provider == "omnivoice":
+        assets = _omnivoice_assets(config)
+        if not (package_available("omnivoice") or package_available("omni_voice")):
+            issues.append("OmniVoice runtime is not installed.")
+        if not assets["voices"]:
+            issues.append("OmniVoice reference voices are missing from assets/voices or vendor/voices.")
     elif provider == "piper":
         if not (package_available("piper") or executable_available("piper")):
             issues.append("Piper TTS is not installed.")
@@ -286,7 +302,7 @@ def _tts_status(
         "ready": not issues,
         "issues": issues,
         "assets": assets,
-        "fallback_chain": ["kokoro", "elevenlabs", "openai", "system"],
+        "fallback_chain": ["kokoro", "omnivoice", "system"],
     }
 
 
@@ -308,7 +324,7 @@ def _stt_status(
             "model": model,
             "ready": False,
             "issues": ["STT is disabled."],
-            "fallback_chain": ["faster-whisper", "openai"],
+            "fallback_chain": ["faster-whisper", "whisper.cpp", "openai"],
         }
 
     if provider in {"local", "faster-whisper", "faster_whisper"}:
@@ -337,7 +353,7 @@ def _stt_status(
         "model": model,
         "ready": not issues,
         "issues": issues,
-        "fallback_chain": ["faster-whisper", "groq", "openai"],
+        "fallback_chain": ["faster-whisper", "whisper.cpp", "openai"],
     }
 
 

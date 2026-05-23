@@ -8,6 +8,7 @@
   "scripts": {
     "postinstall": "echo 'JARVIS desktop dependencies ready.'",
     "desktop:dev": "electron .",
+    "desktop:build": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop.ps1 -PyInstallerSpec packaging/jarvis-backend.spec",
     "desktop:pack": "electron-builder"
   },
   "repository": {
@@ -40,7 +41,7 @@
     "extraResources": [
       {
         "from": "dist/jarvis-backend",
-        "to": "backend/jarvis-backend"
+        "to": "backend"
       }
     ],
     "win": {

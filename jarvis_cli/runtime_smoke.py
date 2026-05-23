@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import os
-import asyncio
 import importlib.util
+import shutil
+import subprocess
+import sys
 import tempfile
 import time
 import urllib.parse
@@ -323,82 +325,66 @@ def default_tts_probe(
     text: str,
     output_dir: Path,
 ) -> dict[str, Any]:
-    provider = str(_cfg(config, "tts", "provider", default="edge") or "edge").lower()
+    provider = str(_cfg(config, "tts", "provider", default="kokoro") or "kokoro").lower()
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / "jarvis-smoke-tts.mp3"
+    output_path = output_dir / ("jarvis-smoke-tts.wav" if provider == "system" else "jarvis-smoke-tts.mp3")
     timeout = float(env.get("JARVIS_SMOKE_TIMEOUT_SECONDS", "20") or 20)
 
     started = time.perf_counter()
     error = ""
     try:
-        if provider == "edge":
-            if importlib.util.find_spec("edge_tts") is None:
+        if provider == "kokoro":
+            if importlib.util.find_spec("kokoro") is None and importlib.util.find_spec("kokoro_onnx") is None:
                 return {
                     "ready": False,
-                    "engine": "edge",
-                    "error": "edge-tts is not installed.",
+                    "engine": "kokoro",
+                    "error": "Kokoro runtime is not installed.",
                     "latency_ms": _elapsed_ms(started),
                 }
-            import edge_tts
-
-            voice = str(_cfg(config, "tts", "edge", "voice", default="en-US-AriaNeural"))
-
-            async def _save_edge() -> None:
-                communicator = edge_tts.Communicate(text, voice)
-                await asyncio.wait_for(communicator.save(str(output_path)), timeout=timeout)
-
-            asyncio.run(_save_edge())
-        elif provider == "openai":
-            api_key = str(_cfg(config, "tts", "openai", "api_key", default="") or env.get("OPENAI_API_KEY", ""))
-            if not api_key:
+            error = "Kokoro live synthesis is installed but not yet wired in the smoke runner."
+        elif provider == "omnivoice":
+            if importlib.util.find_spec("omnivoice") is None and importlib.util.find_spec("omni_voice") is None:
                 return {
                     "ready": False,
-                    "engine": "openai",
-                    "error": "OPENAI_API_KEY is required for OpenAI TTS.",
+                    "engine": "omnivoice",
+                    "error": "OmniVoice runtime is not installed.",
                     "latency_ms": _elapsed_ms(started),
                 }
-            base_url = str(_cfg(config, "tts", "openai", "base_url", default="https://api.openai.com/v1")).rstrip("/")
-            model = str(_cfg(config, "tts", "openai", "model", default="gpt-4o-mini-tts"))
-            voice = str(_cfg(config, "tts", "openai", "voice", default="alloy"))
-            payload = {"model": model, "voice": voice, "input": text, "response_format": "mp3"}
-            request = urllib.request.Request(
-                f"{base_url}/audio/speech",
-                data=json.dumps(payload).encode("utf-8"),
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                method="POST",
-            )
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                output_path.write_bytes(response.read())
-        elif provider == "elevenlabs":
-            api_key = str(env.get("ELEVENLABS_API_KEY", "") or _cfg(config, "tts", "elevenlabs", "api_key", default=""))
-            if not api_key:
+            error = "OmniVoice live synthesis is installed but not yet wired in the smoke runner."
+        elif provider == "system":
+            if sys.platform == "win32":
+                safe_output_path = str(output_path).replace("'", "''")
+                safe_text = text.replace("'", "''")
+                command = [
+                    "powershell",
+                    "-NoProfile",
+                    "-Command",
+                    (
+                        "Add-Type -AssemblyName System.Speech; "
+                        "$s = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+                        f"$s.SetOutputToWaveFile('{safe_output_path}'); "
+                        f"$s.Speak('{safe_text}'); "
+                        "$s.Dispose();"
+                    ),
+                ]
+            elif shutil.which("say"):
+                command = ["say", "-o", str(output_path), text]
+            elif shutil.which("espeak"):
+                command = ["espeak", "-w", str(output_path), text]
+            else:
+                command = []
+            if not command:
                 return {
                     "ready": False,
-                    "engine": "elevenlabs",
-                    "error": "ELEVENLABS_API_KEY is required for ElevenLabs TTS.",
+                    "engine": "system",
+                    "error": "No system TTS command is available.",
                     "latency_ms": _elapsed_ms(started),
                 }
-            voice_id = str(_cfg(config, "tts", "elevenlabs", "voice_id", default="pNInz6obpgDQGcFmaJgB"))
-            model_id = str(_cfg(config, "tts", "elevenlabs", "model_id", default="eleven_multilingual_v2"))
-            request = urllib.request.Request(
-                f"https://api.elevenlabs.io/v1/text-to-speech/{urllib.parse.quote(voice_id)}",
-                data=json.dumps({"text": text, "model_id": model_id}).encode("utf-8"),
-                headers={
-                    "xi-api-key": api_key,
-                    "Accept": "audio/mpeg",
-                    "Content-Type": "application/json",
-                },
-                method="POST",
-            )
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                output_path.write_bytes(response.read())
+            subprocess.run(command, check=True, capture_output=True, text=True, timeout=timeout)
         else:
             error = (
                 f"TTS smoke test for provider '{provider}' is not implemented yet. "
-                "Use edge, openai, or elevenlabs for live smoke testing."
+                "Use kokoro, omnivoice, or system for local smoke testing."
             )
     except TimeoutError:
         error = f"TTS smoke test timed out after {timeout:.1f}s."

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface DesktopTitleBarProps {
   onToggleSidebar: () => void;
+  sidebarCollapsed: boolean;
 }
 
 type BackendStatus = "idle" | "offline" | "checking";
@@ -24,7 +25,10 @@ function formatClock(date: Date): string {
   });
 }
 
-export function DesktopTitleBar({ onToggleSidebar }: DesktopTitleBarProps) {
+export function DesktopTitleBar({
+  onToggleSidebar,
+  sidebarCollapsed,
+}: DesktopTitleBarProps) {
   const [clock, setClock] = useState(() => formatClock(new Date()));
   const [backendStatus, setBackendStatus] = useState<BackendStatus>("checking");
 
@@ -64,8 +68,8 @@ export function DesktopTitleBar({ onToggleSidebar }: DesktopTitleBarProps) {
         className="mr-2 grid h-8 w-8 place-items-center rounded-md text-cyan-100/75 transition hover:bg-cyan-200/10 hover:text-cyan-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-200"
         onClick={onToggleSidebar}
         style={noDragStyle}
-        aria-label="Toggle sidebar"
-        title="Toggle sidebar"
+        aria-label={sidebarCollapsed ? "Restore sidebar" : "Minimize sidebar"}
+        title={sidebarCollapsed ? "Restore sidebar" : "Minimize sidebar"}
       >
         <PanelLeft className="h-4 w-4" />
       </button>
