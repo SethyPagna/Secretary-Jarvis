@@ -28,6 +28,7 @@ Implemented checkpoints:
 | `/api/shutdown` | Done | Commit `24d75b5` |
 | Blueprint/progress documentation | Done | Commit `756cdb0` |
 | LLM/TTS/STT smoke testing | Done | This checkpoint adds `/api/runtime/smoke-test` |
+| Runtime autoconfig planner | Done | This checkpoint adds `/api/runtime/autoconfig` |
 | Electron desktop shell | Not started | Planned phase 3 |
 | React home page/orb UI | Not started | Planned phase 3 |
 | Models page | Not started | Planned phase 4 |
@@ -323,6 +324,7 @@ Implemented:
 | WS | `/ws/stats` | Stats stream |
 | POST | `/api/shutdown` | Graceful shutdown snapshot and cleanup |
 | POST | `/api/runtime/smoke-test` | Verify active LLM/TTS/STT actually run |
+| GET | `/api/runtime/autoconfig` | Discover local models/assets and return a config/action plan |
 
 Planned:
 
@@ -358,7 +360,14 @@ The current runtime smoke test verifies "arms and legs" behavior:
 
 Latest local smoke result from this workspace:
 
-- TTS: ready with Edge TTS; produced a real MP3 file.
-- LLM: blocked because no LLM provider or local backend is configured in the smoke invocation.
+- LLM: ready with Ollama `qwen3:8b`; native Ollama smoke returns `ready`.
+- TTS: ready with Edge TTS; produced a real MP3 file. Kokoro assets are also present.
 - STT: blocked because `faster-whisper` is not installed.
-- Production readiness remains false until LLM and STT blockers are removed.
+- Production readiness remains false until the STT blocker is removed.
+
+Latest autoconfig result from this workspace:
+
+- Preferred LLM: Ollama `qwen3:8b` when already registered, otherwise local Qwen Q4_K_M GGUF with `llama-server`.
+- Preferred TTS now: Edge TTS because it is installed and verified.
+- Preferred TTS target: Kokoro local once `kokoro-onnx` and `onnxruntime` are installed.
+- Preferred STT target: faster-whisper local with `large-v3`/auto device; install `faster-whisper` next.

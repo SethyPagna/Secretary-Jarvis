@@ -665,6 +665,15 @@ async def post_runtime_smoke_test():
     )
 
 
+@app.get("/api/runtime/autoconfig")
+async def get_runtime_autoconfig():
+    """Return a local model/voice/STT autoconfiguration plan."""
+    from jarvis_cli.runtime_autoconfig import build_runtime_autoconfig_plan
+
+    config = load_config()
+    return build_runtime_autoconfig_plan(config)
+
+
 def _active_skill_count() -> int:
     skills_dir = get_jarvis_home() / "skills"
     if not skills_dir.exists():

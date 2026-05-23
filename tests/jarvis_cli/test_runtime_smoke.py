@@ -1,11 +1,47 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from jarvis_cli.runtime_smoke import run_runtime_smoke_test
+from jarvis_cli import runtime_smoke
+from jarvis_cli.runtime_smoke import SMOKE_PROMPT, run_runtime_smoke_test
 
 
 class RuntimeSmokeTests(unittest.TestCase):
+    def test_smoke_prompt_disables_reasoning_for_reasoning_models(self) -> None:
+        self.assertIn("/no_think", SMOKE_PROMPT)
+        self.assertIn("exactly", SMOKE_PROMPT.lower())
+
+    def test_ollama_probe_uses_native_chat_with_think_disabled(self) -> None:
+        captured = {}
+
+        def fake_request(url, payload, **kwargs):
+            captured["url"] = url
+            captured["payload"] = payload
+            return {
+                "message": {"content": "ready"},
+                "eval_count": 2,
+                "eval_duration": 100_000_000,
+            }
+
+        with patch.object(runtime_smoke, "_json_request", side_effect=fake_request):
+            result = runtime_smoke._ollama_probe(
+                {
+                    "base_url": "http://127.0.0.1:11434/v1",
+                    "model": "qwen3:8b",
+                    "backend": "ollama",
+                    "provider_name": "ollama_local",
+                },
+                "Reply with exactly: ready",
+            )
+
+        self.assertEqual(captured["url"], "http://127.0.0.1:11434/api/chat")
+        self.assertEqual(captured["payload"]["think"], False)
+        self.assertEqual(captured["payload"]["options"]["num_predict"], 32)
+        self.assertTrue(result["ready"])
+        self.assertEqual(result["response"], "ready")
+        self.assertEqual(result["tokens_per_second"], 20.0)
+
     def test_smoke_test_marks_runtime_ready_when_all_probes_succeed(self) -> None:
         calls = []
 

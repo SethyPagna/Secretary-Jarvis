@@ -17,7 +17,7 @@ from jarvis_cli.runtime_readiness import _cfg, _first_provider, _infer_backend
 
 
 Probe = Callable[..., Mapping[str, Any]]
-SMOKE_PROMPT = "Reply with exactly: ready"
+SMOKE_PROMPT = "/no_think\nReply with exactly: ready"
 SMOKE_TTS_TEXT = "JARVIS runtime smoke ready."
 
 
@@ -131,7 +131,7 @@ def _openai_compatible_probe(settings: Mapping[str, Any], prompt: str) -> dict[s
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0,
-        "max_tokens": 16,
+        "max_tokens": 64,
         "stream": False,
     }
 
@@ -156,6 +156,50 @@ def _openai_compatible_probe(settings: Mapping[str, Any], prompt: str) -> dict[s
         ),
         "model": model,
         "backend": settings.get("backend"),
+        "provider": settings.get("provider_name"),
+    }
+
+
+def _ollama_probe(settings: Mapping[str, Any], prompt: str) -> dict[str, Any]:
+    model = str(settings.get("model") or "").strip()
+    base_url = str(settings.get("base_url") or "http://127.0.0.1:11434").rstrip("/")
+    if base_url.endswith("/v1"):
+        base_url = base_url[: -len("/v1")]
+    if not model:
+        return {"ready": False, "error": "No Ollama model is configured."}
+
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt.replace("/no_think\n", "")}],
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0,
+            "num_predict": 32,
+        },
+    }
+    started = time.perf_counter()
+    body = _json_request(f"{base_url}/api/chat", payload)
+    latency_ms = _elapsed_ms(started)
+    message = body.get("message") if isinstance(body.get("message"), Mapping) else {}
+    response = str(message.get("content") or "").strip()
+    eval_count = body.get("eval_count")
+    eval_duration_ns = body.get("eval_duration")
+    if eval_count and eval_duration_ns:
+        try:
+            tokens_per_second = round(int(eval_count) / (int(eval_duration_ns) / 1_000_000_000), 2)
+        except (TypeError, ValueError, ZeroDivisionError):
+            tokens_per_second = _tokens_per_second(response, latency_ms)
+    else:
+        tokens_per_second = _tokens_per_second(response, latency_ms)
+
+    return {
+        "ready": bool(response),
+        "response": response,
+        "latency_ms": latency_ms,
+        "tokens_per_second": tokens_per_second,
+        "model": model,
+        "backend": "ollama",
         "provider": settings.get("provider_name"),
     }
 
@@ -245,6 +289,8 @@ def default_llm_probe(config: Mapping[str, Any], env: Mapping[str, str], prompt:
     backend = settings["backend"]
     if backend == "unconfigured":
         return {"ready": False, "error": "No LLM provider or local backend is configured."}
+    if backend == "ollama":
+        return _ollama_probe(settings, prompt)
     if backend == "anthropic":
         return _anthropic_probe(settings, prompt)
     if backend == "gemini":
