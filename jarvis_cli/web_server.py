@@ -77,6 +77,7 @@ WEB_DIST = Path(os.environ["JARVIS_WEB_DIST"]) if "JARVIS_WEB_DIST" in os.enviro
 _log = logging.getLogger(__name__)
 
 app = FastAPI(title="JARVIS", version=__version__)
+_PROCESS_STARTED_AT = time.time()
 
 # ---------------------------------------------------------------------------
 # Session token for protecting sensitive endpoints (reveal).
@@ -648,6 +649,64 @@ async def get_runtime_readiness():
     config = load_config()
     env = {**os.environ, **load_env()}
     return build_runtime_readiness(config, env=env)
+
+
+def _active_skill_count() -> int:
+    skills_dir = get_jarvis_home() / "skills"
+    if not skills_dir.exists():
+        return 0
+    try:
+        return sum(
+            1
+            for path in skills_dir.rglob("*")
+            if path.is_file() and path.suffix.lower() in {".py", ".yaml", ".yml", ".md"}
+        )
+    except OSError:
+        return 0
+
+
+def _runtime_stats_snapshot() -> dict:
+    from jarvis_cli.runtime_stats import collect_runtime_stats
+
+    return collect_runtime_stats(
+        get_jarvis_home(),
+        gateway_status=read_runtime_status() or {},
+        active_skills=_active_skill_count(),
+        started_at=_PROCESS_STARTED_AT,
+    )
+
+
+@app.get("/api/stats")
+async def get_runtime_stats():
+    """Return one runtime stats snapshot for the desktop dashboard."""
+    return _runtime_stats_snapshot()
+
+
+@app.websocket("/ws/stats")
+async def stats_ws(ws: WebSocket) -> None:
+    token = ws.query_params.get("token", "")
+    if not hmac.compare_digest(token.encode(), _SESSION_TOKEN.encode()):
+        await ws.close(code=4401)
+        return
+    if not _ws_client_is_allowed(ws):
+        await ws.close(code=4403)
+        return
+
+    await ws.accept()
+    try:
+        while True:
+            await ws.send_json(_runtime_stats_snapshot())
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        return
+
+
+@app.post("/api/shutdown")
+async def post_shutdown():
+    """Persist backend state before Electron terminates the child process."""
+    from jarvis_cli.shutdown import perform_graceful_shutdown
+
+    return perform_graceful_shutdown(get_jarvis_home())
 
 
 # ---------------------------------------------------------------------------
