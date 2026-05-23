@@ -27,6 +27,17 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("toggle-maximize", source)
         self.assertIn("close", source)
 
+    def test_title_bar_notification_button_opens_drawer(self) -> None:
+        source = (ROOT / "web" / "src" / "components" / "DesktopTitleBar.tsx").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("notificationsOpen", source)
+        self.assertIn("setNotificationsOpen((value) => !value)", source)
+        self.assertIn('aria-expanded={notificationsOpen}', source)
+        self.assertIn('id="jarvis-notification-drawer"', source)
+        self.assertIn("Notification centre", source)
+
     def test_home_page_unifies_orb_stats_terminal_and_voice(self) -> None:
         source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
