@@ -651,6 +651,20 @@ async def get_runtime_readiness():
     return build_runtime_readiness(config, env=env)
 
 
+@app.post("/api/runtime/smoke-test")
+async def post_runtime_smoke_test():
+    """Run live LLM, TTS, and STT smoke checks for production readiness."""
+    from jarvis_cli.runtime_smoke import run_runtime_smoke_test
+
+    config = load_config()
+    env = {**os.environ, **load_env()}
+    return run_runtime_smoke_test(
+        config,
+        env=env,
+        output_dir=get_jarvis_home() / "runtime-smoke",
+    )
+
+
 def _active_skill_count() -> int:
     skills_dir = get_jarvis_home() / "skills"
     if not skills_dir.exists():

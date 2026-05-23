@@ -26,8 +26,8 @@ Implemented checkpoints:
 | `/api/stats` and `/ws/stats` | Done | Commit `24d75b5` |
 | Graceful shutdown helper | Done | Commit `24d75b5` |
 | `/api/shutdown` | Done | Commit `24d75b5` |
-| Blueprint/progress documentation | In progress | This document |
-| LLM/TTS/STT smoke testing | Next | Must verify actual responses/audio/transcripts |
+| Blueprint/progress documentation | Done | Commit `756cdb0` |
+| LLM/TTS/STT smoke testing | Done | This checkpoint adds `/api/runtime/smoke-test` |
 | Electron desktop shell | Not started | Planned phase 3 |
 | React home page/orb UI | Not started | Planned phase 3 |
 | Models page | Not started | Planned phase 4 |
@@ -322,12 +322,12 @@ Implemented:
 | GET | `/api/stats` | One stats snapshot |
 | WS | `/ws/stats` | Stats stream |
 | POST | `/api/shutdown` | Graceful shutdown snapshot and cleanup |
+| POST | `/api/runtime/smoke-test` | Verify active LLM/TTS/STT actually run |
 
 Planned:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| POST | `/api/runtime/smoke-test` | Verify active LLM/TTS/STT actually run |
 | WS | `/ws/pty` | Desktop PTY stream |
 | POST | `/api/chat` | Chat message |
 | GET | `/api/models` | List models |
@@ -348,10 +348,17 @@ Planned:
 
 ## Immediate Next Slice
 
-Add runtime smoke tests for "arms and legs" verification:
+The current runtime smoke test verifies "arms and legs" behavior:
 
 - LLM probe sends a tiny prompt to the configured backend and measures latency/tokens per second.
 - TTS probe synthesizes a short phrase and verifies non-empty audio bytes or a file.
 - STT probe transcribes a known audio sample or reports the exact missing dependency/sample blocker.
 - API returns `production_ready`, per-subsystem results, timings, throughput, and blockers.
 - Tests must run without optional heavy dependencies by injecting fake probes.
+
+Latest local smoke result from this workspace:
+
+- TTS: ready with Edge TTS; produced a real MP3 file.
+- LLM: blocked because no LLM provider or local backend is configured in the smoke invocation.
+- STT: blocked because `faster-whisper` is not installed.
+- Production readiness remains false until LLM and STT blockers are removed.
