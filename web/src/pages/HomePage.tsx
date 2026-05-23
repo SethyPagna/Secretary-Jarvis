@@ -10,6 +10,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { JarvisOrb, type OrbState } from "@/components/JarvisOrb";
 import { StatsPanel } from "@/components/StatsPanel";
@@ -57,6 +58,7 @@ function smokeSummary(smoke: RuntimeSmokeResponse): string {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
   const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
@@ -170,14 +172,21 @@ export default function HomePage() {
       return;
     }
 
+    if (command.toLowerCase() !== "status") {
+      const params = new URLSearchParams({ prefill: command });
+      setTerminalEntries((entries) => [
+        ...entries,
+        { kind: "output", text: "Opening live terminal." },
+      ]);
+      navigate(`/chat?${params.toString()}`);
+      return;
+    }
+
     setTerminalEntries((entries) => [
       ...entries,
       {
         kind: "output",
-        text:
-          command.toLowerCase() === "status"
-            ? `Backend ${compactStatus(status, readiness)}. Gateway ${status?.gateway_state ?? "unknown"}.`
-            : "PTY handoff is queued for the next desktop slice.",
+        text: `Backend ${compactStatus(status, readiness)}. Gateway ${status?.gateway_state ?? "unknown"}.`,
       },
     ]);
   };

@@ -40,6 +40,29 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("api.getRuntimeReadiness", source)
         self.assertIn("api.getRuntimeSmokeTest", source)
 
+    def test_home_terminal_hands_off_to_live_chat_pty(self) -> None:
+        source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("useNavigate", source)
+        self.assertIn("const navigate = useNavigate()", source)
+        self.assertIn('new URLSearchParams({ prefill: command })', source)
+        self.assertIn('navigate(`/chat?${params.toString()}`)', source)
+        self.assertNotIn("PTY handoff is queued", source)
+
+    def test_chat_page_accepts_home_prefill_over_pty(self) -> None:
+        source = (ROOT / "web" / "src" / "pages" / "ChatPage.tsx").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn('const prefillParam = searchParams.get("prefill");', source)
+        self.assertIn("[resumeParam, prefillParam]", source)
+        self.assertIn("const initialInput =", source)
+        self.assertIn("ws.send(initialInput)", source)
+        self.assertIn('next.delete("prefill")', source)
+        self.assertIn("window.history.replaceState", source)
+
     def test_api_client_exposes_runtime_endpoints_for_home(self) -> None:
         source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
 

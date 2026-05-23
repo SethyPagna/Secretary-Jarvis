@@ -52,11 +52,15 @@ function buildWsUrl(
 // (subscriber).  Generated once per mount so a tab refresh starts a fresh
 // channel — the previous PTY child terminates with the old WS, and its
 // channel auto-evicts when no subscribers remain.
-function generateChannelId(): string {
+function generateChannelId(
+  resume: string | null = null,
+  prefill: string | null = null,
+): string {
+  const identityHint = `${resume ?? ""}:${prefill ?? ""}`.length.toString(36);
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
+    return `${crypto.randomUUID()}-${identityHint}`;
   }
-  return `chat-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+  return `chat-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}-${identityHint}`;
 }
 
 // Colors for the terminal body.  Matches the dashboard's dark teal canvas
@@ -151,12 +155,15 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
 
   // The dashboard keeps ChatPage mounted persistently so the PTY survives tab
   // switches. That is great for ordinary /chat navigation, but it means query
-  // param changes do NOT remount the component. Resume-in-chat from the
-  // Sessions page relies on `/chat?resume=<id>` changing at runtime, so we must
-  // treat the current resume target as part of the PTY identity and rebuild the
-  // terminal session when it changes.
+  // param changes do NOT remount the component. Resume-in-chat from Sessions
+  // and desktop Home prefill handoffs both rely on query changes at runtime, so
+  // treat both as part of the PTY identity and rebuild when either changes.
   const resumeParam = searchParams.get("resume");
-  const channel = useMemo(() => generateChannelId(), [resumeParam]);
+  const prefillParam = searchParams.get("prefill");
+  const channel = useMemo(
+    () => generateChannelId(resumeParam, prefillParam),
+    [resumeParam, prefillParam],
+  );
 
   useEffect(() => {
     if (!resumeParam) return;
@@ -561,6 +568,22 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       // follow up with the authoritative measurement — at worst Ink
       // reflows once after the PTY boots, which is imperceptible.
       ws.send(`\x1b[RESIZE:${term.cols};${term.rows}]`);
+
+      if (prefillParam) {
+        const initialInput = /[\r\n]$/.test(prefillParam)
+          ? prefillParam
+          : `${prefillParam}\r`;
+        ws.send(initialInput);
+
+        const next = new URLSearchParams(window.location.search);
+        next.delete("prefill");
+        const query = next.toString();
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${window.location.pathname}${query ? `?${query}` : ""}`,
+        );
+      }
     };
 
     ws.onmessage = (ev) => {
@@ -650,7 +673,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         copyResetRef.current = null;
       }
     };
-  }, [channel, resumeParam]);
+  }, [channel, prefillParam, resumeParam]);
 
   // When the user returns to the chat tab (isActive: false → true), the
   // terminal host just transitioned from display:none to display:flex.

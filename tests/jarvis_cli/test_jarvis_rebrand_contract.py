@@ -69,6 +69,15 @@ class JarvisRebrandContractTests(unittest.TestCase):
         self.assertNotIn("cli", metadata["provides-extras"])
         self.assertNotIn("tts-premium", metadata["provides-extras"])
 
+    def test_frontend_lock_keeps_canonical_third_party_package_names(self) -> None:
+        package_lock = (ROOT / "web" / "package-lock.json").read_text(encoding="utf-8")
+
+        self.assertIn('"hermes-parser": "^0.25.1"', package_lock)
+        self.assertIn('"node_modules/hermes-parser"', package_lock)
+        self.assertIn('"node_modules/hermes-estree"', package_lock)
+        self.assertNotIn("jarvis-parser", package_lock)
+        self.assertNotIn("jarvis-estree", package_lock)
+
     def test_desktop_backend_entrypoint_imports(self) -> None:
         entry = importlib.import_module("jarvis_cli.desktop_entry")
 

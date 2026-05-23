@@ -37,6 +37,8 @@ Implemented checkpoints:
 | Desktop shutdown token | Done | Electron and package smoke use `X-Jarvis-Desktop-Shutdown-Token`; shutdown stays protected from generic unauthenticated API calls |
 | Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
+| Home terminal live PTY handoff | Done | Non-status Home commands navigate into the live `/api/pty` chat terminal with a prefilled command instead of a placeholder |
+| Frontend dependency rebrand guard | Done | Lockfile preserves canonical third-party `hermes-parser`/`hermes-estree` package names so ESLint can start |
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
 | Permissions/platforms/workflows/settings | Not started | Planned phases 6-8 |
@@ -154,6 +156,9 @@ Production requirements:
 - Orb frame rate targets 60 FPS on integrated graphics.
 - Particle count must auto-scale.
 - Voice controls must use real STT/TTS smoke-test results before showing ready.
+- Terminal commands must reach the live PTY path. The first desktop slice hands
+  commands from Home into the chat terminal with a prefilled command; the next
+  UI slice embeds the resizable xterm surface directly in the Home panel.
 - Terminal must preserve history in `~/.jarvis/history`.
 
 ## Part 4 - Models Page
@@ -409,7 +414,7 @@ The next product slice is packaging plus the React Home page inside the Electron
 - finish a successful local package smoke once PyPI connectivity is restored or a local wheel cache is available
 - run PyInstaller through `scripts/build-desktop.ps1` with the new smoke gate enabled
 - run electron-builder packaging after the backend smoke passes
-- wire the Home terminal shell to the PTY websocket
+- embed the full resizable xterm surface directly in the Home terminal panel
 - connect microphone capture to configured STT instead of permission probing only
 - connect voice playback controls to configured TTS output
 - preserve no standalone CLI entrypoints
