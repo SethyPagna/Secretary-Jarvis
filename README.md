@@ -14,11 +14,12 @@
 
 **The self-improving AI agent built by [Nous Research](https://nousresearch.com).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
 
-Use any model you want — [Nous Portal](https://portal.nousresearch.com), [OpenRouter](https://openrouter.ai) (200+ models), [NovitaAI](https://novita.ai) (AI-native cloud for Model API, Agent Sandbox, and GPU Cloud), [NVIDIA NIM](https://build.nvidia.com) (Nemotron), [Xiaomi MiMo](https://platform.xiaomimimo.com), [z.ai/GLM](https://z.ai), [Kimi/Moonshot](https://platform.moonshot.ai), [MiniMax](https://www.minimax.io), [Hugging Face](https://huggingface.co), OpenAI, or your own endpoint. Switch with `jarvis model` — no code changes, no lock-in.
+Use any model you want: llama.cpp first, vLLM second, Ollama as the final local fallback, plus [Nous Portal](https://portal.nousresearch.com), [OpenRouter](https://openrouter.ai), [NovitaAI](https://novita.ai), [NVIDIA NIM](https://build.nvidia.com), [Hugging Face](https://huggingface.co), OpenAI, or your own endpoint. Switch from the desktop Models page with no code changes and no lock-in.
 
 <table>
-<tr><td><b>A real terminal interface</b></td><td>Full TUI with multiline editing, slash-command autocomplete, conversation history, interrupt-and-redirect, and streaming tool output.</td></tr>
-<tr><td><b>Lives where you do</b></td><td>Telegram, Discord, Slack, WhatsApp, Signal, and CLI — all from a single gateway process. Voice memo transcription, cross-platform conversation continuity.</td></tr>
+<tr><td><b>Desktop-first control surface</b></td><td>Unified Home page with orb, live stats, voice input/output, terminal, chat, tools, and notifications in one place.</td></tr>
+<tr><td><b>Integrated terminal</b></td><td>The standalone CLI is no longer the product surface. The desktop terminal panel provides command execution, natural-language tasks, history, and streaming tool output through the backend PTY websocket.</td></tr>
+<tr><td><b>Lives where you do</b></td><td>Telegram, Discord, Slack, WhatsApp, Signal, and desktop notifications from a single gateway process. Voice memo transcription, cross-platform conversation continuity.</td></tr>
 <tr><td><b>A closed learning loop</b></td><td>Agent-curated memory with periodic nudges. Autonomous skill creation after complex tasks. Skills self-improve during use. FTS5 session search with LLM summarization for cross-session recall. <a href="https://github.com/plastic-labs/honcho">Honcho</a> dialectic user modeling. Compatible with the <a href="https://agentskills.io">agentskills.io</a> open standard.</td></tr>
 <tr><td><b>Scheduled automations</b></td><td>Built-in cron scheduler with delivery to any platform. Daily reports, nightly backups, weekly audits — all in natural language, running unattended.</td></tr>
 <tr><td><b>Delegates and parallelizes</b></td><td>Spawn isolated subagents for parallel workstreams. Write Python scripts that call tools via RPC, collapsing multi-step pipelines into zero-context-cost turns.</td></tr>
@@ -52,50 +53,44 @@ If you already have Git installed, the installer detects it and uses that instea
 
 > **Android / Termux:** The tested manual path is documented in the [Termux guide](https://jarvis-agent.nousresearch.com/docs/getting-started/termux). On Termux, Jarvis installs a curated `.[termux]` extra because the full `.[all]` extra currently pulls Android-incompatible voice dependencies.
 >
-> **Windows:** Native Windows is supported as an **early beta** — the PowerShell one-liner above installs everything, but expect rough edges and please file issues when you hit them. If you'd rather use WSL2 (our most battle-tested Windows path), the Linux command works there too. Native Windows install lives under `%LOCALAPPDATA%\jarvis`; WSL2 installs under `~/.jarvis` as on Linux.  The only Jarvis feature that currently needs WSL2 specifically is the browser-based dashboard chat pane (it uses a POSIX PTY — classic CLI and gateway both run natively).
+> **Windows:** Native Windows is supported as an **early beta**. The desktop remake uses an embedded backend plus an in-app terminal, so the standalone CLI is no longer the primary surface.
 
-After installation:
+During the desktop remake, the backend child process can be launched for development with:
 
 ```bash
-source ~/.bashrc    # reload shell (or: source ~/.zshrc)
-jarvis              # start chatting!
+jarvis-desktop-backend --host 127.0.0.1 --port 8765 --no-open
 ```
 
 ---
 
 ## Getting Started
 
-```bash
-jarvis              # Interactive CLI — start a conversation
-jarvis model        # Choose your LLM provider and model
-jarvis tools        # Configure which tools are enabled
-jarvis config set   # Set individual config values
-jarvis gateway      # Start the messaging gateway (Telegram, Discord, etc.)
-jarvis setup        # Run the full setup wizard (configures everything at once)
-jarvis claw migrate # Migrate from OpenClaw (if coming from OpenClaw)
-jarvis update       # Update to the latest version
-jarvis doctor       # Diagnose any issues
-```
+Open the desktop app and work from the unified Home page:
+
+- Home: orb, chat, terminal, voice, stats, quick actions, notifications.
+- Models: configure llama.cpp first, vLLM second, Ollama last, plus cloud providers.
+- Souls & Voices: identity, TTS, STT, wake word, voice tests.
+- Permissions, Platforms, Workflow, and Settings: tool access, gateway setup, automations, packaging preferences.
 
 📖 **[Full documentation →](https://jarvis-agent.nousresearch.com/docs/)**
 
-## CLI vs Messaging Quick Reference
+## Desktop and Messaging Quick Reference
 
-Jarvis has two entry points: start the terminal UI with `jarvis`, or run the gateway and talk to it from Telegram, Discord, Slack, WhatsApp, Signal, or Email. Once you're in a conversation, many slash commands are shared across both interfaces.
+JARVIS has one primary product surface: the desktop app. Messaging platforms remain available through the gateway and share the same backend memory, model, voice, and permission configuration.
 
-| Action | CLI | Messaging platforms |
-|---------|-----|---------------------|
-| Start chatting | `jarvis` | Run `jarvis gateway setup` + `jarvis gateway start`, then send the bot a message |
+| Action | Desktop | Messaging platforms |
+|---------|---------|---------------------|
+| Start chatting | Home chat input or terminal panel | Configure the platform in the Platforms page, then send the bot a message |
 | Start fresh conversation | `/new` or `/reset` | `/new` or `/reset` |
-| Change model | `/model [provider:model]` | `/model [provider:model]` |
-| Set a personality | `/personality [name]` | `/personality [name]` |
+| Change model | Models page | `/model [provider:model]` |
+| Set a personality | Souls & Voices page | `/personality [name]` |
 | Retry or undo the last turn | `/retry`, `/undo` | `/retry`, `/undo` |
 | Compress context / check usage | `/compress`, `/usage`, `/insights [--days N]` | `/compress`, `/usage`, `/insights [days]` |
-| Browse skills | `/skills` or `/<skill-name>` | `/<skill-name>` |
-| Interrupt current work | `Ctrl+C` or send a new message | `/stop` or send a new message |
-| Platform-specific status | `/platforms` | `/status`, `/sethome` |
+| Browse skills | Tools overlay or terminal panel | `/<skill-name>` |
+| Interrupt current work | Stop button, terminal interrupt, or new message | `/stop` or send a new message |
+| Platform-specific status | Platforms page | `/status`, `/sethome` |
 
-For the full command lists, see the [CLI guide](https://jarvis-agent.nousresearch.com/docs/user-guide/cli) and the [Messaging Gateway guide](https://jarvis-agent.nousresearch.com/docs/user-guide/messaging).
+For platform details, see the [Messaging Gateway guide](https://jarvis-agent.nousresearch.com/docs/user-guide/messaging).
 
 ---
 
@@ -106,7 +101,7 @@ All documentation lives at **[jarvis-agent.nousresearch.com/docs](https://jarvis
 | Section | What's Covered |
 |---------|---------------|
 | [Quickstart](https://jarvis-agent.nousresearch.com/docs/getting-started/quickstart) | Install → setup → first conversation in 2 minutes |
-| [CLI Usage](https://jarvis-agent.nousresearch.com/docs/user-guide/cli) | Commands, keybindings, personalities, sessions |
+| Desktop Usage | Home terminal, Models, Souls & Voices, permissions, platforms, workflows |
 | [Configuration](https://jarvis-agent.nousresearch.com/docs/user-guide/configuration) | Config file, providers, models, all options |
 | [Messaging Gateway](https://jarvis-agent.nousresearch.com/docs/user-guide/messaging) | Telegram, Discord, Slack, WhatsApp, Signal, Home Assistant |
 | [Security](https://jarvis-agent.nousresearch.com/docs/user-guide/security) | Command approval, DM pairing, container isolation |
@@ -118,7 +113,7 @@ All documentation lives at **[jarvis-agent.nousresearch.com/docs](https://jarvis
 | [Context Files](https://jarvis-agent.nousresearch.com/docs/user-guide/features/context-files) | Project context that shapes every conversation |
 | [Architecture](https://jarvis-agent.nousresearch.com/docs/developer-guide/architecture) | Project structure, agent loop, key classes |
 | [Contributing](https://jarvis-agent.nousresearch.com/docs/developer-guide/contributing) | Development setup, PR process, code style |
-| [CLI Reference](https://jarvis-agent.nousresearch.com/docs/reference/cli-commands) | All commands and flags |
+| Desktop Backend API | Runtime readiness, smoke tests, stats, PTY, shutdown, models, voice |
 | [Environment Variables](https://jarvis-agent.nousresearch.com/docs/reference/environment-variables) | Complete env var reference |
 
 ---
@@ -127,16 +122,9 @@ All documentation lives at **[jarvis-agent.nousresearch.com/docs](https://jarvis
 
 If you're coming from OpenClaw, Jarvis can automatically import your settings, memories, skills, and API keys.
 
-**During first-time setup:** The setup wizard (`jarvis setup`) automatically detects `~/.openclaw` and offers to migrate before configuration begins.
+**During first-time setup:** The desktop setup flow should detect `~/.openclaw` and offer to migrate before configuration begins.
 
-**Anytime after install:**
-
-```bash
-jarvis claw migrate              # Interactive migration (full preset)
-jarvis claw migrate --dry-run    # Preview what would be migrated
-jarvis claw migrate --preset user-data   # Migrate without secrets
-jarvis claw migrate --overwrite  # Overwrite existing conflicts
-```
+**Anytime after install:** use the desktop Settings > Data > Import flow. The old CLI migration command is not part of the desktop-first package surface.
 
 What gets imported:
 - **SOUL.md** — persona file
@@ -148,7 +136,7 @@ What gets imported:
 - **TTS assets** — workspace audio files
 - **Workspace instructions** — AGENTS.md (with `--workspace-target`)
 
-See `jarvis claw migrate --help` for all options, or use the `openclaw-migration` skill for an interactive agent-guided migration with dry-run previews.
+The migration UI should provide dry-run previews before writing imported data.
 
 ---
 
@@ -156,22 +144,19 @@ See `jarvis claw migrate --help` for all options, or use the `openclaw-migration
 
 We welcome contributions! See the [Contributing Guide](https://jarvis-agent.nousresearch.com/docs/developer-guide/contributing) for development setup, code style, and PR process.
 
-Quick start for contributors — clone and go with `setup-jarvis.sh`:
+Quick start for contributors:
 
 ```bash
 git clone https://github.com/NousResearch/jarvis-agent.git
 cd jarvis-agent
-./setup-jarvis.sh     # installs uv, creates venv, installs .[all], symlinks ~/.local/bin/jarvis
-./jarvis              # auto-detects the venv, no need to `source` first
+uv venv .venv --python 3.11
+uv pip install -e ".[all,dev]"
+jarvis-desktop-backend --host 127.0.0.1 --port 8765 --no-open
 ```
 
-Manual path (equivalent to the above):
+Run tests:
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv .venv --python 3.11
-source .venv/bin/activate
-uv pip install -e ".[all,dev]"
 scripts/run_tests.sh
 ```
 

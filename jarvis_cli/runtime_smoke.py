@@ -151,6 +151,8 @@ def _openai_compatible_probe(settings: Mapping[str, Any], prompt: str) -> dict[s
         "max_tokens": 64,
         "stream": False,
     }
+    if str(settings.get("backend") or "").lower() == "llama.cpp":
+        payload["chat_template_kwargs"] = {"enable_thinking": False}
 
     started = time.perf_counter()
     body = _json_request(url, payload, headers=headers)

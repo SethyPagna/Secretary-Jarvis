@@ -6,7 +6,9 @@ import importlib.util
 import json
 import os
 import shutil
+import socket
 import subprocess
+import urllib.request
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping
 
@@ -14,6 +16,8 @@ from typing import Any, Callable, Iterable, Mapping
 PackageChecker = Callable[[str], bool]
 ExecutableChecker = Callable[[str], bool]
 OllamaModels = Callable[[], list[str]]
+PortChecker = Callable[[int], bool]
+EndpointChecker = Callable[[int], bool]
 
 
 def _package_available(name: str) -> bool:
@@ -22,6 +26,23 @@ def _package_available(name: str) -> bool:
 
 def _executable_available(name: str) -> bool:
     return shutil.which(name) is not None
+
+
+def _loopback_port_available(port: int) -> bool:
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+
+
+def _openai_endpoint_ready(port: int) -> bool:
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/models", timeout=1.0) as response:
+            return 200 <= response.status < 300
+    except Exception:
+        return False
 
 
 def _default_model_roots() -> list[Path]:
@@ -112,6 +133,33 @@ def _best_gguf(roots: Iterable[Path]) -> Path | None:
     return sorted(files, key=_gguf_score, reverse=True)[0]
 
 
+def _vllm_score(path: Path) -> tuple[int, int, str]:
+    text = str(path).lower()
+    family_score = 0
+    for score, token in ((60, "qwen"), (50, "gemma"), (45, "llama"), (40, "mistral"), (35, "deepseek")):
+        if token in text:
+            family_score = score
+            break
+    return (family_score, -len(path.name), path.name.lower())
+
+
+def _best_vllm_model_dir(roots: Iterable[Path]) -> Path | None:
+    candidates: list[Path] = []
+    for root in roots:
+        try:
+            if not root.exists():
+                continue
+            for config_path in root.rglob("config.json"):
+                model_dir = config_path.parent
+                if any(model_dir.glob("*.safetensors")):
+                    candidates.append(model_dir)
+        except OSError:
+            continue
+    if not candidates:
+        return None
+    return sorted(candidates, key=_vllm_score, reverse=True)[0]
+
+
 def _best_ollama_model(models: list[str]) -> str:
     priorities = ("qwen", "gemma", "llama", "mistral", "phi", "deepseek")
     for token in priorities:
@@ -119,6 +167,18 @@ def _best_ollama_model(models: list[str]) -> str:
             if token in model.lower():
                 return model
     return models[0] if models else ""
+
+
+def _first_available_port(
+    preferred: int,
+    fallbacks: Iterable[int],
+    port_available: PortChecker,
+    endpoint_ready: EndpointChecker,
+) -> int:
+    for port in (preferred, *tuple(fallbacks)):
+        if endpoint_ready(port) or port_available(port):
+            return port
+    return preferred
 
 
 def _find_kokoro_assets(roots: Iterable[Path]) -> dict[str, Any]:
@@ -172,8 +232,78 @@ def _find_whisper_assets(roots: Iterable[Path]) -> list[str]:
 def _llm_plan(
     roots: list[Path],
     executable_available: ExecutableChecker,
+    package_available: PackageChecker,
     ollama_models: OllamaModels,
+    port_available: PortChecker,
+    endpoint_ready: EndpointChecker,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    gguf = _best_gguf(roots)
+    if gguf and executable_available("llama-server"):
+        port = _first_available_port(8080, range(8081, 8090), port_available, endpoint_ready)
+        endpoint = f"http://127.0.0.1:{port}/v1"
+        model = gguf.stem
+        start_command = (
+            f"llama-server --model {_quote(gguf)} --host 127.0.0.1 --port {port} "
+            "--ctx-size 32768 --n-gpu-layers 999 --threads 8"
+        )
+        config_patch = {
+            "model": model,
+            "providers": {
+                "llama_cpp_local": {
+                    "base_url": endpoint,
+                    "model": model,
+                    "api_key": "",
+                }
+            },
+        }
+        return (
+            {
+                "backend": "llama.cpp",
+                "model": model,
+                "model_path": str(gguf),
+                "endpoint": endpoint,
+                "dependency_ready": True,
+                "start_command": start_command,
+                "actions": [f"Start llama.cpp server: {start_command}"],
+                "optimization": "Default to llama.cpp with Q4_K_M GGUF for fast startup and low RAM/VRAM pressure.",
+            },
+            config_patch,
+        )
+
+    vllm_model_dir = _best_vllm_model_dir(roots)
+    vllm_ready = executable_available("vllm") or package_available("vllm")
+    if vllm_model_dir and vllm_ready:
+        port = _first_available_port(8000, range(8001, 8010), port_available, endpoint_ready)
+        endpoint = f"http://127.0.0.1:{port}/v1"
+        model = str(vllm_model_dir)
+        start_command = (
+            f"python -m vllm.entrypoints.openai.api_server --model {_quote(vllm_model_dir)} "
+            f"--host 127.0.0.1 --port {port} --gpu-memory-utilization 0.90"
+        )
+        config_patch = {
+            "model": model,
+            "providers": {
+                "vllm_local": {
+                    "base_url": endpoint,
+                    "model": model,
+                    "api_key": "",
+                }
+            },
+        }
+        return (
+            {
+                "backend": "vLLM",
+                "model": model,
+                "model_path": str(vllm_model_dir),
+                "endpoint": endpoint,
+                "dependency_ready": True,
+                "start_command": start_command,
+                "actions": [f"Start vLLM OpenAI-compatible server: {start_command}"],
+                "optimization": "Use vLLM for higher throughput batching when a safetensors model directory is available.",
+            },
+            config_patch,
+        )
+
     models = ollama_models() if executable_available("ollama") else []
     if models:
         model = _best_ollama_model(models)
@@ -195,38 +325,7 @@ def _llm_plan(
                 "dependency_ready": True,
                 "start_command": "ollama serve",
                 "actions": [],
-                "optimization": "Use Ollama keep_alive and Q4/Q5 quantized local models for fast startup.",
-            },
-            config_patch,
-        )
-
-    gguf = _best_gguf(roots)
-    if gguf and executable_available("llama-server"):
-        model = gguf.stem
-        start_command = (
-            f"llama-server --model {_quote(gguf)} --host 127.0.0.1 --port 8080 "
-            "--ctx-size 32768 --n-gpu-layers 999 --threads 8"
-        )
-        config_patch = {
-            "model": model,
-            "providers": {
-                "llama_cpp_local": {
-                    "base_url": "http://127.0.0.1:8080/v1",
-                    "model": model,
-                    "api_key": "",
-                }
-            },
-        }
-        return (
-            {
-                "backend": "llama.cpp",
-                "model": model,
-                "model_path": str(gguf),
-                "endpoint": "http://127.0.0.1:8080/v1",
-                "dependency_ready": True,
-                "start_command": start_command,
-                "actions": [f"Start llama.cpp server: {start_command}"],
-                "optimization": "Q4_K_M GGUF is preferred over F16 for faster tokens/sec and lower RAM/VRAM.",
+                "optimization": "Ollama is retained as the last local fallback for already-registered models.",
             },
             config_patch,
         )
@@ -234,15 +333,17 @@ def _llm_plan(
     actions = []
     if gguf and not executable_available("llama-server"):
         actions.append("Install llama.cpp/llama-server to serve the discovered GGUF model.")
-    if not gguf and not models:
-        actions.append("Download or register an LLM model with Ollama or llama.cpp.")
+    if vllm_model_dir and not vllm_ready:
+        actions.append("Install vLLM to serve the discovered safetensors model directory.")
+    if not gguf and not vllm_model_dir and not models:
+        actions.append("Download a GGUF model for llama.cpp, a safetensors model for vLLM, or register an Ollama fallback.")
     return (
         {
             "backend": "unconfigured",
             "model": "",
             "dependency_ready": False,
             "actions": actions,
-            "optimization": "Use Qwen/Gemma Q4_K_M GGUF or an Ollama model for fast local startup.",
+            "optimization": "Backend priority is llama.cpp first, vLLM second, Ollama last.",
         },
         {},
     )
@@ -340,12 +441,21 @@ def build_runtime_autoconfig_plan(
     executable_available: ExecutableChecker = _executable_available,
     package_available: PackageChecker = _package_available,
     ollama_models: OllamaModels = _ollama_models,
+    port_available: PortChecker = _loopback_port_available,
+    endpoint_ready: EndpointChecker = _openai_endpoint_ready,
 ) -> dict[str, Any]:
     """Return a config patch and action plan for a fast working runtime."""
     roots = list(_default_model_roots() if model_roots is None else model_roots)
     config_patch: dict[str, Any] = {}
 
-    llm, llm_patch = _llm_plan(roots, executable_available, ollama_models)
+    llm, llm_patch = _llm_plan(
+        roots,
+        executable_available,
+        package_available,
+        ollama_models,
+        port_available,
+        endpoint_ready,
+    )
     config_patch.update(llm_patch)
     tts = _tts_plan(config_patch, roots, package_available)
     stt = _stt_plan(config_patch, roots, package_available, executable_available)

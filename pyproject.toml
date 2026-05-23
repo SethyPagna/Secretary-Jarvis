@@ -46,8 +46,6 @@ dependencies = [
   # Responses API resource is exercised from a non-main thread, which is the
   # codex_responses dispatch in agent/chat_completion_helpers.py:_call.
   "pydantic==2.13.4",
-  # Interactive CLI (prompt_toolkit is used directly by cli.py)
-  "prompt_toolkit==3.0.52",
   # Cron scheduler (built-in feature — scheduled cron/interval jobs use croniter).
   "croniter==6.0.0",
   # Skills Hub (GitHub App JWT auth — optional, only needed for bot identity)
@@ -71,7 +69,7 @@ dependencies = [
 # OpenRouter or other aggregators).
 anthropic = ["anthropic==0.86.0"]
 # Web search backends — each only loaded when the user picks it as their
-# search provider (configured via `jarvis tools` or config.yaml).
+# search provider (configured via the desktop Tools overlay or config.yaml).
 exa = ["exa-py==2.10.2"]
 firecrawl = ["firecrawl-py==4.17.0"]
 parallel-web = ["parallel-web==0.4.2"]
@@ -89,7 +87,6 @@ messaging = ["python-telegram-bot[webhooks]==22.6", "discord.py[voice]==2.7.1", 
 cron = []  # croniter is now a core dependency; this extra kept for back-compat
 slack = ["slack-bolt==1.27.0", "slack-sdk==3.40.1", "aiohttp==3.13.3"]
 matrix = ["mautrix[encryption]==0.21.0", "Markdown==3.10.2", "aiosqlite==0.22.1", "asyncpg==0.31.0", "aiohttp-socks==0.11.0"]
-cli = ["simple-term-menu==1.6.6"]
 tts-premium = ["elevenlabs==1.59.0"]
 voice = [
   # Local STT pulls in wheel-only transitive deps (ctranslate2, onnxruntime),
@@ -107,7 +104,7 @@ mcp = ["mcp==1.26.0"]
 homeassistant = ["aiohttp==3.13.3"]
 sms = ["aiohttp==3.13.3"]
 # Computer use — macOS background desktop control via cua-driver (MCP stdio).
-# The cua-driver binary itself is installed via `jarvis tools` post-setup
+# The cua-driver binary itself is installed by the desktop setup/tools flow
 # (curl install script); this extra just pins the MCP client used to talk
 # to it, which is already provided by the `mcp` extra.
 computer-use = ["mcp==1.26.0"]
@@ -134,7 +131,6 @@ termux = [
   # Baseline Android / Termux path for reliable fresh installs.
   "python-telegram-bot[webhooks]==22.6",
   "jarvis-agent[cron]",
-  "jarvis-agent[cli]",
   "jarvis-agent[pty]",
   "jarvis-agent[mcp]",
   "jarvis-agent[honcho]",
@@ -169,13 +165,13 @@ youtube = [
   # at first invocation with ModuleNotFoundError (issue #22243).
   "youtube-transcript-api==1.2.4",
 ]
-# `jarvis dashboard` (localhost SPA + API).  Not in core to keep the default install lean.
+# Local desktop/dashboard API. Not in core to keep the default install lean.
 web = ["fastapi==0.133.1", "uvicorn[standard]==0.41.0"]
 all = [
   # Policy (2026-05-12): `[all]` includes only extras that genuinely
   # CAN'T be lazy-installed via `tools/lazy_deps.py` — i.e. things every
   # session can use, things needed before the agent loop is alive
-  # (terminal/CLI), and skill deps that packagers (Nix, AUR, Homebrew)
+  # (desktop terminal/PTY), and skill deps that packagers (Nix, AUR, Homebrew)
   # need in the wheel. Anything an opt-in backend (provider, search,
   # TTS, image, memory, messaging platform, terminal sandbox) needs
   # MUST live exclusively in `LAZY_DEPS` and resolve at first use —
@@ -194,7 +190,6 @@ all = [
   # and failed on `make`. Lazy-install routes that build to first use,
   # where the user is expected to have a toolchain available.
   "jarvis-agent[cron]",
-  "jarvis-agent[cli]",
   "jarvis-agent[dev]",
   "jarvis-agent[pty]",
   "jarvis-agent[mcp]",
@@ -207,12 +202,11 @@ all = [
 ]
 
 [project.scripts]
-jarvis = "jarvis_cli.main:main"
-jarvis-agent = "run_agent:main"
+jarvis-desktop-backend = "jarvis_cli.desktop_entry:main"
 jarvis-acp = "acp_adapter.entry:main"
 
 [tool.setuptools]
-py-modules = ["run_agent", "model_tools", "toolsets", "batch_runner", "trajectory_compressor", "toolset_distributions", "cli", "jarvis_bootstrap", "jarvis_constants", "jarvis_state", "jarvis_time", "jarvis_logging", "utils"]
+py-modules = ["run_agent", "model_tools", "toolsets", "batch_runner", "trajectory_compressor", "toolset_distributions", "jarvis_bootstrap", "jarvis_constants", "jarvis_state", "jarvis_time", "jarvis_logging", "utils"]
 
 [tool.setuptools.package-data]
 jarvis_cli = ["web_dist/**/*", "tui_dist/**/*", "scripts/install.sh", "scripts/install.ps1"]

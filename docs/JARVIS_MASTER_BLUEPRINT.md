@@ -17,8 +17,8 @@ Implemented checkpoints:
 | Area | Status | Evidence |
 | --- | --- | --- |
 | Fork/rebrand foundation | Done | Commit `3a75408` |
-| CLI package rename to `jarvis_cli` | Done | Commit `3a75408` |
-| `jarvis` command entry point | Done | Commit `3a75408` |
+| Internal Python backend package | Done | Historical package path remains `jarvis_cli` during migration |
+| Standalone CLI removal from package surface | Done | Desktop backend entrypoint replaces `jarvis` console script |
 | Default JARVIS SOUL template | Done | Commit `3a75408` |
 | Runtime readiness checker for LLM/TTS/STT | Done | Commit `2f93e96` |
 | `/api/runtime/readiness` | Done | Commit `2f93e96` |
@@ -31,6 +31,7 @@ Implemented checkpoints:
 | Runtime autoconfig planner | Done | This checkpoint adds `/api/runtime/autoconfig` |
 | Runtime autoconfig apply | Done | This checkpoint adds `/api/runtime/autoconfig/apply` |
 | Fast local STT profile | Done | CPU machines use faster-whisper `tiny.en`/int8; NVIDIA machines target `large-v3` |
+| Desktop-first backend priority | Done | Autoconfig prefers llama.cpp, then vLLM, then Ollama |
 | Electron desktop shell | Not started | Planned phase 3 |
 | React home page/orb UI | Not started | Planned phase 3 |
 | Models page | Not started | Planned phase 4 |
@@ -57,8 +58,9 @@ Performance targets:
 
 | Runtime | Minimum target | Preferred target |
 | --- | --- | --- |
-| Local Ollama/llama.cpp chat | 20 tokens/sec | 35+ tokens/sec |
+| llama.cpp local chat | 20 tokens/sec | 35+ tokens/sec |
 | vLLM local serving | 60 tokens/sec | 80+ tokens/sec |
+| Ollama fallback chat | 15 tokens/sec | 25+ tokens/sec |
 | Cloud chat | 60 tokens/sec observed stream | 120+ tokens/sec where provider supports it |
 | TTS first audio | Under 1500 ms | Under 700 ms |
 | STT short utterance | Under realtime | 0.5x realtime or faster |
@@ -71,8 +73,9 @@ Goals:
 - Fork `NousResearch/hermes-agent` to `SethyPagna/Secretary-Jarvis`.
 - Work on `jarvis-remake`.
 - Rename user-facing product from Hermes to JARVIS.
-- Rename CLI command from `hermes` to `jarvis`.
-- Rename Python package from `hermes_cli` to `jarvis_cli`.
+- Remove standalone CLI as a user-facing product surface.
+- Keep the historical `jarvis_cli` Python package only as an internal backend namespace until a later low-risk module migration.
+- Expose `jarvis-desktop-backend` for Electron/PyInstaller child-process startup.
 - Move local config/data from `~/.hermes` to `~/.jarvis`.
 - Preserve backward-compatible context fallbacks for `HERMES.md` and `AGENTS.md`.
 
@@ -105,7 +108,7 @@ Technology stack:
 | Backend | Python 3.12, FastAPI |
 | TTS | Kokoro local, ElevenLabs, OpenAI, system fallback |
 | STT | faster-whisper, whisper.cpp, OpenAI/Groq fallback |
-| Models | llama.cpp, Ollama, vLLM, OpenAI, Anthropic, Gemini, Groq, Together |
+| Models | llama.cpp default, vLLM throughput tier, Ollama fallback, OpenAI, Anthropic, Gemini, Groq, Together |
 | Packaging | PyInstaller, electron-builder |
 
 Process model:
@@ -114,6 +117,7 @@ Process model:
 - Python FastAPI backend runs as a child process.
 - Backend provides HTTP, PTY websocket, stats websocket, runtime readiness, and shutdown APIs.
 - Clean shutdown always persists state before Electron terminates the backend.
+- The integrated Home terminal replaces the standalone CLI; commands and natural-language tasks are routed through desktop IPC/API and PTY websockets.
 
 ## Part 3 - Home Page
 
@@ -137,7 +141,7 @@ Production requirements:
 
 The Models page manages:
 
-- Local backends: Ollama, llama.cpp, vLLM.
+- Local backends in priority order: llama.cpp first, vLLM second, Ollama last.
 - Cloud providers: OpenAI, Anthropic, Gemini, Groq, Together AI.
 - Custom OpenAI-compatible endpoints.
 - GGUF, safetensors, ONNX, and registry-managed models.
@@ -279,7 +283,7 @@ Development:
 
 Production packaging:
 
-1. PyInstaller bundles `jarvis_cli/server_entry.py` as `jarvis-backend`.
+1. PyInstaller bundles `jarvis_cli/desktop_entry.py` as `jarvis-backend`.
 2. Vite builds the React frontend.
 3. electron-builder packages Electron, frontend assets, and backend binary.
 
@@ -295,7 +299,7 @@ Phase 1: foundation and rebrand.
 
 Phase 2: core agent extensions:
 
-- Codex CLI tool
+- Codex desktop/backend tool
 - stats websocket
 - shutdown API
 - psutil monitoring
@@ -363,14 +367,15 @@ The current runtime smoke test verifies "arms and legs" behavior:
 
 Latest local smoke result from this workspace:
 
-- LLM: ready with Ollama `qwen3:8b`; native Ollama smoke returned `ready` in 2896.78 ms at 12.35 tokens/sec.
-- TTS: ready with Edge TTS; produced a real 16560 byte MP3 in 2761.08 ms. Kokoro assets are also present.
-- STT: ready with local faster-whisper `tiny.en` on CPU/int8; transcribed `Jarvis runtime smoke ready.` in 3317.45 ms.
+- LLM: ready with llama.cpp on `127.0.0.1:8081` using `qwen3.5-9b-q4_k_m`; smoke returned `ready` in 259.49 ms.
+- TTS: ready with Edge TTS; produced a real 16560 byte MP3 in 2749.11 ms. Kokoro assets are also present.
+- STT: ready with local faster-whisper `tiny.en` on CPU/int8; transcribed `Jarvis runtime smoke ready.` in 2573.88 ms.
 - Production readiness is true for the current configured LLM/TTS/STT smoke path.
 
 Latest autoconfig result from this workspace:
 
-- Preferred LLM: Ollama `qwen3:8b` when already registered, otherwise local Qwen Q4_K_M GGUF with `llama-server`.
+- Preferred LLM order: llama.cpp with local Q4_K_M GGUF first, vLLM safetensors serving second, Ollama registered models last.
+- Current live LLM smoke: llama.cpp is active on `8081`; autoconfig skipped occupied `8080` and reused the running OpenAI-compatible endpoint.
 - Preferred TTS now: Edge TTS because it is installed and verified.
 - Preferred TTS target: Kokoro local once `kokoro-onnx` and `onnxruntime` are installed.
 - Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.

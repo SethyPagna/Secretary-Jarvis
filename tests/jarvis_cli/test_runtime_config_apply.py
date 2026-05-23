@@ -36,6 +36,7 @@ class RuntimeConfigApplyTests(unittest.TestCase):
         self.assertEqual(merged["model"], "qwen3:8b")
         self.assertEqual(merged["providers"]["cloud"]["model"], "cloud-model")
         self.assertEqual(merged["providers"]["ollama_local"]["model"], "qwen3:8b")
+        self.assertEqual(next(iter(merged["providers"])), "ollama_local")
         self.assertEqual(merged["tts"]["provider"], "edge")
         self.assertEqual(merged["tts"]["openai"]["voice"], "alloy")
         self.assertEqual(merged["stt"]["provider"], "local")

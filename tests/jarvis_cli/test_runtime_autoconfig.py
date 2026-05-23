@@ -30,6 +30,7 @@ class RuntimeAutoconfigTests(unittest.TestCase):
                 model_roots=[root],
                 executable_available=lambda name: name == "llama-server",
                 package_available=lambda name: name == "edge_tts",
+                port_available=lambda port: True,
             )
 
         self.assertEqual(plan["llm"]["backend"], "llama.cpp")
@@ -56,6 +57,7 @@ class RuntimeAutoconfigTests(unittest.TestCase):
             executable_available=lambda name: name == "ollama",
             package_available=lambda name: name in {"edge_tts", "faster_whisper"},
             ollama_models=lambda: ["qwen2.5:7b"],
+            port_available=lambda port: True,
         )
 
         self.assertEqual(plan["llm"]["backend"], "ollama")
@@ -65,6 +67,91 @@ class RuntimeAutoconfigTests(unittest.TestCase):
         self.assertTrue(plan["stt"]["dependency_ready"])
         self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "tiny.en")
 
+    def test_autoconfig_prefers_llama_cpp_over_registered_ollama_models(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            model_dir = root / "Qwen__Qwen3.5-9B"
+            model_dir.mkdir()
+            gguf = model_dir / "qwen3.5-9b-q4_k_m.gguf"
+            gguf.write_bytes(b"q4")
+
+            plan = build_runtime_autoconfig_plan(
+                {},
+                model_roots=[root],
+                executable_available=lambda name: name in {"llama-server", "ollama"},
+                package_available=lambda name: name in {"edge_tts", "faster_whisper"},
+                ollama_models=lambda: ["qwen2.5:7b"],
+                port_available=lambda port: True,
+            )
+
+        self.assertEqual(plan["llm"]["backend"], "llama.cpp")
+        self.assertEqual(plan["llm"]["model_path"], str(gguf))
+        self.assertIn("llama_cpp_local", plan["config_patch"]["providers"])
+        self.assertNotIn("ollama_local", plan["config_patch"]["providers"])
+
+    def test_autoconfig_uses_next_llama_cpp_port_when_default_is_busy(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            model_dir = root / "Qwen__Qwen3.5-9B"
+            model_dir.mkdir()
+            model_dir.joinpath("qwen3.5-9b-q4_k_m.gguf").write_bytes(b"q4")
+
+            plan = build_runtime_autoconfig_plan(
+                {},
+                model_roots=[root],
+                executable_available=lambda name: name == "llama-server",
+                package_available=lambda name: name in {"edge_tts", "faster_whisper"},
+                port_available=lambda port: port != 8080,
+            )
+
+        self.assertEqual(plan["llm"]["endpoint"], "http://127.0.0.1:8081/v1")
+        self.assertIn("--port 8081", plan["llm"]["start_command"])
+        self.assertEqual(
+            plan["config_patch"]["providers"]["llama_cpp_local"]["base_url"],
+            "http://127.0.0.1:8081/v1",
+        )
+
+    def test_autoconfig_reuses_running_llama_cpp_endpoint_when_port_is_busy(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            model_dir = root / "Qwen__Qwen3.5-9B"
+            model_dir.mkdir()
+            model_dir.joinpath("qwen3.5-9b-q4_k_m.gguf").write_bytes(b"q4")
+
+            plan = build_runtime_autoconfig_plan(
+                {},
+                model_roots=[root],
+                executable_available=lambda name: name == "llama-server",
+                package_available=lambda name: name in {"edge_tts", "faster_whisper"},
+                port_available=lambda port: port not in {8080, 8081},
+                endpoint_ready=lambda port: port == 8081,
+            )
+
+        self.assertEqual(plan["llm"]["endpoint"], "http://127.0.0.1:8081/v1")
+        self.assertIn("--port 8081", plan["llm"]["start_command"])
+
+    def test_autoconfig_prefers_vllm_over_ollama_when_no_llama_cpp_model_is_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            model_dir = root / "Qwen__Qwen3.5-9B"
+            model_dir.mkdir()
+            (model_dir / "config.json").write_text("{}", encoding="utf-8")
+            (model_dir / "model.safetensors").write_bytes(b"weights")
+
+            plan = build_runtime_autoconfig_plan(
+                {},
+                model_roots=[root],
+                executable_available=lambda name: name in {"vllm", "ollama"},
+                package_available=lambda name: name in {"edge_tts", "faster_whisper"},
+                ollama_models=lambda: ["qwen2.5:7b"],
+                port_available=lambda port: True,
+            )
+
+        self.assertEqual(plan["llm"]["backend"], "vLLM")
+        self.assertEqual(plan["llm"]["model_path"], str(model_dir))
+        self.assertIn("vllm_local", plan["config_patch"]["providers"])
+        self.assertNotIn("ollama_local", plan["config_patch"]["providers"])
+
     def test_autoconfig_uses_large_whisper_profile_when_nvidia_is_available(self) -> None:
         plan = build_runtime_autoconfig_plan(
             {},
@@ -72,6 +159,7 @@ class RuntimeAutoconfigTests(unittest.TestCase):
             executable_available=lambda name: name in {"ollama", "nvidia-smi"},
             package_available=lambda name: name in {"edge_tts", "faster_whisper"},
             ollama_models=lambda: ["qwen2.5:7b"],
+            port_available=lambda port: True,
         )
 
         self.assertTrue(plan["stt"]["nvidia_ready"])

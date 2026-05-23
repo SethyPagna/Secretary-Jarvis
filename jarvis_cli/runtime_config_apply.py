@@ -16,6 +16,14 @@ def merge_runtime_config(
 
     def _merge(target: dict[str, Any], source: Mapping[str, Any]) -> None:
         for key, value in source.items():
+            if key == "providers" and isinstance(value, Mapping):
+                existing = target.get(key) if isinstance(target.get(key), dict) else {}
+                promoted = {name: copy.deepcopy(provider) for name, provider in value.items()}
+                for name, provider in existing.items():
+                    if name not in promoted:
+                        promoted[name] = copy.deepcopy(provider)
+                target[key] = promoted
+                continue
             if (
                 isinstance(value, Mapping)
                 and isinstance(target.get(key), dict)
