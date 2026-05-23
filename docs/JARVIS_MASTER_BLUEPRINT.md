@@ -34,6 +34,7 @@ Implemented checkpoints:
 | Desktop-first backend priority | Done | Autoconfig prefers llama.cpp, then vLLM, then Ollama |
 | Electron desktop shell | Done | Starts hidden backend child process, frameless window, preload IPC bridge, and `/api/shutdown` close path |
 | Desktop backend dependency contract | Done | FastAPI/Uvicorn are core deps; embedded startup disables lazy installs and fails fast when deps are missing |
+| Desktop shutdown token | Done | Electron and package smoke use `X-Jarvis-Desktop-Shutdown-Token`; shutdown stays protected from generic unauthenticated API calls |
 | Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Models page | Not started | Planned phase 4 |
@@ -54,8 +55,8 @@ JARVIS is not production ready until every gate below has automated evidence:
 7. `/api/runtime/smoke-test` verifies actual runtime behavior, not only config.
 8. `/api/stats` and `/ws/stats` stream CPU, RAM, GPU where available, token counters, skills, gateway connections, and uptime.
 9. `/api/shutdown` persists a session shutdown snapshot and runs cleanup callbacks without blocking process exit.
-10. Desktop close path calls `/api/shutdown`, then terminates child processes within a fixed timeout.
-11. Packaged backend smoke starts the PyInstaller backend hidden, verifies `/api/status`, calls `/api/shutdown`, and stops the child process before electron-builder packages the installer.
+10. Desktop close path calls `/api/shutdown` with the desktop shutdown token, then terminates child processes within a fixed timeout.
+11. Packaged backend smoke starts the PyInstaller backend hidden, verifies `/api/status`, calls `/api/shutdown` with the desktop shutdown token, and stops the child process before electron-builder packages the installer.
 
 Performance targets:
 

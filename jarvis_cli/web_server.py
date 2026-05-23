@@ -91,6 +91,8 @@ _PROCESS_STARTED_AT = time.time()
 # ---------------------------------------------------------------------------
 _SESSION_TOKEN = secrets.token_urlsafe(32)
 _SESSION_HEADER_NAME = "X-Jarvis-Session-Token"
+_DESKTOP_SHUTDOWN_TOKEN = os.environ.get("JARVIS_DESKTOP_SHUTDOWN_TOKEN", "")
+_DESKTOP_SHUTDOWN_HEADER_NAME = "X-Jarvis-Desktop-Shutdown-Token"
 
 # In-browser Chat tab (/chat, /api/pty, …).  Off unless ``jarvis dashboard --tui``
 # or JARVIS_DASHBOARD_TUI=1.  Set from :func:`start_server`.
@@ -146,6 +148,16 @@ def _has_valid_session_token(request: Request) -> bool:
     auth = request.headers.get("authorization", "")
     expected = f"Bearer {_SESSION_TOKEN}"
     return hmac.compare_digest(auth.encode(), expected.encode())
+
+
+def _has_valid_desktop_shutdown_token(request: Request) -> bool:
+    """True when Electron or the packaging smoke owns the backend process."""
+    token = request.headers.get(_DESKTOP_SHUTDOWN_HEADER_NAME, "")
+    return bool(
+        _DESKTOP_SHUTDOWN_TOKEN
+        and token
+        and hmac.compare_digest(token.encode(), _DESKTOP_SHUTDOWN_TOKEN.encode())
+    )
 
 
 def _require_token(request: Request) -> None:
@@ -244,6 +256,8 @@ async def auth_middleware(request: Request, call_next):
     """Require the session token on all /api/ routes except the public list."""
     path = request.url.path
     if path.startswith("/api/") and path not in _PUBLIC_API_PATHS:
+        if path == "/api/shutdown" and _has_valid_desktop_shutdown_token(request):
+            return await call_next(request)
         if not _has_valid_session_token(request):
             return JSONResponse(
                 status_code=401,

@@ -15,6 +15,15 @@ class DesktopApiContractTests(unittest.TestCase):
         self.assertIn("collect_runtime_stats", source)
         self.assertIn("perform_graceful_shutdown", source)
 
+    def test_shutdown_endpoint_accepts_desktop_shutdown_token(self) -> None:
+        source = (ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
+
+        self.assertIn("JARVIS_DESKTOP_SHUTDOWN_TOKEN", source)
+        self.assertIn("X-Jarvis-Desktop-Shutdown-Token", source)
+        self.assertIn("_has_valid_desktop_shutdown_token", source)
+        self.assertIn('path == "/api/shutdown"', source)
+        self.assertNotIn('"/api/shutdown",\n}', source)
+
 
 if __name__ == "__main__":
     unittest.main()

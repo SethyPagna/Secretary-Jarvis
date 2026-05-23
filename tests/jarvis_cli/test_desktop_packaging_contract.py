@@ -31,6 +31,8 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("-WindowStyle Hidden", smoke_script)
         self.assertIn("JARVIS_DESKTOP_EMBEDDED", smoke_script)
         self.assertIn("JARVIS_DISABLE_LAZY_INSTALLS", smoke_script)
+        self.assertIn("JARVIS_DESKTOP_SHUTDOWN_TOKEN", smoke_script)
+        self.assertIn("X-Jarvis-Desktop-Shutdown-Token", smoke_script)
         self.assertIn("[string]$BindHost", smoke_script)
         self.assertNotIn("[string]$Host", smoke_script)
         self.assertIn("/api/status", smoke_script)

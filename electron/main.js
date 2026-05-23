@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const { spawn } = require('child_process')
+const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 
@@ -7,6 +8,7 @@ const BACKEND_HOST = process.env.JARVIS_DESKTOP_BACKEND_HOST || '127.0.0.1'
 const BACKEND_PORT = Number.parseInt(process.env.JARVIS_DESKTOP_BACKEND_PORT || '8765', 10)
 const BACKEND_BASE_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`
 const BACKEND_SHUTDOWN_TIMEOUT_MS = 5000
+const BACKEND_SHUTDOWN_TOKEN = process.env.JARVIS_DESKTOP_SHUTDOWN_TOKEN || crypto.randomBytes(32).toString('hex')
 
 let mainWindow = null
 let backendProcess = null
@@ -72,6 +74,7 @@ function startBackendProcess() {
     env: {
       ...process.env,
       JARVIS_DESKTOP_EMBEDDED: '1',
+      JARVIS_DESKTOP_SHUTDOWN_TOKEN: BACKEND_SHUTDOWN_TOKEN,
       JARVIS_DISABLE_LAZY_INSTALLS: '1'
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -198,7 +201,8 @@ async function shutdownBackend() {
     await fetchJson('/api/shutdown', {
       method: 'POST',
       headers: {
-        'content-type': 'application/json'
+        'content-type': 'application/json',
+        'X-Jarvis-Desktop-Shutdown-Token': BACKEND_SHUTDOWN_TOKEN
       }
     })
   } catch (error) {

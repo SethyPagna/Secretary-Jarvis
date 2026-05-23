@@ -30,10 +30,13 @@ if (-not $BackendCommand) {
 
 $PreviousEmbedded = $env:JARVIS_DESKTOP_EMBEDDED
 $PreviousLazyInstalls = $env:JARVIS_DISABLE_LAZY_INSTALLS
+$PreviousShutdownToken = $env:JARVIS_DESKTOP_SHUTDOWN_TOKEN
+$ShutdownToken = "$([Guid]::NewGuid().ToString("N"))$([Guid]::NewGuid().ToString("N"))"
 $Process = $null
 
 try {
     $env:JARVIS_DESKTOP_EMBEDDED = "1"
+    $env:JARVIS_DESKTOP_SHUTDOWN_TOKEN = $ShutdownToken
     $env:JARVIS_DISABLE_LAZY_INSTALLS = "1"
 
     $Process = Start-Process `
@@ -70,7 +73,11 @@ try {
         throw "JARVIS backend did not become ready at $BaseUrl within $TimeoutSec seconds. LastError=$LastError`n$stderr"
     }
 
-    Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/shutdown" -TimeoutSec 5 | Out-Null
+    Invoke-RestMethod `
+        -Method Post `
+        -Uri "$BaseUrl/api/shutdown" `
+        -Headers @{"X-Jarvis-Desktop-Shutdown-Token" = $ShutdownToken} `
+        -TimeoutSec 5 | Out-Null
 
     if (-not $Process.WaitForExit(5000)) {
         Stop-Process -Id $Process.Id -Force
@@ -100,5 +107,12 @@ finally {
     }
     else {
         $env:JARVIS_DISABLE_LAZY_INSTALLS = $PreviousLazyInstalls
+    }
+
+    if ($null -eq $PreviousShutdownToken) {
+        Remove-Item Env:\JARVIS_DESKTOP_SHUTDOWN_TOKEN -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:JARVIS_DESKTOP_SHUTDOWN_TOKEN = $PreviousShutdownToken
     }
 }
