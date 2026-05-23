@@ -26,6 +26,24 @@ if (-not $BackendCommand) {
         [string]$Port,
         "--no-open"
     )
+    $PreflightArgs = @(
+        "-m",
+        "jarvis_cli.desktop_entry",
+        "--preflight",
+        "--host",
+        $BindHost,
+        "--port",
+        [string]$Port
+    )
+}
+else {
+    $PreflightArgs = @(
+        "--preflight",
+        "--host",
+        $BindHost,
+        "--port",
+        [string]$Port
+    )
 }
 
 $PreviousEmbedded = $env:JARVIS_DESKTOP_EMBEDDED
@@ -38,6 +56,11 @@ try {
     $env:JARVIS_DESKTOP_EMBEDDED = "1"
     $env:JARVIS_DESKTOP_SHUTDOWN_TOKEN = $ShutdownToken
     $env:JARVIS_DISABLE_LAZY_INSTALLS = "1"
+
+    $preflight = & $BackendCommand @PreflightArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "JARVIS desktop backend preflight failed before launch:`n$preflight"
+    }
 
     $Process = Start-Process `
         -FilePath $BackendCommand `

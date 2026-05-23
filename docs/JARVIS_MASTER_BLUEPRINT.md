@@ -33,6 +33,7 @@ Implemented checkpoints:
 | Fast local STT profile | Done | CPU machines use faster-whisper `tiny.en`/int8; NVIDIA machines target `large-v3` |
 | Desktop-first backend priority | Done | Autoconfig prefers llama.cpp, then vLLM, then Ollama |
 | Electron desktop shell | Done | Starts hidden backend child process, frameless window, preload IPC bridge, and `/api/shutdown` close path |
+| Desktop backend startup preflight | Done | `jarvis-desktop-backend --preflight` and Electron/smoke scripts fail fast with missing dependency/port diagnostics before waiting on `/api/status` |
 | Desktop backend dependency contract | Done | FastAPI/Uvicorn are core deps; embedded startup disables lazy installs and fails fast when deps are missing |
 | Desktop shutdown token | Done | Electron and package smoke use `X-Jarvis-Desktop-Shutdown-Token`; shutdown stays protected from generic unauthenticated API calls |
 | Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
@@ -60,6 +61,7 @@ JARVIS is not production ready until every gate below has automated evidence:
 9. `/api/shutdown` persists a session shutdown snapshot and runs cleanup callbacks without blocking process exit.
 10. Desktop close path calls `/api/shutdown` with the desktop shutdown token, then terminates child processes within a fixed timeout.
 11. Packaged backend smoke starts the PyInstaller backend hidden, verifies `/api/status`, calls `/api/shutdown` with the desktop shutdown token, and stops the child process before electron-builder packages the installer.
+12. Desktop backend preflight must pass before Electron or packaging smoke waits for `/api/status`.
 
 Performance targets:
 
@@ -415,6 +417,7 @@ The next product slice is packaging plus the React Home page inside the Electron
 - finish a successful local package smoke once PyPI connectivity is restored or a local wheel cache is available
 - run PyInstaller through `scripts/build-desktop.ps1` with the new smoke gate enabled
 - run electron-builder packaging after the backend smoke passes
+- install/restore FastAPI, Uvicorn, and Pydantic in this Python environment or provide a local wheel cache; current preflight correctly reports those modules missing
 - connect microphone capture to configured STT instead of permission probing only
 - connect voice playback controls to configured TTS output
 - preserve no standalone CLI entrypoints

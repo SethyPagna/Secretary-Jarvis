@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
-const { spawn } = require('child_process')
+const { spawn, spawnSync } = require('child_process')
 const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
@@ -39,6 +39,7 @@ function resolveBackendLaunch() {
     return {
       command: packagedBackend,
       args: ['--host', BACKEND_HOST, '--port', String(BACKEND_PORT), '--no-open'],
+      preflightArgs: ['--preflight', '--host', BACKEND_HOST, '--port', String(BACKEND_PORT)],
       options: {}
     }
   }
@@ -56,11 +57,56 @@ function resolveBackendLaunch() {
       String(BACKEND_PORT),
       '--no-open'
     ],
+    preflightArgs: [
+      '-m',
+      'jarvis_cli.desktop_entry',
+      '--preflight',
+      '--host',
+      BACKEND_HOST,
+      '--port',
+      String(BACKEND_PORT)
+    ],
     options: {
       // Windows equivalent of PowerShell Start-Process -WindowStyle Hidden.
       windowsHide: true
     }
   }
+}
+
+function backendEnv() {
+  return {
+    ...process.env,
+    JARVIS_DESKTOP_EMBEDDED: '1',
+    JARVIS_DESKTOP_SHUTDOWN_TOKEN: BACKEND_SHUTDOWN_TOKEN,
+    JARVIS_DISABLE_LAZY_INSTALLS: '1'
+  }
+}
+
+function runBackendPreflight() {
+  const launch = resolveBackendLaunch()
+  const result = spawnSync(launch.command, launch.preflightArgs, {
+    cwd: path.resolve(__dirname, '..'),
+    env: backendEnv(),
+    encoding: 'utf8',
+    windowsHide: true,
+    ...launch.options
+  })
+
+  if (result.error) {
+    console.error('[jarvis-backend] backend preflight failed', result.error)
+    return false
+  }
+
+  const output = [result.stdout, result.stderr].filter(Boolean).join('\n').trim()
+  if (result.status !== 0) {
+    console.error(`[jarvis-backend] backend preflight failed\n${output}`)
+    return false
+  }
+
+  if (output) {
+    console.log(`[jarvis-backend] preflight ${output}`)
+  }
+  return true
 }
 
 function startBackendProcess() {
@@ -71,12 +117,7 @@ function startBackendProcess() {
   const launch = resolveBackendLaunch()
   backendProcess = spawn(launch.command, launch.args, {
     cwd: path.resolve(__dirname, '..'),
-    env: {
-      ...process.env,
-      JARVIS_DESKTOP_EMBEDDED: '1',
-      JARVIS_DESKTOP_SHUTDOWN_TOKEN: BACKEND_SHUTDOWN_TOKEN,
-      JARVIS_DISABLE_LAZY_INSTALLS: '1'
-    },
+    env: backendEnv(),
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
     ...launch.options
@@ -303,7 +344,11 @@ ipcMain.handle('jarvis:window-control', (_event, action) => {
 })
 
 app.whenReady().then(async () => {
-  startBackendProcess()
+  if (runBackendPreflight()) {
+    startBackendProcess()
+  } else {
+    console.warn('[jarvis-desktop] backend preflight failed; opening offline-capable shell')
+  }
 
   try {
     await waitForBackend()

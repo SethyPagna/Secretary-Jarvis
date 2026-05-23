@@ -33,6 +33,15 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("contextIsolation: true", source)
         self.assertIn("preload.js", source)
 
+    def test_main_process_runs_backend_preflight_before_launch(self) -> None:
+        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+
+        self.assertIn("spawnSync", source)
+        self.assertIn("runBackendPreflight", source)
+        self.assertIn("'--preflight'", source)
+        self.assertIn("backend preflight failed", source)
+        self.assertLess(source.index("runBackendPreflight()"), source.index("startBackendProcess()"))
+
     def test_main_process_shutdown_calls_backend_before_kill(self) -> None:
         source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
 
