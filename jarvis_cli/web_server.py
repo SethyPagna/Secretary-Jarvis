@@ -498,6 +498,11 @@ class VoiceSynthesizeRequest(BaseModel):
     text: str
 
 
+class DockerRuntimeRequest(BaseModel):
+    profile: str = "auto"
+    include_voice: bool = True
+
+
 _GATEWAY_HEALTH_URL = os.getenv("GATEWAY_HEALTH_URL")
 try:
     _GATEWAY_HEALTH_TIMEOUT = float(os.getenv("GATEWAY_HEALTH_TIMEOUT", "3"))
@@ -738,6 +743,38 @@ async def post_runtime_autoconfig_apply():
         "config_path": str(get_config_path()),
         "plan": plan,
     }
+
+
+@app.get("/api/runtime/docker")
+async def get_runtime_docker(profile: str = "auto"):
+    """Return Docker local-model service state for the desktop Setup page."""
+    from jarvis_cli.docker_models import docker_runtime_status
+
+    return docker_runtime_status(profile)
+
+
+@app.post("/api/runtime/docker/start")
+async def post_runtime_docker_start(body: DockerRuntimeRequest):
+    """Start Docker local LLM and voice services owned by JARVIS setup."""
+    from jarvis_cli.docker_models import start_docker_runtime
+
+    return start_docker_runtime(body.profile, include_voice=body.include_voice)
+
+
+@app.post("/api/runtime/docker/stop")
+async def post_runtime_docker_stop():
+    """Stop JARVIS Docker local model services so resources return to the host."""
+    from jarvis_cli.docker_models import stop_docker_runtime
+
+    return stop_docker_runtime()
+
+
+@app.post("/api/runtime/docker/apply")
+async def post_runtime_docker_apply(body: DockerRuntimeRequest):
+    """Apply Docker local runtime endpoints to config.yaml."""
+    from jarvis_cli.docker_models import apply_docker_runtime
+
+    return apply_docker_runtime(body.profile, include_voice=body.include_voice)
 
 
 def _active_skill_count() -> int:

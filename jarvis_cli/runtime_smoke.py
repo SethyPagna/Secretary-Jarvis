@@ -381,6 +381,17 @@ def default_tts_probe(
                     "latency_ms": _elapsed_ms(started),
                 }
             subprocess.run(command, check=True, capture_output=True, text=True, timeout=timeout)
+        elif provider == "docker":
+            from jarvis_cli.desktop_voice import synthesize_desktop_speech
+
+            payload = synthesize_desktop_speech(text, output_dir, provider="docker")
+            return {
+                "ready": bool(payload.get("success")),
+                "engine": "docker",
+                "latency_ms": payload.get("latency_ms") or _elapsed_ms(started),
+                "audio_bytes": payload.get("audio_bytes") or 0,
+                "error": payload.get("error", ""),
+            }
         else:
             error = (
                 f"TTS smoke test for provider '{provider}' is not implemented yet. "
@@ -434,6 +445,25 @@ def default_stt_probe(
         }
 
     started = time.perf_counter()
+    if provider == "docker":
+        from jarvis_cli.desktop_voice import transcribe_desktop_audio
+
+        with _temporary_environ(env):
+            payload = transcribe_desktop_audio(
+                sample_audio.read_bytes(),
+                "audio/wav",
+                sample_audio.parent,
+            )
+        transcript = str(payload.get("transcript") or "").strip()
+        return {
+            "ready": bool(payload.get("success")) and bool(transcript),
+            "engine": "docker",
+            "latency_ms": payload.get("latency_ms") or _elapsed_ms(started),
+            "transcript": transcript,
+            "sample_audio": str(sample_audio),
+            "error": payload.get("error", ""),
+        }
+
     with _temporary_environ(env):
         from tools.transcription_tools import transcribe_audio
 

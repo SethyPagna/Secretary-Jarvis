@@ -58,6 +58,23 @@ def _probe_endpoint(url: str) -> Mapping[str, Any]:
         return {"ok": False, "error": str(exc)}
 
 
+def _probe_health_url(url: str) -> Mapping[str, Any]:
+    if not url:
+        return {"ok": False, "error": "missing endpoint"}
+    probe_url = f"{url.rstrip('/')}/health"
+    started = time.perf_counter()
+    try:
+        with urllib.request.urlopen(probe_url, timeout=1.5) as response:
+            body = response.read(2048)
+        return {
+            "ok": 200 <= response.status < 300,
+            "latency_ms": round((time.perf_counter() - started) * 1000, 2),
+            "sample": body.decode("utf-8", errors="ignore")[:240],
+        }
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
 def _cfg(config: Mapping[str, Any], *keys: str, default: Any = None) -> Any:
     current: Any = config
     for key in keys:
@@ -260,9 +277,11 @@ def _tts_status(
         "piper": "piper",
         "neutts": "neutts",
         "kittentts": "kittentts",
+        "docker": "docker-local-voice",
     }.get(provider, provider or "unconfigured")
     issues: list[str] = []
     assets: dict[str, Any] = {}
+    endpoint: Mapping[str, Any] = {}
 
     if provider == "kokoro":
         assets = _kokoro_assets(config, model_roots)
@@ -293,6 +312,17 @@ def _tts_status(
             or executable_available("powershell")
         ):
             issues.append("No system TTS command was found.")
+    elif provider == "docker":
+        voice_url = str(
+            _cfg(config, "tts", "docker", "url", default="")
+            or _cfg(config, "runtime", "docker", "voice_url", default="")
+            or ""
+        ).strip()
+        endpoint = _probe_health_url(voice_url)
+        if not voice_url:
+            issues.append("Docker voice runtime URL is not configured.")
+        elif not endpoint.get("ok"):
+            issues.append(f"Docker voice runtime is not reachable: {endpoint.get('error', 'offline')}")
     else:
         issues.append(f"Unknown TTS provider: {provider or 'empty'}")
 
@@ -302,6 +332,7 @@ def _tts_status(
         "ready": not issues,
         "issues": issues,
         "assets": assets,
+        "endpoint": dict(endpoint),
         "fallback_chain": ["kokoro", "omnivoice", "system"],
     }
 
@@ -316,6 +347,7 @@ def _stt_status(
     provider = str(_cfg(config, "stt", "provider", default="local") or "local").strip().lower()
     model = str(_cfg(config, "stt", provider, "model", default="") or _cfg(config, "stt", "local", "model", default="base"))
     issues: list[str] = []
+    endpoint: Mapping[str, Any] = {}
 
     if not enabled:
         return {
@@ -343,6 +375,18 @@ def _stt_status(
         engine = "groq-whisper"
         if not _env_has(env, "GROQ_API_KEY"):
             issues.append("GROQ_API_KEY is required for Groq Whisper.")
+    elif provider == "docker":
+        engine = "docker-faster-whisper"
+        voice_url = str(
+            _cfg(config, "stt", "docker", "url", default="")
+            or _cfg(config, "runtime", "docker", "voice_url", default="")
+            or ""
+        ).strip()
+        endpoint = _probe_health_url(voice_url)
+        if not voice_url:
+            issues.append("Docker STT runtime URL is not configured.")
+        elif not endpoint.get("ok"):
+            issues.append(f"Docker STT runtime is not reachable: {endpoint.get('error', 'offline')}")
     else:
         engine = provider or "unconfigured"
         issues.append(f"Unknown STT provider: {provider or 'empty'}")
@@ -353,6 +397,7 @@ def _stt_status(
         "model": model,
         "ready": not issues,
         "issues": issues,
+        "endpoint": dict(endpoint),
         "fallback_chain": ["faster-whisper", "whisper.cpp", "openai"],
     }
 

@@ -382,8 +382,10 @@ export const setupItems: KnowledgeItem[] = [
     title: "Docker And WSL",
     summary: "Avoid fixed low limits while allowing resources to return.",
     detail:
-      "Docker services should be able to use available CPU/RAM/GPU when active, but idle services should release memory naturally. Document any WSL resource policy in setup.",
+      "Use the Docker Local Models panel to start, apply, and stop local model services from the desktop app. The compose file avoids hard CPU/RAM/GPU caps, and stopping services lets Docker/WSL return idle resources.",
     badges: ["Docker", "WSL"],
+    command: "scripts\\jarvis-docker-models.ps1 start -Profile auto",
+    source: "docs/jarvis/docker-local-models.md",
   },
   {
     id: "smoke-tests",

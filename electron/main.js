@@ -76,11 +76,16 @@ function resolveBackendLaunch() {
 }
 
 function backendEnv() {
+  const resourceRoot = app.isPackaged && process.resourcesPath
+    ? process.resourcesPath
+    : path.resolve(__dirname, '..')
+
   return {
     ...process.env,
     JARVIS_DESKTOP_EMBEDDED: '1',
     JARVIS_DESKTOP_SHUTDOWN_TOKEN: BACKEND_SHUTDOWN_TOKEN,
-    JARVIS_DISABLE_LAZY_INSTALLS: '1'
+    JARVIS_DISABLE_LAZY_INSTALLS: '1',
+    JARVIS_RESOURCE_ROOT: resourceRoot
   }
 }
 

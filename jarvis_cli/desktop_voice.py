@@ -12,7 +12,9 @@ from __future__ import annotations
 import base64
 import json
 import mimetypes
+import os
 import time
+import urllib.request
 import uuid
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -57,6 +59,72 @@ def _default_transcriber(path: str) -> Mapping[str, Any]:
     return transcribe_audio(path)
 
 
+def _cfg_nested(mapping: Mapping[str, Any], *keys: str, default: Any = "") -> Any:
+    current: Any = mapping
+    for key in keys:
+        if not isinstance(current, Mapping):
+            return default
+        current = current.get(key)
+    return default if current is None else current
+
+
+def _docker_voice_url(kind: str) -> str:
+    env_url = str(
+        os.environ.get("JARVIS_DOCKER_VOICE_URL")
+        or os.environ.get("JARVIS_VOICE_RUNTIME_URL")
+        or ""
+    ).strip()
+    if env_url:
+        return env_url.rstrip("/")
+
+    try:
+        from jarvis_cli.config import cfg_get, load_config
+
+        config = load_config()
+        provider = str(cfg_get(config, kind, "provider", default="") or "").lower()
+        runtime_enabled = bool(_cfg_nested(config, "runtime", "docker", "enabled", default=False))
+        configured_url = str(
+            cfg_get(config, kind, "docker", "url", default="")
+            or _cfg_nested(config, "runtime", "docker", "voice_url", default="")
+            or ""
+        ).strip()
+        if configured_url and (provider == "docker" or runtime_enabled):
+            return configured_url.rstrip("/")
+    except Exception:
+        return ""
+    return ""
+
+
+def _post_docker_voice_raw(url: str, audio_bytes: bytes, content_type: str | None) -> dict[str, Any]:
+    extension = audio_extension_for(content_type)
+    request = urllib.request.Request(
+        f"{url.rstrip('/')}/stt/raw",
+        data=audio_bytes,
+        headers={
+            "Content-Type": content_type or "application/octet-stream",
+            "X-Audio-Extension": extension,
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:
+        payload = response.read()
+    result = json.loads(payload.decode("utf-8"))
+    return dict(result) if isinstance(result, dict) else {"success": False, "error": "Invalid Docker STT response."}
+
+
+def _post_docker_voice_json(url: str, payload: Mapping[str, Any]) -> dict[str, Any]:
+    request = urllib.request.Request(
+        f"{url.rstrip('/')}/tts",
+        data=json.dumps(dict(payload)).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:
+        raw = response.read()
+    result = json.loads(raw.decode("utf-8"))
+    return dict(result) if isinstance(result, dict) else {"success": False, "error": "Invalid Docker TTS response."}
+
+
 def transcribe_desktop_audio(
     audio_bytes: bytes,
     content_type: str | None,
@@ -72,6 +140,31 @@ def transcribe_desktop_audio(
             "error": "No microphone audio was captured.",
             "bytes": 0,
         }
+
+    docker_url = _docker_voice_url("stt")
+    if docker_url:
+        started = time.perf_counter()
+        try:
+            result = _post_docker_voice_raw(docker_url, audio_bytes, content_type)
+            transcript = str(result.get("transcript") or "").strip()
+            return {
+                **result,
+                "success": bool(result.get("success")) and bool(transcript),
+                "transcript": transcript,
+                "provider": "docker",
+                "bytes": len(audio_bytes),
+                "latency_ms": result.get("latency_ms")
+                or int((time.perf_counter() - started) * 1000),
+            }
+        except Exception as exc:
+            return {
+                "success": False,
+                "transcript": "",
+                "provider": "docker",
+                "error": f"Docker STT runtime is unavailable at {docker_url}: {type(exc).__name__}: {exc}",
+                "bytes": len(audio_bytes),
+                "latency_ms": int((time.perf_counter() - started) * 1000),
+            }
 
     output_dir.mkdir(parents=True, exist_ok=True)
     audio_path = output_dir / f"desktop-input-{uuid.uuid4().hex}{audio_extension_for(content_type)}"
@@ -138,6 +231,39 @@ def synthesize_desktop_speech(
             "audio_base64": "",
             "audio_bytes": 0,
         }
+
+    docker_url = _docker_voice_url("tts")
+    if effective_provider == "docker" or docker_url:
+        if not docker_url:
+            return {
+                "success": False,
+                "error": "Docker TTS provider is selected but no Docker voice URL is configured.",
+                "provider": "docker",
+                "audio_base64": "",
+                "audio_bytes": 0,
+            }
+        started = time.perf_counter()
+        try:
+            result = _post_docker_voice_json(docker_url, {"text": spoken_text})
+            return {
+                **result,
+                "success": bool(result.get("success")) and bool(result.get("audio_base64")),
+                "provider": "docker",
+                "audio_base64": str(result.get("audio_base64") or ""),
+                "audio_bytes": int(result.get("audio_bytes") or 0),
+                "mime_type": str(result.get("mime_type") or "audio/wav"),
+                "latency_ms": result.get("latency_ms")
+                or int((time.perf_counter() - started) * 1000),
+            }
+        except Exception as exc:
+            return {
+                "success": False,
+                "error": f"Docker TTS runtime is unavailable at {docker_url}: {type(exc).__name__}: {exc}",
+                "provider": "docker",
+                "audio_base64": "",
+                "audio_bytes": 0,
+                "latency_ms": int((time.perf_counter() - started) * 1000),
+            }
 
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"desktop-output-{uuid.uuid4().hex}.mp3"

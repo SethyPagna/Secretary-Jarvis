@@ -81,6 +81,39 @@ class RuntimeReadinessTests(unittest.TestCase):
         self.assertFalse(readiness["stt"]["ready"])
         self.assertGreaterEqual(len(readiness["blocking_issues"]), 3)
 
+    def test_reports_docker_voice_runtime_as_local_provider(self) -> None:
+        from jarvis_cli.runtime_readiness import build_runtime_readiness
+
+        config = {
+            "model": "gemma-4-E4B-it",
+            "providers": {
+                "jarvis_vllm_docker": {
+                    "base_url": "http://127.0.0.1:8000/v1",
+                    "model": "gemma-4-E4B-it",
+                }
+            },
+            "runtime": {"docker": {"voice_url": "http://127.0.0.1:9010"}},
+            "tts": {"provider": "docker", "docker": {"url": "http://127.0.0.1:9010"}},
+            "stt": {
+                "enabled": True,
+                "provider": "docker",
+                "docker": {"url": "http://127.0.0.1:9010", "model": "base"},
+            },
+        }
+
+        readiness = build_runtime_readiness(
+            config,
+            env={},
+            model_roots=[],
+            package_available=lambda _name: False,
+            executable_available=lambda _name: False,
+            endpoint_probe=lambda _url: {"ok": True, "latency_ms": 10.0},
+        )
+
+        self.assertEqual(readiness["llm"]["backend"], "vllm")
+        self.assertEqual(readiness["tts"]["engine"], "docker-local-voice")
+        self.assertEqual(readiness["stt"]["engine"], "docker-faster-whisper")
+
 
 if __name__ == "__main__":
     unittest.main()
