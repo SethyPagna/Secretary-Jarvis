@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from collections.abc import Sequence
 
 
@@ -24,6 +25,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
+
+    os.environ.setdefault("JARVIS_DESKTOP_EMBEDDED", "1")
+    os.environ.setdefault("JARVIS_DISABLE_LAZY_INSTALLS", "1")
 
     from jarvis_cli.web_server import start_server
 

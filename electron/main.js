@@ -71,7 +71,8 @@ function startBackendProcess() {
     cwd: path.resolve(__dirname, '..'),
     env: {
       ...process.env,
-      JARVIS_DESKTOP_EMBEDDED: '1'
+      JARVIS_DESKTOP_EMBEDDED: '1',
+      JARVIS_DISABLE_LAZY_INSTALLS: '1'
     },
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,

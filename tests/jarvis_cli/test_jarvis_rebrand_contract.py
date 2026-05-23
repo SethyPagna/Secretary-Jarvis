@@ -21,9 +21,53 @@ class JarvisRebrandContractTests(unittest.TestCase):
         self.assertNotIn("jarvis-agent", scripts)
         self.assertNotIn("hermes", scripts)
         self.assertNotIn("cli", data["project"].get("optional-dependencies", {}))
+        self.assertNotIn("tts-premium", data["project"].get("optional-dependencies", {}))
+        self.assertFalse(
+            any(
+                "elevenlabs" in dep.lower()
+                for deps in data["project"].get("optional-dependencies", {}).values()
+                for dep in deps
+            )
+        )
         self.assertFalse(any("prompt_toolkit" in dep for dep in data["project"]["dependencies"]))
+        self.assertTrue(any(dep.startswith("fastapi==") for dep in data["project"]["dependencies"]))
+        self.assertTrue(any(dep.startswith("uvicorn[standard]==") for dep in data["project"]["dependencies"]))
         self.assertNotIn("cli", data["tool"]["setuptools"]["py-modules"])
         self.assertIn("jarvis_cli", data["tool"]["setuptools"]["packages"]["find"]["include"])
+
+    def test_uv_lock_matches_desktop_package_contract(self) -> None:
+        lock = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
+        package = next(pkg for pkg in lock["package"] if pkg["source"].get("editable") == ".")
+
+        self.assertFalse(any(pkg["name"] == "elevenlabs" for pkg in lock["package"]))
+        self.assertFalse(any(pkg["name"] == "prompt-toolkit" for pkg in lock["package"]))
+        self.assertFalse(any(pkg["name"] == "simple-term-menu" for pkg in lock["package"]))
+        self.assertEqual(package["name"], "jarvis-agent")
+        dependencies = {
+            (dep["name"], tuple(dep.get("extra", [])))
+            for dep in package["dependencies"]
+        }
+        self.assertIn(("fastapi", ()), dependencies)
+        self.assertIn(("uvicorn", ("standard",)), dependencies)
+        self.assertNotIn(("prompt-toolkit", ()), dependencies)
+
+        optional = package.get("optional-dependencies", {})
+        self.assertNotIn("cli", optional)
+        self.assertNotIn("tts-premium", optional)
+        self.assertEqual(optional.get("web", []), [])
+
+        metadata = package["metadata"]
+        requires_dist = metadata["requires-dist"]
+        self.assertTrue(
+            any(req["name"] == "fastapi" and "marker" not in req for req in requires_dist)
+        )
+        self.assertTrue(
+            any(req["name"] == "uvicorn" and "marker" not in req for req in requires_dist)
+        )
+        self.assertFalse(any(req["name"] == "elevenlabs" for req in requires_dist))
+        self.assertFalse(any(req["name"] == "hermes-agent" for req in requires_dist))
+        self.assertNotIn("cli", metadata["provides-extras"])
+        self.assertNotIn("tts-premium", metadata["provides-extras"])
 
     def test_desktop_backend_entrypoint_imports(self) -> None:
         entry = importlib.import_module("jarvis_cli.desktop_entry")

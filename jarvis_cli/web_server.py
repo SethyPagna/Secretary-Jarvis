@@ -55,7 +55,12 @@ try:
     from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
     from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel
-except ImportError:
+except ImportError as exc:
+    if os.environ.get("JARVIS_DESKTOP_EMBEDDED") == "1":
+        raise SystemExit(
+            "Web UI requires fastapi and uvicorn for the embedded desktop backend.\n"
+            f"Install project dependencies with: {sys.executable} -m pip install -e ."
+        ) from exc
     # First try lazy-installing the dashboard extras. Only the user actually
     # running `jarvis dashboard` needs fastapi+uvicorn; lazy install keeps
     # them out of every other install path. After install, re-import.
