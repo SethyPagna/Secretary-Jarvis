@@ -20,6 +20,18 @@ scripts\jarvis-docker-models.ps1 apply -Profile auto
 
 `auto` prefers `llama.cpp` when a GGUF model exists, then `vLLM` when a safetensors model directory exists, then `Ollama`.
 
+Use the one-command desktop launcher:
+
+```powershell
+.\run-jarvis.cmd
+```
+
+The launcher sets `JARVIS_DOCKER_AUTOSTART=1`, `JARVIS_DOCKER_PROFILE=auto`,
+and `JARVIS_DOCKER_INCLUDE_VOICE=1`. The Electron app loads first, then the
+backend starts the selected Docker profile through `/api/runtime/docker/start`.
+Use `.\run-jarvis.cmd -NoDocker` for UI-only development or
+`.\run-jarvis.cmd -NoVoice` to skip the voice container while debugging LLMs.
+
 ## What Docker Runs
 
 - `jarvis-llamacpp`: OpenAI-compatible llama.cpp server on `127.0.0.1:8080`.
@@ -38,6 +50,10 @@ scripts\jarvis-docker-models.ps1 stop
 ```
 
 Stopping services lets Docker Desktop and WSL return idle memory and compute headroom to the host.
+
+The packaged app and `stop-jarvis.cmd` both call the same stop path. A normal
+hide-to-tray close keeps services alive; `Quit JARVIS` from the tray menu or
+`.\stop-jarvis.cmd` shuts down the backend and Docker model containers.
 
 ## Model Folders
 

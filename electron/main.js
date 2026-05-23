@@ -10,6 +10,11 @@ const BACKEND_BASE_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`
 const BACKEND_SHUTDOWN_TIMEOUT_MS = 5000
 const BACKEND_SHUTDOWN_TOKEN = process.env.JARVIS_DESKTOP_SHUTDOWN_TOKEN || crypto.randomBytes(32).toString('hex')
 const MINIMIZE_TO_TRAY = /^(1|true|yes)$/i.test(process.env.JARVIS_MINIMIZE_TO_TRAY || '')
+const DOCKER_AUTOSTART = /^(1|true|yes)$/i.test(process.env.JARVIS_DOCKER_AUTOSTART || '')
+const DOCKER_PROFILE = process.env.JARVIS_DOCKER_PROFILE || 'auto'
+const DOCKER_INCLUDE_VOICE = !/^(0|false|no)$/i.test(process.env.JARVIS_DOCKER_INCLUDE_VOICE || '1')
+const DOCKER_START_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_DOCKER_START_TIMEOUT_MS || '240000', 10)
+const DOCKER_STOP_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_DOCKER_STOP_TIMEOUT_MS || '90000', 10)
 
 let mainWindow = null
 let backendProcess = null
@@ -42,7 +47,10 @@ function resolveBackendLaunch() {
       command: packagedBackend,
       args: ['--host', BACKEND_HOST, '--port', String(BACKEND_PORT), '--no-open'],
       preflightArgs: ['--preflight', '--host', BACKEND_HOST, '--port', String(BACKEND_PORT)],
-      options: {}
+      options: {
+        cwd: path.dirname(packagedBackend),
+        windowsHide: true
+      }
     }
   }
 
@@ -152,12 +160,28 @@ function startBackendProcess() {
 }
 
 async function fetchJson(endpoint, options = {}) {
-  const response = await fetch(`${BACKEND_BASE_URL}${endpoint}`, options)
-  if (!response.ok) {
-    throw new Error(`Backend ${endpoint} returned ${response.status}`)
+  const { timeoutMs, ...fetchOptions } = options
+  let timeoutHandle = null
+  let controller = null
+
+  if (timeoutMs) {
+    controller = new AbortController()
+    fetchOptions.signal = controller.signal
+    timeoutHandle = setTimeout(() => controller.abort(), timeoutMs)
   }
 
-  return response.json()
+  try {
+    const response = await fetch(`${BACKEND_BASE_URL}${endpoint}`, fetchOptions)
+    if (!response.ok) {
+      throw new Error(`Backend ${endpoint} returned ${response.status}`)
+    }
+
+    return response.json()
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle)
+    }
+  }
 }
 
 async function waitForBackend(timeoutMs = 20000) {
@@ -174,6 +198,44 @@ async function waitForBackend(timeoutMs = 20000) {
   }
 
   throw lastError || new Error('JARVIS backend did not become ready')
+}
+
+async function maybeStartDockerRuntime() {
+  if (!DOCKER_AUTOSTART) {
+    return { skipped: true }
+  }
+
+  console.log(
+    `[jarvis-desktop] starting Docker runtime profile=${DOCKER_PROFILE} include_voice=${DOCKER_INCLUDE_VOICE}`
+  )
+
+  try {
+    return await fetchJson('/api/runtime/docker/start', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        profile: DOCKER_PROFILE,
+        include_voice: DOCKER_INCLUDE_VOICE
+      }),
+      timeoutMs: DOCKER_START_TIMEOUT_MS
+    })
+  } catch (error) {
+    console.warn('[jarvis-desktop] Docker runtime autostart failed', error)
+    return { ok: false, error: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+async function stopDockerRuntime() {
+  try {
+    return await fetchJson('/api/runtime/docker/stop', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      timeoutMs: DOCKER_STOP_TIMEOUT_MS
+    })
+  } catch (error) {
+    console.warn('[jarvis-desktop] Docker runtime stop failed', error)
+    return { ok: false, error: error instanceof Error ? error.message : String(error) }
+  }
 }
 
 function rendererIndexCandidates() {
@@ -296,13 +358,16 @@ async function shutdownBackend() {
     return
   }
 
+  await stopDockerRuntime()
+
   try {
     await fetchJson('/api/shutdown', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         'X-Jarvis-Desktop-Shutdown-Token': BACKEND_SHUTDOWN_TOKEN
-      }
+      },
+      timeoutMs: BACKEND_SHUTDOWN_TIMEOUT_MS
     })
   } catch (error) {
     console.warn('[jarvis-desktop] backend shutdown endpoint failed', error)
@@ -419,6 +484,8 @@ app.whenReady().then(async () => {
 
   createMainWindow()
   createTray()
+
+  void maybeStartDockerRuntime()
 })
 
 app.on('activate', () => {

@@ -7,6 +7,9 @@
   "main": "electron/main.js",
   "scripts": {
     "postinstall": "echo 'JARVIS desktop dependencies ready.'",
+    "jarvis:setup": "powershell -ExecutionPolicy Bypass -File setup-jarvis.ps1",
+    "jarvis:run": "powershell -ExecutionPolicy Bypass -File run-jarvis.ps1",
+    "jarvis:stop": "powershell -ExecutionPolicy Bypass -File stop-jarvis.ps1",
     "desktop:dev": "electron .",
     "desktop:build": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop.ps1 -PyInstallerSpec packaging/jarvis-backend.spec",
     "desktop:pack": "electron-builder",

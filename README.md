@@ -21,6 +21,39 @@ command-line program is no longer the primary user experience.
 | Workflow | React Flow automation canvas with triggers, actions, logic, execution status, and YAML storage |
 | Packaging | Electron plus bundled Python backend, packaged as desktop installers with hidden child processes owned by the app lifecycle |
 
+## Quick Run
+
+On Windows, use the root launchers:
+
+```powershell
+.\setup-jarvis.cmd
+.\run-jarvis.cmd
+```
+
+`run-jarvis.cmd` prefers the packaged desktop app at
+`release\win-unpacked\JARVIS.exe` when it exists. Otherwise it falls back to the
+Electron development shell. It also enables minimize-to-tray and asks the
+desktop backend to start Docker local models by default.
+
+Useful launch switches:
+
+```powershell
+.\run-jarvis.cmd -DockerProfile llamacpp
+.\run-jarvis.cmd -DockerProfile vllm
+.\run-jarvis.cmd -NoDocker
+.\run-jarvis.cmd -NoVoice
+.\run-jarvis.cmd -Dev
+```
+
+To terminate everything JARVIS owns, including Docker model containers:
+
+```powershell
+.\stop-jarvis.cmd
+```
+
+Close-to-tray keeps the app alive. `Quit JARVIS` from the tray menu, Alt+F4
+when tray mode is disabled, or `stop-jarvis.cmd` performs full shutdown.
+
 ## Local Development
 
 Backend development entrypoint:
@@ -38,7 +71,9 @@ npm run desktop:dev
 
 The Electron shell starts the backend as a hidden child process, opens the
 frameless desktop window, and calls `/api/shutdown` before terminating backend
-children.
+children. When `JARVIS_DOCKER_AUTOSTART=1` is set, the shell also asks the
+backend to start the Docker local model profile and stops those containers
+before backend shutdown.
 
 ## Runtime Priorities
 

@@ -32,6 +32,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("frame: false", source)
         self.assertIn("contextIsolation: true", source)
         self.assertIn("preload.js", source)
+        self.assertIn("cwd: path.dirname(packagedBackend)", source)
 
     def test_main_process_runs_backend_preflight_before_launch(self) -> None:
         source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
