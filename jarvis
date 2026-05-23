@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+"""JARVIS CLI launcher."""
+
+if __name__ == "__main__":
+    from jarvis_cli.main import main
+
+    main()
