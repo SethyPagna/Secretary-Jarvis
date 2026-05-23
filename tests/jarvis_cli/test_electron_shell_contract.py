@@ -25,7 +25,7 @@ class ElectronShellContractTests(unittest.TestCase):
     def test_main_process_starts_backend_and_uses_frameless_window(self) -> None:
         source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
 
-        self.assertIn("const { app, BrowserWindow, ipcMain } = require('electron')", source)
+        self.assertIn("const { app, BrowserWindow, ipcMain, Menu, Tray } = require('electron')", source)
         self.assertIn("spawn(", source)
         self.assertIn("jarvis_cli.desktop_entry", source)
         self.assertIn("WindowStyle Hidden", source)
@@ -56,6 +56,17 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("let exited = false", source)
         self.assertIn("if (!exited) {", source)
         self.assertNotIn("!processToStop.killed) {\n        processToStop.kill('SIGKILL')", source)
+
+    def test_main_process_supports_explicit_minimize_to_tray(self) -> None:
+        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+
+        self.assertIn("Tray", source)
+        self.assertIn("Menu", source)
+        self.assertIn("JARVIS_MINIMIZE_TO_TRAY", source)
+        self.assertIn("createTray", source)
+        self.assertIn("mainWindow.hide()", source)
+        self.assertIn("Quit JARVIS", source)
+        self.assertIn("runAppShutdown()", source)
 
     def test_preload_exposes_limited_desktop_bridge(self) -> None:
         source = (ROOT / "electron" / "preload.js").read_text(encoding="utf-8")

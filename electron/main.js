@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, Tray } = require('electron')
 const { spawn, spawnSync } = require('child_process')
 const crypto = require('crypto')
 const fs = require('fs')
@@ -9,9 +9,11 @@ const BACKEND_PORT = Number.parseInt(process.env.JARVIS_DESKTOP_BACKEND_PORT || 
 const BACKEND_BASE_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`
 const BACKEND_SHUTDOWN_TIMEOUT_MS = 5000
 const BACKEND_SHUTDOWN_TOKEN = process.env.JARVIS_DESKTOP_SHUTDOWN_TOKEN || crypto.randomBytes(32).toString('hex')
+const MINIMIZE_TO_TRAY = /^(1|true|yes)$/i.test(process.env.JARVIS_MINIMIZE_TO_TRAY || '')
 
 let mainWindow = null
 let backendProcess = null
+let tray = null
 let shutdownStarted = false
 let shutdownFinished = false
 
@@ -182,6 +184,51 @@ function rendererIndexCandidates() {
   return candidates
 }
 
+function trayIconCandidates() {
+  const resourcesPath = process.resourcesPath || ''
+  return [
+    path.join(__dirname, '..', 'assets', 'icon.ico'),
+    path.join(__dirname, '..', 'assets', 'icon.png'),
+    path.join(resourcesPath, 'assets', 'icon.ico'),
+    path.join(resourcesPath, 'assets', 'icon.png'),
+    path.join(resourcesPath, 'app.asar.unpacked', 'assets', 'icon.ico'),
+    path.join(resourcesPath, 'app.asar.unpacked', 'assets', 'icon.png')
+  ]
+}
+
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createMainWindow()
+  }
+
+  mainWindow.show()
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
+  }
+  mainWindow.focus()
+}
+
+function createTray() {
+  if (!MINIMIZE_TO_TRAY || tray) {
+    return
+  }
+
+  const iconPath = trayIconCandidates().find((candidate) => fs.existsSync(candidate))
+  if (!iconPath) {
+    console.warn('[jarvis-desktop] tray requested but no tray icon was found')
+    return
+  }
+
+  tray = new Tray(iconPath)
+  tray.setToolTip('JARVIS')
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Show JARVIS', click: () => showMainWindow() },
+    { type: 'separator' },
+    { label: 'Quit JARVIS', click: () => runAppShutdown() }
+  ]))
+  tray.on('click', () => showMainWindow())
+}
+
 async function loadRenderer(window) {
   if (process.env.JARVIS_RENDERER_URL) {
     await window.loadURL(process.env.JARVIS_RENDERER_URL)
@@ -221,6 +268,12 @@ function createMainWindow() {
 
   mainWindow.on('close', (event) => {
     if (shutdownFinished || shutdownStarted) {
+      return
+    }
+
+    if (MINIMIZE_TO_TRAY) {
+      event.preventDefault()
+      mainWindow.hide()
       return
     }
 
@@ -295,6 +348,9 @@ async function runAppShutdown() {
     mainWindow.destroy()
   }
 
+  tray?.destroy()
+  tray = null
+
   app.quit()
 }
 
@@ -357,6 +413,7 @@ app.whenReady().then(async () => {
   }
 
   createMainWindow()
+  createTray()
 })
 
 app.on('activate', () => {

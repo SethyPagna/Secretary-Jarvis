@@ -36,6 +36,7 @@ Implemented checkpoints:
 | Desktop backend startup preflight | Done | `jarvis-desktop-backend --preflight` and Electron/smoke scripts fail fast with missing dependency/port diagnostics before waiting on `/api/status` |
 | Desktop backend dependency contract | Done | FastAPI/Uvicorn are core deps; embedded startup disables lazy installs and fails fast when deps are missing |
 | Desktop shutdown token | Done | Electron and package smoke use `X-Jarvis-Desktop-Shutdown-Token`; shutdown stays protected from generic unauthenticated API calls |
+| Optional close-to-tray lifecycle | Done | Default window close still runs full shutdown; `JARVIS_MINIMIZE_TO_TRAY=1` hides to tray and tray Quit runs the same shutdown path |
 | Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Home terminal live PTY handoff | Done | Non-status Home commands navigate into the live `/api/pty` chat terminal with a prefilled command instead of a placeholder |
@@ -62,6 +63,7 @@ JARVIS is not production ready until every gate below has automated evidence:
 10. Desktop close path calls `/api/shutdown` with the desktop shutdown token, then terminates child processes within a fixed timeout.
 11. Packaged backend smoke starts the PyInstaller backend hidden, verifies `/api/status`, calls `/api/shutdown` with the desktop shutdown token, and stops the child process before electron-builder packages the installer.
 12. Desktop backend preflight must pass before Electron or packaging smoke waits for `/api/status`.
+13. Close-to-tray must be opt-in only; tray Quit must call the same shutdown path as a normal close so no backend child remains idle in the background.
 
 Performance targets:
 
