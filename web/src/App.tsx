@@ -17,6 +17,7 @@ import {
 import {
   Activity,
   BarChart3,
+  BookOpen,
   Clock,
   Code,
   Cpu,
@@ -33,6 +34,7 @@ import {
   RotateCw,
   Settings,
   Shield,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Terminal,
@@ -54,9 +56,11 @@ import { DesktopTitleBar } from "@/components/DesktopTitleBar";
 import { PageHeaderProvider } from "@/contexts/PageHeaderProvider";
 import { useSystemActions } from "@/contexts/useSystemActions";
 import type { SystemAction } from "@/contexts/system-actions-context";
+import CommandsPage from "@/pages/CommandsPage";
 import ConfigPage from "@/pages/ConfigPage";
 import DocsPage from "@/pages/DocsPage";
 import EnvPage from "@/pages/EnvPage";
+import GuidesPage from "@/pages/GuidesPage";
 import SessionsPage from "@/pages/SessionsPage";
 import LogsPage from "@/pages/LogsPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
@@ -64,6 +68,7 @@ import ModelsPage from "@/pages/ModelsPage";
 import HomePage from "@/pages/HomePage";
 import CronPage from "@/pages/CronPage";
 import ProfilesPage from "@/pages/ProfilesPage";
+import SetupPage from "@/pages/SetupPage";
 import SkillsPage from "@/pages/SkillsPage";
 import PluginsPage from "@/pages/PluginsPage";
 import ChatPage from "@/pages/ChatPage";
@@ -98,6 +103,9 @@ const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/analytics": AnalyticsPage,
   "/models": ModelsPage,
   "/souls": ProfilesPage,
+  "/commands": CommandsPage,
+  "/guides": GuidesPage,
+  "/setup": SetupPage,
   "/permissions": EnvPage,
   "/platforms": PluginsPage,
   "/workflow": CronPage,
@@ -125,26 +133,40 @@ const BUILTIN_NAV_REST: NavItem[] = [
     path: "/",
     label: "Home",
     icon: Sparkles,
+    section: "Core",
   },
   {
     path: "/models",
     label: "Models",
     icon: Cpu,
+    section: "Core",
   },
   {
     path: "/souls",
     label: "Souls",
     icon: Heart,
+    section: "Core",
   },
-  { path: "/permissions", label: "Perms", icon: Shield },
-  { path: "/platforms", label: "Platforms", icon: Globe },
-  { path: "/workflow", label: "Workflow", icon: Zap },
-  { path: "/settings", label: "Settings", icon: Settings },
+  { path: "/commands", label: "Commands", icon: Terminal, section: "Operate" },
+  { path: "/guides", label: "Guides", icon: BookOpen, section: "Operate" },
+  {
+    path: "/setup",
+    label: "Setup",
+    icon: SlidersHorizontal,
+    section: "Operate",
+  },
+  { path: "/skills", label: "Skills", icon: Package, section: "Operate" },
+  { path: "/workflow", label: "Workflow", icon: Zap, section: "Operate" },
+  { path: "/permissions", label: "Perms", icon: Shield, section: "Admin" },
+  { path: "/platforms", label: "Platforms", icon: Globe, section: "Admin" },
+  { path: "/settings", label: "Settings", icon: Settings, section: "Admin" },
+  { path: "/docs", label: "Reference", icon: FileText, section: "Reference" },
 ];
 
 const ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
   Activity,
   BarChart3,
+  BookOpen,
   Clock,
   Cpu,
   FileText,
@@ -152,6 +174,7 @@ const ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
   MessageSquare,
   Package,
   Settings,
+  SlidersHorizontal,
   Puzzle,
   Sparkles,
   Terminal,
@@ -220,6 +243,37 @@ function partitionSidebarNav(
     else pluginItems.push(item);
   }
   return { coreItems, pluginItems };
+}
+
+const SIDEBAR_SECTION_ORDER: NavSection[] = [
+  "Core",
+  "Operate",
+  "Admin",
+  "Reference",
+];
+
+const SIDEBAR_SECTION_LABELS: Record<NavSection, string> = {
+  Core: "Core",
+  Operate: "Operate",
+  Admin: "Admin",
+  Reference: "Reference",
+};
+
+function groupSidebarItems(items: NavItem[]): SidebarNavGroup[] {
+  const groups = new Map<NavSection, NavItem[]>();
+  for (const item of items) {
+    const section = item.section ?? "Core";
+    const existing = groups.get(section) ?? [];
+    existing.push(item);
+    groups.set(section, existing);
+  }
+
+  return SIDEBAR_SECTION_ORDER.flatMap((section) => {
+    const sectionItems = groups.get(section);
+    return sectionItems?.length
+      ? [{ key: section, label: SIDEBAR_SECTION_LABELS[section], items: sectionItems }]
+      : [];
+  });
 }
 
 function buildRoutes(
@@ -362,6 +416,10 @@ export default function App() {
     () => partitionSidebarNav(builtinNav, manifests),
     [builtinNav, manifests],
   );
+  const sidebarGroups = useMemo(
+    () => groupSidebarItems(sidebarNav.coreItems),
+    [sidebarNav.coreItems],
+  );
   const routes = useMemo(
     () => buildRoutes(builtinRoutes, manifests),
     [builtinRoutes, manifests],
@@ -492,17 +550,37 @@ export default function App() {
               className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden border-t border-current/10 py-2"
               aria-label={t.app.navigation}
             >
-              <ul className="flex flex-col">
-                {sidebarNav.coreItems.map((item) => (
-                  <SidebarNavLink
-                    closeMobile={closeMobile}
-                    item={item}
-                    key={item.path}
-                    sidebarCollapsed={sidebarCollapsed}
-                    t={t}
-                  />
-                ))}
-              </ul>
+              {sidebarGroups.map((group) => (
+                <div
+                  aria-labelledby={`jarvis-sidebar-${group.key.toLowerCase()}-heading`}
+                  className="flex flex-col border-b border-current/10 pb-2 last:border-b-0"
+                  key={group.key}
+                  role="group"
+                >
+                  <span
+                    className={cn(
+                      "px-5 pt-2.5 pb-1",
+                      sidebarCollapsed ? "lg:hidden" : "",
+                      "font-mondwest text-display text-xs tracking-[0.12em] text-text-tertiary",
+                    )}
+                    id={`jarvis-sidebar-${group.key.toLowerCase()}-heading`}
+                  >
+                    {group.label}
+                  </span>
+
+                  <ul className="flex flex-col">
+                    {group.items.map((item) => (
+                      <SidebarNavLink
+                        closeMobile={closeMobile}
+                        item={item}
+                        key={item.path}
+                        sidebarCollapsed={sidebarCollapsed}
+                        t={t}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              ))}
 
               {sidebarNav.pluginItems.length > 0 && (
                 <div
@@ -823,6 +901,7 @@ interface NavItem {
   label: string;
   labelKey?: string;
   path: string;
+  section?: NavSection;
 }
 
 interface SidebarNavLinkProps {
@@ -830,6 +909,14 @@ interface SidebarNavLinkProps {
   item: NavItem;
   sidebarCollapsed: boolean;
   t: Translations;
+}
+
+type NavSection = "Core" | "Operate" | "Admin" | "Reference";
+
+interface SidebarNavGroup {
+  key: NavSection;
+  label: string;
+  items: NavItem[];
 }
 
 interface SystemActionItem {

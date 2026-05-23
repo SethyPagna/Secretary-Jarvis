@@ -18,10 +18,14 @@ const BUILTIN: Record<string, keyof Translations["app"]["nav"]> = {
 const DESKTOP_TITLES: Record<string, string> = {
   "/": "Home",
   "/souls": "Souls",
+  "/commands": "Commands",
+  "/guides": "Guides",
+  "/setup": "Setup",
   "/permissions": "Permissions",
   "/platforms": "Platforms",
   "/workflow": "Workflow",
   "/settings": "Settings",
+  "/docs": "Reference",
 };
 
 export function resolvePageTitle(
