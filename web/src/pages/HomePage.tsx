@@ -10,7 +10,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { JarvisOrb, type OrbState } from "@/components/JarvisOrb";
 import { StatsPanel } from "@/components/StatsPanel";
@@ -22,10 +21,16 @@ import {
   type StatusResponse,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import ChatPage from "@/pages/ChatPage";
 
 type TerminalEntry = {
   kind: "input" | "output";
   text: string;
+};
+
+type TerminalLaunch = {
+  command: string;
+  id: number;
 };
 
 function subsystemReady(value: unknown): boolean {
@@ -58,7 +63,6 @@ function smokeSummary(smoke: RuntimeSmokeResponse): string {
 }
 
 export default function HomePage() {
-  const navigate = useNavigate();
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
   const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
@@ -67,6 +71,10 @@ export default function HomePage() {
   const [smoke, setSmoke] = useState<RuntimeSmokeResponse | null>(null);
   const [smokeRunning, setSmokeRunning] = useState(false);
   const [terminalInput, setTerminalInput] = useState("");
+  const [terminalLive, setTerminalLive] = useState(false);
+  const [terminalLaunch, setTerminalLaunch] = useState<TerminalLaunch | null>(
+    null,
+  );
   const [voiceOutput, setVoiceOutput] = useState(true);
   const [listening, setListening] = useState(false);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([
@@ -173,12 +181,12 @@ export default function HomePage() {
     }
 
     if (command.toLowerCase() !== "status") {
-      const params = new URLSearchParams({ prefill: command });
+      setTerminalLive(true);
+      setTerminalLaunch({ command, id: Date.now() });
       setTerminalEntries((entries) => [
         ...entries,
-        { kind: "output", text: "Opening live terminal." },
+        { kind: "output", text: "Running in live terminal." },
       ]);
-      navigate(`/chat?${params.toString()}`);
       return;
     }
 
@@ -276,18 +284,38 @@ export default function HomePage() {
           </button>
         </div>
 
-        <div className="min-h-0 overflow-y-auto rounded-sm bg-black/28 p-3 font-mono text-[0.82rem] leading-relaxed text-cyan-50/82">
-          {terminalEntries.slice(-6).map((entry, index) => (
-            <div
-              key={`${entry.kind}-${index}-${entry.text}`}
-              className={cn(entry.kind === "input" ? "text-emerald-200" : "text-cyan-50/72")}
-            >
-              <span className="text-cyan-100/35">
-                {entry.kind === "input" ? ">" : "jarvis"}
-              </span>{" "}
-              {entry.text}
-            </div>
-          ))}
+        <div
+          className={cn(
+            "min-h-0 overflow-hidden rounded-sm bg-black/28",
+            terminalLive
+              ? "h-[min(42vh,420px)] min-h-[280px]"
+              : "overflow-y-auto p-3 font-mono text-[0.82rem] leading-relaxed text-cyan-50/82",
+          )}
+        >
+          {terminalLive ? (
+            <ChatPage
+              className="h-full"
+              initialInput={terminalLaunch?.command ?? null}
+              initialInputKey={terminalLaunch?.id ?? null}
+              isActive
+              showPlugins={false}
+              showSidebar={false}
+            />
+          ) : (
+            terminalEntries.slice(-6).map((entry, index) => (
+              <div
+                key={`${entry.kind}-${index}-${entry.text}`}
+                className={cn(
+                  entry.kind === "input" ? "text-emerald-200" : "text-cyan-50/72",
+                )}
+              >
+                <span className="text-cyan-100/35">
+                  {entry.kind === "input" ? ">" : "jarvis"}
+                </span>{" "}
+                {entry.text}
+              </div>
+            ))
+          )}
         </div>
 
         <form className="flex items-center gap-2" onSubmit={submitTerminal}>

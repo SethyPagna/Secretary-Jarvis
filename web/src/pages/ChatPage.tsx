@@ -108,7 +108,25 @@ function terminalLineHeightForWidth(layoutWidthPx: number): number {
   return layoutWidthPx < 1024 ? 1.02 : 1.15;
 }
 
-export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
+type ChatPageProps = {
+  className?: string;
+  initialInput?: string | null;
+  initialInputKey?: number | string | null;
+  isActive?: boolean;
+  keepAliveWhenInactive?: boolean;
+  showPlugins?: boolean;
+  showSidebar?: boolean;
+};
+
+export default function ChatPage({
+  className,
+  initialInput = null,
+  initialInputKey = null,
+  isActive = true,
+  keepAliveWhenInactive = false,
+  showPlugins = true,
+  showSidebar = true,
+}: ChatPageProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -136,7 +154,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
   // Keying on the raw state would leak the body.overflow="hidden" across
   // tabs because the dep wouldn't change on tab switch.
   const [mobilePanelOpenRaw, setMobilePanelOpenRaw] = useState(false);
-  const mobilePanelOpen = isActive && mobilePanelOpenRaw;
+  const mobilePanelOpen = showSidebar && isActive && mobilePanelOpenRaw;
   const { setEnd } = usePageHeader();
   const { t } = useI18n();
   const closeMobilePanel = useCallback(() => setMobilePanelOpenRaw(false), []);
@@ -153,16 +171,16 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       : false,
   );
 
-  // The dashboard keeps ChatPage mounted persistently so the PTY survives tab
-  // switches. That is great for ordinary /chat navigation, but it means query
-  // param changes do NOT remount the component. Resume-in-chat from Sessions
-  // and desktop Home prefill handoffs both rely on query changes at runtime, so
-  // treat both as part of the PTY identity and rebuild when either changes.
+  // ChatPage can be used as the full chat route or as the compact Home
+  // terminal. Query params still support /chat?resume=... and /chat?prefill=...,
+  // while Home can pass an initial input directly through props.
   const resumeParam = searchParams.get("resume");
-  const prefillParam = searchParams.get("prefill");
+  const routePrefillParam = searchParams.get("prefill");
+  const prefillParam = initialInput ?? routePrefillParam;
+  const prefillIdentity = `${initialInputKey ?? ""}:${prefillParam ?? ""}`;
   const channel = useMemo(
-    () => generateChannelId(resumeParam, prefillParam),
-    [resumeParam, prefillParam],
+    () => generateChannelId(resumeParam, prefillIdentity),
+    [resumeParam, prefillIdentity],
   );
 
   useEffect(() => {
@@ -224,7 +242,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
   useEffect(() => {
     // When hidden (non-chat tab) we must not register the header button —
     // another page owns the header's end slot at that point.
-    if (!isActive) {
+    if (!showSidebar || !isActive) {
       setEnd(null);
       return;
     }
@@ -251,7 +269,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
       </Button>,
     );
     return () => setEnd(null);
-  }, [isActive, narrow, mobilePanelOpen, modelToolsLabel, setEnd]);
+  }, [isActive, narrow, mobilePanelOpen, modelToolsLabel, setEnd, showSidebar]);
 
   const handleCopyLast = () => {
     const ws = wsRef.current;
@@ -273,6 +291,8 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
   };
 
   useEffect(() => {
+    if (!isActive && !keepAliveWhenInactive) return;
+
     const host = hostRef.current;
     if (!host) return;
 
@@ -575,14 +595,16 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           : `${prefillParam}\r`;
         ws.send(initialInput);
 
-        const next = new URLSearchParams(window.location.search);
-        next.delete("prefill");
-        const query = next.toString();
-        window.history.replaceState(
-          window.history.state,
-          "",
-          `${window.location.pathname}${query ? `?${query}` : ""}`,
-        );
+        if (routePrefillParam) {
+          const next = new URLSearchParams(window.location.search);
+          next.delete("prefill");
+          const query = next.toString();
+          window.history.replaceState(
+            window.history.state,
+            "",
+            `${window.location.pathname}${query ? `?${query}` : ""}`,
+          );
+        }
       }
     };
 
@@ -673,7 +695,14 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
         copyResetRef.current = null;
       }
     };
-  }, [channel, prefillParam, resumeParam]);
+  }, [
+    channel,
+    isActive,
+    keepAliveWhenInactive,
+    prefillParam,
+    resumeParam,
+    routePrefillParam,
+  ]);
 
   // When the user returns to the chat tab (isActive: false → true), the
   // terminal host just transitioned from display:none to display:flex.
@@ -736,6 +765,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
   // dashboard column uses `relative z-2`, which traps `position:fixed`
   // descendants below those layers (see Toast.tsx).
   const mobileModelToolsPortal =
+    showSidebar &&
     isActive &&
     narrow &&
     portalRoot &&
@@ -810,8 +840,8 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
     );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <PluginSlot name="chat:top" />
+    <div className={cn("flex min-h-0 flex-1 flex-col gap-2", className)}>
+      {showPlugins && <PluginSlot name="chat:top" />}
       {mobileModelToolsPortal}
 
       {banner && (
@@ -862,7 +892,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           </Button>
         </div>
 
-        {!narrow && (
+        {showSidebar && !narrow && (
           <div
             id="chat-side-panel"
             role="complementary"
@@ -875,7 +905,7 @@ export default function ChatPage({ isActive = true }: { isActive?: boolean }) {
           </div>
         )}
       </div>
-      <PluginSlot name="chat:bottom" />
+      {showPlugins && <PluginSlot name="chat:bottom" />}
     </div>
   );
 }

@@ -40,15 +40,18 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("api.getRuntimeReadiness", source)
         self.assertIn("api.getRuntimeSmokeTest", source)
 
-    def test_home_terminal_hands_off_to_live_chat_pty(self) -> None:
+    def test_home_terminal_embeds_live_chat_pty(self) -> None:
         source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
 
-        self.assertIn("useNavigate", source)
-        self.assertIn("const navigate = useNavigate()", source)
-        self.assertIn('new URLSearchParams({ prefill: command })', source)
-        self.assertIn('navigate(`/chat?${params.toString()}`)', source)
+        self.assertIn('import ChatPage from "@/pages/ChatPage"', source)
+        self.assertIn("<ChatPage", source)
+        self.assertIn("showSidebar={false}", source)
+        self.assertIn("showPlugins={false}", source)
+        self.assertIn("initialInput={terminalLaunch?.command ?? null}", source)
+        self.assertIn("initialInputKey={terminalLaunch?.id ?? null}", source)
+        self.assertNotIn("useNavigate", source)
         self.assertNotIn("PTY handoff is queued", source)
 
     def test_chat_page_accepts_home_prefill_over_pty(self) -> None:
@@ -56,8 +59,14 @@ class DesktopHomeContractTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-        self.assertIn('const prefillParam = searchParams.get("prefill");', source)
-        self.assertIn("[resumeParam, prefillParam]", source)
+        self.assertIn("initialInput?: string | null", source)
+        self.assertIn("initialInputKey?: number | string | null", source)
+        self.assertIn("showSidebar?: boolean", source)
+        self.assertIn("showPlugins?: boolean", source)
+        self.assertIn("keepAliveWhenInactive?: boolean", source)
+        self.assertIn('const routePrefillParam = searchParams.get("prefill");', source)
+        self.assertIn("const prefillParam = initialInput ?? routePrefillParam;", source)
+        self.assertIn("if (!isActive && !keepAliveWhenInactive) return;", source)
         self.assertIn("const initialInput =", source)
         self.assertIn("ws.send(initialInput)", source)
         self.assertIn('next.delete("prefill")', source)

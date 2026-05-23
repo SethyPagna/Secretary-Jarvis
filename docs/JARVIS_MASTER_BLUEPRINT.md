@@ -38,6 +38,7 @@ Implemented checkpoints:
 | Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Home terminal live PTY handoff | Done | Non-status Home commands navigate into the live `/api/pty` chat terminal with a prefilled command instead of a placeholder |
+| Embedded Home xterm | Done | Home mounts the xterm-backed `ChatPage` directly with sidebar/plugin chrome disabled and no hidden inactive PTY sessions |
 | Frontend dependency rebrand guard | Done | Lockfile preserves canonical third-party `hermes-parser`/`hermes-estree` package names so ESLint can start |
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
@@ -156,9 +157,9 @@ Production requirements:
 - Orb frame rate targets 60 FPS on integrated graphics.
 - Particle count must auto-scale.
 - Voice controls must use real STT/TTS smoke-test results before showing ready.
-- Terminal commands must reach the live PTY path. The first desktop slice hands
-  commands from Home into the chat terminal with a prefilled command; the next
-  UI slice embeds the resizable xterm surface directly in the Home panel.
+- Terminal commands must reach the live PTY path. Home embeds the resizable
+  xterm surface directly and passes non-status commands into the PTY as initial
+  input.
 - Terminal must preserve history in `~/.jarvis/history`.
 
 ## Part 4 - Models Page
@@ -414,7 +415,6 @@ The next product slice is packaging plus the React Home page inside the Electron
 - finish a successful local package smoke once PyPI connectivity is restored or a local wheel cache is available
 - run PyInstaller through `scripts/build-desktop.ps1` with the new smoke gate enabled
 - run electron-builder packaging after the backend smoke passes
-- embed the full resizable xterm surface directly in the Home terminal panel
 - connect microphone capture to configured STT instead of permission probing only
 - connect voice playback controls to configured TTS output
 - preserve no standalone CLI entrypoints
