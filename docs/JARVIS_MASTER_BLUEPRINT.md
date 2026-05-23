@@ -37,6 +37,7 @@ Implemented checkpoints:
 | Desktop backend dependency contract | Done | FastAPI/Uvicorn are core deps; embedded startup disables lazy installs and fails fast when deps are missing |
 | Desktop shutdown token | Done | Electron and package smoke use `X-Jarvis-Desktop-Shutdown-Token`; shutdown stays protected from generic unauthenticated API calls |
 | Optional close-to-tray lifecycle | Done | Default window close still runs full shutdown; `JARVIS_MINIMIZE_TO_TRAY=1` hides to tray and tray Quit runs the same shutdown path |
+| Desktop Python dependency gate | Done | Build script checks backend modules plus PyInstaller first and prints online/offline wheelhouse recovery commands before packaging starts |
 | Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Home quick actions | Done | Voice, Quick Task, Attach, Tools, Mute, and Stats controls now mutate UI state or dispatch into the embedded terminal instead of being placeholders |
@@ -421,7 +422,7 @@ The next product slice is packaging plus the React Home page inside the Electron
 - finish a successful local package smoke once PyPI connectivity is restored or a local wheel cache is available
 - run PyInstaller through `scripts/build-desktop.ps1` with the new smoke gate enabled
 - run electron-builder packaging after the backend smoke passes
-- install/restore FastAPI, Uvicorn, and Pydantic in this Python environment or provide a local wheel cache; current preflight correctly reports those modules missing
+- install/restore FastAPI, Uvicorn, Pydantic, and PyInstaller in this Python environment or provide a local `wheelhouse/desktop`; current preflight and `scripts/check-desktop-python-deps.ps1` correctly report those modules missing
 - connect microphone capture to configured STT instead of permission probing only
 - connect voice playback controls to configured TTS output
 - preserve no standalone CLI entrypoints

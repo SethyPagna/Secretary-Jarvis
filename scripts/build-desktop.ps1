@@ -18,10 +18,8 @@ try {
 
     $python = Get-Command python -ErrorAction Stop
 
-    & $python.Source -c "import PyInstaller" 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        throw "PyInstaller is not installed. Run: python -m pip install pyinstaller"
-    }
+    $dependencyCheck = Join-Path $PSScriptRoot "check-desktop-python-deps.ps1"
+    & $dependencyCheck -Python $python.Source
 
     if (-not (Test-Path "web/node_modules")) {
         & $npm.Source --prefix web install

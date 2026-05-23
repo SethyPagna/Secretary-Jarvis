@@ -12,6 +12,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+        self.assertIn("check-desktop-python-deps.ps1", build_script)
         self.assertIn("[switch]$SkipSmoke", build_script)
         self.assertIn("smoke-desktop-backend.ps1", build_script)
         self.assertIn("$backendLaunch", build_script)
@@ -57,6 +58,30 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("desktop:build", package["scripts"])
         self.assertIn("build-desktop.ps1", package["scripts"]["desktop:build"])
         self.assertNotIn("SkipSmoke", package["scripts"]["desktop:build"])
+
+    def test_desktop_python_dependency_check_reports_wheelhouse_recovery(self) -> None:
+        checker = (ROOT / "scripts" / "check-desktop-python-deps.ps1").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("jarvis_cli.desktop_entry", checker)
+        self.assertIn("--preflight", checker)
+        self.assertIn("PyInstaller", checker)
+        self.assertIn("wheelhouse", checker)
+        self.assertIn("--no-index", checker)
+        self.assertIn("--find-links", checker)
+        self.assertIn("prepare-desktop-wheelhouse.ps1", checker)
+
+    def test_desktop_wheelhouse_script_downloads_backend_and_build_deps(self) -> None:
+        wheelhouse = (ROOT / "scripts" / "prepare-desktop-wheelhouse.ps1").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("pip", wheelhouse)
+        self.assertIn("download", wheelhouse)
+        self.assertIn("pyinstaller", wheelhouse.lower())
+        self.assertIn("--prefer-binary", wheelhouse)
+        self.assertIn("wheelhouse", wheelhouse)
 
 
 if __name__ == "__main__":
