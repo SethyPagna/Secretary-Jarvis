@@ -640,6 +640,16 @@ async def get_status():
     }
 
 
+@app.get("/api/runtime/readiness")
+async def get_runtime_readiness():
+    """Return production readiness for LLM, TTS, and STT runtime stacks."""
+    from jarvis_cli.runtime_readiness import build_runtime_readiness
+
+    config = load_config()
+    env = {**os.environ, **load_env()}
+    return build_runtime_readiness(config, env=env)
+
+
 # ---------------------------------------------------------------------------
 # Gateway + update actions (invoked from the Status page).
 #
