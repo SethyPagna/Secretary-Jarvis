@@ -33,6 +33,8 @@ Implemented checkpoints:
 | Fast local STT profile | Done | CPU machines use faster-whisper `tiny.en`/int8; NVIDIA machines target `large-v3` |
 | Desktop-first backend priority | Done | Autoconfig prefers llama.cpp, then vLLM, then Ollama |
 | Electron desktop shell | Done | Starts hidden backend child process, frameless window, preload IPC bridge, and `/api/shutdown` close path |
+| Desktop backend dependency contract | Done | FastAPI/Uvicorn are core deps; embedded startup disables lazy installs and fails fast when deps are missing |
+| Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
@@ -53,6 +55,7 @@ JARVIS is not production ready until every gate below has automated evidence:
 8. `/api/stats` and `/ws/stats` stream CPU, RAM, GPU where available, token counters, skills, gateway connections, and uptime.
 9. `/api/shutdown` persists a session shutdown snapshot and runs cleanup callbacks without blocking process exit.
 10. Desktop close path calls `/api/shutdown`, then terminates child processes within a fixed timeout.
+11. Packaged backend smoke starts the PyInstaller backend hidden, verifies `/api/status`, calls `/api/shutdown`, and stops the child process before electron-builder packages the installer.
 
 Performance targets:
 
@@ -400,8 +403,11 @@ Planned:
 
 ## Immediate Next Slice
 
-The next product slice is the React Home page inside the Electron shell:
+The next product slice is packaging plus the React Home page inside the Electron shell:
 
+- finish a successful local package smoke once PyPI connectivity is restored or a local wheel cache is available
+- run PyInstaller through `scripts/build-desktop.ps1` with the new smoke gate enabled
+- run electron-builder packaging after the backend smoke passes
 - wire the Home terminal shell to the PTY websocket
 - connect microphone capture to configured STT instead of permission probing only
 - connect voice playback controls to configured TTS output
@@ -432,4 +438,4 @@ Latest autoconfig result from this workspace:
 - Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.
 - STT dependency status: `faster-whisper==1.2.1` is installed. Non-interactive pip flags were required: `PIP_NO_INPUT=1` and `PIP_DISABLE_PIP_VERSION_CHECK=1`.
 - STT model cache status: `Systran/faster-whisper-tiny.en` is downloaded. The Hugging Face Xet path stalled on larger model blobs, so first-run downloads should set `HF_HUB_DISABLE_XET=1`.
-- Packaging status: Electron/web/Docker configuration checks pass, but PyInstaller is not installed and `pip` timed out connecting to `pypi.org`, so the final backend binary and NSIS installer were not produced in this workspace yet.
+- Packaging status: Electron/web/Docker configuration checks pass, FastAPI/Uvicorn are now core packaged deps, and a packaged-backend smoke script is wired into the build. Local package installation is still blocked in this workspace: `Test-NetConnection pypi.org -Port 443` timed out and `pip install` hung without installing FastAPI/Uvicorn/PyInstaller, so the final backend binary and NSIS installer were not produced yet.

@@ -1,6 +1,8 @@
 param(
     [string]$PyInstallerSpec = "packaging/jarvis-backend.spec",
-    [switch]$SkipInstaller
+    [switch]$SkipInstaller,
+    [switch]$SkipSmoke,
+    [int]$SmokePort = 18765
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,6 +43,16 @@ try {
     $backendBin = Join-Path $RepoRoot "dist/jarvis-backend/jarvis-backend"
     if (-not (Test-Path $backendExe) -and -not (Test-Path $backendBin)) {
         throw "PyInstaller did not create dist/jarvis-backend/jarvis-backend(.exe)."
+    }
+    $backendLaunch = if (Test-Path $backendExe) { $backendExe } else { $backendBin }
+
+    if (-not $SkipSmoke) {
+        $smokeScript = Join-Path $PSScriptRoot "smoke-desktop-backend.ps1"
+        & $smokeScript `
+            -BackendCommand $backendLaunch `
+            -BackendArgs @("--host", "127.0.0.1", "--port", [string]$SmokePort, "--no-open") `
+            -BindHost "127.0.0.1" `
+            -Port $SmokePort
     }
 
     if (-not (Test-Path "node_modules")) {
