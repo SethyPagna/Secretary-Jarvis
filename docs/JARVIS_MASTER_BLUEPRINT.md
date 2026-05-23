@@ -33,7 +33,7 @@ Implemented checkpoints:
 | Fast local STT profile | Done | CPU machines use faster-whisper `tiny.en`/int8; NVIDIA machines target `large-v3` |
 | Desktop-first backend priority | Done | Autoconfig prefers llama.cpp, then vLLM, then Ollama |
 | Electron desktop shell | Done | Starts hidden backend child process, frameless window, preload IPC bridge, and `/api/shutdown` close path |
-| React home page/orb UI | Not started | Planned phase 3 |
+| React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
 | Permissions/platforms/workflows/settings | Not started | Planned phases 6-8 |
@@ -323,7 +323,8 @@ Phase 2: core agent extensions:
 Phase 3: Electron shell and Home page:
 
 - Electron shell lifecycle: done.
-- React Home page, orb, terminal panel, stats consumer, and voice controls: next.
+- React Home route, orb, stats consumer, title bar, terminal input shell, and voice controls: in progress.
+- PTY websocket attachment and full STT/TTS playback controls: next.
 
 Phase 4: Models page.
 
@@ -376,10 +377,10 @@ Planned:
 
 The next product slice is the React Home page inside the Electron shell:
 
-- custom title bar connected to `jarvisDesktop.windowControl(...)`
-- unified Home layout with orb/state surface, stats, terminal/chat, and voice controls
-- status calls through `jarvisDesktop.getBackendStatus()` and backend readiness/smoke APIs
-- no standalone CLI entrypoints reintroduced
+- wire the Home terminal shell to the PTY websocket
+- connect microphone capture to configured STT instead of permission probing only
+- connect voice playback controls to configured TTS output
+- preserve no standalone CLI entrypoints
 
 The current runtime smoke test verifies "arms and legs" behavior:
 

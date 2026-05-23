@@ -15,15 +15,23 @@ const BUILTIN: Record<string, keyof Translations["app"]["nav"]> = {
   "/docs": "documentation",
 };
 
+const DESKTOP_TITLES: Record<string, string> = {
+  "/": "Home",
+  "/souls": "Souls",
+  "/permissions": "Permissions",
+  "/platforms": "Platforms",
+  "/workflow": "Workflow",
+  "/settings": "Settings",
+};
+
 export function resolvePageTitle(
   pathname: string,
   t: Translations,
   pluginTabs: { path: string; label: string }[],
 ): string {
   const normalized = pathname.replace(/\/$/, "") || "/";
-  if (normalized === "/") {
-    return t.app.nav.sessions;
-  }
+  const desktopTitle = DESKTOP_TITLES[normalized];
+  if (desktopTitle) return desktopTitle;
   const plugin = pluginTabs.find((p) => p.path === normalized);
   if (plugin) {
     return plugin.label;

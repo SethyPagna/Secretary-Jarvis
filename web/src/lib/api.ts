@@ -68,6 +68,13 @@ async function getSessionToken(): Promise<string> {
 
 export const api = {
   getStatus: () => fetchJSON<StatusResponse>("/api/status"),
+  getRuntimeStats: () => fetchJSON<RuntimeStatsResponse>("/api/stats"),
+  getRuntimeReadiness: () =>
+    fetchJSON<RuntimeReadinessResponse>("/api/runtime/readiness"),
+  getRuntimeSmokeTest: () =>
+    fetchJSON<RuntimeSmokeResponse>("/api/runtime/smoke-test", {
+      method: "POST",
+    }),
   getSessions: (limit = 20, offset = 0) =>
     fetchJSON<PaginatedSessions>(`/api/sessions?limit=${limit}&offset=${offset}`),
   getSessionMessages: (id: string) =>
@@ -385,6 +392,75 @@ export interface StatusResponse {
   latest_config_version: number;
   release_date: string;
   version: string;
+}
+
+export interface RuntimeStatsResponse {
+  type: "stats";
+  timestamp: string;
+  cpu_percent: number | null;
+  process_cpu_percent: number | null;
+  ram_used_mb: number | null;
+  ram_total_mb: number | null;
+  process_ram_mb: number | null;
+  gpu_percent: number | null;
+  gpu_temp_c: number | null;
+  gpu_memory_used_mb: number | null;
+  gpu_memory_total_mb: number | null;
+  gpu_power_w: number | null;
+  cpu_temp_c: number | null;
+  tokens_input: number;
+  tokens_output: number;
+  tokens_total_lifetime: number;
+  active_skills: number;
+  gateway_connections: number;
+  uptime_seconds: number;
+  warnings: string[];
+}
+
+export interface RuntimeReadinessCheck {
+  ready?: boolean;
+  status?: string;
+  backend?: string;
+  engine?: string;
+  model?: string;
+  provider?: string;
+  blockers?: string[];
+  recommendations?: string[];
+  [key: string]: unknown;
+}
+
+export interface RuntimeReadinessResponse {
+  production_ready?: boolean;
+  llm?: RuntimeReadinessCheck;
+  tts?: RuntimeReadinessCheck;
+  stt?: RuntimeReadinessCheck;
+  blockers?: string[];
+  recommendations?: string[];
+  [key: string]: unknown;
+}
+
+export interface RuntimeSmokeSubsystem {
+  ok?: boolean;
+  ready?: boolean;
+  status?: string;
+  backend?: string;
+  engine?: string;
+  model?: string;
+  latency_ms?: number;
+  tokens_per_second?: number;
+  transcript?: string;
+  bytes?: number;
+  blockers?: string[];
+  [key: string]: unknown;
+}
+
+export interface RuntimeSmokeResponse {
+  production_ready: boolean;
+  llm?: RuntimeSmokeSubsystem;
+  tts?: RuntimeSmokeSubsystem;
+  stt?: RuntimeSmokeSubsystem;
+  blockers?: string[];
+  [key: string]: unknown;
 }
 
 export interface SessionInfo {
