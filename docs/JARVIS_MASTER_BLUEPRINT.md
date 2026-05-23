@@ -29,6 +29,7 @@ Implemented checkpoints:
 | Blueprint/progress documentation | Done | Commit `756cdb0` |
 | LLM/TTS/STT smoke testing | Done | This checkpoint adds `/api/runtime/smoke-test` |
 | Runtime autoconfig planner | Done | This checkpoint adds `/api/runtime/autoconfig` |
+| Runtime autoconfig apply | Done | This checkpoint adds `/api/runtime/autoconfig/apply` |
 | Electron desktop shell | Not started | Planned phase 3 |
 | React home page/orb UI | Not started | Planned phase 3 |
 | Models page | Not started | Planned phase 4 |
@@ -325,6 +326,7 @@ Implemented:
 | POST | `/api/shutdown` | Graceful shutdown snapshot and cleanup |
 | POST | `/api/runtime/smoke-test` | Verify active LLM/TTS/STT actually run |
 | GET | `/api/runtime/autoconfig` | Discover local models/assets and return a config/action plan |
+| POST | `/api/runtime/autoconfig/apply` | Merge the discovered runtime config patch into `config.yaml` |
 
 Planned:
 
@@ -371,3 +373,4 @@ Latest autoconfig result from this workspace:
 - Preferred TTS now: Edge TTS because it is installed and verified.
 - Preferred TTS target: Kokoro local once `kokoro-onnx` and `onnxruntime` are installed.
 - Preferred STT target: faster-whisper local with `large-v3`/auto device; install `faster-whisper` next.
+- STT install attempt: `pip install faster-whisper==1.2.1` and binary-only pip both timed out in this Python 3.13 environment before installing packages.

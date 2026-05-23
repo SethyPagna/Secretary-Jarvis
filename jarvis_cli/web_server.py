@@ -674,6 +674,25 @@ async def get_runtime_autoconfig():
     return build_runtime_autoconfig_plan(config)
 
 
+@app.post("/api/runtime/autoconfig/apply")
+async def post_runtime_autoconfig_apply():
+    """Merge the runtime autoconfiguration patch into config.yaml."""
+    from jarvis_cli.runtime_autoconfig import build_runtime_autoconfig_plan
+    from jarvis_cli.runtime_config_apply import changed_top_level_keys, merge_runtime_config
+
+    current = load_config()
+    plan = build_runtime_autoconfig_plan(current)
+    merged = merge_runtime_config(current, plan.get("config_patch") or {})
+    changed = changed_top_level_keys(current, merged)
+    save_config(merged)
+    return {
+        "ok": True,
+        "changed_keys": changed,
+        "config_path": str(get_config_path()),
+        "plan": plan,
+    }
+
+
 def _active_skill_count() -> int:
     skills_dir = get_jarvis_home() / "skills"
     if not skills_dir.exists():
