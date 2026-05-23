@@ -61,6 +61,27 @@ class DesktopVoiceTests(unittest.TestCase):
         self.assertEqual(result["mime_type"], "audio/mpeg")
         self.assertTrue(result["audio_base64"])
 
+    def test_synthesize_desktop_speech_refuses_elevenlabs_cloud_provider(self) -> None:
+        called = False
+
+        def fake_synthesizer(*, text: str, output_path: str):
+            nonlocal called
+            called = True
+            Path(output_path).write_bytes(b"cloud-audio")
+            return {"success": True, "file_path": output_path, "provider": "elevenlabs"}
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = synthesize_desktop_speech(
+                "No cloud voice",
+                Path(temp_dir),
+                provider="elevenlabs",
+                synthesizer=fake_synthesizer,
+            )
+
+        self.assertFalse(result["success"])
+        self.assertIn("disabled", result["error"].lower())
+        self.assertFalse(called)
+
 
 if __name__ == "__main__":
     unittest.main()

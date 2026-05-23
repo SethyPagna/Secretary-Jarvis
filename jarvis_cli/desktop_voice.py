@@ -20,6 +20,7 @@ from typing import Any, Callable, Mapping
 Transcriber = Callable[[str], Mapping[str, Any]]
 Synthesizer = Callable[..., str | Mapping[str, Any]]
 
+_DESKTOP_BLOCKED_TTS_PROVIDERS = {"elevenlabs"}
 _AUDIO_EXTENSIONS = {
     "audio/webm": ".webm",
     "audio/ogg": ".ogg",
@@ -99,10 +100,20 @@ def _default_synthesizer(*, text: str, output_path: str) -> str | Mapping[str, A
     return text_to_speech_tool(text=text, output_path=output_path)
 
 
+def _configured_tts_provider() -> str:
+    try:
+        from jarvis_cli.config import cfg_get, load_config
+
+        return str(cfg_get(load_config(), "tts", "provider", default="") or "").lower()
+    except Exception:
+        return ""
+
+
 def synthesize_desktop_speech(
     text: str,
     output_dir: Path,
     *,
+    provider: str | None = None,
     synthesizer: Synthesizer | None = None,
 ) -> dict[str, Any]:
     """Synthesize assistant text and return a browser-playable audio payload."""
@@ -111,6 +122,19 @@ def synthesize_desktop_speech(
         return {
             "success": False,
             "error": "No text was provided for speech synthesis.",
+            "audio_base64": "",
+            "audio_bytes": 0,
+        }
+
+    effective_provider = (provider or _configured_tts_provider()).lower()
+    if effective_provider in _DESKTOP_BLOCKED_TTS_PROVIDERS:
+        return {
+            "success": False,
+            "error": (
+                "ElevenLabs desktop TTS is disabled. Use Kokoro, OmniVoice, "
+                "system TTS, or another configured local voice provider."
+            ),
+            "provider": effective_provider,
             "audio_base64": "",
             "audio_bytes": 0,
         }

@@ -42,6 +42,7 @@ Implemented checkpoints:
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Home quick actions | Done | Voice, Quick Task, Attach, Tools, Mute, and Stats controls now mutate UI state or dispatch into the embedded terminal instead of being placeholders |
 | Home browser voice bridge | Done | Microphone uses MediaRecorder, posts raw audio to `/api/voice/transcribe`, dispatches transcript into embedded PTY, and can synthesize live terminal output through `/api/voice/synthesize` |
+| Desktop cloud voice guard | Done | Desktop TTS refuses the legacy cloud-cloning provider and keeps voice playback on Kokoro, OmniVoice, system, or other configured local-compatible providers |
 | Title bar notification drawer | Done | Bell button opens/closes a desktop notification drawer with backend/gateway alert placeholder state |
 | Home terminal live PTY handoff | Done | Non-status Home commands navigate into the live `/api/pty` chat terminal with a prefilled command instead of a placeholder |
 | Embedded Home xterm | Done | Home mounts the xterm-backed `ChatPage` directly with sidebar/plugin chrome disabled and no hidden inactive PTY sessions |

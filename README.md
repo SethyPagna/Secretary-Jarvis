@@ -141,7 +141,7 @@ What gets imported:
 - **Skills** — user-created skills → `~/.jarvis/skills/openclaw-imports/`
 - **Command allowlist** — approval patterns
 - **Messaging settings** — platform configs, allowed users, working directory
-- **API keys** — allowlisted secrets (Telegram, OpenRouter, OpenAI, Anthropic, ElevenLabs)
+- **API keys** — allowlisted secrets (Telegram, OpenRouter, OpenAI, Anthropic, model providers)
 - **TTS assets** — workspace audio files
 - **Workspace instructions** — AGENTS.md (with `--workspace-target`)
 
