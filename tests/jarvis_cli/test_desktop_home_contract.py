@@ -40,6 +40,23 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("api.getRuntimeReadiness", source)
         self.assertIn("api.getRuntimeSmokeTest", source)
 
+    def test_home_quick_actions_are_stateful_not_placeholders(self) -> None:
+        source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("fileInputRef", source)
+        self.assertIn("handleAttachmentChange", source)
+        self.assertIn("fileInputRef.current?.click()", source)
+        self.assertIn("quickTaskOpen", source)
+        self.assertIn("handleQuickTaskSubmit", source)
+        self.assertIn("toolsOpen", source)
+        self.assertIn("statsVisible", source)
+        self.assertIn("setStatsVisible((value) => !value)", source)
+        self.assertNotIn('<QuickAction label="Attach" icon={Paperclip} />', source)
+        self.assertNotIn('<QuickAction label="Tools" icon={Settings2} />', source)
+        self.assertNotIn('<QuickAction label="Stats" icon={Gauge} />', source)
+
     def test_home_terminal_embeds_live_chat_pty(self) -> None:
         source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",

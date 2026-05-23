@@ -9,7 +9,14 @@ import {
   VolumeX,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 
 import { JarvisOrb, type OrbState } from "@/components/JarvisOrb";
 import { StatsPanel } from "@/components/StatsPanel";
@@ -32,6 +39,13 @@ type TerminalLaunch = {
   command: string;
   id: number;
 };
+
+const TOOL_TOGGLES = [
+  { key: "terminal", label: "Terminal" },
+  { key: "files", label: "Files" },
+  { key: "web", label: "Web" },
+  { key: "browser", label: "Browser" },
+] as const;
 
 function subsystemReady(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
@@ -63,6 +77,7 @@ function smokeSummary(smoke: RuntimeSmokeResponse): string {
 }
 
 export default function HomePage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
   const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
@@ -75,6 +90,16 @@ export default function HomePage() {
   const [terminalLaunch, setTerminalLaunch] = useState<TerminalLaunch | null>(
     null,
   );
+  const [quickTaskOpen, setQuickTaskOpen] = useState(false);
+  const [quickTaskText, setQuickTaskText] = useState("");
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [statsVisible, setStatsVisible] = useState(true);
+  const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({
+    browser: false,
+    files: true,
+    terminal: true,
+    web: true,
+  });
   const [voiceOutput, setVoiceOutput] = useState(true);
   const [listening, setListening] = useState(false);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([
@@ -135,6 +160,16 @@ export default function HomePage() {
     return "idle";
   }, [listening, smoke, smokeRunning, status]);
 
+  const runLiveCommand = (command: string, message = "Running in live terminal.") => {
+    setTerminalLive(true);
+    setTerminalLaunch({ command, id: Date.now() });
+    setTerminalEntries((entries) => [
+      ...entries,
+      { kind: "input", text: command },
+      { kind: "output", text: message },
+    ]);
+  };
+
   const runSmoke = async () => {
     setSmokeRunning(true);
     setTerminalEntries((entries) => [
@@ -173,25 +208,21 @@ export default function HomePage() {
     if (!command) return;
 
     setTerminalInput("");
-    setTerminalEntries((entries) => [...entries, { kind: "input", text: command }]);
 
     if (command.toLowerCase().includes("smoke")) {
+      setTerminalEntries((entries) => [...entries, { kind: "input", text: command }]);
       void runSmoke();
       return;
     }
 
     if (command.toLowerCase() !== "status") {
-      setTerminalLive(true);
-      setTerminalLaunch({ command, id: Date.now() });
-      setTerminalEntries((entries) => [
-        ...entries,
-        { kind: "output", text: "Running in live terminal." },
-      ]);
+      runLiveCommand(command);
       return;
     }
 
     setTerminalEntries((entries) => [
       ...entries,
+      { kind: "input", text: command },
       {
         kind: "output",
         text: `Backend ${compactStatus(status, readiness)}. Gateway ${status?.gateway_state ?? "unknown"}.`,
@@ -215,6 +246,39 @@ export default function HomePage() {
         { kind: "output", text: "Microphone permission unavailable." },
       ]);
     }
+  };
+
+  const handleQuickTaskSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const command = quickTaskText.trim();
+    if (!command) return;
+
+    setQuickTaskOpen(false);
+    setQuickTaskText("");
+    runLiveCommand(command, "Quick task dispatched.");
+  };
+
+  const handleAttachmentChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    setTerminalEntries((entries) => [
+      ...entries,
+      {
+        kind: "output",
+        text: `Attached ${files.length} file${files.length === 1 ? "" : "s"}: ${files
+          .map((file) => file.name)
+          .join(", ")}`,
+      },
+    ]);
+    event.target.value = "";
+  };
+
+  const toggleTool = (key: string) => {
+    setEnabledTools((tools) => ({
+      ...tools,
+      [key]: !tools[key],
+    }));
   };
 
   const statusLabel = compactStatus(status, readiness);
@@ -249,22 +313,103 @@ export default function HomePage() {
             <QuickAction
               label="Quick Task"
               icon={Zap}
-              onClick={() => void runSmoke()}
-              busy={smokeRunning}
+              onClick={() => setQuickTaskOpen((value) => !value)}
+              active={quickTaskOpen}
             />
-            <QuickAction label="Attach" icon={Paperclip} />
-            <QuickAction label="Tools" icon={Settings2} />
+            <QuickAction
+              label="Attach"
+              icon={Paperclip}
+              onClick={() => fileInputRef.current?.click()}
+            />
+            <QuickAction
+              label="Tools"
+              icon={Settings2}
+              active={toolsOpen}
+              onClick={() => setToolsOpen((value) => !value)}
+            />
             <QuickAction
               label={voiceOutput ? "Mute" : "Unmute"}
               icon={voiceOutput ? Volume2 : VolumeX}
               active={voiceOutput}
               onClick={() => setVoiceOutput((value) => !value)}
             />
-            <QuickAction label="Stats" icon={Gauge} />
+            <QuickAction
+              label="Stats"
+              icon={Gauge}
+              active={statsVisible}
+              onClick={() => setStatsVisible((value) => !value)}
+            />
           </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            multiple
+            onChange={handleAttachmentChange}
+            aria-label="Attach files"
+          />
+
+          {quickTaskOpen && (
+            <form
+              className="mt-3 flex w-full max-w-3xl flex-col gap-2 rounded-md border border-cyan-200/14 bg-black/32 p-3"
+              onSubmit={handleQuickTaskSubmit}
+            >
+              <label className="text-[0.72rem] uppercase tracking-[0.1em] text-cyan-50/55">
+                Quick task
+              </label>
+              <div className="flex gap-2">
+                <input
+                  value={quickTaskText}
+                  onChange={(event) => setQuickTaskText(event.target.value)}
+                  className="h-10 min-w-0 flex-1 rounded-md border border-cyan-200/12 bg-cyan-950/18 px-3 text-sm text-cyan-50 outline-none transition placeholder:text-cyan-50/28 focus:border-cyan-200/42"
+                  placeholder="What should JARVIS do?"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="inline-flex h-10 items-center gap-2 rounded-md bg-cyan-200 px-3 text-[0.72rem] font-semibold uppercase tracking-[0.09em] text-slate-950 transition hover:bg-cyan-100"
+                >
+                  <Play className="h-4 w-4" />
+                  Run
+                </button>
+              </div>
+            </form>
+          )}
+
+          {toolsOpen && (
+            <div className="mt-3 grid w-full max-w-3xl grid-cols-2 gap-2 rounded-md border border-cyan-200/14 bg-black/32 p-3 sm:grid-cols-4">
+              {TOOL_TOGGLES.map((tool) => (
+                <button
+                  type="button"
+                  key={tool.key}
+                  onClick={() => toggleTool(tool.key)}
+                  className={cn(
+                    "h-9 rounded-md border px-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] transition",
+                    enabledTools[tool.key]
+                      ? "border-emerald-200/32 bg-emerald-300/12 text-emerald-100"
+                      : "border-cyan-200/12 bg-cyan-200/5 text-cyan-50/62 hover:border-cyan-200/28 hover:text-cyan-50",
+                  )}
+                  aria-pressed={enabledTools[tool.key]}
+                >
+                  {tool.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <StatsPanel readiness={readiness} stats={stats} />
+        {statsVisible ? (
+          <StatsPanel readiness={readiness} stats={stats} />
+        ) : (
+          <button
+            type="button"
+            className="flex min-h-[160px] min-w-0 w-full max-w-full items-center justify-center rounded-md border border-cyan-200/12 bg-[#0c141b]/50 p-4 text-sm uppercase tracking-[0.12em] text-cyan-50/62 transition hover:border-cyan-200/28 hover:text-cyan-50"
+            onClick={() => setStatsVisible(true)}
+          >
+            Stats hidden
+          </button>
+        )}
       </section>
 
       <section className="grid min-h-[190px] min-w-0 w-full max-w-full gap-3 rounded-md border border-cyan-200/12 bg-[#05080d]/92 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.22)]">
