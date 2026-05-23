@@ -24,7 +24,7 @@ Implemented checkpoints:
 | Soul delegation registry | Done | This checkpoint adds `jarvis_cli.soul_registry` and a manifest-backed keyword router |
 | JARVIS docs import pack | Done | This checkpoint adds `docs/jarvis/` sections for skills, MCP, tools, memory, scheduling, platforms, security, context, architecture, and env vars |
 | Installer metadata rebrand | Done | Install scripts, ACP registry metadata, Nix flake description, and routine docs now point at `SethyPagna/Secretary-Jarvis` |
-| Standalone gateway launcher rebrand | Done | `scripts/hermes-gateway` is now `scripts/jarvis-gateway` with JARVIS service names and `.jarvis` paths |
+| Standalone gateway launcher rebrand | Done | Legacy gateway launcher path is replaced by `scripts/jarvis-gateway` with JARVIS service names and `.jarvis` paths |
 | Runtime readiness checker for LLM/TTS/STT | Done | Commit `2f93e96` |
 | `/api/runtime/readiness` | Done | Commit `2f93e96` |
 | Desktop stats collector | Done | Commit `24d75b5` |
@@ -43,7 +43,7 @@ Implemented checkpoints:
 | Desktop shutdown token | Done | Electron and package smoke use `X-Jarvis-Desktop-Shutdown-Token`; shutdown stays protected from generic unauthenticated API calls |
 | Optional close-to-tray lifecycle | Done | Default window close still runs full shutdown; `JARVIS_MINIMIZE_TO_TRAY=1` hides to tray and tray Quit runs the same shutdown path |
 | Desktop Python dependency gate | Done | Build script checks backend modules plus PyInstaller first and prints online/offline wheelhouse recovery commands before packaging starts |
-| Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
+| Packaged backend smoke gate | Done | `scripts/build-desktop.ps1` builds the PyInstaller backend and `scripts/smoke-desktop-backend.ps1` verifies `/api/status`, `/api/shutdown`, and process cleanup |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Home quick actions | Done | Voice, Quick Task, Attach, Tools, Mute, and Stats controls now mutate UI state or dispatch into the embedded terminal instead of being placeholders |
 | Home browser voice bridge | Done | Microphone uses MediaRecorder, posts raw audio to `/api/voice/transcribe`, dispatches transcript into embedded PTY, and can synthesize live terminal output through `/api/voice/synthesize` |
@@ -55,7 +55,7 @@ Implemented checkpoints:
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
 | Permissions/platforms/workflows/settings | Not started | Planned phases 6-8 |
-| Packaging/installers | In progress | PyInstaller spec and desktop build script are tracked; installer validation is still pending |
+| Packaging/installers | Done for local Windows build | `release/JARVIS Setup 1.0.0.exe` and `release/win-unpacked/JARVIS.exe` are produced by `scripts/build-desktop.ps1`; local build is unsigned |
 
 ## Production Readiness Gates
 
@@ -430,10 +430,9 @@ Planned:
 
 The next product slice is packaging plus the React Home page inside the Electron shell:
 
-- finish a successful local package smoke once PyPI connectivity is restored or a local wheel cache is available
-- run PyInstaller through `scripts/build-desktop.ps1` with the new smoke gate enabled
-- run electron-builder packaging after the backend smoke passes
-- install/restore FastAPI, Uvicorn, Pydantic, and PyInstaller in this Python environment or provide a local `wheelhouse/desktop`; current preflight and `scripts/check-desktop-python-deps.ps1` correctly report those modules missing
+- keep a local mirror or `wheelhouse/desktop` available when `pypi.org:443` is blocked; this workspace installed the exact pins from `https://pypi.tuna.tsinghua.edu.cn/simple`
+- run signed release packaging in CI or a signing-enabled Windows session; the local Windows build intentionally disables executable signing/editing to avoid symlink extraction failures in unsigned desktop sessions
+- launch and close the full installed app under a GUI test harness before calling the full Electron window lifecycle production-ready
 - verify `/api/voice/transcribe` and `/api/voice/synthesize` against the live embedded backend once FastAPI/Uvicorn are available again
 - harden PTY assistant-output boundaries so TTS speaks only the assistant response, not terminal chrome
 - preserve no standalone CLI entrypoints
@@ -463,4 +462,4 @@ Latest autoconfig result from this workspace:
 - Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.
 - STT dependency status: `faster-whisper==1.2.1` is installed. Non-interactive pip flags were required: `PIP_NO_INPUT=1` and `PIP_DISABLE_PIP_VERSION_CHECK=1`.
 - STT model cache status: `Systran/faster-whisper-tiny.en` is downloaded. The Hugging Face Xet path stalled on larger model blobs, so first-run downloads should set `HF_HUB_DISABLE_XET=1`.
-- Packaging status: Electron/web/Docker configuration checks pass, FastAPI/Uvicorn are now core packaged deps, and a packaged-backend smoke script is wired into the build. Local package installation is still blocked in this workspace: `Test-NetConnection pypi.org -Port 443` timed out and `pip install` hung without installing FastAPI/Uvicorn/PyInstaller, so the final backend binary and NSIS installer were not produced yet.
+- Packaging status: Electron/web/Docker configuration checks pass, FastAPI/Uvicorn are core packaged deps, and `scripts/build-desktop.ps1` completed locally after installing exact pins from the reachable Tsinghua PyPI mirror. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced `release/JARVIS Setup 1.0.0.exe` plus `release/win-unpacked/JARVIS.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.

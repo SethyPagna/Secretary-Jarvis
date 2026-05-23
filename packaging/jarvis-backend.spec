@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-repo_root = Path(SPECPATH).parent.parent
+repo_root = Path(SPECPATH).parent
 entrypoint = repo_root / "jarvis_cli" / "desktop_entry.py"
 data_files = [
     (str(repo_root / "jarvis_cli" / "data" / "default_SOUL.md"), "jarvis_cli/data"),
@@ -48,7 +48,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

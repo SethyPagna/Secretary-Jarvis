@@ -18,10 +18,23 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("$backendLaunch", build_script)
         self.assertIn("jarvis-backend.exe", build_script)
         self.assertIn("jarvis-backend", build_script)
+        self.assertIn("Invoke-Checked", build_script)
+        self.assertIn("$LASTEXITCODE", build_script)
         self.assertLess(
             build_script.index("smoke-desktop-backend.ps1"),
             build_script.index("desktop:pack"),
         )
+
+    def test_build_script_handles_vite_direct_embedded_output(self) -> None:
+        build_script = (ROOT / "scripts" / "build-desktop.ps1").read_text(
+            encoding="utf-8",
+        )
+        vite_config = (ROOT / "web" / "vite.config.ts").read_text(encoding="utf-8")
+
+        self.assertIn('outDir: "../jarvis_cli/web_dist"', vite_config)
+        self.assertIn("$viteEmbeddedDist", build_script)
+        self.assertIn("Vite already emitted", build_script)
+        self.assertIn("web/dist", build_script)
 
     def test_smoke_script_starts_hidden_backend_and_shuts_down(self) -> None:
         smoke_script = (ROOT / "scripts" / "smoke-desktop-backend.ps1").read_text(
@@ -45,12 +58,15 @@ class DesktopPackagingContractTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+        self.assertIn("repo_root = Path(SPECPATH).parent", spec)
+        self.assertNotIn("repo_root = Path(SPECPATH).parent.parent", spec)
         self.assertIn("jarvis_cli", spec)
         self.assertIn("web_dist", spec)
         self.assertIn("default_SOUL.md", spec)
         self.assertIn("fastapi", spec)
         self.assertIn("uvicorn", spec)
         self.assertIn("pydantic", spec)
+        self.assertIn("console=True", spec)
 
     def test_package_json_exposes_build_with_smoke_default(self) -> None:
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
@@ -58,6 +74,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("desktop:build", package["scripts"])
         self.assertIn("build-desktop.ps1", package["scripts"]["desktop:build"])
         self.assertNotIn("SkipSmoke", package["scripts"]["desktop:build"])
+        self.assertFalse(package["build"]["win"]["signAndEditExecutable"])
 
     def test_desktop_python_dependency_check_reports_wheelhouse_recovery(self) -> None:
         checker = (ROOT / "scripts" / "check-desktop-python-deps.ps1").read_text(
