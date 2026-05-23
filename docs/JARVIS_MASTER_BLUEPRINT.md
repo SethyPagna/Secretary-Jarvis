@@ -20,6 +20,9 @@ Implemented checkpoints:
 | Internal Python backend package | Done | Historical package path remains `jarvis_cli` during migration |
 | Standalone CLI removal from package surface | Done | Desktop backend entrypoint replaces `jarvis` console script |
 | Default JARVIS SOUL template | Done | Commit `3a75408` |
+| Delegate soul templates | Done | This checkpoint adds JARVIS, FRIDAY, ARGUS, FORGE, ORACLE, ATLAS, MUSE, and SENTINEL SOUL files |
+| Soul delegation registry | Done | This checkpoint adds `jarvis_cli.soul_registry` and a manifest-backed keyword router |
+| JARVIS docs import pack | Done | This checkpoint adds `docs/jarvis/` sections for skills, MCP, tools, memory, scheduling, platforms, security, context, architecture, and env vars |
 | Runtime readiness checker for LLM/TTS/STT | Done | Commit `2f93e96` |
 | `/api/runtime/readiness` | Done | Commit `2f93e96` |
 | Desktop stats collector | Done | Commit `24d75b5` |
