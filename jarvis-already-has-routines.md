@@ -149,12 +149,12 @@ jarvis webhook subscribe pr-review \
   --deliver github_comment
 ```
 
-Full automation templates gallery: [jarvis-agent.nousresearch.com/docs/guides/automation-templates](https://jarvis-agent.nousresearch.com/docs/guides/automation-templates)
+Full automation templates gallery: [JARVIS scheduling docs](docs/jarvis/scheduling.md)
 
-Documentation: [jarvis-agent.nousresearch.com](https://jarvis-agent.nousresearch.com)
+Documentation: [JARVIS docs pack](docs/jarvis/index.md)
 
-GitHub: [github.com/NousResearch/jarvis-agent](https://github.com/NousResearch/jarvis-agent)
+GitHub: [SethyPagna/Secretary-Jarvis](https://github.com/SethyPagna/Secretary-Jarvis)
 
 ---
 
-*JARVIS is built by [Nous Research](https://nousresearch.com). Open source, model-agnostic, runs on your infrastructure.*
+*JARVIS is a desktop-first assistant for local models, voice, workflows, memory, and platform gateways. Open source, model-agnostic, runs on your infrastructure.*

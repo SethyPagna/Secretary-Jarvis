@@ -2,10 +2,10 @@
   "id": "jarvis-agent",
   "name": "JARVIS",
   "version": "0.14.0",
-  "description": "Self-improving open-source AI agent by Nous Research with ACP editor integration, persistent memory, skills, and rich tool support.",
-  "repository": "https://github.com/NousResearch/jarvis-agent",
-  "website": "https://jarvis-agent.nousresearch.com/docs/user-guide/features/acp",
-  "authors": ["Nous Research"],
+  "description": "JARVIS desktop agent with ACP editor integration, persistent memory, specialist souls, skills, and rich tool support.",
+  "repository": "https://github.com/SethyPagna/Secretary-Jarvis",
+  "website": "https://github.com/SethyPagna/Secretary-Jarvis/tree/jarvis-remake/docs/jarvis",
+  "authors": ["SethyPagna"],
   "license": "MIT",
   "distribution": {
     "uvx": {

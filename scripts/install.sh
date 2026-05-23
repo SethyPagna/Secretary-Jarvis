@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ============================================================================
 # JARVIS Installer
 # ============================================================================
@@ -6,7 +6,7 @@
 # Uses uv for desktop/server installs and Python's stdlib venv + pip on Termux.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/NousResearch/jarvis-agent/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.sh | bash
 #
 # Or with options:
 #   curl -fsSL ... | bash -s -- --no-venv --skip-setup
@@ -20,11 +20,11 @@ set -e
 # can force pip/entrypoints to import a different checkout than the one being
 # installed, which makes fresh installs appear broken or stale.
 if [ -n "${PYTHONPATH:-}" ]; then
-    echo "⚠ Ignoring inherited PYTHONPATH during install to avoid module shadowing"
+    echo "âš  Ignoring inherited PYTHONPATH during install to avoid module shadowing"
     unset PYTHONPATH
 fi
 if [ -n "${PYTHONHOME:-}" ]; then
-    echo "⚠ Ignoring inherited PYTHONHOME during install"
+    echo "âš  Ignoring inherited PYTHONHOME during install"
     unset PYTHONHOME
 fi
 
@@ -43,12 +43,12 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # Configuration
-REPO_URL_SSH="git@github.com:NousResearch/jarvis-agent.git"
-REPO_URL_HTTPS="https://github.com/NousResearch/jarvis-agent.git"
+REPO_URL_SSH="git@github.com:SethyPagna/Secretary-Jarvis.git"
+REPO_URL_HTTPS="https://github.com/SethyPagna/Secretary-Jarvis.git"
 JARVIS_HOME="${JARVIS_HOME:-$HOME/.jarvis}"
 # INSTALL_DIR is resolved AFTER arg parsing and OS detection so we can pick an
 # FHS-style layout for root installs.  Track whether the user gave us an
-# explicit directory — if so we never override it.
+# explicit directory â€” if so we never override it.
 if [ -n "${JARVIS_INSTALL_DIR:-}" ]; then
     INSTALL_DIR="$JARVIS_INSTALL_DIR"
     INSTALL_DIR_EXPLICIT=true
@@ -138,7 +138,7 @@ while [[ $# -gt 0 ]]; do
             echo "Notes:"
             echo "  When running as root on Linux, Jarvis installs the code under"
             echo "  /usr/local/lib/jarvis-agent and links the command into"
-            echo "  /usr/local/bin/jarvis (FHS layout — matches Claude Code / Codex CLI)."
+            echo "  /usr/local/bin/jarvis (FHS layout â€” matches Claude Code / Codex CLI)."
             echo "  Data, config, sessions, and logs still live in \$JARVIS_HOME"
             echo "  (default /root/.jarvis).  This keeps Docker bind-mounted volumes"
             echo "  small and ensures the command is on PATH for all shells."
@@ -165,28 +165,28 @@ done
 print_banner() {
     echo ""
     echo -e "${MAGENTA}${BOLD}"
-    echo "┌─────────────────────────────────────────────────────────┐"
-    echo "│             ⚕ JARVIS Installer                    │"
-    echo "├─────────────────────────────────────────────────────────┤"
-    echo "│  An open source AI agent by Nous Research.              │"
-    echo "└─────────────────────────────────────────────────────────┘"
+    echo "â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”"
+    echo "â”‚             âš• JARVIS Installer                    â”‚"
+    echo "â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤"
+    echo "â”‚  Desktop AI assistant for local models.              â”‚"
+    echo "â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜"
     echo -e "${NC}"
 }
 
 log_info() {
-    echo -e "${CYAN}→${NC} $1"
+    echo -e "${CYAN}â†’${NC} $1"
 }
 
 log_success() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo -e "${GREEN}âœ“${NC} $1"
 }
 
 log_warn() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    echo -e "${YELLOW}âš ${NC} $1"
 }
 
 log_error() {
-    echo -e "${RED}✗${NC} $1"
+    echo -e "${RED}âœ—${NC} $1"
 }
 
 prompt_yes_no() {
@@ -241,7 +241,7 @@ is_termux() {
 #   - Root on Linux (new):    INSTALL_DIR = /usr/local/lib/jarvis-agent
 #                             command link in /usr/local/bin
 #                             (unless a legacy install already exists at
-#                              $JARVIS_HOME/jarvis-agent — then preserve it)
+#                              $JARVIS_HOME/jarvis-agent â€” then preserve it)
 #
 # Always no-op when the user set --dir or $JARVIS_INSTALL_DIR.
 resolve_install_layout() {
@@ -262,20 +262,20 @@ resolve_install_layout() {
     if [ "$OS" = "linux" ] && [ "$(id -u)" -eq 0 ]; then
         if [ -d "$JARVIS_HOME/jarvis-agent/.git" ]; then
             INSTALL_DIR="$JARVIS_HOME/jarvis-agent"
-            log_info "Existing install detected at $INSTALL_DIR — keeping legacy layout"
+            log_info "Existing install detected at $INSTALL_DIR â€” keeping legacy layout"
             log_info "  (new root installs use /usr/local/lib/jarvis-agent)"
             return 0
         fi
         INSTALL_DIR="/usr/local/lib/jarvis-agent"
         ROOT_FHS_LAYOUT=true
-        log_info "Root install on Linux — using FHS layout"
+        log_info "Root install on Linux â€” using FHS layout"
         log_info "  Code:    $INSTALL_DIR"
         log_info "  Command: /usr/local/bin/jarvis"
         log_info "  Data:    $JARVIS_HOME (unchanged)"
         return 0
     fi
 
-    # Default: non-root, non-Termux → legacy user-scoped layout.
+    # Default: non-root, non-Termux â†’ legacy user-scoped layout.
     INSTALL_DIR="$JARVIS_HOME/jarvis-agent"
 }
 
@@ -299,7 +299,7 @@ get_command_link_display_dir() {
     fi
 }
 
-get_hermes_command_path() {
+get_jarvis_command_path() {
     local link_dir
     link_dir="$(get_command_link_dir)"
     if [ -x "$link_dir/jarvis" ]; then
@@ -337,7 +337,7 @@ detect_os() {
             OS="windows"
             DISTRO="windows"
             log_error "Windows detected. Please use the PowerShell installer:"
-            log_info "  iex (irm https://raw.githubusercontent.com/NousResearch/jarvis-agent/main/scripts/install.ps1)"
+            log_info "  iex (irm https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.ps1)"
             exit 1
             ;;
         *)
@@ -356,7 +356,7 @@ detect_os() {
 
 install_uv() {
     if [ "$DISTRO" = "termux" ]; then
-        log_info "Termux detected — using Python's stdlib venv + pip instead of uv"
+        log_info "Termux detected â€” using Python's stdlib venv + pip instead of uv"
         UV_CMD=""
         return 0
     fi
@@ -392,7 +392,7 @@ install_uv() {
     # Capture installer output so a failure shows the user WHY (network,
     # glibc mismatch on old distros, missing curl, ~/.local/bin not
     # writable, disk full, corp proxy / TLS interception, etc.) instead
-    # of the previous "✗ Failed to install uv" with zero diagnostic.
+    # of the previous "âœ— Failed to install uv" with zero diagnostic.
     #
     # Two-stage: download the installer, then run it.  Piping
     # `curl | sh` masks curl failures (sh exits 0 on empty stdin)
@@ -460,7 +460,7 @@ check_python() {
 
     log_info "Checking Python $PYTHON_VERSION..."
 
-    # Let uv handle Python — it can download and manage Python versions
+    # Let uv handle Python â€” it can download and manage Python versions
     # First check if a suitable Python is already available
     if PYTHON_PATH="$("$UV_CMD" python find "$PYTHON_VERSION" 2>/dev/null)"; then
         PYTHON_FOUND_VERSION="$("$PYTHON_PATH" --version 2>/dev/null)"
@@ -468,7 +468,7 @@ check_python() {
         return 0
     fi
 
-    # Python not found — use uv to install it (no sudo needed!)
+    # Python not found â€” use uv to install it (no sudo needed!)
     log_info "Python $PYTHON_VERSION not found, installing via uv..."
     if "$UV_CMD" python install "$PYTHON_VERSION"; then
         PYTHON_PATH="$("$UV_CMD" python find "$PYTHON_VERSION")"
@@ -553,9 +553,9 @@ check_node() {
     fi
 
     if [ "$DISTRO" = "termux" ]; then
-        log_info "Node.js not found — installing Node.js via pkg..."
+        log_info "Node.js not found â€” installing Node.js via pkg..."
     else
-        log_info "Node.js not found — installing Node.js $NODE_VERSION LTS..."
+        log_info "Node.js not found â€” installing Node.js $NODE_VERSION LTS..."
     fi
     install_node
 }
@@ -752,7 +752,7 @@ install_system_packages() {
         return 0
     fi
 
-    # Nothing to install — done
+    # Nothing to install â€” done
     if [ "$need_ripgrep" = false ] && [ "$need_ffmpeg" = false ]; then
         return 0
     fi
@@ -771,7 +771,7 @@ install_system_packages() {
     local description
     description=$(IFS=" and "; echo "${desc_parts[*]}")
 
-    # ── macOS: brew ──
+    # â”€â”€ macOS: brew â”€â”€
     if [ "$OS" = "macos" ]; then
         if command -v brew &> /dev/null; then
             log_info "Installing ${pkgs[*]} via Homebrew..."
@@ -786,7 +786,7 @@ install_system_packages() {
         return 0
     fi
 
-    # ── Linux: resolve package manager command ──
+    # â”€â”€ Linux: resolve package manager command â”€â”€
     local pkg_install=""
     case "$DISTRO" in
         ubuntu|debian) pkg_install="apt install -y"   ;;
@@ -802,7 +802,7 @@ install_system_packages() {
             ubuntu|debian) export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a ;;
         esac
 
-        # Already root — just install
+        # Already root â€” just install
         if [ "$(id -u)" -eq 0 ]; then
             log_info "Installing ${pkgs[*]}..."
             if $install_cmd; then
@@ -810,7 +810,7 @@ install_system_packages() {
                 [ "$need_ffmpeg" = true ]  && HAS_FFMPEG=true  && log_success "ffmpeg installed"
                 return 0
             fi
-        # Passwordless sudo — just install
+        # Passwordless sudo â€” just install
         elif command -v sudo &> /dev/null && sudo -n true 2>/dev/null; then
             log_info "Installing ${pkgs[*]}..."
             if sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a $install_cmd; then
@@ -818,7 +818,7 @@ install_system_packages() {
                 [ "$need_ffmpeg" = true ]  && HAS_FFMPEG=true  && log_success "ffmpeg installed"
                 return 0
             fi
-        # sudo needs password — ask once for everything
+        # sudo needs password â€” ask once for everything
         elif command -v sudo &> /dev/null; then
             if [ "$IS_INTERACTIVE" = true ]; then
                 echo ""
@@ -848,13 +848,13 @@ install_system_packages() {
                     fi
                 fi
             else
-                log_warn "Non-interactive mode and no terminal available — cannot install system packages"
+                log_warn "Non-interactive mode and no terminal available â€” cannot install system packages"
                 log_info "Install manually after setup completes: sudo $install_cmd"
             fi
         fi
     fi
 
-    # ── Fallback for ripgrep: cargo ──
+    # â”€â”€ Fallback for ripgrep: cargo â”€â”€
     if [ "$need_ripgrep" = true ] && [ "$HAS_RIPGREP" = false ]; then
         if command -v cargo &> /dev/null; then
             log_info "Trying cargo install ripgrep (no sudo needed)..."
@@ -865,7 +865,7 @@ install_system_packages() {
         fi
     fi
 
-    # ── Show manual instructions for anything still missing ──
+    # â”€â”€ Show manual instructions for anything still missing â”€â”€
     if [ "$HAS_RIPGREP" = false ] && [ "$need_ripgrep" = true ]; then
         log_warn "ripgrep not installed (file search will use grep fallback)"
         show_manual_install_hint "ripgrep"
@@ -1043,7 +1043,7 @@ install_deps() {
         if "$PIP_PYTHON" -c 'import sys; raise SystemExit(0 if sys.platform == "android" else 1)' 2>/dev/null; then
             log_info "Android Python detected: prebuilding psutil compatibility shim..."
             if ! "$PIP_PYTHON" "$INSTALL_DIR/scripts/install_psutil_android.py" --pip "$PIP_PYTHON -m pip"; then
-                log_warn "psutil Android prebuild failed — package install will likely fail next."
+                log_warn "psutil Android prebuild failed â€” package install will likely fail next."
                 log_info "Workaround: manually rerun 'python scripts/install_psutil_android.py' once your toolchain is set up."
             fi
         fi
@@ -1106,29 +1106,29 @@ install_deps() {
 
     # Install the main package in editable mode with all extras.
     #
-    # Hash-verified install (Tier 0) — when uv.lock is present, prefer
+    # Hash-verified install (Tier 0) â€” when uv.lock is present, prefer
     # `uv sync --locked`. The lockfile records SHA256 hashes for every
     # transitive, so a compromised transitive (different hash than what
     # we shipped) is REJECTED by the resolver. This is the *only* path
     # that protects against the "direct dep is fine, but the dep's dep
     # got worm-poisoned overnight" failure mode. All `uv pip install`
     # tiers below re-resolve transitives fresh from PyPI without any
-    # hash verification — they exist to keep installs working when the
+    # hash verification â€” they exist to keep installs working when the
     # lockfile is stale, missing, or out-of-sync with the current
     # extras spec, NOT because they're equivalent in posture.
     if [ -f "uv.lock" ]; then
         log_info "Trying tier: hash-verified (uv.lock) ..."
-        log_info "(this resolves + downloads the curated [all] set — first run on a"
+        log_info "(this resolves + downloads the curated [all] set â€” first run on a"
         log_info " fresh venv can take 1-5 minutes; uv prints progress below)"
         # Stream uv's progress directly to the user instead of swallowing
         # it with `2>"$(mktemp)"`.  Two reasons:
         #   1. `--extra all --locked` against a fresh venv has to pull
-        #      every transitive — silencing stderr makes the install
+        #      every transitive â€” silencing stderr makes the install
         #      look frozen for minutes on slow networks. Users see
         #      "Trying tier: hash-verified ..." and assume it's hung.
         #   2. The previous `2>"$(mktemp)"` substituted the path at
         #      command-build time but never saved it, so on failure the
-        #      uv error message was unreachable — the user just got the
+        #      uv error message was unreachable â€” the user just got the
         #      generic "lockfile may be stale" warning.
         #
         # Critical flag choice: `--extra all`, NOT `--all-extras`.
@@ -1148,24 +1148,24 @@ install_deps() {
         fi
         log_warn "uv.lock sync failed (see uv output above), falling back to PyPI resolve..."
     else
-        log_info "uv.lock not found — falling back to PyPI resolve (no hash verification)"
+        log_info "uv.lock not found â€” falling back to PyPI resolve (no hash verification)"
     fi
 
     # Multi-tier fallback. The point of the tiers is that ONE compromised
     # PyPI package (a worm-poisoned release that gets quarantined, like
     # mistralai 2.4.6 in May 2026) shouldn't be able to silently demote a
-    # fresh install all the way down to "core only" — the user should keep
+    # fresh install all the way down to "core only" â€” the user should keep
     # everything else they signed up for.
     #
-    # Tier 1: [all] — the curated extra in pyproject.toml.
+    # Tier 1: [all] â€” the curated extra in pyproject.toml.
     # Tier 2: [all] minus the currently-broken extras list (_BROKEN_EXTRAS).
     #         Edit _BROKEN_EXTRAS below when something on PyPI breaks; this
     #         lets users keep the rest of [all] when one transitive is
     #         unavailable. The list of [all]'s contents is parsed from
-    #         pyproject.toml at runtime — there is NO hand-mirrored copy
+    #         pyproject.toml at runtime â€” there is NO hand-mirrored copy
     #         to drift out of sync. If you want to change what [all]
     #         contains, edit pyproject.toml only.
-    # Tier 3: bare `.` — last-resort so at least the core CLI launches.
+    # Tier 3: bare `.` â€” last-resort so at least the core CLI launches.
     #         Skipped tiers like "PyPI-only extras (no git deps)" used to
     #         exist to dodge [rl] / [matrix] git+sdist deps; those are no
     #         longer in [all] post-2026-05-12 lazy-install migration, so
@@ -1174,7 +1174,7 @@ install_deps() {
 
     # Parse [project.optional-dependencies].all from pyproject.toml.
     # tomllib is stdlib on Python 3.11+ which uv's bootstrap guarantees.
-    # Falls back to a hand list if parse fails — defensive only.
+    # Falls back to a hand list if parse fails â€” defensive only.
     local _ALL_EXTRAS_CSV
     _ALL_EXTRAS_CSV="$(
         "$PYTHON_PATH" - <<'PY' 2>/dev/null
@@ -1293,7 +1293,7 @@ setup_path() {
     mkdir -p "$command_link_dir"
     # Older installs created this path as a symlink to $JARVIS_BIN. Without
     # the rm, `cat >` follows the symlink and overwrites the venv pip entry
-    # point with this shim — making `exec "$JARVIS_BIN"` self-recurse. (#21454)
+    # point with this shim â€” making `exec "$JARVIS_BIN"` self-recurse. (#21454)
     rm -f "$command_link_dir/jarvis"
     cat > "$command_link_dir/jarvis" <<EOF
 #!/usr/bin/env bash
@@ -1302,7 +1302,7 @@ unset PYTHONHOME
 exec "$JARVIS_BIN" "\$@"
 EOF
     chmod +x "$command_link_dir/jarvis"
-    log_success "Installed jarvis launcher → $command_link_display_dir/jarvis"
+    log_success "Installed jarvis launcher â†’ $command_link_display_dir/jarvis"
 
     if [ "$DISTRO" = "termux" ]; then
         export PATH="$command_link_dir:$PATH"
@@ -1314,7 +1314,7 @@ EOF
     # FHS layout: /usr/local/bin is normally on PATH for login shells (via
     # /etc/profile pathmunge), but on RHEL/CentOS/Rocky/Alma 8+ non-login
     # interactive root shells (su, sudo -s, tmux panes, some web terminals)
-    # only source /etc/bashrc, which does NOT add /usr/local/bin — and
+    # only source /etc/bashrc, which does NOT add /usr/local/bin â€” and
     # /root/.bash_profile doesn't either.  So verify with `command -v` and
     # fall back to writing a PATH guard into /root/.bashrc when needed.
     if [ "$ROOT_FHS_LAYOUT" = true ]; then
@@ -1331,7 +1331,7 @@ EOF
 
         log_info "jarvis not on PATH in non-login shells (common on RHEL-family)"
         PATH_LINE='export PATH="/usr/local/bin:$PATH"'
-        PATH_COMMENT='# JARVIS — ensure /usr/local/bin is on PATH (RHEL non-login shells)'
+        PATH_COMMENT='# JARVIS â€” ensure /usr/local/bin is on PATH (RHEL non-login shells)'
         for SHELL_CONFIG in "$HOME/.bashrc" "$HOME/.bash_profile"; do
             [ -f "$SHELL_CONFIG" ] || continue
             if ! grep -v '^[[:space:]]*#' "$SHELL_CONFIG" 2>/dev/null \
@@ -1368,7 +1368,7 @@ EOF
                 [ -f "$HOME/.bash_profile" ] && SHELL_CONFIGS+=("$HOME/.bash_profile")
                 ;;
             fish)
-                # fish uses ~/.config/fish/config.fish and fish_add_path — not export PATH=
+                # fish uses ~/.config/fish/config.fish and fish_add_path â€” not export PATH=
                 IS_FISH=true
                 FISH_CONFIG="$HOME/.config/fish/config.fish"
                 mkdir -p "$(dirname "$FISH_CONFIG")"
@@ -1388,7 +1388,7 @@ EOF
         for SHELL_CONFIG in "${SHELL_CONFIGS[@]}"; do
             if ! grep -v '^[[:space:]]*#' "$SHELL_CONFIG" 2>/dev/null | grep -qE 'PATH=.*\.local/bin'; then
                 echo "" >> "$SHELL_CONFIG"
-                echo "# JARVIS — ensure ~/.local/bin is on PATH" >> "$SHELL_CONFIG"
+                echo "# JARVIS â€” ensure ~/.local/bin is on PATH" >> "$SHELL_CONFIG"
                 echo "$PATH_LINE" >> "$SHELL_CONFIG"
                 log_success "Added ~/.local/bin to PATH in $SHELL_CONFIG"
             fi
@@ -1398,7 +1398,7 @@ EOF
         if [ "$IS_FISH" = "true" ]; then
             if ! grep -q 'fish_add_path.*\.local/bin' "$FISH_CONFIG" 2>/dev/null; then
                 echo "" >> "$FISH_CONFIG"
-                echo "# JARVIS — ensure ~/.local/bin is on PATH" >> "$FISH_CONFIG"
+                echo "# JARVIS â€” ensure ~/.local/bin is on PATH" >> "$FISH_CONFIG"
                 echo 'fish_add_path "$HOME/.local/bin"' >> "$FISH_CONFIG"
                 log_success "Added ~/.local/bin to PATH in $FISH_CONFIG"
             fi
@@ -1436,7 +1436,7 @@ copy_config_templates() {
     else
         log_info "~/.jarvis/.env already exists, keeping it"
     fi
-    # Restrict .env permissions — this file holds API keys and tokens.
+    # Restrict .env permissions â€” this file holds API keys and tokens.
     # 0600 ensures only the file owner can read/write, matching standard
     # practice for credential files (.netrc, .aws/credentials, .ssh/config).
     chmod 600 "$JARVIS_HOME/.env"
@@ -1561,7 +1561,7 @@ configure_browser_env_from_system_browser() {
 
     {
         echo ""
-        echo "# JARVIS browser tools — use the system Chrome/Chromium binary."
+        echo "# JARVIS browser tools â€” use the system Chrome/Chromium binary."
         echo "AGENT_BROWSER_EXECUTABLE_PATH=$browser_path"
     } >> "$env_file"
     log_success "Configured browser tools to use $browser_path"
@@ -1609,32 +1609,32 @@ install_node_deps() {
                 ubuntu|debian|raspbian|pop|linuxmint|elementary|zorin|kali|parrot)
                     # Use --with-deps only when sudo is available non-interactively
                     # (root, or a user with passwordless sudo). Non-sudo users
-                    # — typical for systemd service accounts and unprivileged
-                    # operator users — would otherwise get blocked on an
+                    # â€” typical for systemd service accounts and unprivileged
+                    # operator users â€” would otherwise get blocked on an
                     # interactive sudo prompt that they can't satisfy. Fall back
                     # to the browser-only install in that case, and print the
                     # exact command the admin needs to run separately.
                     if [ "$(id -u)" -eq 0 ] || (command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null); then
                         log_info "Installing Playwright Chromium with system dependencies..."
                         cd "$INSTALL_DIR" && run_browser_install_with_timeout 600 npx playwright install --with-deps chromium 2>/dev/null || {
-                            log_warn "Playwright browser installation failed — browser tools will not work."
+                            log_warn "Playwright browser installation failed â€” browser tools will not work."
                             log_warn "Try running manually: cd $INSTALL_DIR && npx playwright install --with-deps chromium"
                         }
                     else
-                        log_warn "No sudo available — skipping system-library install (--with-deps)."
+                        log_warn "No sudo available â€” skipping system-library install (--with-deps)."
                         log_info "Ask an administrator to run, one time, as root:"
                         log_info "  sudo npx playwright install-deps chromium"
                         log_info "  (from $INSTALL_DIR, after Node.js deps are installed)"
                         log_info "Installing Chromium binary into this user's Playwright cache..."
                         cd "$INSTALL_DIR" && run_browser_install_with_timeout 600 npx playwright install chromium 2>/dev/null || {
-                            log_warn "Playwright browser installation failed — browser tools will not work."
+                            log_warn "Playwright browser installation failed â€” browser tools will not work."
                             log_warn "Try running manually: cd $INSTALL_DIR && npx playwright install chromium"
                         }
                     fi
                     ;;
                 arch|manjaro|cachyos|endeavouros|garuda)
                     if command -v pacman &> /dev/null; then
-                        log_info "Arch-family distro detected — installing Chromium system dependencies via pacman..."
+                        log_info "Arch-family distro detected â€” installing Chromium system dependencies via pacman..."
                         if command -v sudo &> /dev/null && sudo -n true 2>/dev/null; then
                             sudo NEEDRESTART_MODE=a pacman -S --noconfirm --needed \
                                 nss atk at-spi2-core cups libdrm libxkbcommon mesa pango cairo alsa-lib >/dev/null 2>&1 || true
@@ -1647,7 +1647,7 @@ install_node_deps() {
                         fi
                     fi
                     cd "$INSTALL_DIR" && run_browser_install_with_timeout 600 npx playwright install chromium 2>/dev/null || {
-                        log_warn "Playwright browser installation failed — browser tools will not work."
+                        log_warn "Playwright browser installation failed â€” browser tools will not work."
                     }
                     ;;
                 fedora|rhel|centos|rocky|alma)
@@ -1655,7 +1655,7 @@ install_node_deps() {
                     log_info "Install Chromium system dependencies manually before using browser tools:"
                     log_info "  sudo dnf install nss atk at-spi2-core cups-libs libdrm libxkbcommon mesa-libgbm pango cairo alsa-lib"
                     cd "$INSTALL_DIR" && run_browser_install_with_timeout 600 npx playwright install chromium 2>/dev/null || {
-                        log_warn "Playwright browser installation failed — install dependencies above and retry."
+                        log_warn "Playwright browser installation failed â€” install dependencies above and retry."
                     }
                     ;;
                 opensuse*|sles)
@@ -1663,7 +1663,7 @@ install_node_deps() {
                     log_info "Install Chromium system dependencies manually before using browser tools:"
                     log_info "  sudo zypper install mozilla-nss libatk-1_0-0 at-spi2-core cups-libs libdrm2 libxkbcommon0 Mesa-libgbm1 pango cairo libasound2"
                     cd "$INSTALL_DIR" && run_browser_install_with_timeout 600 npx playwright install chromium 2>/dev/null || {
-                        log_warn "Playwright browser installation failed — install dependencies above and retry."
+                        log_warn "Playwright browser installation failed â€” install dependencies above and retry."
                     }
                     ;;
                 *)
@@ -1760,7 +1760,7 @@ maybe_start_gateway() {
             log_info "Running 'jarvis whatsapp' to pair via QR code..."
             echo ""
             if prompt_yes_no "Pair WhatsApp now?" "yes"; then
-                JARVIS_CMD="$(get_hermes_command_path)"
+                JARVIS_CMD="$(get_jarvis_command_path)"
                 $JARVIS_CMD whatsapp || true
             fi
         else
@@ -1789,7 +1789,7 @@ maybe_start_gateway() {
     fi
 
     if [ "$should_install_gateway" = true ]; then
-        JARVIS_CMD="$(get_hermes_command_path)"
+        JARVIS_CMD="$(get_jarvis_command_path)"
 
         if [ "$DISTRO" != "termux" ] && command -v systemctl &> /dev/null; then
             log_info "Installing systemd service..."
@@ -1805,9 +1805,9 @@ maybe_start_gateway() {
             fi
         else
             if [ "$DISTRO" = "termux" ]; then
-                log_info "Termux detected — starting gateway in best-effort background mode..."
+                log_info "Termux detected â€” starting gateway in best-effort background mode..."
             else
-                log_info "systemd not available — starting gateway in background..."
+                log_info "systemd not available â€” starting gateway in background..."
             fi
             nohup $JARVIS_CMD gateway > "$JARVIS_HOME/logs/gateway.log" 2>&1 &
             GATEWAY_PID=$!
@@ -1826,14 +1826,14 @@ maybe_start_gateway() {
 print_success() {
     echo ""
     echo -e "${GREEN}${BOLD}"
-    echo "┌─────────────────────────────────────────────────────────┐"
-    echo "│              ✓ Installation Complete!                   │"
-    echo "└─────────────────────────────────────────────────────────┘"
+    echo "â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”"
+    echo "â”‚              âœ“ Installation Complete!                   â”‚"
+    echo "â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜"
     echo -e "${NC}"
     echo ""
 
     # Show file locations
-    echo -e "${CYAN}${BOLD}📁 Your files:${NC}"
+    echo -e "${CYAN}${BOLD}ðŸ“ Your files:${NC}"
     echo ""
     echo -e "   ${YELLOW}Config:${NC}    $JARVIS_HOME/config.yaml"
     echo -e "   ${YELLOW}API Keys:${NC}  $JARVIS_HOME/.env"
@@ -1841,9 +1841,9 @@ print_success() {
     echo -e "   ${YELLOW}Code:${NC}      $INSTALL_DIR"
     echo ""
 
-    echo -e "${CYAN}─────────────────────────────────────────────────────────${NC}"
+    echo -e "${CYAN}â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€${NC}"
     echo ""
-    echo -e "${CYAN}${BOLD}🚀 Commands:${NC}"
+    echo -e "${CYAN}${BOLD}ðŸš€ Commands:${NC}"
     echo ""
     echo -e "   ${GREEN}jarvis${NC}              Start chatting"
     echo -e "   ${GREEN}jarvis setup${NC}        Configure API keys & settings"
@@ -1853,16 +1853,16 @@ print_success() {
     echo -e "   ${GREEN}jarvis update${NC}       Update to latest version"
     echo ""
 
-    echo -e "${CYAN}─────────────────────────────────────────────────────────${NC}"
+    echo -e "${CYAN}â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€${NC}"
     echo ""
     if [ "$DISTRO" = "termux" ]; then
-        echo -e "${YELLOW}⚡ 'jarvis' was linked into $(get_command_link_display_dir), which is already on PATH in Termux.${NC}"
+        echo -e "${YELLOW}âš¡ 'jarvis' was linked into $(get_command_link_display_dir), which is already on PATH in Termux.${NC}"
         echo ""
     elif [ "$ROOT_FHS_LAYOUT" = true ]; then
-        echo -e "${YELLOW}⚡ 'jarvis' was linked into /usr/local/bin and is ready to use — no shell reload needed.${NC}"
+        echo -e "${YELLOW}âš¡ 'jarvis' was linked into /usr/local/bin and is ready to use â€” no shell reload needed.${NC}"
         echo ""
     else
-        echo -e "${YELLOW}⚡ Reload your shell to use 'jarvis' command:${NC}"
+        echo -e "${YELLOW}âš¡ Reload your shell to use 'jarvis' command:${NC}"
         echo ""
         LOGIN_SHELL="$(basename "${SHELL:-/bin/bash}")"
         if [ "$LOGIN_SHELL" = "zsh" ]; then
@@ -2069,3 +2069,5 @@ elif [ "$POSTINSTALL_MODE" = true ]; then
 else
     main
 fi
+
+
