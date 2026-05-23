@@ -114,6 +114,7 @@ type ChatPageProps = {
   initialInputKey?: number | string | null;
   isActive?: boolean;
   keepAliveWhenInactive?: boolean;
+  onOutputData?: (chunk: string) => void;
   showPlugins?: boolean;
   showSidebar?: boolean;
 };
@@ -124,6 +125,7 @@ export default function ChatPage({
   initialInputKey = null,
   isActive = true,
   keepAliveWhenInactive = false,
+  onOutputData,
   showPlugins = true,
   showSidebar = true,
 }: ChatPageProps) {
@@ -609,11 +611,16 @@ export default function ChatPage({
     };
 
     ws.onmessage = (ev) => {
+      let outputText = "";
       if (typeof ev.data === "string") {
-        term.write(ev.data);
+        outputText = ev.data;
+        term.write(outputText);
       } else {
-        term.write(new Uint8Array(ev.data as ArrayBuffer));
+        const bytes = new Uint8Array(ev.data as ArrayBuffer);
+        outputText = new TextDecoder().decode(bytes);
+        term.write(bytes);
       }
+      onOutputData?.(outputText);
     };
 
     ws.onclose = (ev) => {
@@ -699,6 +706,7 @@ export default function ChatPage({
     channel,
     isActive,
     keepAliveWhenInactive,
+    onOutputData,
     prefillParam,
     resumeParam,
     routePrefillParam,

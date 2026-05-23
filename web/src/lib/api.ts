@@ -75,6 +75,18 @@ export const api = {
     fetchJSON<RuntimeSmokeResponse>("/api/runtime/smoke-test", {
       method: "POST",
     }),
+  transcribeVoice: (audio: Blob) =>
+    fetchJSON<VoiceTranscriptionResponse>("/api/voice/transcribe", {
+      method: "POST",
+      headers: { "Content-Type": audio.type || "application/octet-stream" },
+      body: audio,
+    }),
+  synthesizeSpeech: (text: string) =>
+    fetchJSON<VoiceSynthesisResponse>("/api/voice/synthesize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    }),
   getSessions: (limit = 20, offset = 0) =>
     fetchJSON<PaginatedSessions>(`/api/sessions?limit=${limit}&offset=${offset}`),
   getSessionMessages: (id: string) =>
@@ -461,6 +473,27 @@ export interface RuntimeSmokeResponse {
   stt?: RuntimeSmokeSubsystem;
   blockers?: string[];
   [key: string]: unknown;
+}
+
+export interface VoiceTranscriptionResponse {
+  success: boolean;
+  transcript: string;
+  provider?: string;
+  engine?: string;
+  bytes?: number;
+  latency_ms?: number;
+  error?: string;
+}
+
+export interface VoiceSynthesisResponse {
+  success: boolean;
+  audio_base64: string;
+  audio_bytes: number;
+  mime_type?: string;
+  provider?: string;
+  engine?: string;
+  latency_ms?: number;
+  error?: string;
 }
 
 export interface SessionInfo {

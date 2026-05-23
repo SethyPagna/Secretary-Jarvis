@@ -41,6 +41,7 @@ Implemented checkpoints:
 | Packaged backend smoke gate | In progress | `scripts/smoke-desktop-backend.ps1` is wired into `scripts/build-desktop.ps1`; live run currently blocked by local PyPI connectivity |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Home quick actions | Done | Voice, Quick Task, Attach, Tools, Mute, and Stats controls now mutate UI state or dispatch into the embedded terminal instead of being placeholders |
+| Home browser voice bridge | Done | Microphone uses MediaRecorder, posts raw audio to `/api/voice/transcribe`, dispatches transcript into embedded PTY, and can synthesize live terminal output through `/api/voice/synthesize` |
 | Title bar notification drawer | Done | Bell button opens/closes a desktop notification drawer with backend/gateway alert placeholder state |
 | Home terminal live PTY handoff | Done | Non-status Home commands navigate into the live `/api/pty` chat terminal with a prefilled command instead of a placeholder |
 | Embedded Home xterm | Done | Home mounts the xterm-backed `ChatPage` directly with sidebar/plugin chrome disabled and no hidden inactive PTY sessions |
@@ -67,6 +68,8 @@ JARVIS is not production ready until every gate below has automated evidence:
 11. Packaged backend smoke starts the PyInstaller backend hidden, verifies `/api/status`, calls `/api/shutdown` with the desktop shutdown token, and stops the child process before electron-builder packages the installer.
 12. Desktop backend preflight must pass before Electron or packaging smoke waits for `/api/status`.
 13. Close-to-tray must be opt-in only; tray Quit must call the same shutdown path as a normal close so no backend child remains idle in the background.
+14. Home voice capture must use browser MediaRecorder audio, not a permission-only probe.
+15. Home voice output must use the same live terminal response stream and configured TTS endpoint, not a separate canned response path.
 
 Performance targets:
 
@@ -365,8 +368,8 @@ Phase 2: core agent extensions:
 Phase 3: Electron shell and Home page:
 
 - Electron shell lifecycle: done.
-- React Home route, orb, stats consumer, title bar, terminal input shell, and voice controls: in progress.
-- PTY websocket attachment and full STT/TTS playback controls: next.
+- React Home route, orb, stats consumer, title bar, terminal input shell, embedded PTY, voice capture, and TTS playback bridge: in progress.
+- Remaining Home voice hardening: parse explicit assistant message boundaries from PTY events before claiming polished end-to-end voice response playback.
 
 Phase 4: Models page.
 
@@ -392,6 +395,8 @@ Implemented:
 | POST | `/api/runtime/smoke-test` | Verify active LLM/TTS/STT actually run |
 | GET | `/api/runtime/autoconfig` | Discover local models/assets and return a config/action plan |
 | POST | `/api/runtime/autoconfig/apply` | Merge the discovered runtime config patch into `config.yaml` |
+| POST | `/api/voice/transcribe` | Accept raw browser microphone audio and run configured STT |
+| POST | `/api/voice/synthesize` | Return browser-playable TTS audio for assistant output |
 
 Planned:
 
@@ -423,8 +428,8 @@ The next product slice is packaging plus the React Home page inside the Electron
 - run PyInstaller through `scripts/build-desktop.ps1` with the new smoke gate enabled
 - run electron-builder packaging after the backend smoke passes
 - install/restore FastAPI, Uvicorn, Pydantic, and PyInstaller in this Python environment or provide a local `wheelhouse/desktop`; current preflight and `scripts/check-desktop-python-deps.ps1` correctly report those modules missing
-- connect microphone capture to configured STT instead of permission probing only
-- connect voice playback controls to configured TTS output
+- verify `/api/voice/transcribe` and `/api/voice/synthesize` against the live embedded backend once FastAPI/Uvicorn are available again
+- harden PTY assistant-output boundaries so TTS speaks only the assistant response, not terminal chrome
 - preserve no standalone CLI entrypoints
 
 The current runtime smoke test verifies "arms and legs" behavior:

@@ -494,6 +494,10 @@ class ModelAssignment(BaseModel):
     task: str = ""
 
 
+class VoiceSynthesizeRequest(BaseModel):
+    text: str
+
+
 _GATEWAY_HEALTH_URL = os.getenv("GATEWAY_HEALTH_URL")
 try:
     _GATEWAY_HEALTH_TIMEOUT = float(os.getenv("GATEWAY_HEALTH_TIMEOUT", "3"))
@@ -681,6 +685,30 @@ async def post_runtime_smoke_test():
         config,
         env=env,
         output_dir=get_jarvis_home() / "runtime-smoke",
+    )
+
+
+@app.post("/api/voice/transcribe")
+async def post_voice_transcribe(request: Request):
+    """Transcribe raw browser microphone audio with the configured STT stack."""
+    from jarvis_cli.desktop_voice import transcribe_desktop_audio
+
+    audio_bytes = await request.body()
+    return transcribe_desktop_audio(
+        audio_bytes,
+        request.headers.get("content-type"),
+        get_jarvis_home() / "voice-input",
+    )
+
+
+@app.post("/api/voice/synthesize")
+async def post_voice_synthesize(body: VoiceSynthesizeRequest):
+    """Synthesize assistant text for desktop voice playback."""
+    from jarvis_cli.desktop_voice import synthesize_desktop_speech
+
+    return synthesize_desktop_speech(
+        body.text,
+        get_jarvis_home() / "voice-output",
     )
 
 

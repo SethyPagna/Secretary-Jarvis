@@ -110,6 +110,54 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("getRuntimeSmokeTest", source)
         self.assertIn('"/api/runtime/smoke-test"', source)
 
+    def test_home_voice_records_transcribes_and_dispatches_to_live_terminal(self) -> None:
+        source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("new MediaRecorder", source)
+        self.assertIn("voiceChunksRef", source)
+        self.assertIn("api.transcribeVoice", source)
+        self.assertIn("setTerminalInput(transcript)", source)
+        self.assertIn("runLiveCommand(transcript", source)
+        self.assertIn("Transcribing voice input", source)
+        self.assertNotIn("await navigator.mediaDevices?.getUserMedia({ audio: true });\n      setListening(true);", source)
+
+    def test_home_voice_output_synthesizes_live_assistant_output(self) -> None:
+        home_source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+            encoding="utf-8",
+        )
+        chat_source = (ROOT / "web" / "src" / "pages" / "ChatPage.tsx").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("onOutputData?:", chat_source)
+        self.assertIn("onOutputData?.(outputText)", chat_source)
+        self.assertIn("handleTerminalOutput", home_source)
+        self.assertIn("awaitingVoiceResponseRef", home_source)
+        self.assertIn("api.synthesizeSpeech", home_source)
+        self.assertIn("audioPlayerRef", home_source)
+        self.assertIn("onOutputData={handleTerminalOutput}", home_source)
+
+    def test_api_client_exposes_voice_stt_and_tts_endpoints(self) -> None:
+        source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
+
+        self.assertIn("transcribeVoice", source)
+        self.assertIn('"/api/voice/transcribe"', source)
+        self.assertIn("synthesizeSpeech", source)
+        self.assertIn('"/api/voice/synthesize"', source)
+        self.assertIn("VoiceTranscriptionResponse", source)
+        self.assertIn("VoiceSynthesisResponse", source)
+
+    def test_web_server_exposes_raw_voice_transcription_and_synthesis(self) -> None:
+        source = (ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
+
+        self.assertIn('@app.post("/api/voice/transcribe")', source)
+        self.assertIn("await request.body()", source)
+        self.assertIn("transcribe_desktop_audio", source)
+        self.assertIn('@app.post("/api/voice/synthesize")', source)
+        self.assertIn("synthesize_desktop_speech", source)
+
 
 if __name__ == "__main__":
     unittest.main()

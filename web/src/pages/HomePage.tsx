@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import {
   useEffect,
+  useCallback,
   useMemo,
   useRef,
   useState,
@@ -39,6 +40,31 @@ type TerminalLaunch = {
   command: string;
   id: number;
 };
+
+function base64ToAudioBlob(base64: string, mimeType: string): Blob {
+  const binary = window.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return new Blob([bytes], { type: mimeType });
+}
+
+function terminalTextForSpeech(text: string): string {
+  return text
+    // eslint-disable-next-line no-control-regex -- stripping OSC terminal control sequences before TTS
+    .replace(/\x1b\][\s\S]*?(?:\x07|\x1b\\)/g, " ")
+    // eslint-disable-next-line no-control-regex -- stripping ANSI terminal control sequences before TTS
+    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, " ")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith(">") && !/^jarvis\s/i.test(line))
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 1800);
+}
 
 const TOOL_TOGGLES = [
   { key: "terminal", label: "Terminal" },
@@ -78,6 +104,13 @@ function smokeSummary(smoke: RuntimeSmokeResponse): string {
 
 export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceChunksRef = useRef<Blob[]>([]);
+  const voiceStreamRef = useRef<MediaStream | null>(null);
+  const awaitingVoiceResponseRef = useRef(false);
+  const voiceOutputBufferRef = useRef("");
+  const voiceOutputTimerRef = useRef<number | null>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
   const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
@@ -102,6 +135,8 @@ export default function HomePage() {
   });
   const [voiceOutput, setVoiceOutput] = useState(true);
   const [listening, setListening] = useState(false);
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([
     { kind: "output", text: "JARVIS desktop backend linked." },
   ]);
@@ -151,16 +186,35 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (voiceOutputTimerRef.current !== null) {
+        window.clearTimeout(voiceOutputTimerRef.current);
+      }
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== "inactive") {
+        recorder.onstop = null;
+        recorder.stop();
+      }
+      voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+      }
+    };
+  }, []);
+
   const orbState: OrbState = useMemo(() => {
     if (!status) return "offline";
+    if (speaking) return "speaking";
     if (smokeRunning) return "thinking";
     if (listening) return "listening";
+    if (voiceBusy) return "thinking";
     if (smoke && !smoke.production_ready) return "error";
     if (smoke?.tts && subsystemReady(smoke.tts)) return "speaking";
     return "idle";
-  }, [listening, smoke, smokeRunning, status]);
+  }, [listening, smoke, smokeRunning, speaking, status, voiceBusy]);
 
-  const runLiveCommand = (command: string, message = "Running in live terminal.") => {
+  const runLiveCommand = useCallback((command: string, message = "Running in live terminal.") => {
     setTerminalLive(true);
     setTerminalLaunch({ command, id: Date.now() });
     setTerminalEntries((entries) => [
@@ -168,7 +222,7 @@ export default function HomePage() {
       { kind: "input", text: command },
       { kind: "output", text: message },
     ]);
-  };
+  }, []);
 
   const runSmoke = async () => {
     setSmokeRunning(true);
@@ -230,22 +284,200 @@ export default function HomePage() {
     ]);
   };
 
-  const toggleMic = async () => {
-    if (listening) {
-      setListening(false);
+  const playSynthesizedSpeech = useCallback(
+    async (rawText: string) => {
+      if (!voiceOutput) return;
+      const text = terminalTextForSpeech(rawText);
+      if (!text) return;
+
+      setSpeaking(true);
+      let objectUrl: string | null = null;
+      try {
+        const result = await api.synthesizeSpeech(text);
+        if (!result.success || !result.audio_base64) {
+          throw new Error(result.error || "TTS did not return audio.");
+        }
+
+        const currentAudio = audioPlayerRef.current;
+        if (currentAudio) {
+          currentAudio.pause();
+          if (currentAudio.src.startsWith("blob:")) {
+            URL.revokeObjectURL(currentAudio.src);
+          }
+        }
+
+        const audioBlob = base64ToAudioBlob(
+          result.audio_base64,
+          result.mime_type || "audio/mpeg",
+        );
+        objectUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(objectUrl);
+        audioPlayerRef.current = audio;
+        audio.onended = () => {
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          if (audioPlayerRef.current === audio) audioPlayerRef.current = null;
+          setSpeaking(false);
+        };
+        audio.onerror = () => {
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          if (audioPlayerRef.current === audio) audioPlayerRef.current = null;
+          setSpeaking(false);
+        };
+        await audio.play();
+      } catch (error) {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        setSpeaking(false);
+        setTerminalEntries((entries) => [
+          ...entries,
+          {
+            kind: "output",
+            text: error instanceof Error ? error.message : String(error),
+          },
+        ]);
+      }
+    },
+    [voiceOutput],
+  );
+
+  const handleTerminalOutput = useCallback(
+    (chunk: string) => {
+      if (!awaitingVoiceResponseRef.current || !voiceOutput) return;
+      voiceOutputBufferRef.current += chunk;
+      if (voiceOutputTimerRef.current !== null) {
+        window.clearTimeout(voiceOutputTimerRef.current);
+      }
+      voiceOutputTimerRef.current = window.setTimeout(() => {
+        const bufferedOutput = voiceOutputBufferRef.current;
+        voiceOutputBufferRef.current = "";
+        awaitingVoiceResponseRef.current = false;
+        void playSynthesizedSpeech(bufferedOutput);
+      }, 1400);
+    },
+    [playSynthesizedSpeech, voiceOutput],
+  );
+
+  const handleRecordedVoice = useCallback(
+    async (audio: Blob) => {
+      if (audio.size === 0) {
+        setTerminalEntries((entries) => [
+          ...entries,
+          { kind: "output", text: "No microphone audio was captured." },
+        ]);
+        return;
+      }
+
+      setVoiceBusy(true);
+      setTerminalEntries((entries) => [
+        ...entries,
+        { kind: "output", text: "Transcribing voice input..." },
+      ]);
+
+      try {
+        const result = await api.transcribeVoice(audio);
+        const transcript = result.transcript?.trim() ?? "";
+        if (!result.success || !transcript) {
+          throw new Error(result.error || "STT returned an empty transcript.");
+        }
+
+        setTerminalInput(transcript);
+        voiceOutputBufferRef.current = "";
+        awaitingVoiceResponseRef.current = voiceOutput;
+        runLiveCommand(transcript,
+          `Voice transcript (${result.provider ?? result.engine ?? "stt"}): ${transcript}`,
+        );
+      } catch (error) {
+        awaitingVoiceResponseRef.current = false;
+        setTerminalEntries((entries) => [
+          ...entries,
+          {
+            kind: "output",
+            text: error instanceof Error ? error.message : String(error),
+          },
+        ]);
+      } finally {
+        setVoiceBusy(false);
+      }
+    },
+    [runLiveCommand, voiceOutput],
+  );
+
+  const stopVoiceStream = useCallback(() => {
+    voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
+    voiceStreamRef.current = null;
+  }, []);
+
+  const stopVoiceRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+      return;
+    }
+    stopVoiceStream();
+    setListening(false);
+  }, [stopVoiceStream]);
+
+  const startVoiceRecording = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setTerminalEntries((entries) => [
+        ...entries,
+        { kind: "output", text: "Browser audio recorder unavailable." },
+      ]);
       return;
     }
 
     try {
-      await navigator.mediaDevices?.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      voiceStreamRef.current = stream;
+      const preferredMime = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/ogg;codecs=opus",
+      ].find((mime) => MediaRecorder.isTypeSupported(mime));
+      const recorder = preferredMime
+        ? new MediaRecorder(stream, { mimeType: preferredMime })
+        : new MediaRecorder(stream);
+
+      voiceChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          voiceChunksRef.current.push(event.data);
+        }
+      };
+      recorder.onstop = () => {
+        const recordedAudio = new Blob(voiceChunksRef.current, {
+          type: recorder.mimeType || preferredMime || "audio/webm",
+        });
+        mediaRecorderRef.current = null;
+        voiceChunksRef.current = [];
+        stopVoiceStream();
+        setListening(false);
+        void handleRecordedVoice(recordedAudio);
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(250);
       setListening(true);
+      setTerminalEntries((entries) => [
+        ...entries,
+        { kind: "output", text: "Listening..." },
+      ]);
     } catch {
+      stopVoiceStream();
       setListening(false);
       setTerminalEntries((entries) => [
         ...entries,
         { kind: "output", text: "Microphone permission unavailable." },
       ]);
     }
+  }, [handleRecordedVoice, stopVoiceStream]);
+
+  const toggleMic = async () => {
+    if (listening) {
+      stopVoiceRecording();
+      return;
+    }
+
+    await startVoiceRecording();
   };
 
   const handleQuickTaskSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -307,7 +539,8 @@ export default function HomePage() {
             <QuickAction
               label="Voice"
               icon={Mic}
-              active={listening}
+              active={listening || voiceBusy}
+              busy={voiceBusy}
               onClick={() => void toggleMic()}
             />
             <QuickAction
@@ -443,6 +676,7 @@ export default function HomePage() {
               initialInput={terminalLaunch?.command ?? null}
               initialInputKey={terminalLaunch?.id ?? null}
               isActive
+              onOutputData={handleTerminalOutput}
               showPlugins={false}
               showSidebar={false}
             />
