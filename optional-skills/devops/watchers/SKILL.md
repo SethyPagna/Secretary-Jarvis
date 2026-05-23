@@ -66,7 +66,7 @@ Watch a GitHub repo (set `GITHUB_TOKEN` in `~/.jarvis/.env` to avoid the 60 req/
 
 ```bash
 python $JARVIS_HOME/skills/devops/watchers/scripts/watch_github.py \
-  --name jarvis-issues --repo NousResearch/jarvis-agent --scope issues
+  --name jarvis-issues --repo SethyPagna/Secretary-Jarvis --scope issues
 ```
 
 Poll an arbitrary JSON API:

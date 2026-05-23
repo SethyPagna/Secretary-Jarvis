@@ -16,7 +16,7 @@ Implemented checkpoints:
 
 | Area | Status | Evidence |
 | --- | --- | --- |
-| Fork/rebrand foundation | Done | Commit `3a75408` |
+| Repository foundation | Done | Commit `3a75408` |
 | Internal Python backend package | Done | Historical package path remains `jarvis_cli` during migration |
 | Standalone CLI removal from package surface | Done | Desktop backend entrypoint replaces `jarvis` console script |
 | Default JARVIS SOUL template | Done | Commit `3a75408` |
@@ -46,7 +46,7 @@ Implemented checkpoints:
 | Title bar notification drawer | Done | Bell button opens/closes a desktop notification drawer with backend/gateway alert placeholder state |
 | Home terminal live PTY handoff | Done | Non-status Home commands navigate into the live `/api/pty` chat terminal with a prefilled command instead of a placeholder |
 | Embedded Home xterm | Done | Home mounts the xterm-backed `ChatPage` directly with sidebar/plugin chrome disabled and no hidden inactive PTY sessions |
-| Frontend dependency rebrand guard | Done | Lockfile preserves canonical third-party `hermes-parser`/`hermes-estree` package names so ESLint can start |
+| Frontend dependency guard | Done | Lockfile preserves canonical third-party parser package names so ESLint can start |
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
 | Permissions/platforms/workflows/settings | Not started | Planned phases 6-8 |
@@ -88,14 +88,14 @@ Performance targets:
 
 Goals:
 
-- Fork `NousResearch/hermes-agent` to `SethyPagna/Secretary-Jarvis`.
+- Use `SethyPagna/Secretary-Jarvis` as the active product repository.
 - Work on `jarvis-remake`.
-- Rename user-facing product from Hermes to JARVIS.
+- Keep user-facing product identity on JARVIS.
 - Remove standalone CLI as a user-facing product surface.
 - Keep the historical `jarvis_cli` Python package only as an internal backend namespace until a later low-risk module migration.
 - Expose `jarvis-desktop-backend` for Electron/PyInstaller child-process startup.
-- Move local config/data from `~/.hermes` to `~/.jarvis`.
-- Preserve backward-compatible context fallbacks for `HERMES.md` and `AGENTS.md`.
+- Store local config/data in `~/.jarvis`.
+- Preserve project context discovery for `JARVIS.md` and `AGENTS.md`.
 
 Required files:
 

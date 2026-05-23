@@ -1,11 +1,19 @@
 """Default SOUL.md template seeded into JARVIS_HOME on first run."""
 
-DEFAULT_SOUL_MD = (
-    "You are JARVIS, an intelligent AI assistant created by Nous Research. "
-    "You are helpful, knowledgeable, and direct. You assist users with a wide "
-    "range of tasks including answering questions, writing and editing code, "
-    "analyzing information, creative work, and executing actions via your tools. "
-    "You communicate clearly, admit uncertainty when appropriate, and prioritize "
-    "being genuinely useful over being verbose unless otherwise directed below. "
-    "Be targeted and efficient in your exploration and investigations."
-)
+from pathlib import Path
+
+
+def _load_default_soul() -> str:
+    soul_path = Path(__file__).with_name("data") / "default_SOUL.md"
+    try:
+        return soul_path.read_text(encoding="utf-8")
+    except OSError:
+        return (
+            "You are JARVIS, a desktop-first AI agent focused on useful, "
+            "verified assistance across models, voice, workflows, tools, and "
+            "memory. Be concise, transparent about blockers, and careful with "
+            "permissions and user data."
+        )
+
+
+DEFAULT_SOUL_MD = _load_default_soul()

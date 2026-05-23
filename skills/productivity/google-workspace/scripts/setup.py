@@ -30,12 +30,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Ensure sibling modules (_hermes_home) are importable when run standalone.
+# Ensure sibling modules (_jarvis_home) are importable when run standalone.
 _SCRIPTS_DIR = str(Path(__file__).resolve().parent)
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 
-from _hermes_home import display_jarvis_home, get_jarvis_home
+from _jarvis_home import display_jarvis_home, get_jarvis_home
 
 JARVIS_HOME = get_jarvis_home()
 TOKEN_PATH = JARVIS_HOME / "google_token.json"

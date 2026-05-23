@@ -2,7 +2,7 @@
 name: google-workspace
 description: "Gmail, Calendar, Drive, Docs, Sheets via gws CLI or Python."
 version: 1.1.0
-author: Nous Research
+author: JARVIS Project
 license: MIT
 platforms: [linux, macos, windows]
 required_credential_files:
@@ -13,7 +13,7 @@ required_credential_files:
 metadata:
   jarvis:
     tags: [Google, Gmail, Calendar, Drive, Sheets, Docs, Contacts, Email, OAuth]
-    homepage: https://github.com/NousResearch/jarvis-agent
+    homepage: https://github.com/SethyPagna/Secretary-Jarvis
     related_skills: [himalaya]
 ---
 

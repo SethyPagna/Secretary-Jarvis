@@ -158,6 +158,26 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn('@app.post("/api/voice/synthesize")', source)
         self.assertIn("synthesize_desktop_speech", source)
 
+    def test_orb_and_home_use_unframed_cosmic_scene(self) -> None:
+        orb_source = (ROOT / "web" / "src" / "components" / "JarvisOrb.tsx").read_text(
+            encoding="utf-8",
+        )
+        home_source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("function StarField", orb_source)
+        self.assertIn("function NebulaVeil", orb_source)
+        self.assertIn("function OrbitRings", orb_source)
+        self.assertIn("vertexColors", orb_source)
+        self.assertIn("#b86cff", orb_source)
+        self.assertIn("overflow-visible", orb_source)
+        self.assertNotIn("rounded-md border", orb_source)
+        self.assertNotIn("border border-cyan", orb_source)
+        self.assertIn("jarvis-cosmic-field", home_source)
+        self.assertIn("radial-gradient(circle at 18% 20%", home_source)
+        self.assertNotIn("rounded-md border border-cyan-200/10 bg-[#080e14]/72", home_source)
+
 
 if __name__ == "__main__":
     unittest.main()

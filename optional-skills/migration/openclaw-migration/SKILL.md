@@ -2,7 +2,7 @@
 name: openclaw-migration
 description: Migrate a user's OpenClaw customization footprint into JARVIS. Imports Jarvis-compatible memories, SOUL.md, command allowlists, user skills, and selected workspace assets from ~/.openclaw, then reports exactly what could not be migrated and why.
 version: 1.0.0
-author: JARVIS (Nous Research)
+author: JARVIS (JARVIS Project)
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
@@ -33,7 +33,7 @@ The CLI command runs the same migration script described below. Use this skill (
 
 ## What this skill does
 
-It uses `scripts/openclaw_to_hermes.py` to:
+It uses `scripts/openclaw_to_jarvis.py` to:
 
 - import `SOUL.md` into the Jarvis home directory as `SOUL.md`
 - transform OpenClaw `MEMORY.md` and `USER.md` into Jarvis memory entries
@@ -49,11 +49,11 @@ It uses `scripts/openclaw_to_hermes.py` to:
 
 The helper script lives in this skill directory at:
 
-- `scripts/openclaw_to_hermes.py`
+- `scripts/openclaw_to_jarvis.py`
 
 When this skill is installed from the Skills Hub, the normal location is:
 
-- `~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py`
+- `~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_jarvis.py`
 
 Do not guess a shorter path like `~/.jarvis/skills/openclaw-migration/...`.
 
@@ -229,37 +229,37 @@ The helper script still supports category-level `--include` / `--exclude`, but t
 Dry run with full discovery:
 
 ```bash
-python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py
+python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_jarvis.py
 ```
 
 When using the terminal tool, prefer an absolute invocation pattern such as:
 
 ```json
-{"command":"python3 /home/USER/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py","workdir":"/home/USER"}
+{"command":"python3 /home/USER/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_jarvis.py","workdir":"/home/USER"}
 ```
 
 Dry run with the user-data preset:
 
 ```bash
-python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --preset user-data
+python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_jarvis.py --preset user-data
 ```
 
 Execute a user-data migration:
 
 ```bash
-python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict skip
+python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_jarvis.py --execute --preset user-data --skill-conflict skip
 ```
 
 Execute a full compatible migration:
 
 ```bash
-python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset full --migrate-secrets --skill-conflict skip
+python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_jarvis.py --execute --preset full --migrate-secrets --skill-conflict skip
 ```
 
 Execute with workspace instructions included:
 
 ```bash
-python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_hermes.py --execute --preset user-data --skill-conflict rename --workspace-target "/absolute/workspace/path"
+python3 ~/.jarvis/skills/migration/openclaw-migration/scripts/openclaw_to_jarvis.py --execute --preset user-data --skill-conflict rename --workspace-target "/absolute/workspace/path"
 ```
 
 Do not use `$PWD` or the home directory as the workspace target by default. Ask for an explicit workspace path first.

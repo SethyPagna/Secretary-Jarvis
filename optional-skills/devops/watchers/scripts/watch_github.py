@@ -6,7 +6,7 @@ Usage (via cron with --no-agent):
     jarvis cron create jarvis-issues \\
       --schedule "*/5 * * * *" --no-agent \\
       --script "$JARVIS_HOME/skills/devops/watchers/scripts/watch_github.py" \\
-      --script-args "--name jarvis-issues --repo NousResearch/jarvis-agent --scope issues"
+      --script-args "--name jarvis-issues --repo SethyPagna/Secretary-Jarvis --scope issues"
 
 Set GITHUB_TOKEN (or GH_TOKEN) in ~/.jarvis/.env to avoid the 60 req/hr
 anonymous rate limit.

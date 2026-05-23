@@ -45,7 +45,7 @@ DEFAULT_USER_ENV = "HYPERLIQUID_USER_ADDRESS"
 DEFAULT_API_BASE = "https://api.hyperliquid.xyz"
 
 
-def _hermes_home() -> Path:
+def _jarvis_home() -> Path:
     return Path(os.environ.get("JARVIS_HOME", "~/.jarvis")).expanduser()
 
 
@@ -55,7 +55,7 @@ def _dotenv_paths() -> List[Path]:
     if project_env.exists():
         paths.append(project_env)
 
-    user_env = _hermes_home() / ".env"
+    user_env = _jarvis_home() / ".env"
     if user_env.exists():
         paths.append(user_env)
 

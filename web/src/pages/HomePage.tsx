@@ -517,13 +517,45 @@ export default function HomePage() {
   const activeVoice = readiness?.tts?.engine ?? "voice";
 
   return (
-    <main className="flex min-h-0 min-w-0 w-full max-w-[calc(100vw-1.5rem)] flex-1 flex-col gap-4 overflow-x-hidden text-cyan-50 lg:max-w-full">
+    <main
+      className="relative isolate flex min-h-0 min-w-0 w-full max-w-[calc(100vw-1.5rem)] flex-1 flex-col gap-4 overflow-hidden px-1 py-1 text-cyan-50 lg:max-w-full"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at 18% 20%, rgba(0, 212, 255, 0.18), transparent 28%), radial-gradient(circle at 76% 16%, rgba(184, 108, 255, 0.16), transparent 30%), radial-gradient(circle at 52% 82%, rgba(255, 102, 0, 0.1), transparent 34%), linear-gradient(135deg, #02030a 0%, #07111c 46%, #03040b 100%)",
+      }}
+    >
+      <div className="jarvis-cosmic-field pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-70"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.75) 0 1px, transparent 1.4px), radial-gradient(circle, rgba(0,212,255,0.6) 0 1px, transparent 1.6px), radial-gradient(circle, rgba(184,108,255,0.5) 0 1px, transparent 1.5px)",
+            backgroundPosition: "0 0, 42px 28px, 88px 64px",
+            backgroundSize: "120px 120px, 170px 170px, 230px 230px",
+          }}
+        />
+        <div
+          className="absolute inset-x-[-12%] top-[-18%] h-[52%] opacity-55 blur-3xl"
+          style={{
+            background:
+              "linear-gradient(110deg, transparent 5%, rgba(0,212,255,0.18) 28%, rgba(184,108,255,0.2) 52%, rgba(255,102,0,0.12) 72%, transparent 95%)",
+            transform: "rotate(-7deg)",
+          }}
+        />
+      </div>
       <section className="grid min-h-0 min-w-0 w-full max-w-full flex-1 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
-        <div className="flex min-h-[380px] min-w-0 w-full max-w-full flex-col items-center justify-center rounded-md border border-cyan-200/10 bg-[#080e14]/72 px-4 py-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)] sm:px-5">
+        <div className="relative flex min-h-[420px] min-w-0 w-full max-w-full flex-col items-center justify-center overflow-visible px-4 py-6 sm:px-5">
+          <div
+            className="pointer-events-none absolute inset-x-[8%] top-[8%] h-px opacity-60"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, rgba(0,212,255,0.44), rgba(184,108,255,0.4), transparent)",
+            }}
+          />
           <JarvisOrb state={orbState} />
 
           <div className="mt-4 flex flex-col items-center gap-2 text-center">
-            <p className="text-2xl font-semibold tracking-[0.01em] text-cyan-50">
+            <p className="text-2xl font-semibold tracking-[0.01em] text-white drop-shadow-[0_0_18px_rgba(0,212,255,0.24)]">
               How can I help?
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2 text-[0.78rem] uppercase tracking-[0.11em] text-cyan-50/58">
@@ -585,7 +617,7 @@ export default function HomePage() {
 
           {quickTaskOpen && (
             <form
-              className="mt-3 flex w-full max-w-3xl flex-col gap-2 rounded-md border border-cyan-200/14 bg-black/32 p-3"
+              className="mt-3 flex w-full max-w-3xl flex-col gap-2 rounded-md border border-cyan-200/16 bg-black/42 p-3 shadow-[0_18px_54px_rgba(0,0,0,0.26)] backdrop-blur-xl"
               onSubmit={handleQuickTaskSubmit}
             >
               <label className="text-[0.72rem] uppercase tracking-[0.1em] text-cyan-50/55">
@@ -611,7 +643,7 @@ export default function HomePage() {
           )}
 
           {toolsOpen && (
-            <div className="mt-3 grid w-full max-w-3xl grid-cols-2 gap-2 rounded-md border border-cyan-200/14 bg-black/32 p-3 sm:grid-cols-4">
+            <div className="mt-3 grid w-full max-w-3xl grid-cols-2 gap-2 rounded-md border border-cyan-200/16 bg-black/42 p-3 shadow-[0_18px_54px_rgba(0,0,0,0.26)] backdrop-blur-xl sm:grid-cols-4">
               {TOOL_TOGGLES.map((tool) => (
                 <button
                   type="button"
