@@ -1,22 +1,67 @@
 {
   "name": "jarvis-agent",
+  "productName": "JARVIS",
   "version": "1.0.0",
-  "description": "An AI agent with advanced tool-calling capabilities, featuring a flexible toolsets system for organizing and managing tools.",
+  "description": "JARVIS desktop agent with an embedded Python backend, local model orchestration, and voice readiness checks.",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
-    "postinstall": "echo '✅ Browser tools ready. Run: python run_agent.py --help'"
+    "postinstall": "echo 'JARVIS desktop dependencies ready.'",
+    "desktop:dev": "electron .",
+    "desktop:pack": "electron-builder"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NousResearch/Jarvis-Agent.git"
+    "url": "git+https://github.com/SethyPagna/Secretary-Jarvis.git"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/NousResearch/Jarvis-Agent/issues"
+    "url": "https://github.com/SethyPagna/Secretary-Jarvis/issues"
   },
-  "homepage": "https://github.com/NousResearch/Jarvis-Agent#readme",
+  "homepage": "https://github.com/SethyPagna/Secretary-Jarvis#readme",
   "dependencies": {
     "agent-browser": "^0.26.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.sethypagna.jarvis",
+    "productName": "JARVIS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "jarvis_cli/web_dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/jarvis-backend",
+        "to": "backend/jarvis-backend"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "assets/icon.png"
+    }
   },
   "overrides": {
     "lodash": "4.18.1"

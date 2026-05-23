@@ -32,7 +32,7 @@ Implemented checkpoints:
 | Runtime autoconfig apply | Done | This checkpoint adds `/api/runtime/autoconfig/apply` |
 | Fast local STT profile | Done | CPU machines use faster-whisper `tiny.en`/int8; NVIDIA machines target `large-v3` |
 | Desktop-first backend priority | Done | Autoconfig prefers llama.cpp, then vLLM, then Ollama |
-| Electron desktop shell | Not started | Planned phase 3 |
+| Electron desktop shell | Done | Starts hidden backend child process, frameless window, preload IPC bridge, and `/api/shutdown` close path |
 | React home page/orb UI | Not started | Planned phase 3 |
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
@@ -118,6 +118,20 @@ Process model:
 - Backend provides HTTP, PTY websocket, stats websocket, runtime readiness, and shutdown APIs.
 - Clean shutdown always persists state before Electron terminates the backend.
 - The integrated Home terminal replaces the standalone CLI; commands and natural-language tasks are routed through desktop IPC/API and PTY websockets.
+
+Implemented shell files:
+
+- `electron/main.js` starts `jarvis_cli.desktop_entry` in development or the packaged `dist/jarvis-backend` resource in production.
+- `electron/main.js` creates a frameless, offline-capable desktop window and loads `JARVIS_RENDERER_URL`, built web assets, or the backend web surface.
+- `electron/main.js` calls `/api/shutdown` before sending `SIGTERM`, with `SIGKILL` as the fixed-timeout fallback.
+- `electron/preload.js` exposes only `jarvisDesktop.getBackendStatus()` and `jarvisDesktop.windowControl(...)` to the renderer.
+- `package.json` declares the Electron 33+ app entrypoint, electron-builder resources, and desktop packaging scripts.
+
+Verification:
+
+- `python -m unittest tests.jarvis_cli.test_electron_shell_contract`
+- `node --check electron/main.js`
+- `node --check electron/preload.js`
 
 ## Part 3 - Home Page
 
@@ -306,7 +320,10 @@ Phase 2: core agent extensions:
 - gateway status API
 - LLM/TTS/STT runtime smoke tests
 
-Phase 3: Electron shell and Home page.
+Phase 3: Electron shell and Home page:
+
+- Electron shell lifecycle: done.
+- React Home page, orb, terminal panel, stats consumer, and voice controls: next.
 
 Phase 4: Models page.
 
@@ -356,6 +373,13 @@ Planned:
 | PUT | `/api/settings` | Update settings |
 
 ## Immediate Next Slice
+
+The next product slice is the React Home page inside the Electron shell:
+
+- custom title bar connected to `jarvisDesktop.windowControl(...)`
+- unified Home layout with orb/state surface, stats, terminal/chat, and voice controls
+- status calls through `jarvisDesktop.getBackendStatus()` and backend readiness/smoke APIs
+- no standalone CLI entrypoints reintroduced
 
 The current runtime smoke test verifies "arms and legs" behavior:
 

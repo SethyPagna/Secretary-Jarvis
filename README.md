@@ -61,6 +61,15 @@ During the desktop remake, the backend child process can be launched for develop
 jarvis-desktop-backend --host 127.0.0.1 --port 8765 --no-open
 ```
 
+The Electron shell owns that backend in normal desktop development:
+
+```bash
+npm install
+npm run desktop:dev
+```
+
+It starts the Python backend as a hidden child process, opens the frameless desktop window, and calls `/api/shutdown` before terminating the backend.
+
 ---
 
 ## Getting Started
