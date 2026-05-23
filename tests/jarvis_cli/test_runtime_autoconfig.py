@@ -41,6 +41,11 @@ class RuntimeAutoconfigTests(unittest.TestCase):
         self.assertEqual(plan["tts"]["target_provider"], "kokoro")
         self.assertIn("Install Kokoro runtime", plan["tts"]["actions"][0])
         self.assertEqual(plan["stt"]["provider"], "local")
+        self.assertEqual(plan["stt"]["selected_model"], "tiny.en")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "tiny.en")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["device"], "cpu")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["compute_type"], "int8")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["language"], "en")
         self.assertIn("Install faster-whisper", plan["stt"]["actions"][0])
         self.assertFalse(plan["production_ready"])
 
@@ -58,6 +63,21 @@ class RuntimeAutoconfigTests(unittest.TestCase):
         self.assertEqual(plan["config_patch"]["providers"]["ollama_local"]["base_url"], "http://127.0.0.1:11434/v1")
         self.assertEqual(plan["config_patch"]["model"], "qwen2.5:7b")
         self.assertTrue(plan["stt"]["dependency_ready"])
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "tiny.en")
+
+    def test_autoconfig_uses_large_whisper_profile_when_nvidia_is_available(self) -> None:
+        plan = build_runtime_autoconfig_plan(
+            {},
+            model_roots=[],
+            executable_available=lambda name: name in {"ollama", "nvidia-smi"},
+            package_available=lambda name: name in {"edge_tts", "faster_whisper"},
+            ollama_models=lambda: ["qwen2.5:7b"],
+        )
+
+        self.assertTrue(plan["stt"]["nvidia_ready"])
+        self.assertEqual(plan["stt"]["selected_model"], "large-v3")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["device"], "auto")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["compute_type"], "float16")
 
 
 if __name__ == "__main__":

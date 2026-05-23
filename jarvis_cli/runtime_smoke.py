@@ -10,6 +10,7 @@ import tempfile
 import time
 import urllib.parse
 import urllib.request
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -27,6 +28,22 @@ def _elapsed_ms(started: float) -> float:
 
 def _count_tokens(text: str) -> int:
     return max(1, len((text or "").split()))
+
+
+@contextmanager
+def _temporary_environ(env: Mapping[str, str]):
+    previous: dict[str, str | None] = {}
+    for key, value in env.items():
+        previous[key] = os.environ.get(key)
+        os.environ[key] = str(value)
+    try:
+        yield
+    finally:
+        for key, old_value in previous.items():
+            if old_value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = old_value
 
 
 def _tokens_per_second(text: str, latency_ms: float, explicit_tokens: Any = None) -> float:
@@ -428,10 +445,11 @@ def default_stt_probe(
             "error": "openai package is required for this STT provider.",
         }
 
-    from tools.transcription_tools import transcribe_audio
-
     started = time.perf_counter()
-    payload = transcribe_audio(str(sample_audio))
+    with _temporary_environ(env):
+        from tools.transcription_tools import transcribe_audio
+
+        payload = transcribe_audio(str(sample_audio))
     latency_ms = _elapsed_ms(started)
     transcript = str(payload.get("transcript") or "").strip()
     ready = bool(payload.get("success")) and bool(transcript)

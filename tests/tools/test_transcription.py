@@ -148,12 +148,51 @@ class TestTranscribeLocal:
         fake_fw = _fake_faster_whisper_module(mock_model)
         with patch("tools.transcription_tools._HAS_FASTER_WHISPER", True), \
              patch.dict("sys.modules", {"faster_whisper": fake_fw}), \
-             patch("tools.transcription_tools._local_model", None):
+             patch("tools.transcription_tools._local_model", None), \
+             patch("tools.transcription_tools._local_model_runtime", None), \
+             patch("tools.transcription_tools._load_stt_config", return_value={}):
             from tools.transcription_tools import _transcribe_local
             result = _transcribe_local(str(audio_file), "base")
 
         assert result["success"] is True
         assert result["transcript"] == "Hello world"
+
+    def test_configured_runtime_settings_are_used_for_local_model(self, tmp_path):
+        audio_file = tmp_path / "test.ogg"
+        audio_file.write_bytes(b"fake audio")
+
+        mock_segment = MagicMock()
+        mock_segment.text = "Hello world"
+        mock_info = MagicMock()
+        mock_info.language = "en"
+        mock_info.duration = 2.5
+
+        mock_model = MagicMock()
+        mock_model.transcribe.return_value = ([mock_segment], mock_info)
+        fake_fw = _fake_faster_whisper_module(mock_model)
+
+        stt_config = {
+            "local": {
+                "device": "cpu",
+                "compute_type": "int8",
+                "language": "en",
+            }
+        }
+        with patch("tools.transcription_tools._HAS_FASTER_WHISPER", True), \
+             patch.dict("sys.modules", {"faster_whisper": fake_fw}), \
+             patch("tools.transcription_tools._local_model", None), \
+             patch("tools.transcription_tools._local_model_runtime", None), \
+             patch("tools.transcription_tools._load_stt_config", return_value=stt_config):
+            from tools.transcription_tools import _transcribe_local
+            result = _transcribe_local(str(audio_file), "base")
+
+        fake_fw.WhisperModel.assert_called_once_with(
+            "base",
+            device="cpu",
+            compute_type="int8",
+        )
+        mock_model.transcribe.assert_called_once_with(str(audio_file), beam_size=5, language="en")
+        assert result["success"] is True
 
     def test_not_installed(self):
         with patch("tools.transcription_tools._HAS_FASTER_WHISPER", False):

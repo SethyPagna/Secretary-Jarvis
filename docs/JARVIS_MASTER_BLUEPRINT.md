@@ -30,6 +30,7 @@ Implemented checkpoints:
 | LLM/TTS/STT smoke testing | Done | This checkpoint adds `/api/runtime/smoke-test` |
 | Runtime autoconfig planner | Done | This checkpoint adds `/api/runtime/autoconfig` |
 | Runtime autoconfig apply | Done | This checkpoint adds `/api/runtime/autoconfig/apply` |
+| Fast local STT profile | Done | CPU machines use faster-whisper `tiny.en`/int8; NVIDIA machines target `large-v3` |
 | Electron desktop shell | Not started | Planned phase 3 |
 | React home page/orb UI | Not started | Planned phase 3 |
 | Models page | Not started | Planned phase 4 |
@@ -362,15 +363,16 @@ The current runtime smoke test verifies "arms and legs" behavior:
 
 Latest local smoke result from this workspace:
 
-- LLM: ready with Ollama `qwen3:8b`; native Ollama smoke returns `ready`.
-- TTS: ready with Edge TTS; produced a real MP3 file. Kokoro assets are also present.
-- STT: blocked because `faster-whisper` is not installed.
-- Production readiness remains false until the STT blocker is removed.
+- LLM: ready with Ollama `qwen3:8b`; native Ollama smoke returned `ready` in 2896.78 ms at 12.35 tokens/sec.
+- TTS: ready with Edge TTS; produced a real 16560 byte MP3 in 2761.08 ms. Kokoro assets are also present.
+- STT: ready with local faster-whisper `tiny.en` on CPU/int8; transcribed `Jarvis runtime smoke ready.` in 3317.45 ms.
+- Production readiness is true for the current configured LLM/TTS/STT smoke path.
 
 Latest autoconfig result from this workspace:
 
 - Preferred LLM: Ollama `qwen3:8b` when already registered, otherwise local Qwen Q4_K_M GGUF with `llama-server`.
 - Preferred TTS now: Edge TTS because it is installed and verified.
 - Preferred TTS target: Kokoro local once `kokoro-onnx` and `onnxruntime` are installed.
-- Preferred STT target: faster-whisper local with `large-v3`/auto device; install `faster-whisper` next.
-- STT install attempt: `pip install faster-whisper==1.2.1` and binary-only pip both timed out in this Python 3.13 environment before installing packages.
+- Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.
+- STT dependency status: `faster-whisper==1.2.1` is installed. Non-interactive pip flags were required: `PIP_NO_INPUT=1` and `PIP_DISABLE_PIP_VERSION_CHECK=1`.
+- STT model cache status: `Systran/faster-whisper-tiny.en` is downloaded. The Hugging Face Xet path stalled on larger model blobs, so first-run downloads should set `HF_HUB_DISABLE_XET=1`.

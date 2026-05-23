@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -8,6 +9,19 @@ from jarvis_cli.runtime_smoke import SMOKE_PROMPT, run_runtime_smoke_test
 
 
 class RuntimeSmokeTests(unittest.TestCase):
+    def test_temporary_environ_restores_values(self) -> None:
+        os.environ["JARVIS_TEST_ENV_RESTORE"] = "before"
+        with runtime_smoke._temporary_environ({
+            "JARVIS_TEST_ENV_RESTORE": "during",
+            "JARVIS_TEST_ENV_NEW": "yes",
+        }):
+            self.assertEqual(os.environ["JARVIS_TEST_ENV_RESTORE"], "during")
+            self.assertEqual(os.environ["JARVIS_TEST_ENV_NEW"], "yes")
+
+        self.assertEqual(os.environ["JARVIS_TEST_ENV_RESTORE"], "before")
+        self.assertNotIn("JARVIS_TEST_ENV_NEW", os.environ)
+        os.environ.pop("JARVIS_TEST_ENV_RESTORE", None)
+
     def test_smoke_prompt_disables_reasoning_for_reasoning_models(self) -> None:
         self.assertIn("/no_think", SMOKE_PROMPT)
         self.assertIn("exactly", SMOKE_PROMPT.lower())

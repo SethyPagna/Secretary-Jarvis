@@ -103,6 +103,7 @@ GROQ_MODELS = {"whisper-large-v3", "whisper-large-v3-turbo", "distil-whisper-lar
 # Singleton for the local model — loaded once, reused across calls
 _local_model: Optional[object] = None
 _local_model_name: Optional[str] = None
+_local_model_runtime: Optional[tuple[str, str]] = None
 
 # ---------------------------------------------------------------------------
 # Config helpers
@@ -397,7 +398,21 @@ def _looks_like_cuda_lib_error(exc: BaseException) -> bool:
     return any(marker in msg for marker in _CUDA_LIB_ERROR_MARKERS)
 
 
-def _load_local_whisper_model(model_name: str):
+def _local_runtime_settings() -> tuple[str, str]:
+    local_cfg = _load_stt_config().get("local", {})
+    device = str(local_cfg.get("device") or "auto").strip() or "auto"
+    compute_type = str(local_cfg.get("compute_type") or "auto").strip() or "auto"
+    if device == "cpu" and compute_type in {"auto", "float16", "int8_float16"}:
+        compute_type = "int8"
+    return device, compute_type
+
+
+def _load_local_whisper_model(
+    model_name: str,
+    *,
+    device: str = "auto",
+    compute_type: str = "auto",
+):
     """Load faster-whisper with graceful CUDA → CPU fallback.
 
     faster-whisper's ``device="auto"`` picks CUDA when the ctranslate2 wheel
@@ -412,9 +427,9 @@ def _load_local_whisper_model(model_name: str):
     """
     from faster_whisper import WhisperModel
     try:
-        return WhisperModel(model_name, device="auto", compute_type="auto")
+        return WhisperModel(model_name, device=device, compute_type=compute_type)
     except Exception as exc:
-        if not _looks_like_cuda_lib_error(exc):
+        if device == "cpu" or not _looks_like_cuda_lib_error(exc):
             raise
         logger.warning(
             "faster-whisper CUDA load failed (%s) — falling back to CPU (int8). "
@@ -426,18 +441,34 @@ def _load_local_whisper_model(model_name: str):
 
 def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
     """Transcribe using faster-whisper (local, free)."""
-    global _local_model, _local_model_name
+    global _local_model, _local_model_name, _local_model_runtime
 
     if not _HAS_FASTER_WHISPER:
         if not _try_lazy_install_stt():
             return {"success": False, "transcript": "", "error": "faster-whisper not installed"}
 
     try:
+        device, compute_type = _local_runtime_settings()
+
         # Lazy-load the model (downloads on first use, ~150 MB for 'base')
-        if _local_model is None or _local_model_name != model_name:
-            logger.info("Loading faster-whisper model '%s' (first load downloads the model)...", model_name)
-            _local_model = _load_local_whisper_model(model_name)
+        if (
+            _local_model is None
+            or _local_model_name != model_name
+            or _local_model_runtime != (device, compute_type)
+        ):
+            logger.info(
+                "Loading faster-whisper model '%s' on %s/%s (first load downloads the model)...",
+                model_name,
+                device,
+                compute_type,
+            )
+            _local_model = _load_local_whisper_model(
+                model_name,
+                device=device,
+                compute_type=compute_type,
+            )
             _local_model_name = model_name
+            _local_model_runtime = (device, compute_type)
 
         # Language: config.yaml (stt.local.language) > env var > auto-detect.
         _forced_lang = (
@@ -467,9 +498,11 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
             )
             _local_model = None
             _local_model_name = None
+            _local_model_runtime = None
             from faster_whisper import WhisperModel
             _local_model = WhisperModel(model_name, device="cpu", compute_type="int8")
             _local_model_name = model_name
+            _local_model_runtime = ("cpu", "int8")
             segments, info = _local_model.transcribe(file_path, **transcribe_kwargs)
             transcript = " ".join(segment.text.strip() for segment in segments)
 

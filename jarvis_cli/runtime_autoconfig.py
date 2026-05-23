@@ -293,16 +293,22 @@ def _stt_plan(
 ) -> dict[str, Any]:
     faster_ready = package_available("faster_whisper")
     whisper_cpp_ready = executable_available("whisper-cli") or executable_available("whisper")
+    nvidia_ready = executable_available("nvidia-smi")
     assets = _find_whisper_assets(roots)
+    local_model = "large-v3" if nvidia_ready else "tiny.en"
+    local_device = "auto" if nvidia_ready else "cpu"
+    local_compute = "float16" if nvidia_ready else "int8"
+    local_language = "" if nvidia_ready else "en"
 
     config_patch.setdefault("stt", {})
     config_patch["stt"].update({
         "enabled": True,
         "provider": "local",
         "local": {
-            "model": "large-v3",
-            "device": "auto",
-            "compute_type": "int8_float16",
+            "model": local_model,
+            "language": local_language,
+            "device": local_device,
+            "compute_type": local_compute,
         },
     })
 
@@ -319,9 +325,11 @@ def _stt_plan(
         "engine": "faster-whisper" if faster_ready else "faster-whisper",
         "dependency_ready": faster_ready,
         "whisper_cpp_ready": whisper_cpp_ready,
+        "nvidia_ready": nvidia_ready,
+        "selected_model": local_model,
         "assets": assets,
         "actions": actions,
-        "optimization": "Use faster-whisper with CUDA when available, CPU int8 fallback otherwise.",
+        "optimization": "Use faster-whisper large-v3 on NVIDIA/CUDA; otherwise use tiny.en on CPU int8 for instant local STT.",
     }
 
 
