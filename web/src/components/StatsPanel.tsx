@@ -10,7 +10,7 @@ interface StatsPanelProps {
 }
 
 function formatValue(value: number | null | undefined, suffix = ""): string {
-  if (value === null || value === undefined) return "--";
+  if (value === null || value === undefined) return "N/A";
   return `${value}${suffix}`;
 }
 
@@ -32,7 +32,8 @@ function StatRow({
   value: string;
   percent?: number | null;
 }) {
-  const width = Math.max(4, Math.min(100, percent ?? 0));
+  const unavailable = percent === null || percent === undefined;
+  const width = unavailable ? 0 : Math.max(3, Math.min(100, percent));
 
   return (
     <div className="space-y-1" title={detail}>
@@ -40,7 +41,12 @@ function StatRow({
         <span>{label}</span>
         <span className="font-mono text-white">{value}</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+      <div
+        className={cn(
+          "h-1.5 overflow-hidden rounded-full",
+          unavailable ? "bg-white/7 ring-1 ring-inset ring-white/8" : "bg-white/10",
+        )}
+      >
         <div
           className={cn("h-full rounded-full transition-all", percentColor(percent))}
           style={{ width: `${width}%` }}
@@ -57,6 +63,8 @@ function cleanRuntimeLabel(value: unknown): string {
   return leaf
     .replace(/^openai__/, "")
     .replace(/^hexgrad__/, "")
+    .replace(/__/g, " / ")
+    .replace(/whisper-large-v3-turbo/i, "whisper v3 turbo")
     .replace("docker-local-voice", "kokoro")
     .replace("docker-faster-whisper", "faster-whisper");
 }
@@ -100,7 +108,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
           value={
             stats?.ram_used_mb && stats?.ram_total_mb
               ? `${stats.ram_used_mb} / ${stats.ram_total_mb} MB`
-              : "--"
+              : "N/A"
           }
           percent={
             stats?.ram_used_mb && stats?.ram_total_mb
@@ -163,7 +171,10 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
       <div className="space-y-2 border-t border-white/10 pt-3 text-[0.8rem]">
         <RuntimeLine label="LLM" value={llm?.model ?? llm?.backend ?? llm?.provider} />
         <RuntimeLine label="TTS" value={tts?.engine ?? tts?.model} />
-        <RuntimeLine label="STT" value={stt?.model ?? stt?.engine} />
+        <RuntimeLine
+          label="STT"
+          value={stt?.model_folder ?? stt?.model ?? stt?.engine}
+        />
       </div>
     </aside>
   );

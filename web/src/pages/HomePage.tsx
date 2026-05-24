@@ -7,7 +7,6 @@ import {
   Settings2,
   Volume2,
   VolumeX,
-  Zap,
 } from "lucide-react";
 import {
   useEffect,
@@ -123,12 +122,10 @@ export default function HomePage() {
   const [terminalLaunch, setTerminalLaunch] = useState<TerminalLaunch | null>(
     null,
   );
-  const [quickTaskOpen, setQuickTaskOpen] = useState(false);
-  const [quickTaskText, setQuickTaskText] = useState("");
   const [toolsOpen, setToolsOpen] = useState(false);
   const [statsVisible, setStatsVisible] = useState(true);
   const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({
-    browser: false,
+    browser: true,
     files: true,
     terminal: true,
     web: true,
@@ -480,16 +477,6 @@ export default function HomePage() {
     await startVoiceRecording();
   };
 
-  const handleQuickTaskSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const command = quickTaskText.trim();
-    if (!command) return;
-
-    setQuickTaskOpen(false);
-    setQuickTaskText("");
-    runLiveCommand(command, "Quick task dispatched.");
-  };
-
   const handleAttachmentChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
@@ -567,45 +554,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-3 grid min-w-0 w-full max-w-3xl grid-cols-3 gap-2 sm:grid-cols-6">
-            <QuickAction
-              label="Voice"
-              icon={Mic}
-              active={listening || voiceBusy}
-              busy={voiceBusy}
-              onClick={() => void toggleMic()}
-            />
-            <QuickAction
-              label="Task"
-              icon={Zap}
-              onClick={() => setQuickTaskOpen((value) => !value)}
-              active={quickTaskOpen}
-            />
-            <QuickAction
-              label="Attach"
-              icon={Paperclip}
-              onClick={() => fileInputRef.current?.click()}
-            />
-            <QuickAction
-              label="Tools"
-              icon={Settings2}
-              active={toolsOpen}
-              onClick={() => setToolsOpen((value) => !value)}
-            />
-            <QuickAction
-              label={voiceOutput ? "Mute" : "Unmute"}
-              icon={voiceOutput ? Volume2 : VolumeX}
-              active={voiceOutput}
-              onClick={() => setVoiceOutput((value) => !value)}
-            />
-            <QuickAction
-              label="Stats"
-              icon={Gauge}
-              active={statsVisible}
-              onClick={() => setStatsVisible((value) => !value)}
-            />
-          </div>
-
           <input
             ref={fileInputRef}
             type="file"
@@ -614,33 +562,6 @@ export default function HomePage() {
             onChange={handleAttachmentChange}
             aria-label="Attach files"
           />
-
-          {quickTaskOpen && (
-            <form
-              className="mt-3 flex w-full max-w-3xl flex-col gap-2 rounded-md border border-cyan-200/16 bg-black/42 p-3 shadow-[0_18px_54px_rgba(0,0,0,0.26)] backdrop-blur-xl"
-              onSubmit={handleQuickTaskSubmit}
-            >
-              <label className="text-[0.72rem] uppercase tracking-[0.1em] text-cyan-50/55">
-                Quick task
-              </label>
-              <div className="flex gap-2">
-                <input
-                  value={quickTaskText}
-                  onChange={(event) => setQuickTaskText(event.target.value)}
-                  className="h-10 min-w-0 flex-1 rounded-md border border-cyan-200/12 bg-cyan-950/18 px-3 text-sm text-cyan-50 outline-none transition placeholder:text-cyan-50/28 focus:border-cyan-200/42"
-                  placeholder="What should JARVIS do?"
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  className="inline-flex h-10 items-center gap-2 rounded-md bg-cyan-200 px-3 text-[0.72rem] font-semibold uppercase tracking-[0.09em] text-slate-950 transition hover:bg-cyan-100"
-                >
-                  <Play className="h-4 w-4" />
-                  Run
-                </button>
-              </div>
-            </form>
-          )}
 
           {toolsOpen && (
             <div className="mt-3 grid w-full max-w-3xl grid-cols-2 gap-2 rounded-md border border-cyan-200/16 bg-black/42 p-3 shadow-[0_18px_54px_rgba(0,0,0,0.26)] backdrop-blur-xl sm:grid-cols-4">
@@ -729,13 +650,55 @@ export default function HomePage() {
           )}
         </div>
 
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2">
+          <div className="text-[0.7rem] uppercase tracking-[0.12em] text-slate-300/58">
+            Steering
+          </div>
+          <div className="flex items-center gap-2">
+            <QuickAction
+              label={listening ? "Stop listening" : "Voice input"}
+              icon={Mic}
+              active={listening || voiceBusy}
+              busy={voiceBusy}
+              onClick={() => void toggleMic()}
+            />
+            <QuickAction
+              label="Tools"
+              icon={Settings2}
+              active={toolsOpen}
+              onClick={() => setToolsOpen((value) => !value)}
+            />
+            <QuickAction
+              label={voiceOutput ? "Voice output on" : "Voice output muted"}
+              icon={voiceOutput ? Volume2 : VolumeX}
+              active={voiceOutput}
+              onClick={() => setVoiceOutput((value) => !value)}
+            />
+            <QuickAction
+              label={statsVisible ? "Hide stats" : "Show stats"}
+              icon={Gauge}
+              active={statsVisible}
+              onClick={() => setStatsVisible((value) => !value)}
+            />
+          </div>
+        </div>
+
         <form className="flex items-center gap-2" onSubmit={submitTerminal}>
           <input
             value={terminalInput}
             onChange={(event) => setTerminalInput(event.target.value)}
             className="h-11 min-w-0 flex-1 rounded-md border border-white/12 bg-white/6 px-3 font-mono text-[0.92rem] text-white outline-none transition placeholder:text-slate-300/38 focus:border-cyan-200/48"
-            placeholder="status, smoke, or task"
+            placeholder="Ask JARVIS, say a command, or run status"
           />
+          <button
+            type="button"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-cyan-200/12 bg-cyan-200/5 text-cyan-50/78 transition hover:border-cyan-200/30 hover:bg-cyan-200/10 hover:text-cyan-50"
+            onClick={() => fileInputRef.current?.click()}
+            aria-label="Attach files"
+            title="Attach files"
+          >
+            <Paperclip className="h-5 w-5" />
+          </button>
           <button
             type="submit"
             className="inline-flex h-11 items-center gap-2 rounded-md bg-cyan-200 px-4 text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-slate-950 transition hover:bg-cyan-100"
@@ -765,21 +728,20 @@ function QuickAction({
   return (
     <button
       type="button"
-      aria-label={label === "Task" ? "Quick Task" : label}
-      title={label === "Task" ? "Quick Task" : label}
+      aria-label={label}
+      title={label}
       onClick={onClick}
       disabled={busy}
       className={cn(
-        "inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-md border px-2",
-        "text-[0.7rem] font-semibold uppercase tracking-[0.04em] transition",
+        "inline-flex h-9 w-9 min-w-0 items-center justify-center rounded-md border",
+        "transition",
         active
           ? "border-cyan-200/38 bg-cyan-200/16 text-cyan-50"
           : "border-cyan-200/12 bg-cyan-200/5 text-cyan-50/72 hover:border-cyan-200/30 hover:bg-cyan-200/10 hover:text-cyan-50",
         busy && "cursor-wait opacity-70",
       )}
     >
-      <Icon className={cn("h-3.5 w-3.5 shrink-0", busy && "animate-pulse")} />
-      <span className="whitespace-nowrap">{label}</span>
+      <Icon className={cn("h-[18px] w-[18px] shrink-0", busy && "animate-pulse")} />
     </button>
   );
 }

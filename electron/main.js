@@ -85,7 +85,24 @@ function backendEnv() {
   const resourceRoot = app.isPackaged && process.resourcesPath
     ? process.resourcesPath
     : path.resolve(__dirname, '..')
-  const defaultModelsDir = path.resolve(resourceRoot, '..', 'models')
+  const exeDir = app.isPackaged ? path.dirname(app.getPath('exe')) : path.resolve(__dirname, '..')
+  const portableDir = process.env.PORTABLE_EXECUTABLE_DIR
+    || (process.env.PORTABLE_EXECUTABLE_FILE ? path.dirname(process.env.PORTABLE_EXECUTABLE_FILE) : '')
+  const candidateModelsDirs = [
+    process.env.JARVIS_MODELS_DIR,
+    portableDir ? path.resolve(portableDir, 'models') : '',
+    portableDir ? path.resolve(portableDir, '..', 'models') : '',
+    portableDir ? path.resolve(portableDir, '..', '..', 'models') : '',
+    path.resolve(exeDir, 'models'),
+    path.resolve(exeDir, '..', 'models'),
+    path.resolve(exeDir, '..', '..', 'models'),
+    path.resolve(exeDir, '..', '..', '..', 'models'),
+    path.resolve(resourceRoot, '..', 'models'),
+    path.resolve(resourceRoot, '..', '..', 'models'),
+    path.resolve(process.cwd(), 'models'),
+    path.resolve(process.cwd(), '..', 'models')
+  ].filter(Boolean)
+  const defaultModelsDir = candidateModelsDirs.find((candidate) => fs.existsSync(candidate)) || candidateModelsDirs[0]
 
   return {
     ...process.env,

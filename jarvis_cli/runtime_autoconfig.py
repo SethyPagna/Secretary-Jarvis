@@ -300,9 +300,12 @@ def _llm_plan(
         port = _first_available_port(8080, range(8081, 8090), port_available, endpoint_ready)
         endpoint = f"http://127.0.0.1:{port}/v1"
         model = gguf.stem
+        has_nvidia = executable_available("nvidia-smi")
+        ctx_size = 32768 if has_nvidia else 8192
+        gpu_layers = 999 if has_nvidia else 0
         start_command = (
             f"llama-server --model {_quote(gguf)} --host 127.0.0.1 --port {port} "
-            "--ctx-size 32768 --n-gpu-layers 999 --threads 8"
+            f"--ctx-size {ctx_size} --n-gpu-layers {gpu_layers} --threads 8"
         )
         config_patch = {
             "model": model,

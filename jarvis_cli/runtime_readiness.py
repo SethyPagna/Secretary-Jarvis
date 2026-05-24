@@ -157,6 +157,59 @@ def _find_model_assets(model_name: str, roots: Iterable[Path]) -> list[str]:
     return assets[:20]
 
 
+def _find_whisper_assets(roots: Iterable[Path]) -> dict[str, Any]:
+    candidates: list[Path] = []
+    for root in roots:
+        try:
+            if not root.exists():
+                continue
+            for path in root.rglob("*"):
+                if path.is_file() and "whisper" in path.name.lower() and path.suffix.lower() in MODEL_EXTENSIONS:
+                    candidates.append(path)
+                elif path.is_dir() and "whisper" in path.name.lower():
+                    model_files = [
+                        child
+                        for child in path.rglob("*")
+                        if child.is_file() and child.suffix.lower() in MODEL_EXTENSIONS
+                    ]
+                    if model_files:
+                        candidates.extend(model_files)
+        except OSError:
+            continue
+
+    def rank(path: Path) -> tuple[int, int]:
+        lowered = str(path).lower()
+        priority = 0
+        for index, marker in enumerate(
+            (
+                "large-v3-turbo",
+                "large-v3",
+                "large",
+                "medium",
+                "small",
+                "base",
+                "tiny",
+            )
+        ):
+            if marker in lowered:
+                priority = 100 - index * 10
+                break
+        return priority, -len(path.parts)
+
+    ordered = sorted({path.resolve() for path in candidates}, key=rank, reverse=True)
+    if not ordered:
+        return {"files": [], "model_folder": ""}
+
+    best = ordered[0]
+    model_folder = best.parent
+    if model_folder.name.lower() in {"model", "models", "snapshots"} and model_folder.parent != model_folder:
+        model_folder = model_folder.parent
+    return {
+        "files": [str(path) for path in ordered[:20]],
+        "model_folder": str(model_folder),
+    }
+
+
 def _env_has(env: Mapping[str, str], *names: str) -> bool:
     return any(bool(str(env.get(name, "")).strip()) for name in names)
 
@@ -335,12 +388,19 @@ def _tts_status(
 def _stt_status(
     config: Mapping[str, Any],
     env: Mapping[str, str],
+    model_roots: Iterable[Path],
     package_available: PackageChecker,
     executable_available: ExecutableChecker,
 ) -> dict[str, Any]:
     enabled = bool(_cfg(config, "stt", "enabled", default=True))
     provider = str(_cfg(config, "stt", "provider", default="local") or "local").strip().lower()
-    model = str(_cfg(config, "stt", provider, "model", default="") or _cfg(config, "stt", "local", "model", default="base"))
+    configured_model = str(
+        _cfg(config, "stt", provider, "model", default="")
+        or _cfg(config, "stt", "local", "model", default="base")
+    )
+    model = configured_model
+    local_assets = _find_whisper_assets(model_roots)
+    model_folder = str(local_assets.get("model_folder") or "")
     issues: list[str] = []
     endpoint: Mapping[str, Any] = {}
 
@@ -356,8 +416,12 @@ def _stt_status(
 
     if provider in {"local", "faster-whisper", "faster_whisper"}:
         engine = "faster-whisper"
+        if model_folder:
+            model = Path(model_folder).name
         if not package_available("faster_whisper"):
             issues.append("faster-whisper is not installed.")
+        if not local_assets.get("files"):
+            issues.append("No local Whisper model asset was found.")
     elif provider in {"whisper.cpp", "whisper-cpp", "whisper_cpp"}:
         engine = "whisper.cpp"
         if not (executable_available("whisper-cli") or executable_available("main")):
@@ -381,6 +445,9 @@ def _stt_status(
         "engine": engine,
         "provider": provider,
         "model": model,
+        "configured_model": configured_model,
+        "model_folder": model_folder,
+        "local_assets": local_assets.get("files", []),
         "ready": not issues,
         "issues": issues,
         "endpoint": dict(endpoint),
@@ -417,7 +484,7 @@ def build_runtime_readiness(
 
     llm = _llm_status(config, env_map, roots, endpoint_probe)
     tts = _tts_status(config, env_map, roots, package_available, executable_available)
-    stt = _stt_status(config, env_map, package_available, executable_available)
+    stt = _stt_status(config, env_map, roots, package_available, executable_available)
 
     blocking = []
     for label, section in (("llm", llm), ("tts", tts), ("stt", stt)):

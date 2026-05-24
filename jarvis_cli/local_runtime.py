@@ -55,6 +55,10 @@ def _llama_server_command(plan: dict[str, Any]) -> list[str]:
         raise RuntimeError("llama-server was not found on PATH.")
     if not model_path or not Path(model_path).is_file():
         raise RuntimeError("No GGUF model file was found for llama.cpp.")
+    has_nvidia = shutil.which("nvidia-smi") is not None
+    ctx_size = "32768" if has_nvidia else "8192"
+    gpu_layers = "999" if has_nvidia else "0"
+    threads = str(max(2, min(os.cpu_count() or 4, 12)))
     return [
         executable,
         "--model",
@@ -64,11 +68,11 @@ def _llama_server_command(plan: dict[str, Any]) -> list[str]:
         "--port",
         _port_from_endpoint(endpoint),
         "--ctx-size",
-        "32768",
+        ctx_size,
         "--n-gpu-layers",
-        "999",
+        gpu_layers,
         "--threads",
-        str(max(2, min(os.cpu_count() or 4, 12))),
+        threads,
     ]
 
 

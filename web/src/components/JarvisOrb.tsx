@@ -311,32 +311,14 @@ export function JarvisOrb({ state }: JarvisOrbProps) {
 
   return (
     <div
-      className="relative aspect-square min-w-0 w-[clamp(180px,26vw,270px)] max-w-full overflow-visible"
+      className="relative aspect-square min-w-0 w-[clamp(170px,22vw,250px)] max-w-full overflow-visible"
       style={{
         filter: `drop-shadow(0 0 42px ${palette.core}55) drop-shadow(0 0 90px ${palette.accent}26)`,
       }}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-[46%] w-[46%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          background: `radial-gradient(circle at 38% 34%, #ffffff 0 8%, ${palette.rim} 22%, ${palette.core} 54%, ${palette.accent} 100%)`,
-          boxShadow: `0 0 34px ${palette.core}8a, 0 0 96px ${palette.accent}42, inset -18px -20px 42px rgba(0,0,0,0.18)`,
-          opacity: state === "offline" ? 0.42 : 0.72,
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-[68%] w-[68%] -translate-x-1/2 -translate-y-1/2 rounded-full border"
-        style={{
-          borderColor: `${palette.rim}33`,
-          boxShadow: `0 0 48px ${palette.core}2f`,
-          opacity: state === "offline" ? 0.24 : 0.56,
-        }}
-      />
       <Canvas
-        className="absolute inset-[-34%] z-10 h-[168%] w-[168%]"
-        camera={{ position: [0, 0, 5.8], fov: 34 }}
+        className="absolute inset-0 z-10 h-full w-full"
+        camera={{ position: [0, 0, 5.2], fov: 36 }}
         dpr={[1, 1.8]}
         gl={{ alpha: true }}
       >

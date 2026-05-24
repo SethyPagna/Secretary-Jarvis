@@ -12,6 +12,9 @@ class RuntimeReadinessTests(unittest.TestCase):
             model_root = root / "models"
             model_root.mkdir()
             (model_root / "qwen3.5-9b-q4_k_m.gguf").write_bytes(b"gguf")
+            whisper_root = model_root / "openai__whisper-large-v3-turbo"
+            whisper_root.mkdir()
+            (whisper_root / "model.safetensors").write_bytes(b"whisper")
 
             kokoro_root = root / "kokoro"
             (kokoro_root / "voices").mkdir(parents=True)
