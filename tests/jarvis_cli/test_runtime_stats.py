@@ -68,6 +68,9 @@ class RuntimeStatsTests(unittest.TestCase):
         self.assertEqual(stats["tokens_total_lifetime"], 123456)
         self.assertEqual(stats["active_skills"], 9)
         self.assertEqual(stats["gateway_connections"], 3)
+        self.assertGreaterEqual(stats["souls_total"], 1)
+        self.assertEqual(stats["active_soul"], "jarvis")
+        self.assertIn("hardware_status", stats)
         self.assertEqual(stats["uptime_seconds"], 65)
 
     def test_collect_runtime_stats_degrades_without_psutil(self) -> None:

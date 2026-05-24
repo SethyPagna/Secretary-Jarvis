@@ -130,13 +130,17 @@ def default_model_roots() -> list[Path]:
     env_root = os.getenv("JARVIS_MODELS_DIR", "").strip()
     if env_root:
         roots.append(Path(env_root))
+    root = project_root()
     roots.extend(
         [
             get_jarvis_home() / "models",
-            project_root() / "models",
-            project_root().parent / "models",
+            root / "models",
+            root.parent / "models",
         ]
     )
+    for parent in root.parents[:5]:
+        roots.append(parent / "models")
+    roots.extend([Path.cwd() / "models", Path.cwd().parent / "models"])
     return _unique_existing_or_candidate_roots(roots)
 
 
@@ -145,22 +149,20 @@ def default_voice_roots() -> list[Path]:
     env_root = os.getenv("JARVIS_VOICE_ASSETS_DIR", "").strip()
     if env_root:
         roots.append(Path(env_root))
-    roots.extend(
-        [
-            project_root() / "assets" / "voices",
-            project_root() / "assets" / "voice",
-            project_root() / "assets",
-            project_root() / "vendor" / "voices",
-            project_root() / "vendor" / "voice",
-            project_root() / "vendor",
-            project_root().parent / "assets" / "voices",
-            project_root().parent / "assets" / "voice",
-            project_root().parent / "assets",
-            project_root().parent / "vendor" / "voices",
-            project_root().parent / "vendor" / "voice",
-            project_root().parent / "vendor",
-        ]
-    )
+    root = project_root()
+    cwd = Path.cwd()
+    base_roots = [root, root.parent, cwd, cwd.parent, *list(root.parents[:5])]
+    for base in base_roots:
+        roots.extend(
+            [
+                base / "assets" / "voices",
+                base / "assets" / "voice",
+                base / "assets",
+                base / "vendor" / "voices",
+                base / "vendor" / "voice",
+                base / "vendor",
+            ]
+        )
     return _unique_existing_or_candidate_roots(roots)
 
 
@@ -292,6 +294,88 @@ def best_vllm_model_dir(roots: Iterable[Path]) -> Path | None:
     return sorted(candidates, key=_vllm_score, reverse=True)[0] if candidates else None
 
 
+def _whisper_score(path: Path) -> tuple[int, int, str]:
+    text = str(path).lower()
+    score = 0
+    for value, token in (
+        (100, "large-v3-turbo"),
+        (90, "large-v3"),
+        (70, "medium"),
+        (50, "small"),
+        (30, "base"),
+        (10, "tiny"),
+    ):
+        if token in text:
+            score = value
+            break
+    return (score, -len(path.name), path.name.lower())
+
+
+def best_whisper_model_dir(roots: Iterable[Path]) -> Path | None:
+    candidates: list[Path] = []
+    for root in roots:
+        try:
+            if not root.exists():
+                continue
+            for config_path in root.rglob("config.json"):
+                model_dir = config_path.parent
+                if "whisper" in str(model_dir).lower() and any(model_dir.glob("*.safetensors")):
+                    candidates.append(model_dir)
+        except OSError:
+            continue
+    return sorted(candidates, key=_whisper_score, reverse=True)[0] if candidates else None
+
+
+def is_ctranslate2_whisper_dir(path: Path | str | None) -> bool:
+    """Return True when a Whisper directory can be loaded by faster-whisper."""
+    if not path:
+        return False
+    model_dir = Path(path)
+    try:
+        return model_dir.is_dir() and (model_dir / "model.bin").is_file()
+    except OSError:
+        return False
+
+
+def _faster_whisper_model_name_from_path(path: Path | str | None) -> str:
+    text = str(path or "").lower()
+    if "large-v3-turbo" in text or "turbo" in text:
+        return "large-v3-turbo"
+    if "large-v3" in text:
+        return "large-v3"
+    if "medium" in text:
+        return "medium"
+    if "small" in text:
+        return "small"
+    if "base" in text:
+        return "base"
+    if "tiny" in text:
+        return "tiny"
+    return "large-v3-turbo"
+
+
+def faster_whisper_model_for_dir(
+    whisper_dir: Path | str | None,
+    models_root: Path | str,
+    *,
+    container_path: bool,
+) -> str:
+    """Return a faster-whisper-safe model reference.
+
+    The downloaded OpenAI Whisper folders in ``models/`` are often Transformers
+    safetensors checkpoints. faster-whisper needs a CTranslate2 directory with
+    ``model.bin``. When a discovered folder is not CTranslate2, use the matching
+    faster-whisper model name so the runtime can use/download its own converted
+    cache instead of failing on an incompatible local path.
+    """
+    if whisper_dir and is_ctranslate2_whisper_dir(whisper_dir):
+        path = Path(whisper_dir)
+        if container_path:
+            return f"/models/{_relative_posix(path, Path(models_root))}"
+        return str(path)
+    return _faster_whisper_model_name_from_path(whisper_dir)
+
+
 def choose_models_root(
     gguf: Path | None,
     vllm_dir: Path | None,
@@ -355,6 +439,7 @@ def build_compose_environment(
     roots = list(model_roots or default_model_roots())
     gguf = best_gguf(roots)
     vllm_dir = best_vllm_model_dir(roots)
+    whisper_dir = best_whisper_model_dir(roots)
     selected = _profile_for_request(profile, gguf=gguf, vllm_dir=vllm_dir)
     models_root = choose_models_root(gguf, vllm_dir, roots)
     voice_candidates = list(voice_roots or default_voice_roots())
@@ -363,6 +448,20 @@ def build_compose_environment(
     vllm_port = _selected_port("JARVIS_VLLM_PORT", VLLM_PORT, range(8001, 8010))
     ollama_port = _selected_port("JARVIS_OLLAMA_PORT", OLLAMA_PORT, range(11435, 11445))
     voice_port = _selected_port("JARVIS_VOICE_PORT", VOICE_PORT, range(9011, 9020))
+    llama_threads = str(
+        os.getenv("JARVIS_LLAMA_CPP_THREADS")
+        or max(4, min(8, os.cpu_count() or 8))
+    )
+
+    stt_model = os.getenv("JARVIS_STT_MODEL", "").strip()
+    if not stt_model and whisper_dir:
+        stt_model = faster_whisper_model_for_dir(
+            whisper_dir,
+            models_root,
+            container_path=True,
+        )
+    if not stt_model:
+        stt_model = "large-v3-turbo"
 
     env = {
         "JARVIS_MODELS_DIR": _docker_path(models_root),
@@ -372,7 +471,10 @@ def build_compose_environment(
         "JARVIS_VLLM_PORT": str(vllm_port),
         "JARVIS_OLLAMA_PORT": str(ollama_port),
         "JARVIS_VOICE_PORT": str(voice_port),
-        "JARVIS_STT_MODEL": os.getenv("JARVIS_STT_MODEL", "base"),
+        "JARVIS_LLAMA_CPP_THREADS": llama_threads,
+        "JARVIS_LLAMA_CPP_THREADS_BATCH": os.getenv("JARVIS_LLAMA_CPP_THREADS_BATCH", llama_threads),
+        "JARVIS_LLAMA_CPP_BATCH_SIZE": os.getenv("JARVIS_LLAMA_CPP_BATCH_SIZE", "1024"),
+        "JARVIS_STT_MODEL": stt_model,
         "JARVIS_STT_DEVICE": os.getenv("JARVIS_STT_DEVICE", "auto"),
         "JARVIS_STT_COMPUTE_TYPE": os.getenv("JARVIS_STT_COMPUTE_TYPE", "int8"),
         "JARVIS_STT_LANGUAGE": os.getenv("JARVIS_STT_LANGUAGE", "en"),
@@ -403,6 +505,8 @@ def build_compose_environment(
         "llama_cpp_model": env.get("JARVIS_LLAMA_CPP_MODEL", ""),
         "vllm_model_dir": str(vllm_dir) if vllm_dir else "",
         "vllm_model": env.get("JARVIS_VLLM_MODEL", ""),
+        "whisper_model_dir": str(whisper_dir) if whisper_dir else "",
+        "stt_model": stt_model,
         "model_roots": [str(root) for root in roots],
     }
 
@@ -432,7 +536,7 @@ def _service_status() -> dict[str, Any]:
         return {"ok": False, "services": [], "error": "Docker Compose is not available."}
 
     result = _run(
-        ["docker", "compose", "-f", str(compose_file_path()), "ps", "--format", "json"],
+        ["docker", "compose", "-f", str(compose_file_path()), "ps", "--all", "--format", "json"],
         timeout=15,
     )
     services: list[dict[str, Any]] = []
@@ -617,12 +721,23 @@ def stop_docker_runtime() -> dict[str, Any]:
             "error": "Docker Compose is not available.",
             "status": docker_runtime_status("auto"),
         }
+    services = ["jarvis-llamacpp", "jarvis-vllm", "jarvis-ollama", "jarvis-voice"]
     result = _run(
-        ["docker", "compose", "-f", str(compose_file_path()), "down"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            str(compose_file_path()),
+            "--profile",
+            "models",
+            "stop",
+            *services,
+        ],
         timeout=90,
     )
     return {
         "ok": bool(result.get("ok")),
+        "preserved_containers": True,
         "result": result,
         "status": docker_runtime_status("auto"),
     }
@@ -646,15 +761,15 @@ def _config_patch_for_profile(profile: str, plan: Mapping[str, Any]) -> dict[str
             "docker": {
                 "url": endpoints["voice"],
                 "engine": "faster-whisper",
-                "model": os.getenv("JARVIS_STT_MODEL", "base"),
+                "model": str(plan.get("stt_model") or os.getenv("JARVIS_STT_MODEL", "large-v3-turbo")),
             },
         },
             "tts": {
                 "provider": "docker",
                 "docker": {
                     "url": endpoints["voice"],
-                    "engine": "docker-local-voice",
-                    "fallback": "espeak-ng",
+                    "engine": "kokoro",
+                    "fallback": "system-tts",
                     "kokoro_ready": True,
                 },
             },
@@ -710,8 +825,28 @@ def apply_docker_runtime(profile: str = "auto", *, include_voice: bool = True) -
     selected_profile = str(plan["profile"])
     patch = _config_patch_for_profile(selected_profile, plan)
     if not include_voice:
-        patch.pop("stt", None)
-        patch.pop("tts", None)
+        configured_stt_model = os.getenv("JARVIS_STT_MODEL", "").strip()
+        whisper_dir = str(plan.get("whisper_model_dir") or "")
+        host_stt_model = configured_stt_model or faster_whisper_model_for_dir(
+            whisper_dir or None,
+            str(plan.get("models_root") or ""),
+            container_path=False,
+        )
+        patch["stt"] = {
+            "enabled": True,
+            "provider": "local",
+            "local": {
+                "engine": "faster-whisper",
+                "model": host_stt_model,
+            },
+        }
+        patch["tts"] = {
+            "provider": "system",
+            "system": {
+                "engine": "windows-sapi" if os.name == "nt" else "system-tts",
+                "fallback_from": "kokoro",
+            },
+        }
         patch["runtime"]["docker"]["voice_url"] = ""
 
     current = load_config()

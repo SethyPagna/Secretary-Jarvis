@@ -32,8 +32,12 @@ On Windows, use the root launchers:
 
 `run-jarvis.cmd` prefers the packaged desktop app at
 `release\win-unpacked\JARVIS.exe` when it exists. Otherwise it falls back to the
-Electron development shell. It also enables minimize-to-tray and asks the
-desktop backend to start Docker local models by default.
+Electron development shell. It also enables minimize-to-tray and sets the Docker
+profile explicitly.
+
+The packaged exe starts Docker local models by default unless
+`JARVIS_DOCKER_AUTOSTART=0` is set. This keeps double-clicking `JARVIS.exe`
+straightforward while still letting development runs opt out.
 
 Useful launch switches:
 

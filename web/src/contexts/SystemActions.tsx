@@ -72,7 +72,7 @@ export function SystemActionsProvider({
         if (action === "restart") {
           await api.restartGateway();
         } else {
-          await api.updateHermes();
+          await api.updateJarvis();
         }
         setActiveAction(action);
       } catch (err) {

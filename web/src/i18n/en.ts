@@ -120,8 +120,8 @@ export const en: Translations = {
     starting: "Starting",
     startedInBackground: "Started in background — check logs for progress",
     stopped: "Stopped",
-    updateHermes: "Update Jarvis",
-    updatingHermes: "Updating Jarvis…",
+    updateJarvis: "Update Jarvis",
+    updatingJarvis: "Updating Jarvis…",
     waitingForOutput: "Waiting for output…",
   },
 

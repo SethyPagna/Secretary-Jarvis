@@ -40,14 +40,14 @@ const DEFAULT_LAYOUT: ThemeLayout = {
 
 export const defaultTheme: DashboardTheme = {
   name: "default",
-  label: "Jarvis Teal",
+  label: "JARVIS Orbit",
   description: "Classic dark teal — the canonical Jarvis look",
   palette: {
-    background: { hex: "#041c1c", alpha: 1 },
-    midground: { hex: "#ffe6cb", alpha: 1 },
+    background: { hex: "#080b10", alpha: 1 },
+    midground: { hex: "#e8f6ff", alpha: 1 },
     foreground: { hex: "#ffffff", alpha: 0 },
-    warmGlow: "rgba(255, 189, 56, 0.35)",
-    noiseOpacity: 1,
+    warmGlow: "rgba(0, 212, 255, 0.24)",
+    noiseOpacity: 0.35,
   },
   typography: DEFAULT_TYPOGRAPHY,
   layout: DEFAULT_LAYOUT,
@@ -190,8 +190,8 @@ export const roseTheme: DashboardTheme = {
  */
 export const defaultLargeTheme: DashboardTheme = {
   name: "default-large",
-  label: "Jarvis Teal (Large)",
-  description: "Jarvis Teal with bigger fonts and roomier spacing",
+  label: "JARVIS Orbit (Large)",
+  description: "JARVIS Orbit with bigger fonts and roomier spacing",
   palette: defaultTheme.palette,
   typography: {
     ...DEFAULT_TYPOGRAPHY,

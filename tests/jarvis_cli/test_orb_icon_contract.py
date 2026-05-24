@@ -98,9 +98,11 @@ class OrbIconContractTests(unittest.TestCase):
 
     def test_windows_icon_is_generated_for_packaging(self) -> None:
         ico = ROOT / "assets" / "icon.ico"
+        data = ico.read_bytes()
         self.assertTrue(ico.is_file())
         self.assertGreater(ico.stat().st_size, 1000)
-        self.assertEqual(ico.read_bytes()[:4], b"\x00\x00\x01\x00")
+        self.assertEqual(data[:4], b"\x00\x00\x01\x00")
+        self.assertGreaterEqual(struct.unpack("<H", data[4:6])[0], 7)
 
     def test_icon_generator_is_committed(self) -> None:
         generator = ROOT / "scripts" / "generate-orb-icon.ps1"
@@ -110,6 +112,7 @@ class OrbIconContractTests(unittest.TestCase):
         self.assertIn("Transparent", source)
         self.assertIn("assets/icon.png", source)
         self.assertIn("assets/icon.ico", source)
+        self.assertIn("$iconSizes = @(16, 24, 32, 48, 64, 128, 256)", source)
 
 
 if __name__ == "__main__":

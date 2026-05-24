@@ -65,6 +65,7 @@ function hermesDevToken(): Plugin {
 }
 
 export default defineConfig({
+  base: "./",
   plugins: [react(), tailwindcss(), hermesDevToken()],
   resolve: {
     alias: {

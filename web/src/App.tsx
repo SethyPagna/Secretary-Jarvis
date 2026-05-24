@@ -47,7 +47,6 @@ import { Button } from "@nous-research/ui/ui/components/button";
 import { ListItem } from "@nous-research/ui/ui/components/list-item";
 import { SelectionSwitcher } from "@nous-research/ui/ui/components/selection-switcher";
 import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Typography } from "@/components/NouiTypography";
 import { cn } from "@/lib/utils";
 import { Backdrop } from "@/components/Backdrop";
 import { SidebarFooter } from "@/components/SidebarFooter";
@@ -84,7 +83,7 @@ import { api } from "@/lib/api";
 
 function UnknownRouteFallback({ pluginsLoading }: { pluginsLoading: boolean }) {
   if (pluginsLoading) {
-    // Render nothing during the plugin-load window — a spinner here would just flash.
+    // Render nothing during the plugin-load window; a spinner here would just flash.
     return null;
   }
   return <Navigate to="/" replace />;
@@ -357,11 +356,12 @@ export default function App() {
   const isDocsRoute = pathname === "/docs" || pathname === "/docs/";
   const normalizedPath = pathname.replace(/\/$/, "") || "/";
   const isChatRoute = normalizedPath === "/chat";
+  const isHomeRoute = normalizedPath === "/";
   const embeddedChat = isDashboardEmbeddedChatEnabled();
 
   // `dashboard.show_token_analytics` gates the Analytics nav item.  The
   // page itself remains reachable by URL (it renders an explanation when
-  // the flag is off — see AnalyticsPage), but hiding the nav entry avoids
+  // the flag is off; see AnalyticsPage), but hiding the nav entry avoids
   // surfacing misleading token/cost numbers in the sidebar.  Default off.
   const [showTokenAnalytics, setShowTokenAnalytics] = useState(false);
   useEffect(() => {
@@ -378,7 +378,7 @@ export default function App() {
 
   // A plugin can replace the built-in /chat page via `tab.override: "/chat"`
   // in its manifest.  When one does, `buildRoutes` already swaps the route
-  // element for <PluginPage /> — but we also have to suppress the
+  // element for <PluginPage />; but we also have to suppress the
   // ChatPage host below, or the plugin's page and the built-in terminal would
   // paint on top of each other.  The override is niche
   // (nothing ships overriding /chat today) but it's an advertised
@@ -463,7 +463,7 @@ export default function App() {
   return (
     <div
       data-layout-variant={layoutVariant}
-      className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-black text-text-primary antialiased"
+      className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-[#080b10] text-text-primary antialiased"
     >
       <SelectionSwitcher />
       <DesktopTitleBar
@@ -494,17 +494,16 @@ export default function App() {
             aria-label={t.app.navigation}
             className={cn(
               "fixed top-[42px] left-0 z-50 flex h-[calc(100dvh-42px)] max-h-[calc(100dvh-42px)] w-64 min-h-0 flex-col",
-              sidebarCollapsed ? "lg:w-16" : "lg:w-64",
-              "border-r border-current/20",
-              "bg-background-base/95 backdrop-blur-sm",
+              sidebarCollapsed ? "lg:w-20" : "lg:w-64",
+              "border-r border-white/10",
+              "bg-[#10151d]/95 backdrop-blur-md",
               "transition-transform duration-200 ease-out",
               mobileOpen ? "translate-x-0" : "-translate-x-full",
               "lg:sticky lg:top-0 lg:h-full lg:max-h-full lg:translate-x-0 lg:shrink-0",
             )}
             style={{
-              background: "var(--component-sidebar-background)",
-              clipPath: "var(--component-sidebar-clip-path)",
-              borderImage: "var(--component-sidebar-border-image)",
+              background:
+                "linear-gradient(180deg, rgba(16,21,29,0.98), rgba(9,13,20,0.98))",
             }}
           >
             <div
@@ -522,17 +521,18 @@ export default function App() {
               >
                 <PluginSlot name="header-left" />
 
-                <Typography
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-cyan-200/35 bg-cyan-300/10 shadow-[0_0_22px_rgba(0,212,255,0.32)]">
+                  <span className="h-3.5 w-3.5 rounded-full bg-cyan-100 shadow-[0_0_18px_rgba(0,212,255,0.9)]" />
+                </span>
+
+                <span
                   className={cn(
-                    "font-bold text-[1.125rem] leading-[0.95] tracking-[0.0525rem] text-midground uppercase",
+                    "text-[0.92rem] font-bold uppercase tracking-[0.18em] text-cyan-50",
                     sidebarCollapsed ? "lg:hidden" : "",
                   )}
-                  style={{ mixBlendMode: "plus-lighter" }}
                 >
-                  Jarvis
-                  <br />
-                  Agent
-                </Typography>
+                  JARVIS
+                </span>
               </div>
 
               <Button
@@ -561,7 +561,7 @@ export default function App() {
                     className={cn(
                       "px-5 pt-2.5 pb-1",
                       sidebarCollapsed ? "lg:hidden" : "",
-                      "font-mondwest text-display text-xs tracking-[0.12em] text-text-tertiary",
+                      "text-xs font-semibold tracking-[0.08em] text-slate-400",
                     )}
                     id={`jarvis-sidebar-${group.key.toLowerCase()}-heading`}
                   >
@@ -592,7 +592,7 @@ export default function App() {
                     className={cn(
                       "px-5 pt-2.5 pb-1",
                       sidebarCollapsed ? "lg:hidden" : "",
-                      "font-mondwest text-display text-xs tracking-[0.12em] text-text-tertiary",
+                      "text-xs font-semibold tracking-[0.08em] text-slate-400",
                     )}
                     id="jarvis-sidebar-plugin-nav-heading"
                   >
@@ -647,8 +647,11 @@ export default function App() {
               className={cn(
                 "relative z-2 flex min-w-0 min-h-0 flex-1 flex-col",
                 "px-3 sm:px-6",
+                isHomeRoute && "px-0 sm:px-0",
                 isChatRoute
                   ? "pb-0 pt-1 sm:pt-2 lg:pt-4"
+                  : isHomeRoute
+                    ? "pt-0"
                   : "pt-2 sm:pt-4 lg:pt-6",
                 isDocsRoute && "min-h-0 flex-1",
               )}
@@ -658,8 +661,9 @@ export default function App() {
                 className={cn(
                   "w-full min-w-0",
                   !isChatRoute &&
+                    !isHomeRoute &&
                     "pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-8",
-                  (isDocsRoute || isChatRoute) &&
+                  (isDocsRoute || isChatRoute || isHomeRoute) &&
                     "min-h-0 flex flex-1 flex-col",
                 )}
               >
@@ -686,7 +690,7 @@ export default function App() {
                       >
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Spinner />
-                          <span>Loading chat…</span>
+                          <span>Loading chat...</span>
                         </div>
                       </div>
                     ) : null
@@ -736,8 +740,8 @@ function SidebarNavLink({
           cn(
             "group relative flex items-center gap-3",
             "px-5 py-2.5",
-            sidebarCollapsed && "lg:justify-center lg:px-0",
-            "font-mondwest text-display uppercase text-sm tracking-[0.12em]",
+            sidebarCollapsed && "lg:justify-center lg:px-0 lg:py-3.5",
+            "text-[0.95rem] font-semibold uppercase tracking-[0.07em]",
             "whitespace-nowrap transition-colors cursor-pointer",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground",
             isActive
@@ -745,13 +749,10 @@ function SidebarNavLink({
               : "text-text-secondary hover:text-midground",
           )
         }
-        style={{
-          clipPath: "var(--component-tab-clip-path)",
-        }}
       >
         {({ isActive }) => (
           <>
-            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <Icon className={cn("shrink-0", sidebarCollapsed ? "h-7 w-7" : "h-[18px] w-[18px]")} />
             <span className={cn("truncate", sidebarCollapsed ? "lg:hidden" : "")}>
               {navLabel}
             </span>
@@ -798,8 +799,8 @@ function SidebarSystemActions({
     {
       action: "update",
       icon: Download,
-      label: t.status.updateHermes,
-      runningLabel: t.status.updatingHermes,
+      label: t.status.updateJarvis,
+      runningLabel: t.status.updatingJarvis,
       spin: false,
     },
   ];
@@ -823,7 +824,7 @@ function SidebarSystemActions({
         className={cn(
           "px-5 pt-0.5 pb-0.5",
           sidebarCollapsed ? "lg:hidden" : "",
-          "font-mondwest text-display text-xs tracking-[0.12em] text-text-tertiary",
+          "text-xs font-semibold tracking-[0.08em] text-slate-400",
         )}
       >
         {t.app.system}
@@ -848,9 +849,9 @@ function SidebarSystemActions({
                 aria-busy={busy}
                 active={busy}
                 className={cn(
-                  "gap-3 px-5 py-1.5 whitespace-nowrap",
-                  sidebarCollapsed && "lg:justify-center lg:px-0",
-                  "font-mondwest text-display text-xs tracking-[0.1em]",
+                  "gap-3 px-5 py-2 whitespace-nowrap",
+                  sidebarCollapsed && "lg:justify-center lg:px-0 lg:py-3",
+                  "text-xs font-semibold tracking-[0.08em]",
                   "transition-colors",
                   busy
                     ? "text-midground"
@@ -865,7 +866,7 @@ function SidebarSystemActions({
                 ) : (
                   <Icon
                     className={cn(
-                      "h-3.5 w-3.5 shrink-0",
+                      sidebarCollapsed ? "h-5 w-5 shrink-0" : "h-4 w-4 shrink-0",
                       isActionRunning && !spin && "animate-pulse",
                     )}
                   />

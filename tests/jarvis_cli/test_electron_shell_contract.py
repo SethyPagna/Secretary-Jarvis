@@ -33,6 +33,10 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("contextIsolation: true", source)
         self.assertIn("preload.js", source)
         self.assertIn("cwd: path.dirname(packagedBackend)", source)
+        self.assertIn("window.loadURL(BACKEND_BASE_URL)", source)
+        self.assertLess(source.index("window.loadURL(BACKEND_BASE_URL)"), source.index("window.loadFile(indexPath)"))
+        self.assertIn("did-fail-load", source)
+        self.assertIn("console-message", source)
 
     def test_main_process_runs_backend_preflight_before_launch(self) -> None:
         source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
@@ -68,6 +72,13 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("mainWindow.hide()", source)
         self.assertIn("Quit JARVIS", source)
         self.assertIn("runAppShutdown()", source)
+
+    def test_packaged_app_autostarts_docker_unless_disabled(self) -> None:
+        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+
+        self.assertIn("const dockerAutostartEnv", source)
+        self.assertIn(": app.isPackaged", source)
+        self.assertIn("JARVIS_DOCKER_AUTOSTART", source)
 
     def test_preload_exposes_limited_desktop_bridge(self) -> None:
         source = (ROOT / "electron" / "preload.js").read_text(encoding="utf-8")

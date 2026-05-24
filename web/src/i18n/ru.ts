@@ -120,8 +120,8 @@ export const ru: Translations = {
     starting: "Запуск",
     startedInBackground: "Запущено в фоне — следите за журналами",
     stopped: "Остановлено",
-    updateHermes: "Обновить Jarvis",
-    updatingHermes: "Обновление Jarvis…",
+    updateJarvis: "Обновить Jarvis",
+    updatingJarvis: "Обновление Jarvis…",
     waitingForOutput: "Ожидание вывода…",
   },
 

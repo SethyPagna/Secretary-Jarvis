@@ -174,19 +174,26 @@ def _has_local_command() -> bool:
 
 
 def _normalize_local_model(model_name: Optional[str]) -> str:
-    """Return a valid faster-whisper model size, mapping cloud-only names to the default.
+    """Return a valid faster-whisper model size, mapping cloud-only names safely.
 
     Cloud providers like OpenAI use names such as ``whisper-1`` which are not
     valid for faster-whisper (which expects ``tiny``, ``base``, ``small``,
-    ``medium``, or ``large-v*``).  When such a name is detected we fall back to
-    the default local model and emit a warning so the user knows what happened.
+    ``medium``, or ``large-v*``). Groq's ``whisper-large-v3-turbo`` maps to
+    faster-whisper's local ``large-v3-turbo`` model. Remaining cloud-only names
+    fall back to the default local model and emit a warning.
     """
-    if not model_name or model_name in OPENAI_MODELS or model_name in GROQ_MODELS:
-        if model_name and (model_name in OPENAI_MODELS or model_name in GROQ_MODELS):
+    if not model_name:
+        return DEFAULT_LOCAL_MODEL
+    if model_name == "whisper-large-v3-turbo":
+        return "large-v3-turbo"
+    if model_name == "whisper-large-v3":
+        return "large-v3"
+    if model_name in OPENAI_MODELS or model_name in GROQ_MODELS:
+        if model_name in OPENAI_MODELS or model_name in GROQ_MODELS:
             logger.warning(
                 "STT model '%s' is a cloud-only name and cannot be used with the local "
                 "provider. Falling back to '%s'. Set stt.local.model to a valid "
-                "faster-whisper size (tiny, base, small, medium, large-v3).",
+                "faster-whisper size (tiny, base, small, medium, large-v3, large-v3-turbo).",
                 model_name,
                 DEFAULT_LOCAL_MODEL,
             )

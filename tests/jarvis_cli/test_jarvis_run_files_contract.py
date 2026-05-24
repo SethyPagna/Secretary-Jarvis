@@ -32,6 +32,7 @@ class JarvisRunFilesContractTests(unittest.TestCase):
         source = (ROOT / "run-jarvis.ps1").read_text(encoding="utf-8")
 
         self.assertIn("JARVIS_DOCKER_AUTOSTART", source)
+        self.assertIn('$env:JARVIS_DOCKER_AUTOSTART = "0"', source)
         self.assertIn("JARVIS_DOCKER_PROFILE", source)
         self.assertIn("JARVIS_DOCKER_INCLUDE_VOICE", source)
         self.assertIn("JARVIS_MINIMIZE_TO_TRAY", source)

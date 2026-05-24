@@ -75,6 +75,30 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("build-desktop.ps1", package["scripts"]["desktop:build"])
         self.assertNotIn("SkipSmoke", package["scripts"]["desktop:build"])
         self.assertFalse(package["build"]["win"]["signAndEditExecutable"])
+        self.assertEqual(package["build"]["afterPack"], "scripts/after-pack-icon.cjs")
+        self.assertEqual(package["build"]["nsis"]["installerIcon"], "assets/icon.ico")
+        self.assertEqual(package["build"]["nsis"]["installerHeaderIcon"], "assets/icon.ico")
+        self.assertEqual(package["build"]["nsis"]["uninstallerIcon"], "assets/icon.ico")
+        self.assertIn({"from": "assets", "to": "assets"}, package["build"]["extraResources"])
+
+    def test_after_pack_hook_applies_orb_icon_without_win_code_sign(self) -> None:
+        hook = (ROOT / "scripts" / "after-pack-icon.cjs").read_text(encoding="utf-8")
+
+        self.assertIn("rcedit-x64.exe", hook)
+        self.assertIn("--set-icon", hook)
+        self.assertIn("assets", hook)
+        self.assertIn("icon.ico", hook)
+        self.assertIn("FileDescription", hook)
+
+    def test_vite_build_uses_relative_asset_paths_for_file_fallback(self) -> None:
+        vite_config = (ROOT / "web" / "vite.config.ts").read_text(encoding="utf-8")
+        built_index = (ROOT / "jarvis_cli" / "web_dist" / "index.html").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn('base: "./"', vite_config)
+        if 'src="/assets/' in built_index or 'href="/assets/' in built_index:
+            self.fail("Built desktop index still has absolute /assets paths")
 
     def test_desktop_python_dependency_check_reports_wheelhouse_recovery(self) -> None:
         checker = (ROOT / "scripts" / "check-desktop-python-deps.ps1").read_text(

@@ -22,10 +22,12 @@ function percentColor(value: number | null | undefined): string {
 }
 
 function StatRow({
+  detail,
   label,
   value,
   percent,
 }: {
+  detail?: string;
   label: string;
   value: string;
   percent?: number | null;
@@ -33,12 +35,12 @@ function StatRow({
   const width = Math.max(4, Math.min(100, percent ?? 0));
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between gap-3 text-[0.72rem] uppercase tracking-[0.08em] text-cyan-50/60">
+    <div className="space-y-1" title={detail}>
+      <div className="flex items-center justify-between gap-3 text-[0.75rem] uppercase tracking-[0.08em] text-slate-200/72">
         <span>{label}</span>
-        <span className="font-mono text-cyan-50">{value}</span>
+        <span className="font-mono text-white">{value}</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-cyan-100/10">
+      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
         <div
           className={cn("h-full rounded-full transition-all", percentColor(percent))}
           style={{ width: `${width}%` }}
@@ -48,16 +50,29 @@ function StatRow({
   );
 }
 
+function cleanRuntimeLabel(value: unknown): string {
+  if (typeof value !== "string" || !value) return "--";
+  const normalized = value.replace(/\\/g, "/");
+  const leaf = normalized.split("/").filter(Boolean).at(-1) ?? value;
+  return leaf
+    .replace(/^openai__/, "")
+    .replace(/^hexgrad__/, "")
+    .replace("docker-local-voice", "kokoro")
+    .replace("docker-faster-whisper", "faster-whisper");
+}
+
 export function StatsPanel({ readiness, stats }: StatsPanelProps) {
   const llm = readiness?.llm;
   const tts = readiness?.tts;
   const stt = readiness?.stt;
+  const hardware = stats?.hardware_status ?? {};
+  const warnings = stats?.warnings?.length ? stats.warnings.join(" ") : "Live hardware sample";
 
   return (
-    <aside className="flex min-h-0 min-w-0 w-full max-w-full flex-col gap-4 rounded-md border border-cyan-200/12 bg-[#0c141b]/78 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+    <aside className="flex min-h-0 min-w-0 w-full max-w-full flex-col gap-3 rounded-md border border-white/12 bg-[#10151d]/90 p-4 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
       <div>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-50">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-white">
             Stats
           </h2>
           <span
@@ -73,11 +88,12 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         </div>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid gap-2.5">
         <StatRow
           label="CPU"
           value={formatValue(stats?.cpu_percent, "%")}
           percent={stats?.cpu_percent}
+          detail={`Total CPU. Process CPU: ${formatValue(stats?.process_cpu_percent, "%")}. ${warnings}`}
         />
         <StatRow
           label="RAM"
@@ -91,44 +107,63 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
               ? (stats.ram_used_mb / stats.ram_total_mb) * 100
               : null
           }
+          detail={`System RAM. JARVIS process RSS: ${formatValue(stats?.process_ram_mb, " MB")}.`}
         />
         <StatRow
           label="GPU"
           value={formatValue(stats?.gpu_percent, "%")}
           percent={stats?.gpu_percent}
+          detail={`GPU source: ${hardware.gpu_source ?? "unavailable"}. ${warnings}`}
         />
         <StatRow
           label="GPU temp"
           value={formatValue(stats?.gpu_temp_c, " C")}
           percent={stats?.gpu_temp_c ? (stats.gpu_temp_c / 95) * 100 : null}
+          detail={`GPU temperature source: ${hardware.gpu_temp_source ?? "unavailable"}.`}
+        />
+        <StatRow
+          label="CPU temp"
+          value={formatValue(stats?.cpu_temp_c, " C")}
+          percent={stats?.cpu_temp_c ? (stats.cpu_temp_c / 95) * 100 : null}
+          detail={`CPU temperature source: ${hardware.cpu_temp_source ?? "unavailable"}.`}
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t border-cyan-100/10 pt-3 text-[0.74rem] text-cyan-50/70">
+      <div className="grid grid-cols-2 gap-2 border-t border-white/10 pt-3 text-[0.78rem] text-slate-200/78">
         <div>
-          <div className="text-cyan-50/45">Input tokens</div>
-          <div className="font-mono text-cyan-50">{stats?.tokens_input ?? 0}</div>
+          <div className="text-slate-300/58">Input tokens</div>
+          <div className="font-mono text-white">{stats?.tokens_input ?? 0}</div>
         </div>
         <div>
-          <div className="text-cyan-50/45">Output tokens</div>
-          <div className="font-mono text-cyan-50">{stats?.tokens_output ?? 0}</div>
+          <div className="text-slate-300/58">Output tokens</div>
+          <div className="font-mono text-white">{stats?.tokens_output ?? 0}</div>
         </div>
         <div>
-          <div className="text-cyan-50/45">Skills</div>
-          <div className="font-mono text-cyan-50">{stats?.active_skills ?? 0}</div>
+          <div className="text-slate-300/58">Skills</div>
+          <div className="font-mono text-white">{stats?.active_skills ?? 0}</div>
         </div>
         <div>
-          <div className="text-cyan-50/45">Gateways</div>
-          <div className="font-mono text-cyan-50">
+          <div className="text-slate-300/58">Gateways</div>
+          <div className="font-mono text-white">
             {stats?.gateway_connections ?? 0}
           </div>
         </div>
+        <div title={`Active soul: ${stats?.active_soul ?? "jarvis"}`}>
+          <div className="text-slate-300/58">Souls online</div>
+          <div className="font-mono text-white">
+            {stats?.souls_online ?? 1} / {stats?.souls_total ?? 1}
+          </div>
+        </div>
+        <div title={(stats?.delegate_souls ?? []).join(", ") || "Delegate souls ready"}>
+          <div className="text-slate-300/58">Active soul</div>
+          <div className="truncate font-mono text-white">{stats?.active_soul ?? "jarvis"}</div>
+        </div>
       </div>
 
-      <div className="space-y-2 border-t border-cyan-100/10 pt-3 text-[0.78rem]">
-        <RuntimeLine label="LLM" value={llm?.backend ?? llm?.provider ?? llm?.model} />
+      <div className="space-y-2 border-t border-white/10 pt-3 text-[0.8rem]">
+        <RuntimeLine label="LLM" value={llm?.model ?? llm?.backend ?? llm?.provider} />
         <RuntimeLine label="TTS" value={tts?.engine ?? tts?.model} />
-        <RuntimeLine label="STT" value={stt?.engine ?? stt?.model} />
+        <RuntimeLine label="STT" value={stt?.model ?? stt?.engine} />
       </div>
     </aside>
   );
@@ -143,9 +178,9 @@ function RuntimeLine({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-cyan-50/45">{label}</span>
-      <span className="truncate text-right font-mono text-cyan-50/85">
-        {typeof value === "string" && value ? value : "--"}
+      <span className="text-slate-300/58">{label}</span>
+      <span className="truncate text-right font-mono text-white/90">
+        {cleanRuntimeLabel(value)}
       </span>
     </div>
   );

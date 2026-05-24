@@ -103,7 +103,7 @@ function StarField({ state }: JarvisOrbProps) {
   const palette = STATE_PALETTE[state];
   const starGeometry = useMemo(
     () =>
-      fillSphericalGeometry(760, 5.2, 10.2, [
+      fillSphericalGeometry(620, 5.6, 10.8, [
         "#ffffff",
         "#7df9ff",
         "#b86cff",
@@ -147,8 +147,8 @@ function NebulaVeil({ state }: JarvisOrbProps) {
 
   return (
     <group ref={veilRef} position={[0, 0, -0.9]}>
-      <mesh rotation={[Math.PI / 2.35, 0.2, 0.4]} scale={[1.65, 1.65, 1.65]}>
-        <torusGeometry args={[1.65, 0.022, 18, 180]} />
+      <mesh rotation={[Math.PI / 2.35, 0.2, 0.4]} scale={[1.42, 1.42, 1.42]}>
+        <torusGeometry args={[1.52, 0.018, 18, 180]} />
         <meshBasicMaterial
           color={palette.accent}
           transparent
@@ -157,8 +157,8 @@ function NebulaVeil({ state }: JarvisOrbProps) {
           depthWrite={false}
         />
       </mesh>
-      <mesh rotation={[Math.PI / 2.75, -0.48, -0.7]} scale={[1.18, 1.18, 1.18]}>
-        <torusGeometry args={[1.95, 0.018, 18, 180]} />
+      <mesh rotation={[Math.PI / 2.75, -0.48, -0.7]} scale={[1.05, 1.05, 1.05]}>
+        <torusGeometry args={[1.72, 0.015, 18, 180]} />
         <meshBasicMaterial
           color={palette.secondary}
           transparent
@@ -186,9 +186,9 @@ function OrbitRings({ state }: JarvisOrbProps) {
   return (
     <group ref={ringsRef}>
       {[
-        [palette.rim, 1.38, 0.011, 0.45],
-        [palette.accent, 1.72, 0.008, 0.28],
-        [palette.secondary, 2.08, 0.006, 0.2],
+        [palette.rim, 1.28, 0.01, 0.48],
+        [palette.accent, 1.52, 0.007, 0.3],
+        [palette.secondary, 1.78, 0.005, 0.22],
       ].map(([color, radius, tube, opacity], index) => (
         <mesh
           key={`${color}-${radius}`}
@@ -311,12 +311,35 @@ export function JarvisOrb({ state }: JarvisOrbProps) {
 
   return (
     <div
-      className="relative aspect-square min-w-0 w-full max-w-full overflow-visible sm:max-w-[520px]"
+      className="relative aspect-square min-w-0 w-[clamp(220px,32vw,320px)] max-w-full overflow-visible"
       style={{
         filter: `drop-shadow(0 0 42px ${palette.core}55) drop-shadow(0 0 90px ${palette.accent}26)`,
       }}
     >
-      <Canvas camera={{ position: [0, 0, 4.7], fov: 40 }} dpr={[1, 1.8]} gl={{ alpha: true }}>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-[46%] w-[46%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          background: `radial-gradient(circle at 38% 34%, #ffffff 0 8%, ${palette.rim} 22%, ${palette.core} 54%, ${palette.accent} 100%)`,
+          boxShadow: `0 0 34px ${palette.core}8a, 0 0 96px ${palette.accent}42, inset -18px -20px 42px rgba(0,0,0,0.18)`,
+          opacity: state === "offline" ? 0.42 : 0.72,
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-[68%] w-[68%] -translate-x-1/2 -translate-y-1/2 rounded-full border"
+        style={{
+          borderColor: `${palette.rim}33`,
+          boxShadow: `0 0 48px ${palette.core}2f`,
+          opacity: state === "offline" ? 0.24 : 0.56,
+        }}
+      />
+      <Canvas
+        className="relative z-10"
+        camera={{ position: [0, 0, 5.8], fov: 34 }}
+        dpr={[1, 1.8]}
+        gl={{ alpha: true }}
+      >
         <ambientLight intensity={0.32} />
         <pointLight position={[4, 3, 3]} intensity={2.4} color={palette.rim} />
         <pointLight position={[-3, -2, -2]} intensity={1.1} color={palette.accent} />

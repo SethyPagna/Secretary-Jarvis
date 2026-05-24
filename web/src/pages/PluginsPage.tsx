@@ -21,8 +21,8 @@ import { PluginSlot } from "@/plugins";
 import { cn } from "@/lib/utils";
 import { usePageHeader } from "@/contexts/usePageHeader";
 
-/** Select value for built-in memory (`config` uses empty string). Never use `""` — UI Select maps empty value to an empty label. */
-const MEMORY_PROVIDER_BUILTIN = "__hermes_memory_builtin__";
+/** Select value for built-in memory (`config` uses empty string). Never use `""`; UI Select maps empty value to an empty label. */
+const MEMORY_PROVIDER_BUILTIN = "__jarvis_memory_builtin__";
 
 export default function PluginsPage() {
   const [hub, setHub] = useState<PluginsHubResponse | null>(null);
@@ -340,7 +340,7 @@ export default function PluginsPage() {
                 <li className="text-xs text-text-secondary" key={m.name}>
 
 
-                  {m.label ?? m.name} — {m.description || m.tab?.path}
+                  {m.label || m.name} - {m.description || m.tab?.path}
 
 
                   {!m.tab?.hidden ? (
@@ -421,7 +421,7 @@ function PluginRowCard(props: PluginRowCardProps) {
               {t.pluginsPage.sourceBadge}: {row.source}
             </Badge>
 
-            <Badge tone="outline">v{row.version || "—"}</Badge>
+            <Badge tone="outline">v{row.version || "-"}</Badge>
 
             <Badge tone={badgeTone}>{row.runtime_status}</Badge>
 

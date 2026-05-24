@@ -26,8 +26,10 @@ Use the one-command desktop launcher:
 .\run-jarvis.cmd
 ```
 
-The launcher sets `JARVIS_DOCKER_AUTOSTART=1`, `JARVIS_DOCKER_PROFILE=auto`,
-and `JARVIS_DOCKER_INCLUDE_VOICE=1`. The Electron app loads first, then the
+The packaged exe starts Docker by default. The launcher sets
+`JARVIS_DOCKER_AUTOSTART`, `JARVIS_DOCKER_PROFILE`, and
+`JARVIS_DOCKER_INCLUDE_VOICE` explicitly so scripts and development runs behave
+the same way as double-clicking the app. The Electron app loads first, then the
 backend starts the selected Docker profile through `/api/runtime/docker/start`.
 Use `.\run-jarvis.cmd -NoDocker` for UI-only development or
 `.\run-jarvis.cmd -NoVoice` to skip the voice container while debugging LLMs.

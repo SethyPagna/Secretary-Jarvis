@@ -36,6 +36,10 @@ services:
       - "${JARVIS_LLAMA_CPP_GPU_LAYERS:-999}"
       - "--threads"
       - "${JARVIS_LLAMA_CPP_THREADS:-8}"
+      - "--threads-batch"
+      - "${JARVIS_LLAMA_CPP_THREADS_BATCH:-8}"
+      - "--batch-size"
+      - "${JARVIS_LLAMA_CPP_BATCH_SIZE:-1024}"
 
   jarvis-vllm:
     image: ${JARVIS_VLLM_IMAGE:-vllm/vllm-openai:latest}

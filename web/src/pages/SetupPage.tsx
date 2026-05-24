@@ -132,7 +132,7 @@ function DockerModelsPanel() {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Container className="h-4 w-4 text-midground" />
-            <h1 className="font-mondwest text-display text-sm uppercase tracking-[0.12em] text-text-primary">
+            <h1 className="text-sm font-semibold uppercase tracking-[0.1em] text-text-primary">
               Docker Local Models
             </h1>
             <StatusBadge
@@ -288,7 +288,7 @@ function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <div className="font-mondwest text-display text-[0.65rem] uppercase tracking-[0.12em] text-text-tertiary">
+      <div className="text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-text-tertiary">
         {label}
       </div>
       <div className="mt-1 min-w-0 border border-current/10 bg-background-base/25 px-2 py-1.5">

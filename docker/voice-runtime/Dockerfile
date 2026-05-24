@@ -13,7 +13,10 @@ RUN python -m pip install --upgrade pip \
       fastapi \
       uvicorn \
       python-multipart \
-      faster-whisper
+      faster-whisper \
+      kokoro \
+      soundfile \
+      numpy
 
 WORKDIR /app
 COPY app.py /app/app.py

@@ -152,7 +152,7 @@ export function ChatSidebar({ channel, className }: ChatSidebarProps) {
   // JSON-RPC sidecar so the sidebar matches its documented best-effort
   // UX and the user always has a reconnect affordance.
   useEffect(() => {
-    const token = window.__HERMES_SESSION_TOKEN__;
+    const token = window.__JARVIS_SESSION_TOKEN__;
 
     if (!token || !channel) {
       return;
@@ -298,7 +298,7 @@ export function ChatSidebar({ channel, className }: ChatSidebarProps) {
   );
 
   const canPickModel = state === "open" && !!sessionId;
-  const modelLabel = (info.model ?? "—").split("/").slice(-1)[0] ?? "—";
+  const modelLabel = (info.model ?? "-").split("/").slice(-1)[0] ?? "-";
   const banner = error ?? info.credential_warning ?? null;
 
   return (

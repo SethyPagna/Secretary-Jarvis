@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -133,6 +134,147 @@ def _nvidia_smi_gpu_stats() -> dict[str, Any]:
     }
 
 
+def _windows_gpu_stats() -> dict[str, Any]:
+    if platform.system().lower() != "windows":
+        return {}
+
+    cim_command = [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        (
+            "$engines = Get-CimInstance -Namespace root/cimv2 "
+            "-ClassName Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine "
+            "-ErrorAction SilentlyContinue; "
+            "$sum = ($engines | Where-Object { $_.Name -match 'engtype_(3D|Compute|Cuda|Copy|Video)' } "
+            "| Measure-Object -Property UtilizationPercentage -Sum).Sum; "
+            "if ($null -eq $sum) { $sum = 0 }; "
+            "$adapters = Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue "
+            "| Where-Object { $_.Name -notmatch 'Basic' }; "
+            "$ram = ($adapters | Measure-Object -Property AdapterRAM -Sum).Sum; "
+            "if ($null -eq $ram) { $ram = 0 }; "
+            "$name = ($adapters | Select-Object -First 1 -ExpandProperty Name); "
+            "[pscustomobject]@{ "
+            "gpu_percent = [Math]::Round([Math]::Min([double]$sum, 100), 1); "
+            "gpu_memory_total_mb = [int][Math]::Round([double]$ram / 1MB); "
+            "gpu_adapter = $name "
+            "} | ConvertTo-Json -Compress"
+        ),
+    ]
+    try:
+        completed = subprocess.run(
+            cim_command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2.5,
+        )
+        if completed.returncode == 0 and completed.stdout.strip():
+            payload = json.loads(completed.stdout.strip().splitlines()[-1])
+            if isinstance(payload, Mapping):
+                percent = _round(payload.get("gpu_percent"), digits=1)
+                result: dict[str, Any] = {
+                    "gpu_percent": percent,
+                    "gpu_source": "windows-cim-gpu-engine",
+                    "gpu_adapter": payload.get("gpu_adapter") or "",
+                }
+                try:
+                    total_mb = int(payload.get("gpu_memory_total_mb") or 0)
+                except (TypeError, ValueError):
+                    total_mb = 0
+                if total_mb > 0:
+                    result["gpu_memory_total_mb"] = total_mb
+                if percent is not None:
+                    return result
+    except (json.JSONDecodeError, FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        pass
+
+    command = [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        (
+            "$samples = (Get-Counter '\\GPU Engine(*)\\Utilization Percentage' "
+            "-ErrorAction SilentlyContinue).CounterSamples; "
+            "$sum = ($samples | Where-Object { $_.InstanceName -match 'engtype_(3d|compute|cuda|copy|video)' } "
+            "| Measure-Object -Property CookedValue -Sum).Sum; "
+            "if ($null -eq $sum) { '0' } else { [Math]::Round([Math]::Min($sum,100), 1) }"
+        ),
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+        )
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        return {}
+    if completed.returncode != 0:
+        return {}
+    percent = _round((completed.stdout or "").strip().splitlines()[-1] if completed.stdout.strip() else None, digits=1)
+    return {"gpu_percent": percent, "gpu_source": "windows-performance-counter"} if percent is not None else {}
+
+
+def _windows_cpu_temperature() -> float | None:
+    if platform.system().lower() != "windows":
+        return None
+    command = [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        (
+            "$temps = Get-CimInstance -Namespace root/wmi -ClassName MSAcpi_ThermalZoneTemperature "
+            "-ErrorAction SilentlyContinue | ForEach-Object { ($_.CurrentTemperature / 10) - 273.15 } "
+            "| Where-Object { $_ -gt 0 -and $_ -lt 120 }; "
+            "if ($temps) { [Math]::Round(($temps | Measure-Object -Average).Average, 1) }"
+        ),
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+        )
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        return None
+    if completed.returncode != 0 or not completed.stdout.strip():
+        return None
+    return _round(completed.stdout.strip().splitlines()[-1], digits=1)
+
+
+def _read_soul_status() -> dict[str, Any]:
+    manifest_path = Path(__file__).with_name("data") / "souls" / "soul_manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"active": "jarvis", "online": 1, "total": 1, "delegates": []}
+    souls = manifest.get("souls")
+    if not isinstance(souls, list):
+        souls = []
+    active = str(manifest.get("primary") or "jarvis")
+    delegates = [
+        str(item.get("id"))
+        for item in souls
+        if isinstance(item, Mapping) and item.get("id") and item.get("id") != active
+    ]
+    return {
+        "active": active,
+        "online": 1 if active else 0,
+        "total": max(1, len(souls)),
+        "delegates": delegates[:12],
+    }
+
+
 def _active_gateway_connections(gateway_status: Mapping[str, Any] | None) -> int:
     if not gateway_status:
         return 0
@@ -206,7 +348,18 @@ def collect_runtime_stats(
         cpu_temp_c = _cpu_temperature(psutil_obj)
 
     gpu_stats = _nvidia_smi_gpu_stats()
+    if gpu_stats:
+        gpu_stats.setdefault("gpu_source", "nvidia-smi")
+    else:
+        gpu_stats = _windows_gpu_stats()
+        if not gpu_stats:
+            warnings.append("GPU usage/temperature provider is not available.")
+    if cpu_temp_c is None:
+        cpu_temp_c = _windows_cpu_temperature()
+        if cpu_temp_c is None:
+            warnings.append("CPU temperature provider is not available.")
     uptime_seconds = int(max(0, current_time - started_at)) if started_at else 0
+    soul_status = _read_soul_status()
 
     return {
         "type": "stats",
@@ -222,11 +375,20 @@ def collect_runtime_stats(
         "gpu_memory_total_mb": gpu_stats.get("gpu_memory_total_mb"),
         "gpu_power_w": gpu_stats.get("gpu_power_w"),
         "cpu_temp_c": cpu_temp_c,
+        "hardware_status": {
+            "gpu_source": gpu_stats.get("gpu_source") or "unavailable",
+            "gpu_temp_source": "nvidia-smi" if gpu_stats.get("gpu_temp_c") is not None else "unavailable",
+            "cpu_temp_source": "psutil/wmi" if cpu_temp_c is not None else "unavailable",
+        },
         "tokens_input": _counter_value(token_counter, "input", "tokens_input"),
         "tokens_output": _counter_value(token_counter, "output", "tokens_output"),
         "tokens_total_lifetime": _read_lifetime_tokens(home),
         "active_skills": int(active_skills or 0),
         "gateway_connections": _active_gateway_connections(gateway_status),
+        "souls_online": int(soul_status["online"]),
+        "souls_total": int(soul_status["total"]),
+        "active_soul": soul_status["active"],
+        "delegate_souls": soul_status["delegates"],
         "uptime_seconds": uptime_seconds,
         "warnings": warnings,
     }

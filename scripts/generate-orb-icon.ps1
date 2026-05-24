@@ -121,29 +121,69 @@ $highlightBrush.Dispose()
 $graphics.Dispose()
 $bitmap.Save($resolvedPng, [System.Drawing.Imaging.ImageFormat]::Png)
 
-$iconSize = 256
-$iconBitmap = New-Object System.Drawing.Bitmap $iconSize, $iconSize, ([System.Drawing.Imaging.PixelFormat]::Format32bppPArgb)
-$iconGraphics = [System.Drawing.Graphics]::FromImage($iconBitmap)
-$iconGraphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-$iconGraphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-$iconGraphics.Clear([System.Drawing.Color]::Transparent)
-$iconGraphics.DrawImage($bitmap, 0, 0, $iconSize, $iconSize)
-$iconGraphics.Dispose()
+function Convert-BitmapToPngBytes {
+    param(
+        [System.Drawing.Bitmap]$Source,
+        [int]$TargetSize
+    )
 
-$iconHandle = $iconBitmap.GetHicon()
-$icon = [System.Drawing.Icon]::FromHandle($iconHandle)
+    $target = New-Object System.Drawing.Bitmap $TargetSize, $TargetSize, ([System.Drawing.Imaging.PixelFormat]::Format32bppPArgb)
+    $targetGraphics = [System.Drawing.Graphics]::FromImage($target)
+    $targetGraphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    $targetGraphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $targetGraphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+    $targetGraphics.Clear([System.Drawing.Color]::Transparent)
+    $targetGraphics.DrawImage($Source, 0, 0, $TargetSize, $TargetSize)
+    $targetGraphics.Dispose()
+
+    $memory = New-Object System.IO.MemoryStream
+    try {
+        $target.Save($memory, [System.Drawing.Imaging.ImageFormat]::Png)
+        return $memory.ToArray()
+    }
+    finally {
+        $memory.Dispose()
+        $target.Dispose()
+    }
+}
+
+$iconSizes = @(16, 24, 32, 48, 64, 128, 256)
+$iconImages = @()
+foreach ($iconSize in $iconSizes) {
+    $iconImages += [pscustomobject]@{
+        Size = $iconSize
+        Bytes = Convert-BitmapToPngBytes -Source $bitmap -TargetSize $iconSize
+    }
+}
+
 $stream = [System.IO.File]::Open($resolvedIco, [System.IO.FileMode]::Create)
+$writer = New-Object System.IO.BinaryWriter $stream
 try {
-    $icon.Save($stream)
+    $writer.Write([UInt16]0) # reserved
+    $writer.Write([UInt16]1) # icon
+    $writer.Write([UInt16]$iconImages.Count)
+
+    $offset = 6 + (16 * $iconImages.Count)
+    foreach ($entry in $iconImages) {
+        $sizeByte = if ($entry.Size -eq 256) { 0 } else { $entry.Size }
+        $writer.Write([byte]$sizeByte)
+        $writer.Write([byte]$sizeByte)
+        $writer.Write([byte]0) # color count
+        $writer.Write([byte]0) # reserved
+        $writer.Write([UInt16]1) # planes
+        $writer.Write([UInt16]32) # bit depth
+        $writer.Write([UInt32]$entry.Bytes.Length)
+        $writer.Write([UInt32]$offset)
+        $offset += $entry.Bytes.Length
+    }
+
+    foreach ($entry in $iconImages) {
+        $writer.Write([byte[]]$entry.Bytes)
+    }
 }
 finally {
+    $writer.Dispose()
     $stream.Dispose()
-    $icon.Dispose()
-    $nativeMethods = "Win32.NativeMethods" -as [type]
-    if ($nativeMethods) {
-        $nativeMethods::DestroyIcon($iconHandle) | Out-Null
-    }
-    $iconBitmap.Dispose()
     $bitmap.Dispose()
 }
 

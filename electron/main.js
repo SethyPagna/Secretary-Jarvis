@@ -10,7 +10,10 @@ const BACKEND_BASE_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`
 const BACKEND_SHUTDOWN_TIMEOUT_MS = 5000
 const BACKEND_SHUTDOWN_TOKEN = process.env.JARVIS_DESKTOP_SHUTDOWN_TOKEN || crypto.randomBytes(32).toString('hex')
 const MINIMIZE_TO_TRAY = /^(1|true|yes)$/i.test(process.env.JARVIS_MINIMIZE_TO_TRAY || '')
-const DOCKER_AUTOSTART = /^(1|true|yes)$/i.test(process.env.JARVIS_DOCKER_AUTOSTART || '')
+const dockerAutostartEnv = process.env.JARVIS_DOCKER_AUTOSTART || ''
+const DOCKER_AUTOSTART = dockerAutostartEnv
+  ? /^(1|true|yes)$/i.test(dockerAutostartEnv)
+  : app.isPackaged
 const DOCKER_PROFILE = process.env.JARVIS_DOCKER_PROFILE || 'auto'
 const DOCKER_INCLUDE_VOICE = !/^(0|false|no)$/i.test(process.env.JARVIS_DOCKER_INCLUDE_VOICE || '1')
 const DOCKER_START_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_DOCKER_START_TIMEOUT_MS || '240000', 10)
@@ -212,7 +215,10 @@ async function maybeStartDockerRuntime() {
   try {
     return await fetchJson('/api/runtime/docker/start', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'X-Jarvis-Desktop-Shutdown-Token': BACKEND_SHUTDOWN_TOKEN
+      },
       body: JSON.stringify({
         profile: DOCKER_PROFILE,
         include_voice: DOCKER_INCLUDE_VOICE
@@ -229,7 +235,10 @@ async function stopDockerRuntime() {
   try {
     return await fetchJson('/api/runtime/docker/stop', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'X-Jarvis-Desktop-Shutdown-Token': BACKEND_SHUTDOWN_TOKEN
+      },
       timeoutMs: DOCKER_STOP_TIMEOUT_MS
     })
   } catch (error) {
@@ -302,6 +311,13 @@ async function loadRenderer(window) {
     return
   }
 
+  try {
+    await window.loadURL(BACKEND_BASE_URL)
+    return
+  } catch (error) {
+    console.warn('[jarvis-desktop] backend renderer load failed; falling back to bundled file', error)
+  }
+
   const indexPath = rendererIndexCandidates().find((candidate) => fs.existsSync(candidate))
   if (indexPath) {
     await window.loadFile(indexPath)
@@ -331,6 +347,20 @@ function createMainWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
+  })
+
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    console.error(`[jarvis-renderer] load failed ${errorCode}: ${errorDescription} (${validatedURL})`)
+  })
+
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error(`[jarvis-renderer] process gone reason=${details.reason} exitCode=${details.exitCode}`)
+  })
+
+  mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    if (level >= 2) {
+      console.warn(`[jarvis-renderer] ${sourceId}:${line} ${message}`)
+    }
   })
 
   mainWindow.on('close', (event) => {

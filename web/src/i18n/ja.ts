@@ -120,8 +120,8 @@ export const ja: Translations = {
     starting: "起動中",
     startedInBackground: "バックグラウンドで起動しました — 進行状況はログをご確認ください",
     stopped: "停止",
-    updateHermes: "Jarvis を更新",
-    updatingHermes: "Jarvis を更新しています…",
+    updateJarvis: "Jarvis を更新",
+    updatingJarvis: "Jarvis を更新しています…",
     waitingForOutput: "出力を待機しています…",
   },
 

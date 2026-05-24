@@ -29,7 +29,7 @@ BANNED_LEGACY_BRAND_TEXT = [
     "nousresearch",
     "nousresearch.com",
     "Hermes Agent",
-    "HermesCLI",
+    "JarvisCLI",
     "HermesClaw",
     "hermes-agent",
 ]

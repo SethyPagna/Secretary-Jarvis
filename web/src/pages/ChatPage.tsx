@@ -141,7 +141,7 @@ export default function ChatPage({
   // Lazy-init: the missing-token check happens at construction so the effect
   // body doesn't have to setState (React 19's set-state-in-effect rule).
   const [banner, setBanner] = useState<string | null>(() =>
-    typeof window !== "undefined" && !window.__HERMES_SESSION_TOKEN__
+    typeof window !== "undefined" && !window.__JARVIS_SESSION_TOKEN__
       ? "Session token unavailable. Open this page through `jarvis dashboard`, not directly."
       : null,
   );
@@ -298,7 +298,7 @@ export default function ChatPage({
     const host = hostRef.current;
     if (!host) return;
 
-    const token = window.__HERMES_SESSION_TOKEN__;
+    const token = window.__JARVIS_SESSION_TOKEN__;
     // Banner already initialised above; just bail before wiring xterm/WS.
     if (!token) {
       return;
@@ -920,6 +920,6 @@ export default function ChatPage({
 
 declare global {
   interface Window {
-    __HERMES_SESSION_TOKEN__?: string;
+    __JARVIS_SESSION_TOKEN__?: string;
   }
 }

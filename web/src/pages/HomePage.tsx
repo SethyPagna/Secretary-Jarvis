@@ -518,10 +518,10 @@ export default function HomePage() {
 
   return (
     <main
-      className="relative isolate flex min-h-0 min-w-0 w-full max-w-[calc(100vw-1.5rem)] flex-1 flex-col gap-4 overflow-hidden px-1 py-1 text-cyan-50 lg:max-w-full"
+      className="relative isolate flex min-h-0 min-w-0 w-full max-w-[calc(100vw-1.5rem)] flex-1 flex-col gap-3 overflow-hidden px-0 py-0 text-slate-100 lg:max-w-full"
       style={{
         backgroundImage:
-          "radial-gradient(circle at 18% 20%, rgba(0, 212, 255, 0.18), transparent 28%), radial-gradient(circle at 76% 16%, rgba(184, 108, 255, 0.16), transparent 30%), radial-gradient(circle at 52% 82%, rgba(255, 102, 0, 0.1), transparent 34%), linear-gradient(135deg, #02030a 0%, #07111c 46%, #03040b 100%)",
+          "radial-gradient(circle at 18% 20%, rgba(0, 212, 255, 0.2), transparent 28%), radial-gradient(circle at 76% 16%, rgba(184, 108, 255, 0.14), transparent 30%), radial-gradient(circle at 52% 82%, rgba(255, 102, 0, 0.08), transparent 34%), linear-gradient(135deg, #080b10 0%, #111822 46%, #07090f 100%)",
       }}
     >
       <div className="jarvis-cosmic-field pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -543,8 +543,8 @@ export default function HomePage() {
           }}
         />
       </div>
-      <section className="grid min-h-0 min-w-0 w-full max-w-full flex-1 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
-        <div className="relative flex min-h-[420px] min-w-0 w-full max-w-full flex-col items-center justify-center overflow-visible px-4 py-6 sm:px-5">
+      <section className="grid min-h-0 min-w-0 w-full max-w-full flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_330px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="relative flex min-h-[300px] min-w-0 w-full max-w-full flex-col items-center justify-center overflow-visible px-4 py-3 sm:px-5">
           <div
             className="pointer-events-none absolute inset-x-[8%] top-[8%] h-px opacity-60"
             style={{
@@ -554,11 +554,11 @@ export default function HomePage() {
           />
           <JarvisOrb state={orbState} />
 
-          <div className="mt-4 flex flex-col items-center gap-2 text-center">
-            <p className="text-2xl font-semibold tracking-[0.01em] text-white drop-shadow-[0_0_18px_rgba(0,212,255,0.24)]">
+          <div className="mt-2 flex flex-col items-center gap-2 text-center">
+            <p className="text-xl font-semibold tracking-[0.01em] text-white drop-shadow-[0_0_18px_rgba(0,212,255,0.24)] sm:text-2xl">
               How can I help?
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-2 text-[0.78rem] uppercase tracking-[0.11em] text-cyan-50/58">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[0.78rem] uppercase tracking-[0.08em] text-slate-200/70">
               <span>{statusLabel}</span>
               <span className="text-cyan-100/25">|</span>
               <span>{activeVoice}</span>
@@ -567,7 +567,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-5 grid min-w-0 w-full max-w-3xl grid-cols-2 gap-2 sm:grid-cols-6">
+          <div className="mt-3 grid min-w-0 w-full max-w-3xl grid-cols-2 gap-2 sm:grid-cols-6">
             <QuickAction
               label="Voice"
               icon={Mic}
@@ -677,9 +677,9 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="grid min-h-[190px] min-w-0 w-full max-w-full gap-3 rounded-md border border-cyan-200/12 bg-[#05080d]/92 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.22)]">
-        <div className="flex items-center justify-between gap-3 border-b border-cyan-100/10 pb-2">
-          <div className="flex items-center gap-2 text-[0.78rem] uppercase tracking-[0.12em] text-cyan-50/64">
+      <section className="grid min-h-[180px] min-w-0 w-full max-w-full gap-3 rounded-md border border-white/12 bg-[#0d1219]/94 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.25)]">
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
+          <div className="flex items-center gap-2 text-[0.82rem] uppercase tracking-[0.08em] text-slate-200/76">
             <Activity className="h-4 w-4 text-cyan-200" />
             <span>Terminal / Chat Input</span>
           </div>
@@ -699,7 +699,7 @@ export default function HomePage() {
             "min-h-0 overflow-hidden rounded-sm bg-black/28",
             terminalLive
               ? "h-[min(42vh,420px)] min-h-[280px]"
-              : "overflow-y-auto p-3 font-mono text-[0.82rem] leading-relaxed text-cyan-50/82",
+              : "overflow-y-auto p-3 font-mono text-[0.9rem] leading-relaxed text-slate-100/88",
           )}
         >
           {terminalLive ? (
@@ -733,12 +733,12 @@ export default function HomePage() {
           <input
             value={terminalInput}
             onChange={(event) => setTerminalInput(event.target.value)}
-            className="h-10 min-w-0 flex-1 rounded-md border border-cyan-200/12 bg-cyan-950/18 px-3 font-mono text-[0.86rem] text-cyan-50 outline-none transition placeholder:text-cyan-50/28 focus:border-cyan-200/42"
+            className="h-11 min-w-0 flex-1 rounded-md border border-white/12 bg-white/6 px-3 font-mono text-[0.92rem] text-white outline-none transition placeholder:text-slate-300/38 focus:border-cyan-200/48"
             placeholder="status, smoke, or task"
           />
           <button
             type="submit"
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-cyan-200 px-4 text-[0.76rem] font-semibold uppercase tracking-[0.1em] text-slate-950 transition hover:bg-cyan-100"
+            className="inline-flex h-11 items-center gap-2 rounded-md bg-cyan-200 px-4 text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-slate-950 transition hover:bg-cyan-100"
           >
             <Play className="h-4 w-4" />
             Run
@@ -769,7 +769,7 @@ function QuickAction({
       disabled={busy}
       className={cn(
         "inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-md border px-2",
-        "text-[0.72rem] font-semibold uppercase tracking-[0.09em] transition",
+        "text-[0.78rem] font-semibold uppercase tracking-[0.06em] transition",
         active
           ? "border-cyan-200/38 bg-cyan-200/16 text-cyan-50"
           : "border-cyan-200/12 bg-cyan-200/5 text-cyan-50/72 hover:border-cyan-200/30 hover:bg-cyan-200/10 hover:text-cyan-50",

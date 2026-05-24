@@ -13,7 +13,10 @@ $RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $RepoRoot
 
 try {
-    if (-not $NoDocker) {
+    if ($NoDocker) {
+        $env:JARVIS_DOCKER_AUTOSTART = "0"
+    }
+    else {
         $env:JARVIS_DOCKER_AUTOSTART = "1"
         $env:JARVIS_DOCKER_PROFILE = $DockerProfile
         $env:JARVIS_DOCKER_INCLUDE_VOICE = if ($NoVoice) { "0" } else { "1" }

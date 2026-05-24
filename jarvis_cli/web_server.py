@@ -1,5 +1,5 @@
 """
-JARVIS — Web UI server.
+JARVIS - Web UI server.
 
 Provides a FastAPI backend serving the Vite/React frontend and REST API
 endpoints for managing configuration, environment variables, and sessions.
@@ -86,7 +86,7 @@ _PROCESS_STARTED_AT = time.time()
 
 # ---------------------------------------------------------------------------
 # Session token for protecting sensitive endpoints (reveal).
-# Generated fresh on every server start — dies when the process exits.
+# Generated fresh on every server start ? dies when the process exits.
 # Injected into the SPA HTML so only the legitimate web UI can use it.
 # ---------------------------------------------------------------------------
 _SESSION_TOKEN = secrets.token_urlsafe(32)
@@ -94,7 +94,7 @@ _SESSION_HEADER_NAME = "X-Jarvis-Session-Token"
 _DESKTOP_SHUTDOWN_TOKEN = os.environ.get("JARVIS_DESKTOP_SHUTDOWN_TOKEN", "")
 _DESKTOP_SHUTDOWN_HEADER_NAME = "X-Jarvis-Desktop-Shutdown-Token"
 
-# In-browser Chat tab (/chat, /api/pty, …).  Off unless ``jarvis dashboard --tui``
+# In-browser Chat tab (/chat, /api/pty, ?).  Off unless ``jarvis dashboard --tui``
 # or JARVIS_DASHBOARD_TUI=1.  Set from :func:`start_server`.
 _DASHBOARD_EMBEDDED_CHAT_ENABLED = False
 
@@ -116,7 +116,7 @@ app.add_middleware(
 
 # ---------------------------------------------------------------------------
 # Endpoints that do NOT require the session token.  Everything else under
-# /api/ is gated by the auth middleware below.  Keep this list minimal —
+# /api/ is gated by the auth middleware below.  Keep this list minimal ?
 # only truly non-sensitive, read-only endpoints belong here.
 # ---------------------------------------------------------------------------
 _PUBLIC_API_PATHS: frozenset = frozenset({
@@ -168,7 +168,7 @@ def _require_token(request: Request) -> None:
 
 # Accepted Host header values for loopback binds. DNS rebinding attacks
 # point a victim browser at an attacker-controlled hostname (evil.test)
-# which resolves to 127.0.0.1 after a TTL flip — bypassing same-origin
+# which resolves to 127.0.0.1 after a TTL flip ? bypassing same-origin
 # checks because the browser now considers evil.test and our dashboard
 # "same origin". Validating the Host header at the app layer rejects any
 # request whose Host isn't one we bound for. See GHSA-ppp5-vxwm-4cf7.
@@ -189,14 +189,14 @@ def _is_accepted_host(host_header: str, bound_host: str) -> bool:
     if not host_header:
         return False
     # Strip port suffix. IPv6 addresses use bracket notation:
-    #   [::1]         — no port
-    #   [::1]:9119    — with port
+    #   [::1]         ? no port
+    #   [::1]:9119    ? with port
     # Plain hosts/v4:
     #   localhost:9119
     #   127.0.0.1:9119
     h = host_header.strip()
     if h.startswith("["):
-        # IPv6 bracketed — port (if any) follows "]:"
+        # IPv6 bracketed ? port (if any) follows "]:"
         close = h.find("]")
         if close != -1:
             host_only = h[1:close]  # strip brackets
@@ -227,13 +227,13 @@ async def host_header_middleware(request: Request, call_next):
 
     Defends against DNS rebinding: a victim browser on a localhost
     dashboard is tricked into fetching from an attacker hostname that
-    TTL-flips to 127.0.0.1. CORS and same-origin checks don't help —
+    TTL-flips to 127.0.0.1. CORS and same-origin checks don't help ?
     the browser now treats the attacker origin as same-origin with the
     dashboard. Host-header validation at the app layer catches it.
 
     See GHSA-ppp5-vxwm-4cf7.
     """
-    # Store the bound host on app.state so this middleware can read it —
+    # Store the bound host on app.state so this middleware can read it ?
     # set by start_server() at listen time.
     bound_host = getattr(app.state, "bound_host", None)
     if bound_host:
@@ -256,7 +256,10 @@ async def auth_middleware(request: Request, call_next):
     """Require the session token on all /api/ routes except the public list."""
     path = request.url.path
     if path.startswith("/api/") and path not in _PUBLIC_API_PATHS:
-        if path == "/api/shutdown" and _has_valid_desktop_shutdown_token(request):
+        if (
+            path == "/api/shutdown"
+            or path.startswith("/api/runtime/docker")
+        ) and _has_valid_desktop_shutdown_token(request):
             return await call_next(request)
         if not _has_valid_session_token(request):
             return JSONResponse(
@@ -267,7 +270,7 @@ async def auth_middleware(request: Request, call_next):
 
 
 # ---------------------------------------------------------------------------
-# Config schema — auto-generated from DEFAULT_CONFIG
+# Config schema ? auto-generated from DEFAULT_CONFIG
 # ---------------------------------------------------------------------------
 
 # Manual overrides for fields that need select options or custom types
@@ -305,7 +308,7 @@ _SCHEMA_OVERRIDES: Dict[str, Dict[str, Any]] = {
     "stt.provider": {
         "type": "select",
         "description": "Speech-to-text provider",
-        # "mistral" temporarily removed — mistralai PyPI package quarantined
+        # "mistral" temporarily removed ? mistralai PyPI package quarantined
         # (malicious 2.4.6 release on 2026-05-12). Restore once available.
         "options": ["local", "openai"],
     },
@@ -380,13 +383,13 @@ _CATEGORY_MERGE: Dict[str, str] = {
     "code_execution": "agent",
     "prompt_caching": "agent",
     "goals": "agent",
-    # Only `telegram.reactions` currently lives under telegram — fold it in
+    # Only `telegram.reactions` currently lives under telegram ? fold it in
     # with the other messaging-platform config (discord) so it isn't an
     # orphan tab of one field.
     "telegram": "discord",
 }
 
-# Display order for tabs — unlisted categories sort alphabetically after these.
+# Display order for tabs ? unlisted categories sort alphabetically after these.
 _CATEGORY_ORDER = [
     "general", "agent", "terminal", "display", "delegation",
     "memory", "compression", "security", "browser", "voice",
@@ -413,7 +416,7 @@ def _build_schema_from_config(
     config: Dict[str, Any],
     prefix: str = "",
 ) -> Dict[str, Dict[str, Any]]:
-    """Walk DEFAULT_CONFIG and produce a flat dot-path → field schema dict."""
+    """Walk DEFAULT_CONFIG and produce a flat dot-path ? field schema dict."""
     schema: Dict[str, Dict[str, Any]] = {}
     for key, value in config.items():
         full_key = f"{prefix}.{key}" if prefix else key
@@ -437,7 +440,7 @@ def _build_schema_from_config(
         else:
             entry: Dict[str, Any] = {
                 "type": _infer_type(value),
-                "description": full_key.replace(".", " → ").replace("_", " ").title(),
+                "description": full_key.replace(".", " -> ").replace("_", " ").title(),
                 "category": category,
             }
             # Apply manual overrides
@@ -481,12 +484,12 @@ class EnvVarReveal(BaseModel):
 
 
 class ModelAssignment(BaseModel):
-    """Payload for POST /api/model/set — assign a provider/model to a slot.
+    """Payload for POST /api/model/set ? assign a provider/model to a slot.
 
-    scope="main"        → writes model.provider + model.default
-    scope="auxiliary"   → writes auxiliary.<task>.provider + auxiliary.<task>.model
-    scope="auxiliary" with task=""  → applied to every auxiliary.* slot
-    scope="auxiliary" with task="__reset__"  → resets every slot to provider="auto"
+    scope="main"        ? writes model.provider + model.default
+    scope="auxiliary"   ? writes auxiliary.<task>.provider + auxiliary.<task>.model
+    scope="auxiliary" with task=""  ? applied to every auxiliary.* slot
+    scope="auxiliary" with task="__reset__"  ? resets every slot to provider="auto"
     """
     scope: str
     provider: str
@@ -508,7 +511,7 @@ try:
     _GATEWAY_HEALTH_TIMEOUT = float(os.getenv("GATEWAY_HEALTH_TIMEOUT", "3"))
 except (ValueError, TypeError):
     _log.warning(
-        "Invalid GATEWAY_HEALTH_TIMEOUT value %r — using default 3.0s",
+        "Invalid GATEWAY_HEALTH_TIMEOUT value %r - using default 3.0s",
         os.getenv("GATEWAY_HEALTH_TIMEOUT"),
     )
     _GATEWAY_HEALTH_TIMEOUT = 3.0
@@ -517,7 +520,7 @@ except (ValueError, TypeError):
 # Cross-container / cross-host gateway liveness detection will be folded into a
 # first-class dashboard config key so it's no longer Docker-adjacent lore buried
 # in env vars.  The env vars still work for now so existing Compose deployments
-# don't break.  Do not add new callers — wire new uses through the planned
+# don't break.  Do not add new callers ? wire new uses through the planned
 # config surface.
 
 
@@ -534,11 +537,11 @@ def _probe_gateway_health() -> tuple[bool, dict | None]:
     the simpler ``/health`` endpoint.  Returns ``(is_alive, body_dict)``.
 
     Accepts any of these as ``GATEWAY_HEALTH_URL``:
-    - ``http://gateway:8642``                (base URL — recommended)
+    - ``http://gateway:8642``                (base URL ? recommended)
     - ``http://gateway:8642/health``         (explicit health path)
     - ``http://gateway:8642/health/detailed`` (explicit detailed path)
 
-    This is a **blocking** call — run via ``run_in_executor`` from async code.
+    This is a **blocking** call ? run via ``run_in_executor`` from async code.
     """
     if not _GATEWAY_HEALTH_URL:
         return False, None
@@ -582,7 +585,7 @@ async def get_status():
         )
         if alive:
             gateway_running = True
-            # PID from the remote container (display only — not locally valid)
+            # PID from the remote container (display only ? not locally valid)
             if remote_health_body:
                 gateway_pid = remote_health_body.get("pid")
 
@@ -653,7 +656,7 @@ async def get_status():
     return {
         "version": __version__,
         "release_date": __release_date__,
-        "hermes_home": str(get_jarvis_home()),
+        "jarvis_home": str(get_jarvis_home()),
         "config_path": str(get_config_path()),
         "env_path": str(get_env_path()),
         "config_version": current_ver,
@@ -778,17 +781,29 @@ async def post_runtime_docker_apply(body: DockerRuntimeRequest):
 
 
 def _active_skill_count() -> int:
-    skills_dir = get_jarvis_home() / "skills"
-    if not skills_dir.exists():
-        return 0
-    try:
-        return sum(
-            1
-            for path in skills_dir.rglob("*")
-            if path.is_file() and path.suffix.lower() in {".py", ".yaml", ".yml", ".md"}
-        )
-    except OSError:
-        return 0
+    roots = [
+        get_jarvis_home() / "skills",
+        Path(__file__).resolve().parents[1] / "skills",
+        Path(__file__).resolve().parents[1] / "optional-skills",
+    ]
+    seen: set[str] = set()
+    total = 0
+    suffixes = {".py", ".yaml", ".yml", ".md"}
+    for skills_dir in roots:
+        if not skills_dir.exists():
+            continue
+        try:
+            for path in skills_dir.rglob("*"):
+                if not path.is_file() or path.suffix.lower() not in suffixes:
+                    continue
+                resolved = str(path.resolve())
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
+                total += 1
+        except OSError:
+            continue
+    return total
 
 
 def _runtime_stats_snapshot() -> dict:
@@ -847,18 +862,18 @@ async def post_shutdown():
 
 _ACTION_LOG_DIR: Path = get_jarvis_home() / "logs"
 
-# Short ``name`` (from the URL) → absolute log file path.
+# Short ``name`` (from the URL) ? absolute log file path.
 _ACTION_LOG_FILES: Dict[str, str] = {
     "gateway-restart": "gateway-restart.log",
     "jarvis-update": "jarvis-update.log",
 }
 
-# ``name`` → most recently spawned Popen handle.  Used so ``status`` can
+# ``name`` ? most recently spawned Popen handle.  Used so ``status`` can
 # report liveness and exit code without shelling out to ``ps``.
 _ACTION_PROCS: Dict[str, subprocess.Popen] = {}
 
 
-def _spawn_hermes_action(subcommand: List[str], name: str) -> subprocess.Popen:
+def _spawn_jarvis_action(subcommand: List[str], name: str) -> subprocess.Popen:
     """Spawn ``jarvis <subcommand>`` detached and record the Popen handle.
 
     Uses the running interpreter's ``jarvis_cli.main`` module so the action
@@ -895,7 +910,7 @@ def _spawn_hermes_action(subcommand: List[str], name: str) -> subprocess.Popen:
 
 
 def _tail_lines(path: Path, n: int) -> List[str]:
-    """Return the last ``n`` lines of ``path``.  Reads the whole file — fine
+    """Return the last ``n`` lines of ``path``.  Reads the whole file ? fine
     for our small per-action logs.  Binary-decoded with ``errors='replace'``
     so log corruption doesn't 500 the endpoint."""
     if not path.exists():
@@ -912,7 +927,7 @@ def _tail_lines(path: Path, n: int) -> List[str]:
 async def restart_gateway():
     """Kick off a ``jarvis gateway restart`` in the background."""
     try:
-        proc = _spawn_hermes_action(["gateway", "restart"], "gateway-restart")
+        proc = _spawn_jarvis_action(["gateway", "restart"], "gateway-restart")
     except Exception as exc:
         _log.exception("Failed to spawn gateway restart")
         raise HTTPException(status_code=500, detail=f"Failed to restart gateway: {exc}")
@@ -924,10 +939,10 @@ async def restart_gateway():
 
 
 @app.post("/api/jarvis/update")
-async def update_hermes():
+async def update_jarvis():
     """Kick off ``jarvis update`` in the background."""
     try:
-        proc = _spawn_hermes_action(["update"], "jarvis-update")
+        proc = _spawn_jarvis_action(["update"], "jarvis-update")
     except Exception as exc:
         _log.exception("Failed to spawn jarvis update")
         raise HTTPException(status_code=500, detail=f"Failed to start update: {exc}")
@@ -999,7 +1014,7 @@ async def search_sessions(q: str = "", limit: int = 20):
         db = SessionDB()
         try:
             # Auto-add prefix wildcards so partial words match
-            # e.g. "nimb" → "nimb*" matches "nimby"
+            # e.g. "nimb" ? "nimb*" matches "nimby"
             # Preserve quoted phrases and existing wildcards as-is
             import re
             terms = []
@@ -1010,7 +1025,7 @@ async def search_sessions(q: str = "", limit: int = 20):
                     terms.append(token + "*")
             prefix_query = " ".join(terms)
             matches = db.search_messages(query=prefix_query, limit=limit)
-            # Group by session_id — return unique sessions with their best snippet
+            # Group by session_id ? return unique sessions with their best snippet
             seen: dict = {}
             for m in matches:
                 sid = m["session_id"]
@@ -1116,7 +1131,7 @@ def get_model_info():
                 model=model_name,
                 base_url=base_url,
                 provider=provider,
-                config_context_length=None,  # ignore override — we want auto value
+                config_context_length=None,  # ignore override ? we want auto value
             )
         except Exception:
             auto_ctx = 0
@@ -1159,13 +1174,13 @@ def get_model_info():
 
 
 # ---------------------------------------------------------------------------
-# Model assignment — pick provider+model for main slot or auxiliary slots.
+# Model assignment ? pick provider+model for main slot or auxiliary slots.
 # Mirrors the model.options JSON-RPC from tui_gateway but uses REST so the
 # Models page (which has no chat PTY open) can drive it.
 # ---------------------------------------------------------------------------
 
 # Canonical auxiliary task slots. Keep in sync with DEFAULT_CONFIG["auxiliary"]
-# in jarvis_cli/config.py — listed here for deterministic ordering in the UI.
+# in jarvis_cli/config.py ? listed here for deterministic ordering in the UI.
 _AUX_TASK_SLOTS: Tuple[str, ...] = (
     "vision",
     "web_extract",
@@ -1247,7 +1262,7 @@ def get_auxiliary_models():
 async def set_model_assignment(body: ModelAssignment):
     """Assign a model to the main slot or an auxiliary task slot.
 
-    Writes to ``~/.jarvis/config.yaml`` — applies to **new** sessions only.
+    Writes to ``~/.jarvis/config.yaml`` ? applies to **new** sessions only.
     The currently running chat PTY (if any) is not affected; use the
     ``/model`` slash command inside a chat to hot-swap that specific session.
     """
@@ -1273,7 +1288,7 @@ async def set_model_assignment(body: ModelAssignment):
             # Clear stale base_url so the resolver picks the provider's own default.
             if "base_url" in model_cfg and model_cfg.get("base_url"):
                 model_cfg["base_url"] = ""
-            # Also clear hardcoded context_length override — new model may have
+            # Also clear hardcoded context_length override ? new model may have
             # a different context window.
             if "context_length" in model_cfg:
                 model_cfg.pop("context_length", None)
@@ -1287,7 +1302,7 @@ async def set_model_assignment(body: ModelAssignment):
             aux = {}
 
         if task == "__reset__":
-            # Reset every slot to provider="auto", model="" — keeps other fields intact.
+            # Reset every slot to provider="auto", model="" ? keeps other fields intact.
             for slot in _AUX_TASK_SLOTS:
                 slot_cfg = aux.get(slot)
                 if not isinstance(slot_cfg, dict):
@@ -1339,7 +1354,7 @@ def _denormalize_config_from_web(config: Dict[str, Any]) -> Dict[str, Any]:
     stripped from the GET response.  The frontend only sees model as a flat
     string; the rest is preserved transparently.
 
-    Also handles ``model_context_length`` — writes it back into the model dict
+    Also handles ``model_context_length`` ? writes it back into the model dict
     as ``context_length``.  A value of 0 or absent means "auto-detect" (omitted
     from the dict so get_model_context_length() uses its normal resolution).
     """
@@ -1371,7 +1386,7 @@ def _denormalize_config_from_web(config: Dict[str, Any]) -> Dict[str, Any]:
                 else:
                     disk_model.pop("context_length", None)
                 config["model"] = disk_model
-            # Model was previously a bare string — upgrade to dict if
+            # Model was previously a bare string ? upgrade to dict if
             # user is setting a context_length override
             elif ctx_override > 0:
                 config["model"] = {
@@ -1379,7 +1394,7 @@ def _denormalize_config_from_web(config: Dict[str, Any]) -> Dict[str, Any]:
                     "context_length": ctx_override,
                 }
         except Exception:
-            pass  # can't read disk config — just use the string form
+            pass  # can't read disk config ? just use the string form
     return config
 
 
@@ -1467,7 +1482,7 @@ async def reveal_env_var(body: EnvVarReveal, request: Request):
 
 
 # ---------------------------------------------------------------------------
-# OAuth provider endpoints — status + disconnect (Phase 1)
+# OAuth provider endpoints ? status + disconnect (Phase 1)
 # ---------------------------------------------------------------------------
 #
 # Phase 1 surfaces *which OAuth providers exist* and whether each is
@@ -1487,53 +1502,53 @@ def _truncate_token(value: Optional[str], visible: int = 6) -> str:
     the signing region rather than a meaningless header chunk.
 
     Returns the Entra-ID placeholder when handed a callable (Azure Foundry
-    bearer provider) — the callable is NEVER invoked here.
+    bearer provider) ? the callable is NEVER invoked here.
     """
     if not value:
         return ""
     if callable(value) and not isinstance(value, str):
-        # Entra ID bearer provider — never reveal a minted token in the UI.
+        # Entra ID bearer provider ? never reveal a minted token in the UI.
         return "<entra-id-bearer>"
     s = str(value)
     if "." in s and s.count(".") >= 2:
-        # Looks like a JWT — show the trailing piece of the signature only.
+        # Looks like a JWT ? show the trailing piece of the signature only.
         s = s.rsplit(".", 1)[-1]
     if len(s) <= visible:
         return s
-    return f"…{s[-visible:]}"
+    return f"...{s[-visible:]}"
 
 
 def _anthropic_oauth_status() -> Dict[str, Any]:
     """Combined status across the three Anthropic credential sources we read.
 
     Jarvis resolves Anthropic creds in this order at runtime:
-    1. ``~/.jarvis/.anthropic_oauth.json`` — Jarvis-managed PKCE flow
-    2. ``~/.claude/.credentials.json`` — Claude Code CLI credentials (auto)
+    1. ``~/.jarvis/.anthropic_oauth.json`` ? Jarvis-managed PKCE flow
+    2. ``~/.claude/.credentials.json`` ? Claude Code CLI credentials (auto)
     3. ``ANTHROPIC_TOKEN`` / ``ANTHROPIC_API_KEY`` env vars
     The dashboard reports the highest-priority source that's actually present.
     """
     try:
         from agent.anthropic_adapter import (
-            read_hermes_oauth_credentials,
+            read_jarvis_oauth_credentials,
             read_claude_code_credentials,
-            _HERMES_OAUTH_FILE,
+            _JARVIS_OAUTH_FILE,
         )
     except ImportError:
         read_claude_code_credentials = None  # type: ignore
-        read_hermes_oauth_credentials = None  # type: ignore
-        _HERMES_OAUTH_FILE = None  # type: ignore
+        read_jarvis_oauth_credentials = None  # type: ignore
+        _JARVIS_OAUTH_FILE = None  # type: ignore
 
     hermes_creds = None
-    if read_hermes_oauth_credentials:
+    if read_jarvis_oauth_credentials:
         try:
-            hermes_creds = read_hermes_oauth_credentials()
+            hermes_creds = read_jarvis_oauth_credentials()
         except Exception:
             hermes_creds = None
     if hermes_creds and hermes_creds.get("accessToken"):
         return {
             "logged_in": True,
-            "source": "hermes_pkce",
-            "source_label": f"Jarvis PKCE ({_HERMES_OAUTH_FILE})",
+            "source": "jarvis_pkce",
+            "source_label": f"Jarvis PKCE ({_JARVIS_OAUTH_FILE})",
             "token_preview": _truncate_token(hermes_creds.get("accessToken")),
             "expires_at": hermes_creds.get("expiresAt"),
             "has_refresh_token": bool(hermes_creds.get("refreshToken")),
@@ -1592,7 +1607,7 @@ def _claude_code_only_status() -> Dict[str, Any]:
     return {"logged_in": False, "source": None}
 
 
-# Provider catalog. The order matters — it's how we render the UI list.
+# Provider catalog. The order matters ? it's how we render the UI list.
 # ``cli_command`` is what the dashboard surfaces as the copy-to-clipboard
 # fallback while Phase 2 (in-browser flows) isn't built yet.
 # ``flow`` describes the OAuth shape so the future modal can pick the
@@ -1722,8 +1737,8 @@ async def list_oauth_providers():
         cli_command     fallback CLI command for users to run manually
         docs_url        external docs/portal link for the "Learn more" link
         status:
-          logged_in        bool — currently has usable creds
-          source           short slug ("hermes_pkce", "claude_code", ...)
+          logged_in        bool ? currently has usable creds
+          source           short slug ("jarvis_pkce", "claude_code", ...)
           source_label     human-readable origin (file path, env var name)
           token_preview    last N chars of the token, never the full token
           expires_at       ISO timestamp string or null
@@ -1758,13 +1773,13 @@ async def disconnect_oauth_provider(provider_id: str, request: Request):
 
     # Anthropic and claude-code clear the same Jarvis-managed PKCE file
     # AND forget the Claude Code import. We don't touch ~/.claude/* directly
-    # — that's owned by the Claude Code CLI; users can re-auth there if they
+    # ? that's owned by the Claude Code CLI; users can re-auth there if they
     # want to undo a disconnect.
     if provider_id in {"anthropic", "claude-code"}:
         try:
-            from agent.anthropic_adapter import _HERMES_OAUTH_FILE
-            if _HERMES_OAUTH_FILE.exists():
-                _HERMES_OAUTH_FILE.unlink()
+            from agent.anthropic_adapter import _JARVIS_OAUTH_FILE
+            if _JARVIS_OAUTH_FILE.exists():
+                _JARVIS_OAUTH_FILE.unlink()
         except Exception:
             pass
         # Also clear the credential pool entry if present.
@@ -1787,30 +1802,30 @@ async def disconnect_oauth_provider(provider_id: str, request: Request):
 
 
 # ---------------------------------------------------------------------------
-# OAuth Phase 2 — in-browser PKCE & device-code flows
+# OAuth Phase 2 ? in-browser PKCE & device-code flows
 # ---------------------------------------------------------------------------
 #
 # Two flow shapes are supported:
 #
 #   PKCE (Anthropic):
 #     1. POST /api/providers/oauth/anthropic/start
-#          → server generates code_verifier + challenge, builds claude.ai
+#          ? server generates code_verifier + challenge, builds claude.ai
 #            authorize URL, stashes verifier in _oauth_sessions[session_id]
-#          → returns { session_id, flow: "pkce", auth_url }
+#          ? returns { session_id, flow: "pkce", auth_url }
 #     2. UI opens auth_url in a new tab. User authorizes, copies code.
 #     3. POST /api/providers/oauth/anthropic/submit { session_id, code }
-#          → server exchanges (code + verifier) → tokens at console.anthropic.com
-#          → persists to ~/.jarvis/.anthropic_oauth.json AND credential pool
-#          → returns { ok: true, status: "approved" }
+#          ? server exchanges (code + verifier) ? tokens at console.anthropic.com
+#          ? persists to ~/.jarvis/.anthropic_oauth.json AND credential pool
+#          ? returns { ok: true, status: "approved" }
 #
 #   Device code (Nous, OpenAI Codex):
 #     1. POST /api/providers/oauth/{nous|openai-codex}/start
-#          → server hits provider's device-auth endpoint
-#          → gets { user_code, verification_url, device_code, interval, expires_in }
-#          → spawns background poller thread that polls the token endpoint
+#          ? server hits provider's device-auth endpoint
+#          ? gets { user_code, verification_url, device_code, interval, expires_in }
+#          ? spawns background poller thread that polls the token endpoint
 #            every `interval` seconds until approved/expired
-#          → stores poll status in _oauth_sessions[session_id]
-#          → returns { session_id, flow: "device_code", user_code,
+#          ? stores poll status in _oauth_sessions[session_id]
+#          ? returns { session_id, flow: "device_code", user_code,
 #                      verification_url, expires_in, poll_interval }
 #     2. UI opens verification_url in a new tab and shows user_code.
 #     3. UI polls GET /api/providers/oauth/{provider}/poll/{session_id}
@@ -1874,16 +1889,16 @@ def _save_anthropic_oauth_creds(access_token: str, refresh_token: str, expires_a
     Mirrors what auth_commands.add_command does so the dashboard flow leaves
     the system in the same state as ``jarvis auth add anthropic``.
     """
-    from agent.anthropic_adapter import _HERMES_OAUTH_FILE
+    from agent.anthropic_adapter import _JARVIS_OAUTH_FILE
     payload = {
         "accessToken": access_token,
         "refreshToken": refresh_token,
         "expiresAt": expires_at_ms,
     }
-    _HERMES_OAUTH_FILE.parent.mkdir(parents=True, exist_ok=True)
-    _HERMES_OAUTH_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    _JARVIS_OAUTH_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _JARVIS_OAUTH_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     # Best-effort credential-pool insert. Failure here doesn't invalidate
-    # the file write — pool registration only matters for the rotation
+    # the file write ? pool registration only matters for the rotation
     # strategy, not for runtime credential resolution.
     try:
         from agent.credential_pool import (
@@ -2078,7 +2093,7 @@ async def _start_device_code_flow(provider_id: str) -> Dict[str, Any]:
         # We can't extract just the start step without refactoring auth.py,
         # so we run the full helper in a worker and proxy the user_code +
         # verification_url back via the session dict. The helper prints
-        # to stdout — we capture nothing here, just status.
+        # to stdout ? we capture nothing here, just status.
         threading.Thread(
             target=_codex_full_login_worker, args=(sid,), daemon=True,
             name=f"oauth-codex-{sid[:6]}",
@@ -2154,7 +2169,7 @@ async def _start_device_code_flow(provider_id: str) -> Dict[str, Any]:
         sess["portal_base_url"] = portal_base_url
         sess["client_id"] = MINIMAX_OAUTH_CLIENT_ID
         sess["region"] = "global"
-        # `expired_in` from MiniMax is overloaded — could be a unix-ms
+        # `expired_in` from MiniMax is overloaded ? could be a unix-ms
         # timestamp OR a seconds-from-now duration. Mirror the heuristic
         # in _minimax_poll_token. Stash the raw value for the poller;
         # compute a derived expires_at + UI-friendly expires_in seconds.
@@ -2258,7 +2273,7 @@ def _minimax_poller(session_id: str) -> None:
     which uses a PKCE-style ``code_verifier`` + ``user_code`` rather than
     the ``device_code`` field used by Nous. On success, builds the same
     auth_state dict that ``_minimax_oauth_login`` (the CLI flow) builds
-    and persists via ``_minimax_save_auth_state`` — so the dashboard
+    and persists via ``_minimax_save_auth_state`` ? so the dashboard
     path leaves the system in the same state as
     ``jarvis auth add minimax-oauth``.
     """
@@ -2346,7 +2361,7 @@ def _codex_full_login_worker(session_id: str) -> None:
 
     The flow is replicated inline (rather than calling
     _codex_device_code_login) because that helper prints/blocks/polls in a
-    single function — we need to surface the user_code to the dashboard the
+    single function ? we need to surface the user_code to the dashboard the
     moment we receive it, well before polling completes.
     """
     try:
@@ -2434,7 +2449,7 @@ def _codex_full_login_worker(session_id: str) -> None:
         if not access_token:
             raise RuntimeError("token exchange did not return access_token")
 
-        # Persist via credential pool — same shape as auth_commands.add_command
+        # Persist via credential pool ? same shape as auth_commands.add_command
         from agent.credential_pool import (
             PooledCredential,
             load_pool,
@@ -2522,7 +2537,7 @@ async def submit_oauth_code(provider_id: str, body: OAuthSubmitBody, request: Re
 
 @app.get("/api/providers/oauth/{provider_id}/poll/{session_id}")
 async def poll_oauth_session(provider_id: str, session_id: str):
-    """Poll a device-code session's status (no auth — read-only state)."""
+    """Poll a device-code session's status (no auth ? read-only state)."""
     with _oauth_sessions_lock:
         sess = _oauth_sessions.get(session_id)
     if not sess:
@@ -2710,7 +2725,7 @@ async def get_logs(
     except ImportError:
         COMPONENT_PREFIXES = {}
 
-    # Normalize "ALL" / "all" / empty → no filter. _matches_filters treats an
+    # Normalize "ALL" / "all" / empty ? no filter. _matches_filters treats an
     # empty tuple as "must match a prefix" (startswith(()) is always False),
     # so passing () instead of None silently drops every line.
     min_level = level if level and level.upper() != "ALL" else None
@@ -2789,7 +2804,7 @@ def _annotate_cron_job(job: Dict[str, Any], profile: str, home: Path) -> Dict[st
     annotated = dict(job)
     annotated["profile"] = profile
     annotated["profile_name"] = profile
-    annotated["hermes_home"] = str(home)
+    annotated["jarvis_home"] = str(home)
     annotated["is_default_profile"] = profile == "default"
     return annotated
 
@@ -2937,7 +2952,7 @@ async def delete_cron_job(job_id: str, profile: Optional[str] = None):
 
 
 # ---------------------------------------------------------------------------
-# Profile management endpoints (minimal — list/create/rename/delete + SOUL.md)
+# Profile management endpoints (minimal ? list/create/rename/delete + SOUL.md)
 # ---------------------------------------------------------------------------
 
 
@@ -2982,7 +2997,7 @@ def _fallback_profile_dicts(profiles_mod) -> List[Dict[str, Any]]:
             return default
 
     profiles: List[Dict[str, Any]] = []
-    default_home = profiles_mod._get_default_hermes_home()
+    default_home = profiles_mod._get_default_jarvis_home()
     if default_home.is_dir():
         model, provider = _safe(lambda: profiles_mod._read_config_model(default_home), (None, None))
         profiles.append({
@@ -3451,7 +3466,7 @@ async def get_models_analytics(days: int = 30):
 
 
 # ---------------------------------------------------------------------------
-# /api/pty — PTY-over-WebSocket bridge for the dashboard "Chat" tab.
+# /api/pty ? PTY-over-WebSocket bridge for the dashboard "Chat" tab.
 #
 # The endpoint spawns the same ``jarvis --tui`` binary the CLI uses, behind
 # a POSIX pseudo-terminal, and forwards bytes + resize escapes across a
@@ -3460,7 +3475,7 @@ async def get_models_analytics(days: int = 30):
 #
 # Auth: ``?token=<session_token>`` query param (browsers can't set
 # Authorization on the WS upgrade).  Same ephemeral ``_SESSION_TOKEN`` as
-# REST.  Localhost-only — we defensively reject non-loopback clients even
+# REST.  Localhost-only ? we defensively reject non-loopback clients even
 # though uvicorn binds to 127.0.0.1.
 # ---------------------------------------------------------------------------
 
@@ -3488,6 +3503,7 @@ _VALID_CHANNEL_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 # Starlette's TestClient reports the peer as "testclient"; treat it as
 # loopback so tests don't need to rewrite request scope.
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", "testclient"})
+_WINDOWS_PROMPT = "\r\n\x1b[96mJARVIS Windows terminal ready.\x1b[0m\r\nPS> "
 
 
 def _is_public_bind() -> bool:
@@ -3508,8 +3524,8 @@ def _ws_client_is_allowed(ws: "WebSocket") -> bool:
         return True
     return client_host in _LOOPBACK_HOSTS
 
-# Per-channel subscriber registry used by /api/pub (PTY-side gateway → dashboard)
-# and /api/events (dashboard → browser sidebar).  Keyed by an opaque channel id
+# Per-channel subscriber registry used by /api/pub (PTY-side gateway ? dashboard)
+# and /api/events (dashboard ? browser sidebar).  Keyed by an opaque channel id
 # the chat tab generates on mount; entries auto-evict when the last subscriber
 # drops AND the publisher has disconnected.
 _event_channels: dict[str, set] = {}
@@ -3523,10 +3539,10 @@ def _resolve_chat_argv(
     """Resolve the argv + cwd + env for the chat PTY.
 
     Default: whatever ``jarvis --tui`` would run.  Tests monkeypatch this
-    function to inject a tiny fake command (``cat``, ``sh -c 'printf …'``)
+    function to inject a tiny fake command (``cat``, ``sh -c 'printf ?'``)
     so nothing has to build Node or the TUI bundle.
 
-    Session resume is propagated via the ``JARVIS_TUI_RESUME`` env var —
+    Session resume is propagated via the ``JARVIS_TUI_RESUME`` env var ?
     matching what ``jarvis_cli.main._launch_tui`` does for the CLI path.
     Appending ``--resume <id>`` to argv doesn't work because ``ui-tui`` does
     not parse its argv.
@@ -3596,6 +3612,95 @@ def _channel_or_close_code(ws: WebSocket) -> Optional[str]:
     return channel if _VALID_CHANNEL_RE.match(channel) else None
 
 
+def _terminal_text(text: str) -> str:
+    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+
+
+async def _run_windows_terminal_command(command: str) -> str:
+    def _run_command() -> str:
+        completed = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+            cwd=str(PROJECT_ROOT),
+            env=os.environ.copy(),
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        output = (completed.stdout or "") + (completed.stderr or "")
+        if completed.returncode != 0 and not output.strip():
+            output = f"Command exited with code {completed.returncode}"
+        return output
+
+    try:
+        return await asyncio.to_thread(_run_command)
+    except subprocess.TimeoutExpired:
+        return "Command timed out after 120 seconds."
+    except Exception as exc:
+        return f"{type(exc).__name__}: {exc}"
+
+
+async def _windows_terminal_ws(ws: WebSocket) -> None:
+    """Small Windows command bridge for the desktop terminal.
+
+    Native Windows Python has no POSIX PTY. This keeps the desktop terminal
+    useful by running submitted lines through PowerShell while the full TUI
+    PTY remains available on POSIX/WSL.
+    """
+    await ws.send_text(_WINDOWS_PROMPT)
+    buffer = ""
+
+    try:
+        while True:
+            msg = await ws.receive()
+            if msg.get("type") == "websocket.disconnect":
+                break
+            raw = msg.get("bytes")
+            if raw is None:
+                text_payload = msg.get("text")
+                raw = text_payload.encode("utf-8") if isinstance(text_payload, str) else b""
+            if not raw:
+                continue
+            match = _RESIZE_RE.match(raw)
+            if match and match.end() == len(raw):
+                continue
+
+            text = raw.decode("utf-8", errors="ignore")
+            if text.startswith("\x1b"):
+                continue
+
+            for char in text:
+                if char in "\r\n":
+                    await ws.send_text("\r\n")
+                    command = buffer.strip()
+                    buffer = ""
+                    if not command:
+                        await ws.send_text("PS> ")
+                        continue
+                    if command.lower() in {"exit", "quit"}:
+                        await ws.send_text("Closing terminal.\r\n")
+                        await ws.close(code=1000)
+                        return
+                    if command.lower() in {"clear", "cls", "/clear"}:
+                        await ws.send_text("\x1b[2J\x1b[HPS> ")
+                        continue
+                    output = await _run_windows_terminal_command(command)
+                    if output.strip():
+                        await ws.send_text(_terminal_text(output.rstrip()) + "\r\n")
+                    await ws.send_text("PS> ")
+                elif char in {"\b", "\x7f"}:
+                    if buffer:
+                        buffer = buffer[:-1]
+                        await ws.send_text("\b \b")
+                elif char == "\t":
+                    buffer += "    "
+                    await ws.send_text("    ")
+                elif char >= " ":
+                    buffer += char
+                    await ws.send_text(char)
+    except WebSocketDisconnect:
+        return
+
+
 @app.websocket("/api/pty")
 async def pty_ws(ws: WebSocket) -> None:
     if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
@@ -3615,16 +3720,8 @@ async def pty_ws(ws: WebSocket) -> None:
 
     await ws.accept()
 
-    # On native Windows, the POSIX PTY bridge can't be imported.  Tell the
-    # client and close cleanly rather than pretending the feature works.
     if not _PTY_BRIDGE_AVAILABLE:
-        await ws.send_text(
-            "\r\n\x1b[31mChat unavailable: the embedded terminal requires a "
-            "POSIX PTY, which native Windows Python doesn't provide.\x1b[0m\r\n"
-            "\x1b[33mInstall Jarvis inside WSL2 to use the dashboard's /chat "
-            "tab — the rest of the dashboard works here.\x1b[0m\r\n"
-        )
-        await ws.close(code=1011)
+        await _windows_terminal_ws(ws)
         return
 
     # --- spawn PTY ------------------------------------------------------
@@ -3654,7 +3751,7 @@ async def pty_ws(ws: WebSocket) -> None:
 
     loop = asyncio.get_running_loop()
 
-    # --- reader task: PTY master → WebSocket ----------------------------
+    # --- reader task: PTY master ? WebSocket ----------------------------
     async def pump_pty_to_ws() -> None:
         while True:
             chunk = await loop.run_in_executor(
@@ -3672,7 +3769,7 @@ async def pty_ws(ws: WebSocket) -> None:
 
     reader_task = asyncio.create_task(pump_pty_to_ws())
 
-    # --- writer loop: WebSocket → PTY master ----------------------------
+    # --- writer loop: WebSocket ? PTY master ----------------------------
     try:
         while True:
             msg = await ws.receive()
@@ -3707,7 +3804,7 @@ async def pty_ws(ws: WebSocket) -> None:
 
 
 # ---------------------------------------------------------------------------
-# /api/ws — JSON-RPC WebSocket sidecar for the dashboard "Chat" tab.
+# /api/ws ? JSON-RPC WebSocket sidecar for the dashboard "Chat" tab.
 #
 # Drives the same `tui_gateway.dispatch` surface Ink uses over stdio, so the
 # dashboard can render structured metadata (model badge, tool-call sidebar,
@@ -3738,7 +3835,7 @@ async def gateway_ws(ws: WebSocket) -> None:
 
 
 # ---------------------------------------------------------------------------
-# /api/pub + /api/events — chat-tab event broadcast.
+# /api/pub + /api/events ? chat-tab event broadcast.
 #
 # The PTY-side ``tui_gateway.entry`` opens /api/pub at startup (driven by
 # JARVIS_TUI_SIDECAR_URL set in /api/pty's PTY env) and writes every
@@ -3805,7 +3902,7 @@ async def events_ws(ws: WebSocket) -> None:
 
     try:
         while True:
-            # Subscribers don't speak — the receive() just blocks until
+            # Subscribers don't speak ? the receive() just blocks until
             # disconnect so the connection stays open as long as the
             # browser holds it.
             await ws.receive_text()
@@ -3856,7 +3953,7 @@ def mount_spa(application: FastAPI):
     ``mission-control.tilos.com/jarvis/*`` -> local Caddy -> :9119), the
     proxy injects ``X-Forwarded-Prefix: /jarvis`` on every request. We
     rewrite the served ``index.html`` so absolute asset URLs (``/assets/...``)
-    and the SPA's runtime ``__HERMES_BASE_PATH__`` honour that prefix
+    and the SPA's runtime ``__JARVIS_BASE_PATH__`` honour that prefix
     without rebuilding the bundle.
     """
     if not WEB_DIST.exists():
@@ -3879,9 +3976,9 @@ def mount_spa(application: FastAPI):
         html = _index_path.read_text()
         chat_js = "true" if _DASHBOARD_EMBEDDED_CHAT_ENABLED else "false"
         token_script = (
-            f'<script>window.__HERMES_SESSION_TOKEN__="{_SESSION_TOKEN}";'
-            f"window.__HERMES_DASHBOARD_EMBEDDED_CHAT__={chat_js};"
-            f'window.__HERMES_BASE_PATH__="{prefix}";</script>'
+            f'<script>window.__JARVIS_SESSION_TOKEN__="{_SESSION_TOKEN}";'
+            f"window.__JARVIS_DASHBOARD_EMBEDDED_CHAT__={chat_js};"
+            f'window.__JARVIS_BASE_PATH__="{prefix}";</script>'
         )
         if prefix:
             # Rewrite absolute asset URLs baked into the Vite build so the
@@ -3942,16 +4039,16 @@ def mount_spa(application: FastAPI):
 # Dashboard theme endpoints
 # ---------------------------------------------------------------------------
 
-# Built-in dashboard themes — label + description only.  The actual color
+# Built-in dashboard themes - label + description only.  The actual color
 # definitions live in the frontend (web/src/themes/presets.ts).
 _BUILTIN_DASHBOARD_THEMES = [
-    {"name": "default",       "label": "Jarvis Teal",         "description": "Classic dark teal — the canonical Jarvis look"},
-    {"name": "default-large", "label": "Jarvis Teal (Large)", "description": "Jarvis Teal with bigger fonts and roomier spacing"},
+    {"name": "default",       "label": "JARVIS Orbit",         "description": "Dark orbit palette with sharper contrast"},
+    {"name": "default-large", "label": "JARVIS Orbit (Large)", "description": "JARVIS Orbit with bigger fonts and roomier spacing"},
     {"name": "midnight",      "label": "Midnight",            "description": "Deep blue-violet with cool accents"},
-    {"name": "ember",     "label": "Ember",          "description": "Warm crimson and bronze — forge vibes"},
-    {"name": "mono",      "label": "Mono",           "description": "Clean grayscale — minimal and focused"},
-    {"name": "cyberpunk", "label": "Cyberpunk",      "description": "Neon green on black — matrix terminal"},
-    {"name": "rose",      "label": "Rosé",           "description": "Soft pink and warm ivory — easy on the eyes"},
+    {"name": "ember",     "label": "Ember",          "description": "Warm crimson and bronze"},
+    {"name": "mono",      "label": "Mono",           "description": "Clean grayscale"},
+    {"name": "cyberpunk", "label": "Cyberpunk",      "description": "Neon green on black"},
+    {"name": "rose",      "label": "Rose",           "description": "Soft pink and warm ivory"},
 ]
 
 
@@ -4078,7 +4175,7 @@ def _normalise_theme_definition(data: Dict[str, Any]) -> Optional[Dict[str, Any]
     if isinstance(density, str) and density in {"compact", "comfortable", "spacious"}:
         layout["density"] = density
 
-    # Color overrides — keep only valid keys with string values.
+    # Color overrides ? keep only valid keys with string values.
     overrides_src = data.get("colorOverrides", {})
     color_overrides: Dict[str, str] = {}
     if isinstance(overrides_src, dict):
@@ -4086,7 +4183,7 @@ def _normalise_theme_definition(data: Dict[str, Any]) -> Optional[Dict[str, Any]
             if key in _THEME_OVERRIDE_KEYS and isinstance(val, str) and val.strip():
                 color_overrides[key] = val
 
-    # Assets — named slots + arbitrary user-defined keys.  Values must be
+    # Assets ? named slots + arbitrary user-defined keys.  Values must be
     # strings (URLs or CSS ``url(...)``/``linear-gradient(...)`` expressions).
     # We don't fetch remote assets here; the frontend just injects them as
     # CSS vars.  Empty values are dropped so a theme can explicitly clear a
@@ -4111,17 +4208,17 @@ def _normalise_theme_definition(data: Dict[str, Any]) -> Optional[Dict[str, Any]
         if custom_assets:
             assets_out["custom"] = custom_assets
 
-    # Custom CSS — raw CSS text the frontend injects as a scoped <style>
+    # Custom CSS ? raw CSS text the frontend injects as a scoped <style>
     # tag on theme apply.  Clipped to _THEME_CUSTOM_CSS_MAX to keep the
     # payload bounded.  We intentionally do NOT parse/sanitise the CSS
-    # here — the dashboard is localhost-only and themes are user-authored
+    # here ? the dashboard is localhost-only and themes are user-authored
     # YAML in ~/.jarvis/, same trust level as the config file itself.
     custom_css_val = data.get("customCSS")
     custom_css: Optional[str] = None
     if isinstance(custom_css_val, str) and custom_css_val.strip():
         custom_css = custom_css_val[:_THEME_CUSTOM_CSS_MAX]
 
-    # Component style overrides — per-bucket dicts of camelCase CSS
+    # Component style overrides ? per-bucket dicts of camelCase CSS
     # property -> CSS string.  The frontend converts these into CSS vars
     # that shell components (Card, App header, Backdrop) consume.
     component_styles_src = data.get("componentStyles", {})
@@ -4676,7 +4773,7 @@ def _mount_plugin_api_routes():
             _log.warning("Plugin %s declares api=%s but file not found", plugin["name"], api_file_name)
             continue
         try:
-            module_name = f"hermes_dashboard_plugin_{plugin['name']}"
+            module_name = f"jarvis_dashboard_plugin_{plugin['name']}"
             spec = importlib.util.spec_from_file_location(module_name, api_path)
             if spec is None or spec.loader is None:
                 continue
@@ -4726,13 +4823,13 @@ def start_server(
     _LOCALHOST = ("127.0.0.1", "localhost", "::1")
     if host not in _LOCALHOST and not allow_public:
         raise SystemExit(
-            f"Refusing to bind to {host} — the dashboard exposes API keys "
+            f"Refusing to bind to {host} - the dashboard exposes API keys "
             f"and config without robust authentication.\n"
             f"Use --insecure to override (NOT recommended on untrusted networks)."
         )
     if host not in _LOCALHOST:
         _log.warning(
-            "Binding to %s with --insecure — the dashboard has no robust "
+            "Binding to %s with --insecure - the dashboard has no robust "
             "authentication. Only use on trusted networks.", host,
         )
 
@@ -4774,7 +4871,7 @@ def start_server(
                 "(headless Linux). Pass --no-open to suppress this detection."
             )
 
-    print(f"  Jarvis Web UI → http://{host}:{port}")
+    print(f"  Jarvis Web UI -> http://{host}:{port}")
     # proxy_headers=False so _ws_client_is_allowed sees the real connection peer
     # rather than X-Forwarded-For's rewritten value (which would defeat the
     # loopback gate when behind a reverse proxy).

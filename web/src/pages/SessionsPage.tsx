@@ -444,7 +444,7 @@ function SessionsPagination({
     >
       {!compact && (
         <span className="text-xs text-muted-foreground">
-          {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}{" "}
+          {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, total)}{" "}
           {t.common.of} {total}
         </span>
       )}
@@ -601,7 +601,7 @@ export default function SessionsPage() {
     ? sessions.find((s) => s.id === sessionDelete.pendingId)
     : null;
 
-  // Build snippet map from search results (session_id → snippet)
+  // Build snippet map from search results (session_id -> snippet)
   const snippetMap = new Map<string, string>();
   if (searchResults) {
     for (const r of searchResults) {
@@ -675,7 +675,7 @@ export default function SessionsPage() {
         title={t.sessions.confirmDeleteTitle}
         description={
           pendingSession?.title && pendingSession.title !== "Untitled"
-            ? `"${pendingSession.title}" — ${t.sessions.confirmDeleteMessage}`
+            ? `"${pendingSession.title}" - ${t.sessions.confirmDeleteMessage}`
             : t.sessions.confirmDeleteMessage
         }
         loading={sessionDelete.isDeleting}
@@ -720,7 +720,7 @@ export default function SessionsPage() {
               <span className="text-xs font-mondwest tracking-[0.12em] truncate">
                 {activeAction === "restart"
                   ? t.status.restartGateway
-                  : t.status.updateHermes}
+                  : t.status.updateJarvis}
               </span>
 
               <Badge
@@ -896,7 +896,7 @@ export default function SessionsPage() {
                         <span className="font-mono-ui">
                           {(s.model ?? t.common.unknown).split("/").pop()}
                         </span>{" "}
-                        · {s.message_count} {t.common.msgs} ·{" "}
+                        - {s.message_count} {t.common.msgs} -{" "}
                         {timeAgo(s.last_active)}
                       </span>
 

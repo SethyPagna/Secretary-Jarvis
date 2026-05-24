@@ -1,5 +1,5 @@
 /**
- * usePlugins hook — discovers and loads dashboard plugins.
+ * usePlugins hook: discovers and loads dashboard plugins.
  *
  * 1. Fetches plugin manifests from GET /api/dashboard/plugins
  * 2. Injects CSS <link> tags for plugins that declare css
@@ -57,7 +57,7 @@ export function usePlugins() {
       // re-execute a previously cached <script> URL.
       const baseUrl = `${JARVIS_BASE_PATH}/dashboard-plugins/${manifest.name}/${manifest.entry}`;
       const scriptSrc = import.meta.env.DEV
-        ? `${baseUrl}?hermes_dv=${Date.now()}`
+        ? `${baseUrl}?jarvis_dv=${Date.now()}`
         : baseUrl;
       if (!import.meta.env.DEV) {
         if (loadedScripts.current.has(baseUrl)) continue;
@@ -68,7 +68,7 @@ export function usePlugins() {
       script.setAttribute("data-jarvis-plugin", manifest.name);
       script.src = scriptSrc;
       script.async = true;
-      // SRI integrity verification — defense against compromised plugin
+      // SRI integrity verification; defense against compromised plugin
       // delivery. Plugin manifests can declare an integrity hash
       // (e.g. "sha384-...") which the browser verifies before executing.
       // Without this, a man-in-the-middle or compromised plugin server

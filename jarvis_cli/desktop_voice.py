@@ -13,6 +13,7 @@ import base64
 import json
 import mimetypes
 import os
+import subprocess
 import time
 import urllib.request
 import uuid
@@ -193,6 +194,52 @@ def _default_synthesizer(*, text: str, output_path: str) -> str | Mapping[str, A
     return text_to_speech_tool(text=text, output_path=output_path)
 
 
+def _ps_quote(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def _synthesize_windows_system_voice(text: str, output_path: Path) -> dict[str, Any]:
+    """Generate a local WAV via Windows SAPI without network or lazy installs."""
+    text_path = output_path.with_suffix(".txt")
+    text_path.write_text(text, encoding="utf-8")
+    script = "\n".join(
+        [
+            "Add-Type -AssemblyName System.Speech",
+            f"$text = Get-Content -Raw -LiteralPath {_ps_quote(str(text_path))}",
+            "$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer",
+            "$synth.Volume = 100",
+            "$synth.Rate = 0",
+            f"$synth.SetOutputToWaveFile({_ps_quote(str(output_path))})",
+            "$synth.Speak($text)",
+            "$synth.Dispose()",
+        ]
+    )
+    try:
+        completed = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+    finally:
+        text_path.unlink(missing_ok=True)
+
+    if completed.returncode != 0:
+        return {
+            "success": False,
+            "provider": "system",
+            "engine": "windows-sapi",
+            "error": completed.stderr.strip() or completed.stdout.strip() or "Windows SAPI failed.",
+        }
+    return {
+        "success": output_path.exists() and output_path.stat().st_size > 0,
+        "provider": "system",
+        "engine": "windows-sapi",
+        "file_path": str(output_path),
+    }
+
+
 def _configured_tts_provider() -> str:
     try:
         from jarvis_cli.config import cfg_get, load_config
@@ -264,6 +311,43 @@ def synthesize_desktop_speech(
                 "audio_bytes": 0,
                 "latency_ms": int((time.perf_counter() - started) * 1000),
             }
+
+    if (
+        synthesizer is None
+        and os.name == "nt"
+        and effective_provider in {
+            "",
+            "edge",
+            "system",
+            "system-tts",
+            "windows",
+            "sapi",
+            "kokoro",
+            "omnivoice",
+        }
+    ):
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"desktop-output-{uuid.uuid4().hex}.wav"
+        started = time.perf_counter()
+        result = _synthesize_windows_system_voice(spoken_text, output_path)
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        if result.get("success"):
+            audio_bytes = output_path.read_bytes()
+            return {
+                **result,
+                "success": True,
+                "audio_base64": base64.b64encode(audio_bytes).decode("ascii"),
+                "audio_bytes": len(audio_bytes),
+                "mime_type": "audio/wav",
+                "latency_ms": latency_ms,
+            }
+        return {
+            **result,
+            "success": False,
+            "audio_base64": "",
+            "audio_bytes": 0,
+            "latency_ms": latency_ms,
+        }
 
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"desktop-output-{uuid.uuid4().hex}.mp3"
