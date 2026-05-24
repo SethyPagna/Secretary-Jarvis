@@ -16,7 +16,7 @@ import {
 import spinners from "unicode-animations";
 import { H2 } from "@/components/NouiTypography";
 import { api } from "@/lib/api";
-import type { ProfileInfo } from "@/lib/api";
+import type { ProfileInfo, TeamSoulInfo } from "@/lib/api";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
@@ -67,6 +67,7 @@ function ProfilesLoadingSpinner() {
 
 export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<ProfileInfo[]>([]);
+  const [teamSouls, setTeamSouls] = useState<TeamSoulInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast, showToast } = useToast();
   const { t } = useI18n();
@@ -96,9 +97,14 @@ export default function ProfilesPage() {
   const activeSoulRequest = useRef<string | null>(null);
 
   const load = useCallback(() => {
-    api
-      .getProfiles()
-      .then((res) => setProfiles(res.profiles))
+    Promise.all([
+      api.getProfiles(),
+      api.getTeamSouls().catch(() => ({ primary: "jarvis", souls: [] })),
+    ])
+      .then(([profilesRes, soulsRes]) => {
+        setProfiles(profilesRes.profiles);
+        setTeamSouls(soulsRes.souls);
+      })
       .catch((e) => showToast(`${t.status.error}: ${e}`, "error"))
       .finally(() => setLoading(false));
   }, [showToast, t.status.error]);
@@ -360,6 +366,43 @@ export default function ProfilesPage() {
           </div>
         </div>
       )}
+
+      <div className="flex flex-col gap-3">
+        <H2 variant="sm" className="flex items-center gap-2 text-muted-foreground">
+          <Users className="h-4 w-4" />
+          JARVIS Team ({teamSouls.length})
+        </H2>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {teamSouls.map((soul) => (
+            <Card key={soul.id} className="overflow-hidden border-current/10 bg-background-base/40">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="text-[0.62rem] text-midground">{soul.role.replace(/_/g, " ")}</Badge>
+                      <Badge className={cn("text-[0.62rem]", soul.ready ? "text-emerald-300" : "text-amber-300")}>
+                        {soul.ready ? "Ready" : "Missing"}
+                      </Badge>
+                    </div>
+                    <h3 className="mt-2 truncate text-sm font-semibold text-text-primary">
+                      {soul.name}
+                    </h3>
+                  </div>
+                </div>
+                <p className="mt-3 line-clamp-3 text-sm leading-5 text-text-secondary" title={soul.when_to_use}>
+                  {soul.when_to_use}
+                </p>
+                {soul.delegates?.length ? (
+                  <div className="mt-3 truncate text-xs text-text-tertiary">
+                    Delegates: {soul.delegates.join(", ")}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       {/* List */}
       <div className="flex flex-col gap-3">

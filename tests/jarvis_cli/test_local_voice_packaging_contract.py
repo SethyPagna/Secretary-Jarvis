@@ -62,14 +62,16 @@ class LocalVoicePackagingContractTests(unittest.TestCase):
         self.assertIn("jarvis-backend", electron_main)
         self.assertIn("windowsHide: true", electron_main)
 
-    def test_docker_compose_documents_dynamic_wsl_resources_without_caps(self) -> None:
-        compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    def test_desktop_runtime_is_native_without_compose_files(self) -> None:
+        blueprint = (ROOT / "docs" / "JARVIS_MASTER_BLUEPRINT.md").read_text(
+            encoding="utf-8",
+        )
 
-        self.assertIn("WSL", compose)
-        self.assertIn("dynamic resource", compose.lower())
-        self.assertNotIn("mem_limit:", compose)
-        self.assertNotIn("cpus:", compose)
-        self.assertNotIn("deploy:\n      resources:\n        limits:", compose)
+        self.assertIn("Native Runtime and Packaging", blueprint)
+        self.assertIn("no longer starts or packages Docker services", blueprint)
+        self.assertIn("JARVIS_MODELS_DIR", blueprint)
+        self.assertFalse((ROOT / "docker-compose.yml").exists())
+        self.assertFalse((ROOT / "docker-compose.local-models.yml").exists())
 
 
 if __name__ == "__main__":

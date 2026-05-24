@@ -20,7 +20,7 @@ class TitlebarSidebarContractTests(unittest.TestCase):
 
         self.assertIn("const [sidebarCollapsed, setSidebarCollapsed] = useState(false)", app)
         self.assertIn("setSidebarCollapsed((collapsed) => !collapsed)", app)
-        self.assertIn("sidebarCollapsed ? \"lg:w-16\" : \"lg:w-64\"", app)
+        self.assertIn("sidebarCollapsed ? \"lg:w-20\" : \"lg:w-64\"", app)
         self.assertIn("sidebarCollapsed && \"lg:justify-center", app)
         self.assertIn("sidebarCollapsed ? \"lg:hidden\" : \"\"", app)
 

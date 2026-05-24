@@ -567,7 +567,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-3 grid min-w-0 w-full max-w-3xl grid-cols-2 gap-2 sm:grid-cols-6">
+          <div className="mt-3 grid min-w-0 w-full max-w-3xl grid-cols-3 gap-2 sm:grid-cols-6">
             <QuickAction
               label="Voice"
               icon={Mic}
@@ -576,7 +576,7 @@ export default function HomePage() {
               onClick={() => void toggleMic()}
             />
             <QuickAction
-              label="Quick Task"
+              label="Task"
               icon={Zap}
               onClick={() => setQuickTaskOpen((value) => !value)}
               active={quickTaskOpen}
@@ -765,19 +765,21 @@ function QuickAction({
   return (
     <button
       type="button"
+      aria-label={label === "Task" ? "Quick Task" : label}
+      title={label === "Task" ? "Quick Task" : label}
       onClick={onClick}
       disabled={busy}
       className={cn(
-        "inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-md border px-2",
-        "text-[0.78rem] font-semibold uppercase tracking-[0.06em] transition",
+        "inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-md border px-2",
+        "text-[0.7rem] font-semibold uppercase tracking-[0.04em] transition",
         active
           ? "border-cyan-200/38 bg-cyan-200/16 text-cyan-50"
           : "border-cyan-200/12 bg-cyan-200/5 text-cyan-50/72 hover:border-cyan-200/30 hover:bg-cyan-200/10 hover:text-cyan-50",
         busy && "cursor-wait opacity-70",
       )}
     >
-      <Icon className={cn("h-4 w-4", busy && "animate-pulse")} />
-      <span className="truncate">{label}</span>
+      <Icon className={cn("h-3.5 w-3.5 shrink-0", busy && "animate-pulse")} />
+      <span className="whitespace-nowrap">{label}</span>
     </button>
   );
 }

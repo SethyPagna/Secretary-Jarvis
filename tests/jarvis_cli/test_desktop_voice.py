@@ -1,5 +1,4 @@
 import json
-import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -84,50 +83,17 @@ class DesktopVoiceTests(unittest.TestCase):
         self.assertIn("disabled", result["error"].lower())
         self.assertFalse(called)
 
-    def test_transcribe_desktop_audio_uses_configured_docker_voice_runtime(self) -> None:
-        def fake_post(url: str, audio: bytes, content_type: str | None):
-            self.assertEqual(url, "http://127.0.0.1:9010")
-            self.assertEqual(audio, b"webm-audio")
-            self.assertEqual(content_type, "audio/webm")
-            return {"success": True, "transcript": "hello jarvis", "engine": "faster-whisper"}
-
+    def test_synthesize_desktop_speech_rejects_removed_docker_voice_runtime(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch.dict(os.environ, {"JARVIS_DOCKER_VOICE_URL": "http://127.0.0.1:9010"}):
-                with patch("jarvis_cli.desktop_voice._post_docker_voice_raw", side_effect=fake_post):
-                    result = transcribe_desktop_audio(
-                        b"webm-audio",
-                        "audio/webm",
-                        Path(temp_dir),
-                    )
+            result = synthesize_desktop_speech(
+                "Speak locally",
+                Path(temp_dir),
+                provider="docker",
+            )
 
-        self.assertTrue(result["success"])
+        self.assertFalse(result["success"])
         self.assertEqual(result["provider"], "docker")
-        self.assertEqual(result["transcript"], "hello jarvis")
-
-    def test_synthesize_desktop_speech_uses_configured_docker_voice_runtime(self) -> None:
-        def fake_post(url: str, payload):
-            self.assertEqual(url, "http://127.0.0.1:9010")
-            self.assertEqual(payload["text"], "Speak locally")
-            return {
-                "success": True,
-                "audio_base64": "d2F2",
-                "audio_bytes": 3,
-                "mime_type": "audio/wav",
-                "engine": "espeak-ng",
-            }
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with patch.dict(os.environ, {"JARVIS_DOCKER_VOICE_URL": "http://127.0.0.1:9010"}):
-                with patch("jarvis_cli.desktop_voice._post_docker_voice_json", side_effect=fake_post):
-                    result = synthesize_desktop_speech(
-                        "Speak locally",
-                        Path(temp_dir),
-                        provider="docker",
-                    )
-
-        self.assertTrue(result["success"])
-        self.assertEqual(result["provider"], "docker")
-        self.assertEqual(result["mime_type"], "audio/wav")
+        self.assertIn("removed", result["error"].lower())
 
 
 if __name__ == "__main__":

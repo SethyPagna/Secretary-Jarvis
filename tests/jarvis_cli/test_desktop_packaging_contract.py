@@ -63,6 +63,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("jarvis_cli", spec)
         self.assertIn("web_dist", spec)
         self.assertIn("default_SOUL.md", spec)
+        self.assertIn('"souls"', spec)
         self.assertIn("fastapi", spec)
         self.assertIn("uvicorn", spec)
         self.assertIn("pydantic", spec)
@@ -79,7 +80,14 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertEqual(package["build"]["nsis"]["installerIcon"], "assets/icon.ico")
         self.assertEqual(package["build"]["nsis"]["installerHeaderIcon"], "assets/icon.ico")
         self.assertEqual(package["build"]["nsis"]["uninstallerIcon"], "assets/icon.ico")
+        self.assertIn("portable", package["build"]["win"]["target"])
         self.assertIn({"from": "assets", "to": "assets"}, package["build"]["extraResources"])
+        self.assertIn({"from": "skills", "to": "skills"}, package["build"]["extraResources"])
+        self.assertIn({"from": "optional-skills", "to": "optional-skills"}, package["build"]["extraResources"])
+        self.assertNotIn(
+            {"from": "docker-compose.local-models.yml", "to": "docker-compose.local-models.yml"},
+            package["build"]["extraResources"],
+        )
 
     def test_after_pack_hook_applies_orb_icon_without_win_code_sign(self) -> None:
         hook = (ROOT / "scripts" / "after-pack-icon.cjs").read_text(encoding="utf-8")

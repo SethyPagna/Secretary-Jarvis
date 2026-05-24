@@ -1,8 +1,5 @@
 param(
-    [ValidateSet("auto", "llamacpp", "vllm", "ollama")]
-    [string]$DockerProfile = "auto",
-    [switch]$NoDocker,
-    [switch]$NoVoice,
+    [string]$ModelsDir,
     [switch]$Dev,
     [switch]$NoTray
 )
@@ -13,13 +10,16 @@ $RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $RepoRoot
 
 try {
-    if ($NoDocker) {
-        $env:JARVIS_DOCKER_AUTOSTART = "0"
+    if (-not $ModelsDir) {
+        $candidateModels = Join-Path (Split-Path -Parent $RepoRoot) "models"
+        if (Test-Path $candidateModels) {
+            $ModelsDir = $candidateModels
+        }
     }
-    else {
-        $env:JARVIS_DOCKER_AUTOSTART = "1"
-        $env:JARVIS_DOCKER_PROFILE = $DockerProfile
-        $env:JARVIS_DOCKER_INCLUDE_VOICE = if ($NoVoice) { "0" } else { "1" }
+
+    if ($ModelsDir) {
+        $env:JARVIS_MODELS_DIR = (Resolve-Path $ModelsDir).Path
+        Write-Host "Using local models: $env:JARVIS_MODELS_DIR"
     }
 
     if (-not $NoTray) {

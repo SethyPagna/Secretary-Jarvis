@@ -13,6 +13,13 @@ from typing import Any, Callable, Mapping
 
 
 _UNSET = object()
+_HARDWARE_CACHE: dict[str, Any] = {
+    "expires_at": 0.0,
+    "gpu_stats": {},
+    "cpu_temp_c": None,
+    "warnings": [],
+}
+_HARDWARE_CACHE_TTL_SECONDS = 8.0
 
 
 def _utc_timestamp() -> str:
@@ -112,7 +119,7 @@ def _nvidia_smi_gpu_stats() -> dict[str, Any]:
             check=False,
             capture_output=True,
             text=True,
-            timeout=1.5,
+            timeout=0.5,
         )
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
         return {}
@@ -169,7 +176,7 @@ def _windows_gpu_stats() -> dict[str, Any]:
             check=False,
             capture_output=True,
             text=True,
-            timeout=2.5,
+            timeout=1.0,
         )
         if completed.returncode == 0 and completed.stdout.strip():
             payload = json.loads(completed.stdout.strip().splitlines()[-1])
@@ -211,7 +218,7 @@ def _windows_gpu_stats() -> dict[str, Any]:
             check=False,
             capture_output=True,
             text=True,
-            timeout=2.0,
+            timeout=0.8,
         )
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
         return {}
@@ -243,7 +250,7 @@ def _windows_cpu_temperature() -> float | None:
             check=False,
             capture_output=True,
             text=True,
-            timeout=2.0,
+            timeout=0.7,
         )
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
         return None
@@ -347,17 +354,29 @@ def collect_runtime_stats(
             warnings.append("Process stats could not be sampled.")
         cpu_temp_c = _cpu_temperature(psutil_obj)
 
-    gpu_stats = _nvidia_smi_gpu_stats()
-    if gpu_stats:
-        gpu_stats.setdefault("gpu_source", "nvidia-smi")
+    cached_hardware = current_time < float(_HARDWARE_CACHE.get("expires_at") or 0)
+    if cached_hardware:
+        gpu_stats = dict(_HARDWARE_CACHE.get("gpu_stats") or {})
+        cpu_temp_c = _HARDWARE_CACHE.get("cpu_temp_c")
+        warnings.extend(str(item) for item in (_HARDWARE_CACHE.get("warnings") or []))
     else:
-        gpu_stats = _windows_gpu_stats()
-        if not gpu_stats:
-            warnings.append("GPU usage/temperature provider is not available.")
-    if cpu_temp_c is None:
-        cpu_temp_c = _windows_cpu_temperature()
+        hardware_warnings: list[str] = []
+        gpu_stats = _nvidia_smi_gpu_stats()
+        if gpu_stats:
+            gpu_stats.setdefault("gpu_source", "nvidia-smi")
+        else:
+            gpu_stats = _windows_gpu_stats()
+            if not gpu_stats:
+                hardware_warnings.append("GPU usage/temperature provider is not available.")
         if cpu_temp_c is None:
-            warnings.append("CPU temperature provider is not available.")
+            cpu_temp_c = _windows_cpu_temperature()
+            if cpu_temp_c is None:
+                hardware_warnings.append("CPU temperature provider is not available.")
+        warnings.extend(hardware_warnings)
+        _HARDWARE_CACHE["gpu_stats"] = dict(gpu_stats)
+        _HARDWARE_CACHE["cpu_temp_c"] = cpu_temp_c
+        _HARDWARE_CACHE["warnings"] = list(hardware_warnings)
+        _HARDWARE_CACHE["expires_at"] = current_time + _HARDWARE_CACHE_TTL_SECONDS
     uptime_seconds = int(max(0, current_time - started_at)) if started_at else 0
     soul_status = _read_soul_status()
 

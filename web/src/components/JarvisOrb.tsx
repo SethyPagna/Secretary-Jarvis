@@ -311,7 +311,7 @@ export function JarvisOrb({ state }: JarvisOrbProps) {
 
   return (
     <div
-      className="relative aspect-square min-w-0 w-[clamp(220px,32vw,320px)] max-w-full overflow-visible"
+      className="relative aspect-square min-w-0 w-[clamp(180px,26vw,270px)] max-w-full overflow-visible"
       style={{
         filter: `drop-shadow(0 0 42px ${palette.core}55) drop-shadow(0 0 90px ${palette.accent}26)`,
       }}
@@ -335,7 +335,7 @@ export function JarvisOrb({ state }: JarvisOrbProps) {
         }}
       />
       <Canvas
-        className="relative z-10"
+        className="absolute inset-[-34%] z-10 h-[168%] w-[168%]"
         camera={{ position: [0, 0, 5.8], fov: 34 }}
         dpr={[1, 1.8]}
         gl={{ alpha: true }}

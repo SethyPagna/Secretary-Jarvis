@@ -1,23 +1,17 @@
-param(
-    [switch]$KeepDocker
-)
-
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $RepoRoot
 
 try {
-    if (-not $KeepDocker) {
-        try {
-            & (Join-Path $RepoRoot "scripts/jarvis-docker-models.ps1") stop
-        }
-        catch {
-            Write-Host "Docker stop skipped or failed: $($_.Exception.Message)"
-        }
-    }
-
     $escapedRepo = [Regex]::Escape((Resolve-Path $RepoRoot).Path)
+    $repoParent = Split-Path -Parent $RepoRoot
+    $modelRoots = @(
+        (Join-Path $repoParent "models"),
+        (Join-Path $HOME ".jarvis\\models")
+    ) | ForEach-Object {
+        try { [Regex]::Escape((Resolve-Path $_ -ErrorAction Stop).Path) } catch { [Regex]::Escape($_) }
+    }
     $ownPid = $PID
     $targets = Get-CimInstance Win32_Process | Where-Object {
         if ($_.ProcessId -eq $ownPid) {
@@ -34,8 +28,13 @@ try {
             $_.Name -match "^(JARVIS|Jarvis|jarvis-backend|electron|node|python)\.exe$" -or
             ($commandLine -and $commandLine -match "jarvis_cli\.desktop_entry|jarvis-backend|electron\\main\.js")
         )
+        $isJarvisModelHelper = (
+            $_.Name -match "^(llama-server|llama-cli)\.exe$" -and
+            $commandLine -and
+            (($modelRoots | Where-Object { $commandLine -match $_ }).Count -gt 0)
+        )
 
-        return $isRepoProcess -and $isJarvisRuntime
+        return (($isRepoProcess -and $isJarvisRuntime) -or $isJarvisModelHelper)
     }
 
     foreach ($process in $targets) {

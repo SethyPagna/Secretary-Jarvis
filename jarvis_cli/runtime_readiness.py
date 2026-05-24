@@ -277,7 +277,6 @@ def _tts_status(
         "piper": "piper",
         "neutts": "neutts",
         "kittentts": "kittentts",
-        "docker": "docker-local-voice",
     }.get(provider, provider or "unconfigured")
     issues: list[str] = []
     assets: dict[str, Any] = {}
@@ -313,16 +312,7 @@ def _tts_status(
         ):
             issues.append("No system TTS command was found.")
     elif provider == "docker":
-        voice_url = str(
-            _cfg(config, "tts", "docker", "url", default="")
-            or _cfg(config, "runtime", "docker", "voice_url", default="")
-            or ""
-        ).strip()
-        endpoint = _probe_health_url(voice_url)
-        if not voice_url:
-            issues.append("Docker voice runtime URL is not configured.")
-        elif not endpoint.get("ok"):
-            issues.append(f"Docker voice runtime is not reachable: {endpoint.get('error', 'offline')}")
+        issues.append("Docker voice runtime has been removed from JARVIS Desktop.")
     else:
         issues.append(f"Unknown TTS provider: {provider or 'empty'}")
 
@@ -376,17 +366,8 @@ def _stt_status(
         if not _env_has(env, "GROQ_API_KEY"):
             issues.append("GROQ_API_KEY is required for Groq Whisper.")
     elif provider == "docker":
-        engine = "docker-faster-whisper"
-        voice_url = str(
-            _cfg(config, "stt", "docker", "url", default="")
-            or _cfg(config, "runtime", "docker", "voice_url", default="")
-            or ""
-        ).strip()
-        endpoint = _probe_health_url(voice_url)
-        if not voice_url:
-            issues.append("Docker STT runtime URL is not configured.")
-        elif not endpoint.get("ok"):
-            issues.append(f"Docker STT runtime is not reachable: {endpoint.get('error', 'offline')}")
+        engine = "removed-docker-stt"
+        issues.append("Docker STT runtime has been removed from JARVIS Desktop.")
     else:
         engine = provider or "unconfigured"
         issues.append(f"Unknown STT provider: {provider or 'empty'}")

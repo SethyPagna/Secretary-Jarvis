@@ -73,12 +73,15 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("Quit JARVIS", source)
         self.assertIn("runAppShutdown()", source)
 
-    def test_packaged_app_autostarts_docker_unless_disabled(self) -> None:
+    def test_packaged_app_uses_local_model_folder_without_docker_autostart(self) -> None:
         source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
 
-        self.assertIn("const dockerAutostartEnv", source)
-        self.assertIn(": app.isPackaged", source)
-        self.assertIn("JARVIS_DOCKER_AUTOSTART", source)
+        self.assertIn("JARVIS_MODELS_DIR", source)
+        self.assertIn("defaultModelsDir", source)
+        self.assertIn("/api/runtime/local/start", source)
+        self.assertIn("/api/runtime/local/stop", source)
+        self.assertNotIn("JARVIS_DOCKER_AUTOSTART", source)
+        self.assertNotIn("/api/runtime/docker/start", source)
 
     def test_preload_exposes_limited_desktop_bridge(self) -> None:
         source = (ROOT / "electron" / "preload.js").read_text(encoding="utf-8")

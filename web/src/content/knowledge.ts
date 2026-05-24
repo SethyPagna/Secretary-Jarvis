@@ -308,9 +308,9 @@ export const setupSections: KnowledgeSection[] = [
     summary: "Electron, backend process, tray, and title bar.",
   },
   {
-    id: "docker",
-    label: "Docker",
-    summary: "WSL/Docker resource behavior and backend services.",
+    id: "runtime",
+    label: "Runtime",
+    summary: "One packaged app with local model folder wiring.",
   },
   {
     id: "release",
@@ -377,15 +377,14 @@ export const setupItems: KnowledgeItem[] = [
     badges: ["packaging"],
   },
   {
-    id: "docker-wsl",
-    section: "docker",
-    title: "Docker And WSL",
-    summary: "Avoid fixed low limits while allowing resources to return.",
+    id: "local-runtime",
+    section: "runtime",
+    title: "Local Packaged Runtime",
+    summary: "Run from the desktop package and point to local model folders.",
     detail:
-      "Use the Docker Local Models panel to start, apply, and stop local model services from the desktop app. The compose file avoids hard CPU/RAM/GPU caps, and stopping services lets Docker/WSL return idle resources.",
-    badges: ["Docker", "WSL"],
-    command: "scripts\\jarvis-docker-models.ps1 start -Profile auto",
-    source: "docs/jarvis/docker-local-models.md",
+      "JARVIS no longer starts Docker from the desktop app. The packaged backend reads JARVIS_MODELS_DIR, defaults to the sibling models folder, and keeps external model paths editable in the Models page.",
+    badges: ["local", "models"],
+    command: ".\\run-jarvis.ps1 -ModelsDir ..\\models",
   },
   {
     id: "smoke-tests",

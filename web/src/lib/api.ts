@@ -75,32 +75,7 @@ export const api = {
     fetchJSON<RuntimeSmokeResponse>("/api/runtime/smoke-test", {
       method: "POST",
     }),
-  getDockerRuntime: (profile = "auto") =>
-    fetchJSON<DockerRuntimeStatusResponse>(
-      `/api/runtime/docker?profile=${encodeURIComponent(profile)}`,
-    ),
-  startDockerRuntime: (body: DockerRuntimeRequest = {}) =>
-    fetchJSON<DockerRuntimeActionResponse>("/api/runtime/docker/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        profile: body.profile ?? "auto",
-        include_voice: body.include_voice ?? true,
-      }),
-    }),
-  stopDockerRuntime: () =>
-    fetchJSON<DockerRuntimeActionResponse>("/api/runtime/docker/stop", {
-      method: "POST",
-    }),
-  applyDockerRuntime: (body: DockerRuntimeRequest = {}) =>
-    fetchJSON<DockerRuntimeActionResponse>("/api/runtime/docker/apply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        profile: body.profile ?? "auto",
-        include_voice: body.include_voice ?? true,
-      }),
-    }),
+  getLocalModels: () => fetchJSON<LocalModelsResponse>("/api/models/local"),
   transcribeVoice: (audio: Blob) =>
     fetchJSON<VoiceTranscriptionResponse>("/api/voice/transcribe", {
       method: "POST",
@@ -208,6 +183,7 @@ export const api = {
   // Profiles (minimal)
   getProfiles: () =>
     fetchJSON<{ profiles: ProfileInfo[] }>("/api/profiles"),
+  getTeamSouls: () => fetchJSON<TeamSoulsResponse>("/api/souls/team"),
   createProfile: (body: { name: string; clone_from_default: boolean }) =>
     fetchJSON<{ ok: boolean; name: string; path: string }>("/api/profiles", {
       method: "POST",
@@ -506,50 +482,6 @@ export interface RuntimeSmokeResponse {
   [key: string]: unknown;
 }
 
-export interface DockerRuntimeRequest {
-  profile?: string;
-  include_voice?: boolean;
-}
-
-export interface DockerProbe {
-  ok?: boolean;
-  status?: number;
-  latency_ms?: number;
-  error?: string;
-  sample?: string;
-}
-
-export interface DockerRuntimeStatusResponse {
-  docker_available: boolean;
-  compose_available: boolean;
-  compose_file: string;
-  profile: string;
-  requested_profile?: string;
-  endpoints?: Record<string, string>;
-  probes?: Record<string, DockerProbe>;
-  plan?: Record<string, unknown>;
-  services?: {
-    ok?: boolean;
-    services?: Array<Record<string, unknown>>;
-    error?: string;
-    stderr?: string;
-  };
-  resource_policy?: string;
-  [key: string]: unknown;
-}
-
-export interface DockerRuntimeActionResponse {
-  ok?: boolean;
-  error?: string;
-  profile?: string;
-  changed_keys?: string[];
-  config_path?: string;
-  services?: string[];
-  result?: Record<string, unknown>;
-  status?: DockerRuntimeStatusResponse;
-  [key: string]: unknown;
-}
-
 export interface VoiceTranscriptionResponse {
   success: boolean;
   transcript: string;
@@ -699,6 +631,39 @@ export interface ProfileInfo {
   provider: string | null;
   has_env: boolean;
   skill_count: number;
+}
+
+export interface TeamSoulInfo {
+  id: string;
+  name: string;
+  role: string;
+  when_to_use: string;
+  responsibilities: string[];
+  keywords: string[];
+  delegates?: string[];
+  template: string;
+  ready: boolean;
+}
+
+export interface TeamSoulsResponse {
+  primary: string;
+  souls: TeamSoulInfo[];
+}
+
+export interface LocalModelInfo {
+  id: string;
+  name: string;
+  kind: "llm" | "stt" | "tts" | "asset" | string;
+  path: string;
+  primary_file: string;
+  file_count: number;
+  size_bytes: number;
+  ready: boolean;
+}
+
+export interface LocalModelsResponse {
+  roots: string[];
+  models: LocalModelInfo[];
 }
 
 export interface ModelsAnalyticsModelEntry {

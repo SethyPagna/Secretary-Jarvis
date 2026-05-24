@@ -152,14 +152,14 @@ const BUILTIN_NAV_REST: NavItem[] = [
     path: "/setup",
     label: "Setup",
     icon: SlidersHorizontal,
-    section: "Operate",
+    section: "Library",
   },
-  { path: "/skills", label: "Skills", icon: Package, section: "Operate" },
+  { path: "/skills", label: "Skills", icon: Package, section: "Library" },
   { path: "/workflow", label: "Workflow", icon: Zap, section: "Operate" },
   { path: "/permissions", label: "Perms", icon: Shield, section: "Admin" },
   { path: "/platforms", label: "Platforms", icon: Globe, section: "Admin" },
   { path: "/settings", label: "Settings", icon: Settings, section: "Admin" },
-  { path: "/docs", label: "Reference", icon: FileText, section: "Reference" },
+  { path: "/docs", label: "Reference", icon: FileText, section: "Library" },
 ];
 
 const ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
@@ -247,15 +247,15 @@ function partitionSidebarNav(
 const SIDEBAR_SECTION_ORDER: NavSection[] = [
   "Core",
   "Operate",
+  "Library",
   "Admin",
-  "Reference",
 ];
 
 const SIDEBAR_SECTION_LABELS: Record<NavSection, string> = {
   Core: "Core",
   Operate: "Operate",
+  Library: "Library",
   Admin: "Admin",
-  Reference: "Reference",
 };
 
 function groupSidebarItems(items: NavItem[]): SidebarNavGroup[] {
@@ -506,35 +506,7 @@ export default function App() {
                 "linear-gradient(180deg, rgba(16,21,29,0.98), rgba(9,13,20,0.98))",
             }}
           >
-            <div
-              className={cn(
-                "flex h-14 shrink-0 items-center justify-between gap-2 px-4",
-                sidebarCollapsed && "lg:justify-center lg:px-2",
-                "border-b border-current/20",
-              )}
-            >
-              <div
-                className={cn(
-                  "flex items-center gap-2",
-                  sidebarCollapsed && "lg:justify-center",
-                )}
-              >
-                <PluginSlot name="header-left" />
-
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-cyan-200/35 bg-cyan-300/10 shadow-[0_0_22px_rgba(0,212,255,0.32)]">
-                  <span className="h-3.5 w-3.5 rounded-full bg-cyan-100 shadow-[0_0_18px_rgba(0,212,255,0.9)]" />
-                </span>
-
-                <span
-                  className={cn(
-                    "text-[0.92rem] font-bold uppercase tracking-[0.18em] text-cyan-50",
-                    sidebarCollapsed ? "lg:hidden" : "",
-                  )}
-                >
-                  JARVIS
-                </span>
-              </div>
-
+            <div className="flex h-10 shrink-0 items-center justify-end border-b border-current/20 px-3 lg:hidden">
               <Button
                 ghost
                 size="icon"
@@ -639,7 +611,7 @@ export default function App() {
               </div>
             </div>
 
-            <SidebarFooter />
+            {!sidebarCollapsed && <SidebarFooter />}
           </aside>
 
           <PageHeaderProvider pluginTabs={pluginTabMeta}>
@@ -830,7 +802,7 @@ function SidebarSystemActions({
         {t.app.system}
       </span>
 
-      <SidebarStatusStrip />
+      {!sidebarCollapsed && <SidebarStatusStrip />}
 
       <ul className="flex flex-col">
         {items.map(({ action, icon: Icon, label, runningLabel, spin }) => {
@@ -912,7 +884,7 @@ interface SidebarNavLinkProps {
   t: Translations;
 }
 
-type NavSection = "Core" | "Operate" | "Admin" | "Reference";
+type NavSection = "Core" | "Operate" | "Library" | "Admin";
 
 interface SidebarNavGroup {
   key: NavSection;

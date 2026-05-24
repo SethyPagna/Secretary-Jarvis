@@ -12,11 +12,7 @@
     "jarvis:stop": "powershell -ExecutionPolicy Bypass -File stop-jarvis.ps1",
     "desktop:dev": "electron .",
     "desktop:build": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop.ps1 -PyInstallerSpec packaging/jarvis-backend.spec",
-    "desktop:pack": "electron-builder",
-    "docker:models:status": "powershell -ExecutionPolicy Bypass -File scripts/jarvis-docker-models.ps1 status",
-    "docker:models:start": "powershell -ExecutionPolicy Bypass -File scripts/jarvis-docker-models.ps1 start -Profile auto",
-    "docker:models:apply": "powershell -ExecutionPolicy Bypass -File scripts/jarvis-docker-models.ps1 apply -Profile auto",
-    "docker:models:stop": "powershell -ExecutionPolicy Bypass -File scripts/jarvis-docker-models.ps1 stop"
+    "desktop:pack": "electron-builder"
   },
   "repository": {
     "type": "git",
@@ -52,21 +48,22 @@
         "to": "backend"
       },
       {
-        "from": "docker-compose.local-models.yml",
-        "to": "docker-compose.local-models.yml"
-      },
-      {
-        "from": "docker/voice-runtime",
-        "to": "docker/voice-runtime"
-      },
-      {
         "from": "assets",
         "to": "assets"
+      },
+      {
+        "from": "skills",
+        "to": "skills"
+      },
+      {
+        "from": "optional-skills",
+        "to": "optional-skills"
       }
     ],
     "win": {
       "target": [
-        "nsis"
+        "nsis",
+        "portable"
       ],
       "icon": "assets/icon.ico",
       "signAndEditExecutable": false

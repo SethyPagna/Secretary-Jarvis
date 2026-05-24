@@ -329,15 +329,15 @@ Themes:
 - High Contrast
 - custom CSS variables in `~/.jarvis/themes/custom.css`
 
-## Part 10 - Docker and Packaging
+## Part 10 - Native Runtime and Packaging
 
-Development:
+Development/runtime:
 
-- `docker-compose.yml`
-- backend service on 8765/8766/8767
-- optional Ollama service on 11434, retained as the last local fallback after llama.cpp and vLLM
-- UI service on 3000
-- Docker and WSL must not use fixed CPU or memory caps in this repo. Docker Desktop/WSL dynamic resource management should be allowed to borrow resources when inference needs them and return idle resources to Windows.
+- The desktop app no longer starts or packages Docker services.
+- `run-jarvis.ps1` starts Electron plus the embedded Python backend and points `JARVIS_MODELS_DIR` at the sibling `models/` folder by default.
+- Native `llama-server` is the first local LLM helper, vLLM is the second local serving target, and Ollama remains the last local fallback when already configured by the user.
+- Local voice uses the installed Python/backend stack: faster-whisper for STT, Kokoro or OmniVoice when their runtimes are available, and system TTS as the guaranteed offline fallback.
+- Model folders are editable in the Models page; the default preset is `C:\Users\user\Downloads\Secretary Jarvis\models` in this workspace layout.
 
 Production packaging:
 
@@ -350,7 +350,7 @@ Packaging rules:
 - `scripts/build-desktop.ps1` is the Windows build entrypoint.
 - `packaging/jarvis-backend.spec` is the backend PyInstaller spec.
 - The packaged app launches the backend from Electron resources with hidden child windows.
-- The user-facing process should be a single JARVIS desktop app entry. Backend/model children are owned by the app lifecycle and terminated during `/api/shutdown`.
+- The user-facing process should be a single JARVIS desktop app entry. Backend/model helper children are owned by the app lifecycle and terminated during `/api/shutdown`.
 
 Targets:
 
@@ -462,4 +462,4 @@ Latest autoconfig result from this workspace:
 - Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.
 - STT dependency status: `faster-whisper==1.2.1` is installed. Non-interactive pip flags were required: `PIP_NO_INPUT=1` and `PIP_DISABLE_PIP_VERSION_CHECK=1`.
 - STT model cache status: `Systran/faster-whisper-tiny.en` is downloaded. The Hugging Face Xet path stalled on larger model blobs, so first-run downloads should set `HF_HUB_DISABLE_XET=1`.
-- Packaging status: Electron/web/Docker configuration checks pass, FastAPI/Uvicorn are core packaged deps, and `scripts/build-desktop.ps1` completed locally after installing exact pins from the reachable Tsinghua PyPI mirror. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced `release/JARVIS Setup 1.0.0.exe` plus `release/win-unpacked/JARVIS.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.
+- Packaging status: Electron/web/native-runtime configuration checks pass, FastAPI/Uvicorn are core packaged deps, and `scripts/build-desktop.ps1` completed locally after installing exact pins from the reachable Tsinghua PyPI mirror. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced `release/JARVIS Setup 1.0.0.exe` plus `release/win-unpacked/JARVIS.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.

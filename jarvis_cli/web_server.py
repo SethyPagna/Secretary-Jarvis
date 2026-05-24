@@ -83,6 +83,7 @@ _log = logging.getLogger(__name__)
 
 app = FastAPI(title="JARVIS", version=__version__)
 _PROCESS_STARTED_AT = time.time()
+_SKILL_COUNT_CACHE: Dict[str, Any] = {"value": None, "expires_at": 0.0}
 
 # ---------------------------------------------------------------------------
 # Session token for protecting sensitive endpoints (reveal).
@@ -258,7 +259,7 @@ async def auth_middleware(request: Request, call_next):
     if path.startswith("/api/") and path not in _PUBLIC_API_PATHS:
         if (
             path == "/api/shutdown"
-            or path.startswith("/api/runtime/docker")
+            or path.startswith("/api/runtime/local")
         ) and _has_valid_desktop_shutdown_token(request):
             return await call_next(request)
         if not _has_valid_session_token(request):
@@ -303,7 +304,7 @@ _SCHEMA_OVERRIDES: Dict[str, Dict[str, Any]] = {
     "tts.provider": {
         "type": "select",
         "description": "Text-to-speech provider",
-        "options": ["edge", "elevenlabs", "openai", "neutts"],
+        "options": ["system", "kokoro", "omnivoice", "openai"],
     },
     "stt.provider": {
         "type": "select",
@@ -499,11 +500,6 @@ class ModelAssignment(BaseModel):
 
 class VoiceSynthesizeRequest(BaseModel):
     text: str
-
-
-class DockerRuntimeRequest(BaseModel):
-    profile: str = "auto"
-    include_voice: bool = True
 
 
 _GATEWAY_HEALTH_URL = os.getenv("GATEWAY_HEALTH_URL")
@@ -748,44 +744,45 @@ async def post_runtime_autoconfig_apply():
     }
 
 
-@app.get("/api/runtime/docker")
-async def get_runtime_docker(profile: str = "auto"):
-    """Return Docker local-model service state for the desktop Setup page."""
-    from jarvis_cli.docker_models import docker_runtime_status
+@app.get("/api/runtime/local")
+async def get_runtime_local():
+    """Return native local runtime state for packaged desktop."""
+    from jarvis_cli.local_runtime import status_local_runtime
 
-    return docker_runtime_status(profile)
-
-
-@app.post("/api/runtime/docker/start")
-async def post_runtime_docker_start(body: DockerRuntimeRequest):
-    """Start Docker local LLM and voice services owned by JARVIS setup."""
-    from jarvis_cli.docker_models import start_docker_runtime
-
-    return start_docker_runtime(body.profile, include_voice=body.include_voice)
+    return status_local_runtime()
 
 
-@app.post("/api/runtime/docker/stop")
-async def post_runtime_docker_stop():
-    """Stop JARVIS Docker local model services so resources return to the host."""
-    from jarvis_cli.docker_models import stop_docker_runtime
+@app.post("/api/runtime/local/start")
+async def post_runtime_local_start():
+    """Start native local model helpers such as llama-server."""
+    from jarvis_cli.local_runtime import start_local_runtime
 
-    return stop_docker_runtime()
+    return start_local_runtime()
 
 
-@app.post("/api/runtime/docker/apply")
-async def post_runtime_docker_apply(body: DockerRuntimeRequest):
-    """Apply Docker local runtime endpoints to config.yaml."""
-    from jarvis_cli.docker_models import apply_docker_runtime
+@app.post("/api/runtime/local/stop")
+async def post_runtime_local_stop():
+    """Stop native local model helpers owned by the desktop backend."""
+    from jarvis_cli.local_runtime import stop_local_runtime
 
-    return apply_docker_runtime(body.profile, include_voice=body.include_voice)
+    return stop_local_runtime()
 
 
 def _active_skill_count() -> int:
+    now = time.time()
+    cached = _SKILL_COUNT_CACHE.get("value")
+    if isinstance(cached, int) and now < float(_SKILL_COUNT_CACHE.get("expires_at") or 0):
+        return cached
+
+    resource_root = Path(os.environ.get("JARVIS_RESOURCE_ROOT", "")).expanduser()
+    resource_roots = [resource_root] if str(resource_root) not in {"", "."} else []
     roots = [
         get_jarvis_home() / "skills",
         Path(__file__).resolve().parents[1] / "skills",
         Path(__file__).resolve().parents[1] / "optional-skills",
     ]
+    for root in resource_roots:
+        roots.extend([root / "skills", root / "optional-skills"])
     seen: set[str] = set()
     total = 0
     suffixes = {".py", ".yaml", ".yml", ".md"}
@@ -803,6 +800,8 @@ def _active_skill_count() -> int:
                 total += 1
         except OSError:
             continue
+    _SKILL_COUNT_CACHE["value"] = total
+    _SKILL_COUNT_CACHE["expires_at"] = now + 30.0
     return total
 
 
@@ -1171,6 +1170,105 @@ def get_model_info():
     except Exception:
         _log.exception("GET /api/model/info failed")
         return dict(_EMPTY_MODEL_INFO)
+
+
+def _candidate_model_roots() -> List[Path]:
+    roots: List[Path] = []
+    for raw in (
+        os.environ.get("JARVIS_MODELS_DIR", ""),
+        str(get_jarvis_home() / "models"),
+        str(PROJECT_ROOT.parent / "models"),
+        str(PROJECT_ROOT / "models"),
+    ):
+        if not raw:
+            continue
+        path = Path(raw).expanduser()
+        if path not in roots:
+            roots.append(path)
+    return roots
+
+
+def _model_kind(name: str, files: List[Path]) -> str:
+    lowered = name.lower()
+    suffixes = {p.suffix.lower() for p in files}
+    if "whisper" in lowered:
+        return "stt"
+    if "kokoro" in lowered or "omnivoice" in lowered or any(p.suffix.lower() in {".pt", ".pth"} for p in files):
+        return "tts"
+    if ".gguf" in suffixes or ".safetensors" in suffixes:
+        return "llm"
+    return "asset"
+
+
+_LOCAL_MODEL_SUFFIXES = {".gguf", ".safetensors", ".bin", ".onnx", ".pt", ".pth", ".json"}
+_LOCAL_MODEL_SCAN_LIMIT = 400
+
+
+def _iter_local_model_files(entry: Path) -> List[Path]:
+    """Return a bounded model-file sample so one huge folder cannot block the UI."""
+    files: List[Path] = []
+    stack: List[Tuple[Path, int]] = [(entry, 0)]
+    while stack and len(files) < _LOCAL_MODEL_SCAN_LIMIT:
+        current, depth = stack.pop()
+        try:
+            children = sorted(current.iterdir(), key=lambda p: p.name.lower())
+        except OSError:
+            continue
+        for child in children:
+            if len(files) >= _LOCAL_MODEL_SCAN_LIMIT:
+                break
+            try:
+                if child.is_file() and child.suffix.lower() in _LOCAL_MODEL_SUFFIXES:
+                    files.append(child)
+                elif child.is_dir() and depth < 3:
+                    stack.append((child, depth + 1))
+            except OSError:
+                continue
+    return files
+
+
+def _sum_file_sizes(files: List[Path]) -> int:
+    total = 0
+    for file in files:
+        try:
+            total += file.stat().st_size
+        except OSError:
+            pass
+    return total
+
+
+@app.get("/api/models/local")
+def list_local_models():
+    """Return downloaded local model assets visible to the desktop app."""
+    models: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    roots = [root for root in _candidate_model_roots() if root.exists()]
+
+    for root in roots:
+        for entry in sorted(root.iterdir(), key=lambda p: p.name.lower()):
+            if not entry.is_dir():
+                continue
+            files = _iter_local_model_files(entry)
+            if not files:
+                continue
+            key = str(entry.resolve()).lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            kind = _model_kind(entry.name, files)
+            primary = next((p for p in files if p.suffix.lower() == ".gguf"), files[0])
+            models.append({
+                "id": entry.name,
+                "name": entry.name.replace("__", " / "),
+                "kind": kind,
+                "path": str(entry),
+                "primary_file": str(primary),
+                "file_count": len(files),
+                "size_bytes": _sum_file_sizes(files),
+                "ready": True,
+            })
+
+    return {"roots": [str(root) for root in roots], "models": models}
 
 
 # ---------------------------------------------------------------------------
@@ -3045,6 +3143,55 @@ def _profile_setup_command(name: str) -> str:
     """Return the shell command used to configure a profile in the CLI."""
     _resolve_profile_dir(name)
     return "jarvis setup" if name == "default" else f"{name} setup"
+
+
+def _team_souls_manifest() -> Dict[str, Any]:
+    souls_dir = Path(__file__).parent / "data" / "souls"
+    manifest_path = souls_dir / "soul_manifest.json"
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if isinstance(manifest, dict):
+                return manifest
+        except (OSError, json.JSONDecodeError):
+            _log.exception("Could not read bundled soul manifest")
+
+    souls = []
+    for soul_file in sorted(souls_dir.glob("*_SOUL.md")):
+        soul_id = soul_file.stem.replace("_SOUL", "")
+        souls.append({
+            "id": soul_id,
+            "name": soul_id.upper(),
+            "role": "specialist",
+            "template": str(soul_file),
+            "when_to_use": "Specialist JARVIS team soul.",
+            "responsibilities": [],
+            "keywords": [],
+        })
+    return {"primary": "jarvis", "souls": souls}
+
+
+@app.get("/api/souls/team")
+async def list_team_souls_endpoint():
+    manifest = _team_souls_manifest()
+    souls = []
+    for soul in manifest.get("souls", []):
+        if not isinstance(soul, dict):
+            continue
+        template = str(soul.get("template", ""))
+        template_path = PROJECT_ROOT / template if template else Path()
+        souls.append({
+            "id": soul.get("id", ""),
+            "name": soul.get("name", ""),
+            "role": soul.get("role", "specialist"),
+            "when_to_use": soul.get("when_to_use", ""),
+            "responsibilities": soul.get("responsibilities", []),
+            "keywords": soul.get("keywords", []),
+            "delegates": soul.get("delegates", []),
+            "template": template,
+            "ready": bool(template_path.exists()),
+        })
+    return {"primary": manifest.get("primary", "jarvis"), "souls": souls}
 
 
 @app.get("/api/profiles")

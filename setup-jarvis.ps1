@@ -1,7 +1,6 @@
 param(
     [switch]$SkipPython,
     [switch]$SkipNode,
-    [switch]$SkipDockerCheck,
     [switch]$BuildDesktop,
     [switch]$SkipInstaller,
     [string]$Wheelhouse = "wheelhouse/desktop"
@@ -83,17 +82,6 @@ try {
         }
         else {
             Write-Host "Web Node dependencies already installed."
-        }
-    }
-
-    if (-not $SkipDockerCheck) {
-        $docker = Get-Command docker -ErrorAction SilentlyContinue
-        if ($docker) {
-            Invoke-Checked $docker.Source compose -f docker-compose.local-models.yml config
-            Write-Host "Docker Compose local model configuration is valid."
-        }
-        else {
-            Write-Host "Docker was not found. JARVIS will still run, but local model containers need Docker Desktop."
         }
     }
 

@@ -24,6 +24,15 @@ import { usePageHeader } from "@/contexts/usePageHeader";
 /** Select value for built-in memory (`config` uses empty string). Never use `""`; UI Select maps empty value to an empty label. */
 const MEMORY_PROVIDER_BUILTIN = "__jarvis_memory_builtin__";
 
+const PLATFORM_SHORTCUTS = [
+  { name: "Telegram", env: "JARVIS_TELEGRAM_TOKEN", status: "Token setup" },
+  { name: "Discord", env: "JARVIS_DISCORD_TOKEN", status: "Bot setup" },
+  { name: "WhatsApp", env: "JARVIS_WHATSAPP_PHONE", status: "QR / pairing" },
+  { name: "Slack", env: "JARVIS_SLACK_BOT_TOKEN", status: "App token" },
+  { name: "Email", env: "JARVIS_EMAIL_IMAP_HOST", status: "IMAP / SMTP" },
+  { name: "Webhook", env: "JARVIS_WEBHOOK_SECRET", status: "Inbound URL" },
+];
+
 export default function PluginsPage() {
   const [hub, setHub] = useState<PluginsHubResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -153,6 +162,35 @@ export default function PluginsPage() {
       <PluginSlot name="plugins:top" />
 
       <div className={cn("flex w-full flex-col gap-8")}>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Messaging Platforms</CardTitle>
+            <p className="text-xs tracking-[0.08em] text-text-tertiary">
+              Configure credentials in Permissions / Environment, then the gateway routes each platform through the same JARVIS memory, voice, and tool permissions.
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {PLATFORM_SHORTCUTS.map((platform) => (
+              <div
+                key={platform.name}
+                className="flex min-w-0 items-center justify-between gap-3 border border-current/10 bg-background-base/30 px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-text-primary">
+                    {platform.name}
+                  </div>
+                  <div className="truncate text-xs text-text-tertiary">
+                    {platform.status}
+                  </div>
+                </div>
+                <Badge className="shrink-0 text-[0.62rem] text-midground">
+                  {platform.env.replace("JARVIS_", "")}
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
         {providers && (
           <Card>

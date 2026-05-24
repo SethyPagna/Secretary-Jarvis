@@ -16,6 +16,8 @@ import { api } from "@/lib/api";
 import type {
   AuxiliaryModelsResponse,
   AuxiliaryTaskAssignment,
+  LocalModelInfo,
+  LocalModelsResponse,
   ModelsAnalyticsModelEntry,
   ModelsAnalyticsResponse,
 } from "@/lib/api";
@@ -65,6 +67,86 @@ function formatCost(n: number): string {
   if (n >= 0.01) return `$${n.toFixed(3)}`;
   if (n > 0) return `$${n.toFixed(4)}`;
   return "$0";
+}
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 MB";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value >= 10 || unit < 3 ? value.toFixed(0) : value.toFixed(1)} ${units[unit]}`;
+}
+
+function localModelLabel(kind: string): string {
+  if (kind === "llm") return "LLM";
+  if (kind === "stt") return "STT";
+  if (kind === "tts") return "TTS";
+  return "Asset";
+}
+
+function LocalModelCard({ model }: { model: LocalModelInfo }) {
+  return (
+    <Card className="min-w-0 overflow-hidden border-current/10 bg-background-base/40">
+      <CardContent className="min-w-0 p-4">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="text-[0.62rem] text-midground">{localModelLabel(model.kind)}</Badge>
+              {model.ready ? <Badge className="text-[0.62rem] text-emerald-300">Ready</Badge> : null}
+            </div>
+            <h3 className="mt-2 truncate text-sm font-semibold text-text-primary" title={model.name}>
+              {model.name}
+            </h3>
+          </div>
+          <Cpu className="h-4 w-4 shrink-0 text-text-tertiary" />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-text-secondary">
+          <span>{formatBytes(model.size_bytes)}</span>
+          <span className="text-right">{model.file_count} files</span>
+        </div>
+        <code className="mt-3 block truncate bg-background-base/35 px-2 py-1.5 font-mono text-[0.68rem] text-text-tertiary" title={model.path}>
+          {model.path}
+        </code>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LocalModelsPanel({ local }: { local: LocalModelsResponse | null }) {
+  const models = local?.models ?? [];
+  const preferred = models.filter((model) => ["llm", "stt", "tts"].includes(model.kind));
+  return (
+    <Card className="min-w-0 overflow-hidden">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between gap-3">
+          <span>Local Models</span>
+          <Badge tone="secondary" className="text-xs">{models.length} found</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="min-w-0 pt-0">
+        <p className="mb-4 text-sm text-text-secondary">
+          Downloaded assets from the configured model folder. JARVIS prefers llama.cpp for GGUF,
+          faster-whisper for speech recognition, and Kokoro/OmniVoice/System for voice output.
+        </p>
+        {preferred.length ? (
+          <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {preferred.map((model) => (
+              <LocalModelCard key={model.path} model={model} />
+            ))}
+          </div>
+        ) : (
+          <div className="border border-current/10 bg-background-base/25 p-4 text-sm text-text-secondary">
+            No local model assets were detected yet. Set <span className="font-mono">JARVIS_MODELS_DIR</span> or
+            place model folders beside the repository in <span className="font-mono">models</span>.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 /** Short model name: strip vendor prefix like "openrouter/" or "anthropic/". */
@@ -770,6 +852,7 @@ export default function ModelsPage() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<ModelsAnalyticsResponse | null>(null);
   const [aux, setAux] = useState<AuxiliaryModelsResponse | null>(null);
+  const [localModels, setLocalModels] = useState<LocalModelsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saveKey, setSaveKey] = useState(0);
@@ -799,10 +882,12 @@ export default function ModelsPage() {
     Promise.all([
       api.getModelsAnalytics(days),
       api.getAuxiliaryModels().catch(() => null),
+      api.getLocalModels().catch(() => null),
     ])
-      .then(([models, auxData]) => {
+      .then(([models, auxData, local]) => {
         setData(models);
         setAux(auxData);
+        setLocalModels(local);
       })
       .catch((err) => setError(String(err)))
       .finally(() => setLoading(false));
@@ -869,6 +954,8 @@ export default function ModelsPage() {
   return (
     <div className="flex min-w-0 max-w-full flex-col gap-6">
       <PluginSlot name="models:top" />
+
+      <LocalModelsPanel local={localModels} />
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         <ModelSettingsPanel
