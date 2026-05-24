@@ -75,10 +75,9 @@ function LocalRuntimePanel() {
             <StatusBadge ok={counts.stt > 0} label={counts.stt > 0 ? "Whisper ready" : "STT model missing"} />
             <StatusBadge ok={counts.tts > 0} label={counts.tts > 0 ? "Voice assets ready" : "TTS assets missing"} />
           </div>
-          <p className="mt-2 max-w-4xl text-sm leading-5 text-text-secondary">
-            JARVIS now runs without Docker. The desktop backend reads local assets from the configured
-            model folder, defaults to the repository sibling <span className="font-mono">models</span> directory,
-            and keeps llama.cpp first, vLLM second, Ollama last as editable model backends.
+          <p className="mt-2 max-w-3xl text-sm leading-5 text-text-secondary">
+            One local desktop runtime: model folder first, llama.cpp first, vLLM second, Ollama last.
+            Voice uses local Kokoro and Whisper assets when present.
           </p>
         </div>
 
@@ -100,9 +99,9 @@ function LocalRuntimePanel() {
       </div>
 
       {models?.roots?.length ? (
-        <div className="mt-3 min-w-0 border border-current/10 bg-background-base/25 px-3 py-2 text-xs text-text-tertiary">
+        <div className="mt-3 min-w-0 break-words border border-current/10 bg-background-base/25 px-3 py-2 text-xs text-text-tertiary">
           <span className="text-text-secondary">Model roots: </span>
-          {models.roots.join(" | ")}
+          <span className="font-mono">{models.roots.join(" | ")}</span>
         </div>
       ) : null}
 

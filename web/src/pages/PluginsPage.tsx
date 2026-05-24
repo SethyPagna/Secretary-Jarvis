@@ -1,9 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import { ExternalLink, RefreshCw, Trash2, Eye, EyeOff } from "lucide-react";
+import {
+  Bot,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Hash,
+  Mail,
+  MessageCircle,
+  RefreshCw,
+  Settings2,
+  Smartphone,
+  Trash2,
+  Webhook,
+} from "lucide-react";
 import type { Translations } from "@/i18n/types";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
-import type { HubAgentPluginRow, PluginsHubResponse } from "@/lib/api";
+import type { HubAgentPluginRow, PluginsHubResponse, StatusResponse } from "@/lib/api";
 import { Button } from "@nous-research/ui/ui/components/button";
 import { Badge } from "@nous-research/ui/ui/components/badge";
 import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
@@ -25,16 +38,17 @@ import { usePageHeader } from "@/contexts/usePageHeader";
 const MEMORY_PROVIDER_BUILTIN = "__jarvis_memory_builtin__";
 
 const PLATFORM_SHORTCUTS = [
-  { name: "Telegram", env: "JARVIS_TELEGRAM_TOKEN", status: "Token setup" },
-  { name: "Discord", env: "JARVIS_DISCORD_TOKEN", status: "Bot setup" },
-  { name: "WhatsApp", env: "JARVIS_WHATSAPP_PHONE", status: "QR / pairing" },
-  { name: "Slack", env: "JARVIS_SLACK_BOT_TOKEN", status: "App token" },
-  { name: "Email", env: "JARVIS_EMAIL_IMAP_HOST", status: "IMAP / SMTP" },
-  { name: "Webhook", env: "JARVIS_WEBHOOK_SECRET", status: "Inbound URL" },
+  { key: "telegram", name: "Telegram", env: "JARVIS_TELEGRAM_TOKEN", status: "Token", icon: MessageCircle },
+  { key: "discord", name: "Discord", env: "JARVIS_DISCORD_TOKEN", status: "Bot", icon: Bot },
+  { key: "whatsapp", name: "WhatsApp", env: "JARVIS_WHATSAPP_PHONE", status: "QR / pairing", icon: Smartphone },
+  { key: "slack", name: "Slack", env: "JARVIS_SLACK_BOT_TOKEN", status: "App token", icon: Hash },
+  { key: "email", name: "Email", env: "JARVIS_EMAIL_IMAP_HOST", status: "IMAP / SMTP", icon: Mail },
+  { key: "webhook", name: "Webhook", env: "JARVIS_WEBHOOK_SECRET", status: "Inbound URL", icon: Webhook },
 ];
 
 export default function PluginsPage() {
   const [hub, setHub] = useState<PluginsHubResponse | null>(null);
+  const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [installId, setInstallId] = useState("");
   const [installForce, setInstallForce] = useState(false);
@@ -66,6 +80,26 @@ export default function PluginsPage() {
     setLoading(true);
     void loadHub().finally(() => setLoading(false));
   }, [loadHub]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const refreshStatus = () => {
+      void api
+        .getStatus()
+        .then((next) => {
+          if (!cancelled) setStatus(next);
+        })
+        .catch(() => {
+          if (!cancelled) setStatus(null);
+        });
+    };
+    refreshStatus();
+    const timer = window.setInterval(refreshStatus, 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     setAfterTitle(
@@ -166,29 +200,44 @@ export default function PluginsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Messaging Platforms</CardTitle>
-            <p className="text-xs tracking-[0.08em] text-text-tertiary">
-              Configure credentials in Permissions / Environment, then the gateway routes each platform through the same JARVIS memory, voice, and tool permissions.
+            <p className="text-sm leading-5 text-text-secondary">
+              Connect social channels once; JARVIS uses the same memory, tools, and voice policy everywhere.
             </p>
           </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {PLATFORM_SHORTCUTS.map((platform) => (
+          <CardContent className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {PLATFORM_SHORTCUTS.map((platform) => {
+              const Icon = platform.icon;
+              const platformState = status?.gateway_platforms?.[platform.key]?.state;
+              const connected = platformState === "running" || platformState === "connected";
+              return (
               <div
                 key={platform.name}
-                className="flex min-w-0 items-center justify-between gap-3 border border-current/10 bg-background-base/30 px-3 py-2"
+                className="flex min-w-0 items-center justify-between gap-3 border border-current/10 bg-background-base/30 px-3 py-2.5"
               >
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-text-primary">
-                    {platform.name}
-                  </div>
-                  <div className="truncate text-xs text-text-tertiary">
-                    {platform.status}
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center border border-current/12 bg-background-base/30 text-midground">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-text-primary">
+                      {platform.name}
+                    </div>
+                    <div className="truncate text-xs text-text-tertiary">
+                      {connected ? "Connected" : platformState || platform.status}
+                    </div>
                   </div>
                 </div>
-                <Badge className="shrink-0 text-[0.62rem] text-midground">
-                  {platform.env.replace("JARVIS_", "")}
-                </Badge>
+                <Link
+                  to="/permissions"
+                  className="grid h-8 w-8 shrink-0 place-items-center border border-current/15 text-text-secondary transition hover:border-midground/50 hover:text-midground"
+                  title={`Configure ${platform.env}`}
+                  aria-label={`Configure ${platform.name}`}
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                </Link>
               </div>
-            ))}
+            );
+            })}
           </CardContent>
         </Card>
 

@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import { Clock, Pause, Play, Trash2, X, Zap } from "lucide-react";
+import {
+  Bot,
+  CalendarClock,
+  Clock,
+  GitBranch,
+  MessageCircle,
+  Pause,
+  Play,
+  Send,
+  Trash2,
+  X,
+  Zap,
+} from "lucide-react";
 import { Badge } from "@nous-research/ui/ui/components/badge";
 import { Button } from "@nous-research/ui/ui/components/button";
 import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
@@ -257,6 +269,7 @@ export default function CronPage() {
     <div className="flex flex-col gap-6">
       <PluginSlot name="cron:top" />
       <Toast toast={toast} />
+      <WorkflowCanvasOverview onCreate={() => setCreateModalOpen(true)} />
 
       <DeleteConfirmDialog
         open={jobDelete.isOpen}
@@ -520,5 +533,95 @@ export default function CronPage() {
 
       <PluginSlot name="cron:bottom" />
     </div>
+  );
+}
+
+function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
+  const nodes = [
+    {
+      icon: MessageCircle,
+      label: "Input",
+      title: "Voice, chat, WhatsApp, Telegram",
+      tone: "cyan",
+    },
+    {
+      icon: Bot,
+      label: "Reason",
+      title: "JARVIS routes to models, tools, and souls",
+      tone: "violet",
+    },
+    {
+      icon: GitBranch,
+      label: "Decide",
+      title: "Permissions, memories, skills, approvals",
+      tone: "emerald",
+    },
+    {
+      icon: Send,
+      label: "Respond",
+      title: "Text, voice, files, platform replies",
+      tone: "amber",
+    },
+  ] as const;
+
+  return (
+    <section className="overflow-hidden border border-white/10 bg-[#10151d]/88 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
+      <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.1em] text-white">
+            <Zap className="h-4 w-4 text-cyan-200" />
+            Workflow Canvas
+          </div>
+          <p className="mt-1 text-sm text-slate-300/72">
+            Build automations from live inputs, model reasoning, skills, and platform replies.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onCreate}
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-2 border border-cyan-200/20 bg-cyan-200/10 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-cyan-50 transition hover:border-cyan-200/40 hover:bg-cyan-200/16"
+        >
+          <CalendarClock className="h-4 w-4" />
+          Schedule
+        </button>
+      </div>
+
+      <div className="relative grid gap-3 p-4 md:grid-cols-4">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-8 right-8 top-1/2 hidden h-px bg-gradient-to-r from-cyan-300/10 via-cyan-200/35 to-amber-200/10 md:block"
+        />
+        {nodes.map((node, index) => {
+          const Icon = node.icon;
+          return (
+            <div
+              key={node.label}
+              className="relative z-10 min-h-[112px] border border-white/10 bg-black/24 p-3 backdrop-blur"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span
+                  className={cn(
+                    "grid h-9 w-9 place-items-center border",
+                    node.tone === "cyan" && "border-cyan-200/30 bg-cyan-200/10 text-cyan-100",
+                    node.tone === "violet" && "border-violet-200/30 bg-violet-200/10 text-violet-100",
+                    node.tone === "emerald" && "border-emerald-200/30 bg-emerald-200/10 text-emerald-100",
+                    node.tone === "amber" && "border-amber-200/30 bg-amber-200/10 text-amber-100",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="font-mono text-xs text-slate-400">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              </div>
+              <div className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                {node.label}
+              </div>
+              <div className="mt-1 text-sm font-medium text-white">{node.title}</div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }

@@ -23,6 +23,8 @@ for package_name in (
     "phonemizer",
     "segments",
     "spacy",
+    "tokenizers",
+    "transformers",
 ):
     data_files.extend(
         collect_data_files(package_name, include_py_files=(package_name == "kokoro"))
@@ -47,7 +49,12 @@ a = Analysis(
         "psutil",
         "soundfile",
         "sqlite3",
+        "safetensors",
         "torch",
+        "tokenizers",
+        "transformers",
+        "transformers.models.whisper",
+        "transformers.pipelines",
         "uvicorn",
         "uvicorn.logging",
         "uvicorn.protocols.http.auto",

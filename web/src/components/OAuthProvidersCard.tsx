@@ -49,6 +49,13 @@ function formatExpiresAt(
   }
 }
 
+function displayProviderName(provider: OAuthProvider): string {
+  if (provider.id === "nous" || /nous/i.test(provider.name)) {
+    return "JARVIS Managed";
+  }
+  return provider.name;
+}
+
 export function OAuthProvidersCard({ onError, onSuccess }: Props) {
   const [providers, setProviders] = useState<OAuthProvider[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +86,7 @@ export function OAuthProvidersCard({ onError, onSuccess }: Props) {
     setDisconnectTarget(null);
     try {
       await api.disconnectOAuthProvider(provider.id);
-      onSuccess?.(`${provider.name} ${t.oauth.disconnect.toLowerCase()}ed`);
+      onSuccess?.(`${displayProviderName(provider)} ${t.oauth.disconnect.toLowerCase()}ed`);
       refresh();
     } catch (e) {
       onError?.(`${t.oauth.disconnect} failed: ${e}`);
@@ -150,7 +157,7 @@ export function OAuthProvidersCard({ onError, onSuccess }: Props) {
                   )}
                   <div className="flex flex-col min-w-0 gap-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{p.name}</span>
+                      <span className="font-medium text-sm">{displayProviderName(p)}</span>
                       <Badge
                         tone="outline"
                         className="text-xs tracking-wide"
@@ -220,7 +227,7 @@ export function OAuthProvidersCard({ onError, onSuccess }: Props) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex"
-                      title={`Open ${p.name} docs`}
+                      title={`Open ${displayProviderName(p)} docs`}
                     >
                       <Button ghost size="icon">
                         <ExternalLink />

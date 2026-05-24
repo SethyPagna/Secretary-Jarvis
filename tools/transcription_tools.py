@@ -104,6 +104,8 @@ GROQ_MODELS = {"whisper-large-v3", "whisper-large-v3-turbo", "distil-whisper-lar
 _local_model: Optional[object] = None
 _local_model_name: Optional[str] = None
 _local_model_runtime: Optional[tuple[str, str]] = None
+_local_transformers_pipeline: Optional[object] = None
+_local_transformers_model_path: Optional[str] = None
 
 # ---------------------------------------------------------------------------
 # Config helpers
@@ -203,6 +205,171 @@ def _normalize_local_model(model_name: Optional[str]) -> str:
 
 def _normalize_local_command_model(model_name: Optional[str]) -> str:
     return _normalize_local_model(model_name)
+
+
+def _candidate_model_roots() -> list[Path]:
+    roots: list[Path] = []
+    for env_name in ("JARVIS_MODELS_DIR", "JARVIS_RESOURCE_ROOT"):
+        value = os.getenv(env_name, "").strip()
+        if value:
+            base = Path(value).expanduser()
+            roots.extend([base, base / "models"])
+    roots.extend(
+        [
+            Path.home() / ".jarvis" / "models",
+            Path.cwd() / "models",
+            Path.cwd().parent / "models",
+            Path(__file__).resolve().parents[1] / "models",
+            Path(__file__).resolve().parents[2] / "models",
+        ]
+    )
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for root in roots:
+        key = str(root.resolve()) if root.exists() else str(root)
+        if key not in seen:
+            seen.add(key)
+            unique.append(root)
+    return unique
+
+
+def _find_local_whisper_transformers_dir(model_name: str) -> Optional[Path]:
+    """Find a downloaded Hugging Face Whisper folder usable by transformers."""
+    normalized = (model_name or "").strip().lower().replace("_", "-")
+    aliases = {
+        normalized,
+        normalized.removeprefix("whisper-"),
+        f"whisper-{normalized.removeprefix('whisper-')}",
+    }
+    preferred_names = [
+        "openai__whisper-large-v3-turbo",
+        "whisper-large-v3-turbo",
+        "openai__whisper-large-v3",
+        "whisper-large-v3",
+        "openai__whisper-medium",
+        "whisper-medium",
+        "openai__whisper-small",
+        "whisper-small",
+        "openai__whisper-base",
+        "whisper-base",
+        "openai__whisper-tiny",
+        "whisper-tiny",
+    ]
+    if normalized:
+        preferred_names = [
+            name
+            for name in preferred_names
+            if normalized in name.lower().replace("_", "-")
+            or name.lower().replace("_", "-") in aliases
+        ] + preferred_names
+
+    for root in _candidate_model_roots():
+        if not root.exists():
+            continue
+        candidates = [root / name for name in preferred_names]
+        candidates.extend(path for path in root.iterdir() if path.is_dir() and "whisper" in path.name.lower())
+        for candidate in candidates:
+            if (
+                candidate.exists()
+                and (candidate / "config.json").exists()
+                and (
+                    (candidate / "model.safetensors").exists()
+                    or (candidate / "pytorch_model.bin").exists()
+                    or any(candidate.glob("*.safetensors"))
+                )
+            ):
+                return candidate
+    return None
+
+
+def _decode_audio_with_av(file_path: str):
+    """Decode any PyAV-supported browser audio to mono 16 kHz float32."""
+    import av
+    import numpy as np
+
+    chunks = []
+    with av.open(file_path) as container:
+        audio_stream = next((stream for stream in container.streams if stream.type == "audio"), None)
+        if audio_stream is None:
+            raise ValueError("No audio stream was found in the recording.")
+        resampler = av.audio.resampler.AudioResampler(format="s16", layout="mono", rate=16000)
+        for frame in container.decode(audio_stream):
+            converted_frames = resampler.resample(frame) or []
+            if not isinstance(converted_frames, (list, tuple)):
+                converted_frames = [converted_frames]
+            for converted in converted_frames:
+                array = converted.to_ndarray()
+                chunks.append(array.reshape(-1))
+        flushed = resampler.resample(None)
+        if flushed and not isinstance(flushed, (list, tuple)):
+            flushed = [flushed]
+        if flushed:
+            for converted in flushed:
+                array = converted.to_ndarray()
+                chunks.append(array.reshape(-1))
+
+    if not chunks:
+        raise ValueError("No audio samples were decoded from the recording.")
+    samples = np.concatenate(chunks).astype("float32") / 32768.0
+    return samples
+
+
+def _transcribe_local_transformers(file_path: str, model_dir: Path) -> Dict[str, Any]:
+    """Transcribe with a downloaded OpenAI Whisper transformers folder."""
+    global _local_transformers_pipeline, _local_transformers_model_path
+
+    try:
+        import torch
+        from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+
+        model_path = str(model_dir)
+        if _local_transformers_pipeline is None or _local_transformers_model_path != model_path:
+            device = "cuda:0" if torch.cuda.is_available() else "cpu"
+            dtype = torch.float16 if device.startswith("cuda") else torch.float32
+            processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
+            model = AutoModelForSpeechSeq2Seq.from_pretrained(
+                model_path,
+                local_files_only=True,
+                torch_dtype=dtype,
+                use_safetensors=True,
+            ).to(device)
+            _local_transformers_pipeline = pipeline(
+                "automatic-speech-recognition",
+                model=model,
+                tokenizer=processor.tokenizer,
+                feature_extractor=processor.feature_extractor,
+                device=0 if device.startswith("cuda") else -1,
+                torch_dtype=dtype,
+            )
+            _local_transformers_model_path = model_path
+
+        samples = _decode_audio_with_av(file_path)
+        local_cfg = _load_stt_config().get("local", {})
+        language = local_cfg.get("language") or os.getenv(LOCAL_STT_LANGUAGE_ENV) or None
+        generate_kwargs: dict[str, str] = {"task": "transcribe"}
+        if language:
+            generate_kwargs["language"] = str(language)
+        result = _local_transformers_pipeline(
+            {"array": samples, "sampling_rate": 16000},
+            generate_kwargs=generate_kwargs,
+            return_timestamps=False,
+        )
+        transcript = str(result.get("text") if isinstance(result, dict) else result).strip()
+        return {
+            "success": bool(transcript),
+            "transcript": transcript,
+            "provider": "local_transformers",
+            "model_path": model_path,
+        }
+    except Exception as exc:
+        logger.warning("Local transformers Whisper failed: %s", exc, exc_info=True)
+        return {
+            "success": False,
+            "transcript": "",
+            "error": f"Local downloaded Whisper failed: {exc}",
+            "provider": "local_transformers",
+            "model_path": str(model_dir),
+        }
 
 
 def _try_lazy_install_stt() -> bool:
@@ -918,6 +1085,17 @@ def transcribe_audio(file_path: str, model: Optional[str] = None) -> Dict[str, A
         model_name = _normalize_local_model(
             model or local_cfg.get("model", DEFAULT_LOCAL_MODEL)
         )
+        downloaded_model_dir = _find_local_whisper_transformers_dir(model_name)
+        if downloaded_model_dir is not None:
+            downloaded_result = _transcribe_local_transformers(file_path, downloaded_model_dir)
+            if downloaded_result.get("success"):
+                return downloaded_result
+            logger.warning(
+                "Downloaded Whisper assets at %s were found but could not transcribe; "
+                "falling back to faster-whisper model '%s'.",
+                downloaded_model_dir,
+                model_name,
+            )
         return _transcribe_local(file_path, model_name)
 
     if provider == "local_command":

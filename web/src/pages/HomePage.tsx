@@ -26,6 +26,7 @@ import {
   type RuntimeSmokeResponse,
   type RuntimeStatsResponse,
   type StatusResponse,
+  type TeamSoulInfo,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import ChatPage from "@/pages/ChatPage";
@@ -116,6 +117,8 @@ export default function HomePage() {
     null,
   );
   const [smoke, setSmoke] = useState<RuntimeSmokeResponse | null>(null);
+  const [teamSouls, setTeamSouls] = useState<TeamSoulInfo[]>([]);
+  const [autoVoiceArmed, setAutoVoiceArmed] = useState(true);
   const [smokeRunning, setSmokeRunning] = useState(false);
   const [terminalInput, setTerminalInput] = useState("");
   const [terminalLive, setTerminalLive] = useState(false);
@@ -142,12 +145,19 @@ export default function HomePage() {
     let cancelled = false;
 
     const refreshStaticRuntime = () => {
-      void Promise.allSettled([api.getStatus(), api.getRuntimeReadiness()]).then(
-        ([statusResult, readinessResult]) => {
+      void Promise.allSettled([
+        api.getStatus(),
+        api.getRuntimeReadiness(),
+        api.getTeamSouls(),
+      ]).then(
+        ([statusResult, readinessResult, soulsResult]) => {
           if (cancelled) return;
           if (statusResult.status === "fulfilled") setStatus(statusResult.value);
           if (readinessResult.status === "fulfilled") {
             setReadiness(readinessResult.value);
+          }
+          if (soulsResult.status === "fulfilled") {
+            setTeamSouls(soulsResult.value.souls);
           }
         },
       );
@@ -468,6 +478,31 @@ export default function HomePage() {
     }
   }, [handleRecordedVoice, stopVoiceStream]);
 
+  useEffect(() => {
+    if (!autoVoiceArmed || listening || voiceBusy) return;
+    if (!readiness?.production_ready) return;
+    if (!navigator.permissions?.query) return;
+
+    let cancelled = false;
+    navigator.permissions
+      .query({ name: "microphone" as PermissionName })
+      .then((permission) => {
+        if (cancelled || permission.state !== "granted") return;
+        void startVoiceRecording();
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    autoVoiceArmed,
+    listening,
+    readiness?.production_ready,
+    startVoiceRecording,
+    voiceBusy,
+  ]);
+
   const toggleMic = async () => {
     if (listening) {
       stopVoiceRecording();
@@ -502,6 +537,9 @@ export default function HomePage() {
 
   const statusLabel = compactStatus(status, readiness);
   const activeVoice = readiness?.tts?.engine ?? "voice";
+  const visibleSouls = teamSouls
+    .filter((soul) => soul.id !== "jarvis")
+    .slice(0, 7);
 
   return (
     <main
@@ -531,7 +569,7 @@ export default function HomePage() {
         />
       </div>
       <section className="grid min-h-0 min-w-0 w-full max-w-full flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_330px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="relative flex min-h-[300px] min-w-0 w-full max-w-full flex-col items-center justify-center overflow-visible px-4 py-3 sm:px-5">
+        <div className="relative flex min-h-[310px] min-w-0 w-full max-w-full flex-col items-center justify-center overflow-visible px-4 py-3 sm:px-5">
           <div
             className="pointer-events-none absolute inset-x-[8%] top-[8%] h-px opacity-60"
             style={{
@@ -539,7 +577,10 @@ export default function HomePage() {
                 "linear-gradient(90deg, transparent, rgba(0,212,255,0.44), rgba(184,108,255,0.4), transparent)",
             }}
           />
-          <JarvisOrb state={orbState} />
+          <div className="relative grid min-h-[245px] w-full max-w-[620px] place-items-center overflow-visible">
+            <TeamSoulOrbit souls={visibleSouls} activeSoul={stats?.active_soul ?? "jarvis"} />
+            <JarvisOrb state={orbState} className="z-10" />
+          </div>
 
           <div className="mt-2 flex flex-col items-center gap-2 text-center">
             <p className="text-xl font-semibold tracking-[0.01em] text-white drop-shadow-[0_0_18px_rgba(0,212,255,0.24)] sm:text-2xl">
@@ -549,6 +590,8 @@ export default function HomePage() {
               <span>{statusLabel}</span>
               <span className="text-cyan-100/25">|</span>
               <span>{activeVoice}</span>
+              <span className="text-cyan-100/25">|</span>
+              <span>{readiness?.stt?.ready ? "mic ready" : "mic checking"}</span>
               <span className="text-cyan-100/25">|</span>
               <span>{stats?.tokens_total_lifetime ?? 0} lifetime tokens</span>
             </div>
@@ -658,9 +701,12 @@ export default function HomePage() {
             <QuickAction
               label={listening ? "Stop listening" : "Voice input"}
               icon={Mic}
-              active={listening || voiceBusy}
+              active={autoVoiceArmed || listening || voiceBusy}
               busy={voiceBusy}
-              onClick={() => void toggleMic()}
+              onClick={() => {
+                setAutoVoiceArmed(true);
+                void toggleMic();
+              }}
             />
             <QuickAction
               label="Tools"
@@ -709,6 +755,54 @@ export default function HomePage() {
         </form>
       </section>
     </main>
+  );
+}
+
+function TeamSoulOrbit({
+  activeSoul,
+  souls,
+}: {
+  activeSoul: string;
+  souls: TeamSoulInfo[];
+}) {
+  if (souls.length === 0) return null;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20">
+      {souls.map((soul, index) => {
+        const angle = -118 + index * (236 / Math.max(1, souls.length - 1));
+        const radiusX = 41;
+        const radiusY = 36;
+        const x = 50 + Math.cos((angle * Math.PI) / 180) * radiusX;
+        const y = 52 + Math.sin((angle * Math.PI) / 180) * radiusY;
+        const isActive = soul.id === activeSoul;
+
+        return (
+          <div
+            key={soul.id}
+            className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
+            style={{ left: `${x}%`, top: `${y}%` }}
+            title={`${soul.name}: ${soul.when_to_use}`}
+          >
+            <span
+              className={cn(
+                "grid h-10 w-10 place-items-center rounded-full border bg-[#0b1820]/80 shadow-[0_0_28px_rgba(0,212,255,0.18)] backdrop-blur",
+                isActive
+                  ? "border-cyan-100/70 text-cyan-50"
+                  : soul.ready
+                    ? "border-cyan-200/22 text-cyan-100/78"
+                    : "border-amber-200/30 text-amber-100/75",
+              )}
+            >
+              <span className="h-4 w-4 rounded-full bg-cyan-200 shadow-[0_0_18px_rgba(125,249,255,0.72)]" />
+            </span>
+            <span className="max-w-[5rem] truncate rounded-sm bg-black/36 px-1.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-cyan-50/72 backdrop-blur">
+              {soul.name}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

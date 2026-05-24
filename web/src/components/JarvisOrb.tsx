@@ -12,6 +12,7 @@ type OrbState =
   | "offline";
 
 interface JarvisOrbProps {
+  className?: string;
   state: OrbState;
 }
 
@@ -306,12 +307,12 @@ function OrbMesh({ state }: JarvisOrbProps) {
   );
 }
 
-export function JarvisOrb({ state }: JarvisOrbProps) {
+export function JarvisOrb({ className, state }: JarvisOrbProps) {
   const palette = STATE_PALETTE[state];
 
   return (
     <div
-      className="relative aspect-square min-w-0 w-[clamp(170px,22vw,250px)] max-w-full overflow-visible"
+      className={`relative aspect-square min-w-0 w-[clamp(150px,18vw,215px)] max-w-full overflow-visible ${className ?? ""}`}
       style={{
         filter: `drop-shadow(0 0 42px ${palette.core}55) drop-shadow(0 0 90px ${palette.accent}26)`,
       }}

@@ -7,7 +7,7 @@
  * 4. Waits for plugins to call register() and resolves them
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { api, JARVIS_BASE_PATH } from "@/lib/api";
 import type { PluginManifest, RegisteredPlugin } from "./types";
 import {
@@ -22,6 +22,10 @@ export function usePlugins() {
   const [plugins, setPlugins] = useState<RegisteredPlugin[]>([]);
   const [loading, setLoading] = useState(true);
   const loadedScripts = useRef<Set<string>>(new Set());
+  const visibleManifests = useMemo(
+    () => manifests.filter((manifest) => !manifest.tab.hidden),
+    [manifests],
+  );
 
   // Fetch manifests on mount.
   useEffect(() => {
@@ -29,7 +33,9 @@ export function usePlugins() {
       .getPlugins()
       .then((list) => {
         setManifests(list);
-        if (list.length === 0) setLoading(false);
+        if (list.filter((manifest) => !manifest.tab.hidden).length === 0) {
+          setLoading(false);
+        }
       })
       .catch(() => setLoading(false));
   }, []);
@@ -37,10 +43,14 @@ export function usePlugins() {
   // Load plugin assets when manifests arrive.
   useEffect(() => {
     if (manifests.length === 0) return;
+    if (visibleManifests.length === 0) {
+      setLoading(false);
+      return;
+    }
 
     const injectedScripts: HTMLScriptElement[] = [];
 
-    for (const manifest of manifests) {
+    for (const manifest of visibleManifests) {
       // Inject CSS if specified.
       if (manifest.css) {
         const cssUrl = `${JARVIS_BASE_PATH}/dashboard-plugins/${manifest.name}/${manifest.css}`;
@@ -105,13 +115,13 @@ export function usePlugins() {
         }
       }
     };
-  }, [manifests]);
+  }, [manifests, visibleManifests]);
 
   // Listen for plugin registrations and resolve them against manifests.
   useEffect(() => {
     function resolvePlugins() {
       const resolved: RegisteredPlugin[] = [];
-      for (const manifest of manifests) {
+      for (const manifest of visibleManifests) {
         const component = getPluginComponent(manifest.name);
         if (component) {
           resolved.push({ manifest, component });
@@ -119,7 +129,7 @@ export function usePlugins() {
       }
       setPlugins(resolved);
       // If all plugins registered, stop loading early.
-      if (resolved.length === manifests.length && manifests.length > 0) {
+      if (resolved.length === visibleManifests.length && visibleManifests.length > 0) {
         setLoading(false);
       }
     }
@@ -127,7 +137,7 @@ export function usePlugins() {
     resolvePlugins();
     const unsub = onPluginRegistered(resolvePlugins);
     return unsub;
-  }, [manifests]);
+  }, [visibleManifests]);
 
   return { plugins, manifests, loading };
 }
