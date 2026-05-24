@@ -551,7 +551,7 @@ def _has_any_provider_configured() -> bool:
     except Exception:
         pass
 
-    # Check for Nous Portal OAuth credentials
+    # Check for JARVIS Managed OAuth credentials
     auth_file = get_jarvis_home() / "auth.json"
     if auth_file.exists():
         try:
@@ -2602,7 +2602,7 @@ def _aux_config_menu() -> None:
         print("  Side tasks (vision, compression, web extraction, etc.) default")
         print('  to your main chat model.  "auto" means "use my main model" —')
         print("  Jarvis only falls back to a lightweight backend (OpenRouter,")
-        print("  Nous Portal) if the main model is unavailable.  Override a")
+        print("  JARVIS Managed) if the main model is unavailable.  Override a")
         print("  task below if you want it pinned to a specific provider/model.")
         print()
 
@@ -2982,7 +2982,7 @@ def _model_flow_ai_gateway(config, current_model=""):
 
 
 def _model_flow_nous(config, current_model="", args=None):
-    """Nous Portal provider: ensure logged in, then pick model."""
+    """JARVIS Managed provider: ensure logged in, then pick model."""
     from jarvis_cli.auth import (
         get_provider_auth_state,
         _prompt_model_selection,
@@ -3004,7 +3004,7 @@ def _model_flow_nous(config, current_model="", args=None):
 
     state = get_provider_auth_state("nous")
     if not state or not state.get("access_token"):
-        print("Not logged into Nous Portal. Starting login...")
+        print("Not logged into JARVIS Managed. Starting login...")
         print()
         try:
             mock_args = argparse.Namespace(
@@ -3047,7 +3047,7 @@ def _model_flow_nous(config, current_model="", args=None):
 
     model_ids = get_curated_nous_model_ids()
     if not model_ids:
-        print("No curated models available for Nous Portal.")
+        print("No curated models available for JARVIS Managed.")
         return
 
     # Verify credentials are still valid (catches expired sessions early)
@@ -3058,7 +3058,7 @@ def _model_flow_nous(config, current_model="", args=None):
         msg = format_auth_error(exc) if isinstance(exc, AuthError) else str(exc)
         if relogin:
             print(f"Session expired: {msg}")
-            print("Re-authenticating with Nous Portal...\n")
+            print("Re-authenticating with JARVIS Managed...\n")
             try:
                 mock_args = argparse.Namespace(
                     portal_url=None,
@@ -3116,7 +3116,7 @@ def _model_flow_nous(config, current_model="", args=None):
         )
 
     if not model_ids and not unavailable_models:
-        print("No models available for Nous Portal after filtering.")
+        print("No models available for JARVIS Managed after filtering.")
         return
 
     if free_tier and not model_ids:
@@ -3163,7 +3163,7 @@ def _model_flow_nous(config, current_model="", args=None):
             save_env_value("OPENAI_BASE_URL", "")
             save_env_value("OPENAI_API_KEY", "")
         save_config(config)
-        print(f"Default model set to: {selected} (via Nous Portal)")
+        print(f"Default model set to: {selected} (via JARVIS Managed)")
         # Offer Tool Gateway enablement for paid subscribers
         prompt_enable_tool_gateway(config)
     else:
@@ -6715,7 +6715,7 @@ def _print_curator_first_run_notice() -> None:
     print("  Preview now:  jarvis curator run --dry-run")
     print("  Pause it:     jarvis curator pause")
     print(
-        "  Docs:         https://jarvis-agent.nousresearch.com/docs/user-guide/features/curator"
+        "  Docs:         https://github.com/SethyPagna/Secretary-Jarvis"
     )
 
 
@@ -6921,7 +6921,7 @@ def _update_via_zip(args):
 
     branch = "main"
     zip_url = (
-        f"https://github.com/NousResearch/jarvis-agent/archive/refs/heads/{branch}.zip"
+        f"https://github.com/SethyPagna/Secretary-Jarvis/archive/refs/heads/{branch}.zip"
     )
 
     print("→ Downloading latest version...")
@@ -7248,12 +7248,12 @@ def _restore_stashed_changes(
 # =========================================================================
 
 OFFICIAL_REPO_URLS = {
-    "https://github.com/NousResearch/jarvis-agent.git",
-    "git@github.com:NousResearch/jarvis-agent.git",
-    "https://github.com/NousResearch/jarvis-agent",
-    "git@github.com:NousResearch/jarvis-agent",
+    "https://github.com/SethyPagna/Secretary-Jarvis.git",
+    "git@github.com:SethyPagna/Secretary-Jarvis.git",
+    "https://github.com/SethyPagna/Secretary-Jarvis",
+    "git@github.com:SethyPagna/Secretary-Jarvis",
 }
-OFFICIAL_REPO_URL = "https://github.com/NousResearch/jarvis-agent.git"
+OFFICIAL_REPO_URL = "https://github.com/SethyPagna/Secretary-Jarvis.git"
 SKIP_UPSTREAM_PROMPT_FILE = ".skip_upstream_prompt"
 
 
@@ -7387,7 +7387,7 @@ def _sync_with_upstream_if_needed(git_cmd: list[str], cwd: Path) -> None:
         # Ask user if they want to add upstream
         print()
         print("ℹ Your fork is not tracking the official Jarvis repository.")
-        print("  This means you may miss updates from NousResearch/jarvis-agent.")
+        print("  This means you may miss updates from SethyPagna/Secretary-Jarvis.")
         print()
         try:
             response = (
@@ -7401,7 +7401,7 @@ def _sync_with_upstream_if_needed(git_cmd: list[str], cwd: Path) -> None:
             print("→ Adding upstream remote...")
             if _add_upstream_remote(git_cmd, cwd):
                 print(
-                    "  ✓ Added upstream: https://github.com/NousResearch/jarvis-agent.git"
+                    "  ✓ Added upstream: https://github.com/SethyPagna/Secretary-Jarvis.git"
                 )
                 has_upstream = True
             else:
@@ -7409,7 +7409,7 @@ def _sync_with_upstream_if_needed(git_cmd: list[str], cwd: Path) -> None:
                 return
         else:
             print(
-                "  Skipped. Run 'git remote add upstream https://github.com/NousResearch/jarvis-agent.git' to add later."
+                "  Skipped. Run 'git remote add upstream https://github.com/SethyPagna/Secretary-Jarvis.git' to add later."
             )
             _mark_skip_upstream_prompt()
             return
@@ -8645,7 +8645,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 return
             print("✗ Not a git repository. Please reinstall:")
             print(
-                "  curl -fsSL https://raw.githubusercontent.com/NousResearch/jarvis-agent/main/scripts/install.sh | bash"
+                "  curl -fsSL https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.sh | bash"
             )
             sys.exit(1)
 
@@ -11012,7 +11012,7 @@ def main():
             "Manage the fallback provider chain.  Fallback providers are tried "
             "in order when the primary model fails with rate-limit, overload, or "
             "connection errors.  See: "
-            "https://jarvis-agent.nousresearch.com/docs/user-guide/features/fallback-providers"
+            "https://github.com/SethyPagna/Secretary-Jarvis"
         ),
     )
     fallback_subparsers = fallback_parser.add_subparsers(dest="fallback_command")
@@ -11046,7 +11046,7 @@ def main():
             "Pull API keys from an external secret manager at process startup "
             "instead of storing them in ~/.jarvis/.env.  Currently supports "
             "Bitwarden Secrets Manager.  See: "
-            "https://jarvis-agent.nousresearch.com/docs/user-guide/secrets/bitwarden"
+            "https://github.com/SethyPagna/Secretary-Jarvis"
         ),
     )
     secrets_subparsers = secrets_parser.add_subparsers(dest="secrets_command")
@@ -11300,7 +11300,7 @@ def main():
         help="Local OpenAI-compatible proxy to OAuth providers",
         description=(
             "Run a local HTTP server that forwards OpenAI-compatible requests "
-            "to an OAuth-authenticated provider (e.g. Nous Portal). External "
+            "to an OAuth-authenticated provider (e.g. JARVIS Managed). External "
             "apps can point at the proxy with any bearer token; the proxy "
             "attaches your real credentials."
         ),

@@ -483,7 +483,7 @@ def load_cli_config() -> Dict[str, Any]:
                     # choice isn't shadowed by the hardcoded default.  Without this,
                     # profile configs that only set "model:" (not "default:") silently
                     # fall back to claude-opus because the merge preserves the
-                    # hardcoded default and HermesCLI.__init__ checks "default" first.
+                    # hardcoded default and the JARVIS shell checks "default" first.
                     if "model" in file_config["model"] and "default" not in file_config["model"]:
                         defaults["model"]["default"] = file_config["model"]["model"]
 
@@ -2565,7 +2565,7 @@ class ChatConsole:
         ``ChatConsole()``, which historically only implemented ``print()``.
         Returning a silent context manager keeps slash commands compatible
         without duplicating the higher-level busy indicator already shown by
-        ``HermesCLI._busy_command()``.
+        ``JarvisCLI._busy_command()``.
         """
         yield self
 
@@ -2610,8 +2610,8 @@ def _build_compact_banner() -> str:
     dim_color = _skin.get_color("banner_dim", "#B8860B") if _skin else "#B8860B"
 
     if skin_name == "default":
-        line1 = "⚕ NOUS JARVIS - AI Agent Framework"
-        tiny_line = "⚕ NOUS JARVIS"
+        line1 = "JARVIS - Desktop AI Agent"
+        tiny_line = "JARVIS"
     else:
         agent_name = _skin.get_branding("agent_name", "JARVIS") if _skin else "JARVIS"
         line1 = f"{agent_name} - AI Agent Framework"
@@ -2627,7 +2627,7 @@ def _build_compact_banner() -> str:
 
     w = min(shutil.get_terminal_size().columns - 2, 88)
     if w < 30:
-        return f"\n[{title_color}]{tiny_line}[/] [dim {dim_color}]- Nous Research[/]\n"
+        return f"\n[{title_color}]{tiny_line}[/] [dim {dim_color}]- Desktop Agent[/]\n"
 
     inner = w - 2  # inside the box border
     bar = "═" * w
@@ -2793,7 +2793,7 @@ def save_config_value(key_path: str, value: any) -> bool:
 
 
 # ============================================================================
-# HermesCLI Class
+# JARVIS Shell Class
 # ============================================================================
 
 class HermesCLI:
@@ -3107,7 +3107,7 @@ class HermesCLI:
             self.session_id = f"{timestamp_str}_{short_uuid}"
         
         # History file for persistent input recall across sessions
-        self._history_file = _hermes_home / ".hermes_history"
+        self._history_file = _hermes_home / ".jarvis_history"
         self._last_invalidate: float = 0.0  # throttle UI repaints
         self._app = None
 
@@ -4980,14 +4980,14 @@ class HermesCLI:
                     "[dim]   Fix: Set model.context_length in config.yaml, or increase your server's context setting[/]"
                 )
 
-        # Warn if the configured model is a Nous Jarvis LLM (not agentic)
-        from jarvis_cli.model_switch import is_nous_hermes_non_agentic
+        # Warn if the configured model is a legacy non-agentic LLM.
+        from jarvis_cli.model_switch import is_legacy_jarvis_non_agentic
 
         model_name = getattr(self, "model", "") or ""
-        if is_nous_hermes_non_agentic(model_name):
+        if is_legacy_jarvis_non_agentic(model_name):
             self._console_print()
             self._console_print(
-                "[bold yellow]⚠  Nous Research Jarvis 3 & 4 models are NOT agentic and are not "
+                "[bold yellow]⚠  This selected model is not agentic and is not "
                 "designed for use with JARVIS.[/]"
             )
             self._console_print(
@@ -6801,7 +6801,7 @@ class HermesCLI:
         except Exception as e:
             print(f"(x_x) Failed to create save directory {saved_dir}: {e}")
             return
-        path = saved_dir / f"hermes_conversation_{timestamp}.json"
+        path = saved_dir / f"jarvis_conversation_{timestamp}.json"
 
         try:
             with open(path, "w", encoding="utf-8") as f:
@@ -10601,9 +10601,9 @@ class HermesCLI:
 
             # Use MP3 output for CLI playback (afplay doesn't handle OGG well).
             # The TTS tool may auto-convert MP3->OGG, but the original MP3 remains.
-            os.makedirs(os.path.join(tempfile.gettempdir(), "hermes_voice"), exist_ok=True)
+            os.makedirs(os.path.join(tempfile.gettempdir(), "jarvis_voice"), exist_ok=True)
             mp3_path = os.path.join(
-                tempfile.gettempdir(), "hermes_voice",
+                tempfile.gettempdir(), "jarvis_voice",
                 f"tts_{time.strftime('%Y%m%d_%H%M%S')}.mp3",
             )
 

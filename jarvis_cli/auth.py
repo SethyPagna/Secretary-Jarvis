@@ -1,7 +1,7 @@
 """
 Multi-provider authentication system for JARVIS.
 
-Supports OAuth device code flows (Nous Portal, future: OpenAI Codex) and
+Supports OAuth device code flows (JARVIS Managed, future: OpenAI Codex) and
 traditional API key providers (OpenRouter, custom endpoints). Auth state
 is persisted in ~/.jarvis/auth.json with cross-process file locking.
 
@@ -69,7 +69,7 @@ except Exception:
 AUTH_STORE_VERSION = 1
 AUTH_LOCK_TIMEOUT_SECONDS = 15.0
 
-# Nous Portal defaults
+# JARVIS Managed defaults
 DEFAULT_NOUS_PORTAL_URL = "https://portal.nousresearch.com"
 DEFAULT_NOUS_INFERENCE_URL = "https://inference-api.nousresearch.com/v1"
 DEFAULT_NOUS_CLIENT_ID = "jarvis-cli"
@@ -126,12 +126,12 @@ QWEN_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 DEFAULT_SPOTIFY_ACCOUNTS_BASE_URL = "https://accounts.spotify.com"
 DEFAULT_SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1"
 DEFAULT_SPOTIFY_REDIRECT_URI = "http://127.0.0.1:43827/spotify/callback"
-SPOTIFY_DOCS_URL = "https://jarvis-agent.nousresearch.com/docs/user-guide/features/spotify"
+SPOTIFY_DOCS_URL = "https://github.com/SethyPagna/Secretary-Jarvis"
 SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard"
 SPOTIFY_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 
-XAI_OAUTH_DOCS_URL = "https://jarvis-agent.nousresearch.com/docs/guides/xai-grok-oauth"
-OAUTH_OVER_SSH_DOCS_URL = "https://jarvis-agent.nousresearch.com/docs/guides/oauth-over-ssh"
+XAI_OAUTH_DOCS_URL = "https://github.com/SethyPagna/Secretary-Jarvis"
+OAUTH_OVER_SSH_DOCS_URL = "https://github.com/SethyPagna/Secretary-Jarvis"
 DEFAULT_SPOTIFY_SCOPE = " ".join((
     "user-modify-playback-state",
     "user-read-playback-state",
@@ -183,7 +183,7 @@ class ProviderConfig:
 PROVIDER_REGISTRY: Dict[str, ProviderConfig] = {
     "nous": ProviderConfig(
         id="nous",
-        name="Nous Portal",
+        name="JARVIS Managed",
         auth_type="oauth_device_code",
         portal_base_url=DEFAULT_NOUS_PORTAL_URL,
         inference_base_url=DEFAULT_NOUS_INFERENCE_URL,
@@ -753,14 +753,14 @@ def format_auth_error(error: Exception) -> str:
 
     if error.code == "subscription_required":
         return (
-            "No active paid subscription found on Nous Portal. "
+            "No active paid subscription found for JARVIS Managed. "
             "Please purchase/activate a subscription, then retry."
         )
 
     if error.code == "insufficient_credits":
         return (
             "Subscription credits are exhausted. "
-            "Top up/renew credits in Nous Portal, then retry."
+            "Top up/renew credits in JARVIS Managed, then retry."
         )
 
     if error.code == "temporarily_unavailable":
@@ -1559,7 +1559,7 @@ def _optional_base_url(value: Any) -> Optional[str]:
     return cleaned if cleaned else None
 
 
-# Allowlist of hosts the Nous Portal proxy is willing to forward minted
+# Allowlist of hosts the JARVIS Managed proxy is willing to forward minted
 # bearer tokens to. The bearer is a long-lived agent_key minted by
 # portal.nousresearch.com — sending it anywhere else would leak it.
 #
@@ -4055,7 +4055,7 @@ def _poll_for_token(
 
 
 # =============================================================================
-# Nous Portal — token refresh, agent key minting, model discovery
+# JARVIS Managed — token refresh, agent key minting, model discovery
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -4534,12 +4534,12 @@ def _refresh_access_token(
     lowered = description.lower()
     if code == "refresh_token_reused" or "reuse" in lowered or "reuse detected" in lowered:
         description = (
-            "Nous Portal detected refresh-token reuse and revoked this session.\n"
+            "JARVIS Managed detected refresh-token reuse and revoked this session.\n"
             "This usually means an external process (monitoring script, "
             "custom self-heal hook, or another Jarvis install sharing "
             "~/.jarvis/auth.json) called POST /api/oauth/token with Jarvis's "
             "refresh token without persisting the rotated token back.\n"
-            "Nous refresh tokens are single-use — only Jarvis may call the "
+            "Managed refresh tokens are single-use — only Jarvis may call the "
             "refresh endpoint. For health checks, use `jarvis auth status` "
             "instead.\n"
             "Re-authenticate with: jarvis auth add nous"
@@ -4661,14 +4661,14 @@ def resolve_nous_access_token(
     ca_bundle: Optional[str] = None,
     refresh_skew_seconds: int = ACCESS_TOKEN_REFRESH_SKEW_SECONDS,
 ) -> str:
-    """Resolve a refresh-aware Nous Portal access token for managed tool gateways."""
+    """Resolve a refresh-aware managed access token for tool gateways."""
     with _auth_store_lock():
         auth_store = _load_auth_store()
         state = _load_provider_state(auth_store, "nous")
 
         if not state:
             raise AuthError(
-                "Jarvis is not logged into Nous Portal.",
+                "Jarvis is not logged into JARVIS Managed.",
                 provider="nous",
                 relogin_required=True,
             )
@@ -4688,7 +4688,7 @@ def resolve_nous_access_token(
             refresh_token = state.get("refresh_token")
             if not isinstance(access_token, str) or not access_token:
                 raise AuthError(
-                    "No access token found for Nous Portal login.",
+                    "No access token found for JARVIS Managed login.",
                     provider="nous",
                     relogin_required=True,
                 )
@@ -5009,7 +5009,7 @@ def resolve_nous_runtime_credentials(
         state = _load_provider_state(auth_store, "nous")
 
         if not state:
-            raise AuthError("Jarvis is not logged into Nous Portal.",
+            raise AuthError("Jarvis is not logged into JARVIS Managed.",
                             provider="nous", relogin_required=True)
 
         persisted_state = dict(state)
@@ -5083,7 +5083,7 @@ def resolve_nous_runtime_credentials(
             refresh_token = state.get("refresh_token")
 
             if not isinstance(access_token, str) or not access_token:
-                raise AuthError("No access token found for Nous Portal login.",
+                raise AuthError("No access token found for JARVIS Managed login.",
                                 provider="nous", relogin_required=True)
 
             # Step 1: refresh access token if expiring. If the access token
@@ -6427,7 +6427,7 @@ def _xai_oauth_exchange_code_for_tokens(
         raise AuthError(
             "xAI token exchange refused locally: PKCE code_verifier is empty. "
             "This is a bug in Jarvis — please report at "
-            "https://github.com/NousResearch/jarvis-agent/issues/26990.",
+            "https://github.com/SethyPagna/Secretary-Jarvis/issues.",
             provider="xai-oauth",
             code="xai_pkce_verifier_missing",
         )
@@ -7378,7 +7378,7 @@ def _nous_device_code_login(
                 "portal_base_url", DEFAULT_NOUS_PORTAL_URL
             ).rstrip("/")
             print()
-            print("Your Nous Portal account does not have an active subscription.")
+            print("Your JARVIS Managed account does not have an active subscription.")
             print(f"  Subscribe here: {portal_url}/billing")
             print()
             print("After subscribing, run `jarvis model` again to finish setup.")
@@ -7387,7 +7387,7 @@ def _nous_device_code_login(
 
 
 def _login_nous(args, pconfig: ProviderConfig) -> None:
-    """Nous Portal device authorization flow."""
+    """JARVIS Managed device authorization flow."""
     timeout_seconds = getattr(args, "timeout", None) or 15.0
     insecure = bool(getattr(args, "insecure", False))
     ca_bundle = (
@@ -7525,7 +7525,7 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
                 print("No free models currently available.")
                 print(f"Upgrade at {_url} to access paid models.")
             else:
-                print("No curated models available for Nous Portal.")
+                print("No curated models available for JARVIS Managed.")
         except Exception as exc:
             message = format_auth_error(exc) if isinstance(exc, AuthError) else str(exc)
             print()
@@ -7550,7 +7550,7 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
                 _save_auth_store(auth_store)
             print()
             print("No provider change. Nous credentials saved for future use.")
-            print("  Run `jarvis model` again to switch to Nous Portal.")
+            print("  Run `jarvis model` again to switch to JARVIS Managed.")
             return
 
         config_path = _update_config_for_provider(

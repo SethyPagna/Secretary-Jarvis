@@ -201,9 +201,9 @@ TOOL_CATEGORIES = {
         "icon": "🔊",
         "providers": [
             {
-                "name": "Nous Subscription",
+                "name": "JARVIS Managed",
                 "badge": "subscription",
-                "tag": "Managed OpenAI TTS billed to your subscription",
+                "tag": "Managed OpenAI TTS through your subscription",
                 "env_vars": [],
                 "tts_provider": "openai",
                 "requires_nous_auth": True,
@@ -281,16 +281,16 @@ TOOL_CATEGORIES = {
         # plugins.web.<vendor>.provider via _plugin_web_search_providers()
         # in _visible_providers(). Only non-provider UX setup-flow rows
         # for the firecrawl backend are listed here:
-        #   - "Nous Subscription" — managed Firecrawl billed via Nous
+        #   - "JARVIS Managed" — managed Firecrawl through the managed
         #     subscription (requires_nous_auth + override_env_vars).
         #   - "Firecrawl Self-Hosted" — points firecrawl at a private
         #     Docker instance via FIRECRAWL_API_URL only.
         # See PR #25182 for the migration rationale.
         "providers": [
             {
-                "name": "Nous Subscription",
+                "name": "JARVIS Managed",
                 "badge": "subscription",
-                "tag": "Managed Firecrawl billed to your subscription",
+                "tag": "Managed Firecrawl through your subscription",
                 "web_backend": "firecrawl",
                 "env_vars": [],
                 "requires_nous_auth": True,
@@ -316,16 +316,16 @@ TOOL_CATEGORIES = {
         # ``plugins.image_gen.<vendor>`` package via
         # ``_plugin_image_gen_providers()`` in ``_visible_providers``.
         # Only non-provider UX setup-flow rows remain here:
-        #   - "Nous Subscription" — managed FAL billed via the Nous
+        #   - "JARVIS Managed" — managed FAL through the managed
         #     subscription (requires_nous_auth + override_env_vars).
         #     Uses the fal plugin as the underlying backend but has a
         #     distinct setup UX.
         # Mirrors the shape browser/video_gen ship today.
         "providers": [
             {
-                "name": "Nous Subscription",
+                "name": "JARVIS Managed",
                 "badge": "subscription",
-                "tag": "Managed FAL image generation billed to your subscription",
+                "tag": "Managed FAL image generation through your subscription",
                 "env_vars": [],
                 "requires_nous_auth": True,
                 "managed_nous_feature": "image_gen",
@@ -383,8 +383,8 @@ TOOL_CATEGORIES = {
         # injected at runtime from plugins.browser.<vendor>.provider via
         # _plugin_browser_providers() in _visible_providers(). Only
         # non-provider UX setup-flow rows remain here:
-        #   - "Nous Subscription (Browser Use cloud)" — managed Browser Use
-        #     billed via Nous subscription (requires_nous_auth +
+        #   - "JARVIS Managed (Browser Use cloud)" — managed Browser Use
+        #     through the managed subscription (requires_nous_auth +
         #     override_env_vars). Uses the browser-use plugin as the
         #     underlying backend but has a distinct setup UX.
         #   - "Local Browser" — non-cloud option, no CloudBrowserProvider.
@@ -392,9 +392,9 @@ TOOL_CATEGORIES = {
         #     cloud-provider dispatch path via _is_camofox_mode().
         "providers": [
             {
-                "name": "Nous Subscription (Browser Use cloud)",
+                "name": "JARVIS Managed (Browser Use cloud)",
                 "badge": "subscription",
-                "tag": "Managed Browser Use billed to your subscription",
+                "tag": "Managed Browser Use through your subscription",
                 "env_vars": [],
                 "browser_provider": "browser-use",
                 "requires_nous_auth": True,
@@ -802,7 +802,7 @@ def _run_post_setup(post_setup_key: str):
                 "    Pull the latest image to get the bundled Chromium:"
             )
             _print_info(
-                "      docker pull ghcr.io/nousresearch/jarvis-agent:latest"
+                "      docker pull ghcr.io/sethypagna/secretary-jarvis:latest"
             )
             return
 
@@ -1647,7 +1647,7 @@ def _plugin_video_gen_providers() -> list[dict]:
 # PR #25182 — this helper is the sole source of truth for the category's
 # provider rows. The hardcoded entries that used to drive the category
 # were deleted in the same PR; only the two non-provider UX rows
-# ("Nous Subscription" managed-gateway entry, "Firecrawl Self-Hosted")
+# ("JARVIS Managed" managed-gateway entry, "Firecrawl Self-Hosted")
 # remain in TOOL_CATEGORIES because they describe alternative *setup
 # flows* for the firecrawl backend rather than distinct providers.
 def _plugin_web_search_providers() -> list[dict]:
@@ -1704,7 +1704,7 @@ def _plugin_web_search_providers() -> list[dict]:
 # for those three in the "Browser Automation" picker. The hardcoded
 # ``TOOL_CATEGORIES["browser"]`` entries that drove the category before
 # were deleted in the same PR; only non-provider UX setup-flow rows remain
-# ("Nous Subscription", "Local Browser", "Camofox") — see the comment block
+# ("JARVIS Managed", "Local Browser", "Camofox") — see the comment block
 # in ``TOOL_CATEGORIES["browser"]`` for why each one stays hardcoded.
 def _plugin_browser_providers() -> list[dict]:
     """Build picker-row dicts from plugin-registered cloud browser providers.
@@ -1765,7 +1765,7 @@ def _visible_providers(cat: dict, config: dict) -> list[dict]:
         visible.append(provider)
 
     # Inject plugin-registered image_gen backends (OpenAI today, more
-    # later) so the picker lists them alongside FAL / Nous Subscription.
+    # later) so the picker lists them alongside FAL / JARVIS Managed.
     if cat.get("name") == "Image Generation":
         visible.extend(_plugin_image_gen_providers())
 
@@ -1777,14 +1777,14 @@ def _visible_providers(cat: dict, config: dict) -> list[dict]:
     # Inject plugin-registered web search backends. After PR #25182, this
     # is the SOLE source of provider rows for the Web Search & Extract
     # category — the per-provider hardcoded entries were deleted. The two
-    # remaining hardcoded rows ("Nous Subscription", "Firecrawl
+    # remaining hardcoded rows ("JARVIS Managed", "Firecrawl
     # Self-Hosted") are non-provider UX setup-flow rows for firecrawl.
     if cat.get("name") == "Web Search & Extract":
         visible.extend(_plugin_web_search_providers())
 
     # Inject plugin-registered cloud browser backends. After PR #25214,
     # Browserbase / Browser Use / Firecrawl are the plugin-supplied rows;
-    # the hardcoded "Nous Subscription" / "Local Browser" / "Camofox" rows
+    # the hardcoded "JARVIS Managed" / "Local Browser" / "Camofox" rows
     # stay because they're non-provider UX setup flows (subscription auth,
     # local fallback, and the REST-API anti-detection backend respectively).
     if cat.get("name") == "Browser Automation":
@@ -2331,7 +2331,7 @@ def _configure_provider(provider: dict, config: dict):
     if provider.get("requires_nous_auth"):
         features = get_nous_subscription_features(config)
         if not features.nous_auth_present:
-            _print_warning("  Nous Subscription is only available after logging into Nous Portal.")
+            _print_warning("  JARVIS Managed tools are available after logging into JARVIS Managed.")
             return
 
     # Set TTS provider in config if applicable
@@ -2378,7 +2378,7 @@ def _configure_provider(provider: dict, config: dict):
             _run_post_setup(provider["post_setup"])
         _print_success(f"  {provider['name']} - no configuration needed!")
         if managed_feature:
-            _print_info("  Requests for this tool will be billed to your Nous subscription.")
+            _print_info("  Requests for this tool will use your JARVIS Managed subscription.")
         # Plugin-registered image_gen provider: write image_gen.provider
         # and route model selection to the plugin's own catalog.
         plugin_name = provider.get("image_gen_plugin_name")
@@ -2616,7 +2616,7 @@ def _reconfigure_provider(provider: dict, config: dict):
     if provider.get("requires_nous_auth"):
         features = get_nous_subscription_features(config)
         if not features.nous_auth_present:
-            _print_warning("  Nous Subscription is only available after logging into Nous Portal.")
+            _print_warning("  JARVIS Managed tools are available after logging into JARVIS Managed.")
             return
 
     if provider.get("tts_provider"):
@@ -2662,7 +2662,7 @@ def _reconfigure_provider(provider: dict, config: dict):
             _run_post_setup(provider["post_setup"])
         _print_success(f"  {provider['name']} - no configuration needed!")
         if managed_feature:
-            _print_info("  Requests for this tool will be billed to your Nous subscription.")
+            _print_info("  Requests for this tool will use your JARVIS Managed subscription.")
         plugin_name = provider.get("image_gen_plugin_name")
         if plugin_name:
             _select_plugin_image_gen_provider(plugin_name, config)
@@ -2788,7 +2788,7 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
     print(color("⚕ Jarvis Tool Configuration", Colors.CYAN, Colors.BOLD))
     print(color("  Enable or disable tools per platform.", Colors.DIM))
     print(color("  Tools that need API keys will be configured when enabled.", Colors.DIM))
-    print(color("  Guide: https://jarvis-agent.nousresearch.com/docs/user-guide/features/tools", Colors.DIM))
+    print(color("  Guide: https://github.com/SethyPagna/Secretary-Jarvis", Colors.DIM))
     print()
 
     # ── First-time install: linear flow, no platform menu ──
@@ -2821,7 +2821,7 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
             if managed_nous_tools_enabled():
                 for ts_key in sorted(auto_configured):
                     label = next((l for k, l, _ in CONFIGURABLE_TOOLSETS if k == ts_key), ts_key)
-                    print(color(f"  ✓ {label}: using your Nous subscription defaults", Colors.GREEN))
+                    print(color(f"  ✓ {label}: using your JARVIS Managed defaults", Colors.GREEN))
 
             # Walk through ALL selected tools that have provider options or
             # need API keys.  This ensures browser (Local vs Browserbase),

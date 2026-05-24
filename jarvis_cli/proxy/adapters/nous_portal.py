@@ -1,6 +1,6 @@
-"""Nous Portal upstream adapter.
+"""JARVIS Managed upstream adapter.
 
-Reads the user's Nous OAuth state from ``~/.jarvis/auth.json`` through the
+Reads the user's managed OAuth state from ``~/.jarvis/auth.json`` through the
 shared runtime resolver, refreshes the access token and resolves the
 ``agent_key`` compatibility credential when needed, then exposes the upstream
 base URL plus bearer for the proxy server to forward to.
@@ -35,8 +35,8 @@ from jarvis_cli.proxy.adapters.base import UpstreamAdapter, UpstreamCredential
 
 logger = logging.getLogger(__name__)
 
-# Endpoints inference-api.nousresearch.com actually serves. Anything else
-# the proxy will reject with 404 — keeps stray clients from leaking weird
+# Endpoints the managed inference service actually serves. Anything else
+# the proxy will reject with 404, which keeps stray clients from leaking weird
 # requests to the upstream.
 _ALLOWED_PATHS: FrozenSet[str] = frozenset(
     {
@@ -49,7 +49,7 @@ _ALLOWED_PATHS: FrozenSet[str] = frozenset(
 
 
 class NousPortalAdapter(UpstreamAdapter):
-    """Proxy upstream for the Nous Portal inference API."""
+    """Proxy upstream for the JARVIS Managed inference API."""
 
     def __init__(self) -> None:
         # Serialize proxy requests in this process; cross-process token refresh
@@ -62,7 +62,7 @@ class NousPortalAdapter(UpstreamAdapter):
 
     @property
     def display_name(self) -> str:
-        return "Nous Portal"
+        return "JARVIS Managed"
 
     @property
     def allowed_paths(self) -> FrozenSet[str]:
@@ -104,7 +104,7 @@ class NousPortalAdapter(UpstreamAdapter):
             state = self._read_state()
             if state is None:
                 raise RuntimeError(
-                    "Not logged into Nous Portal. Run `jarvis login nous` first."
+                    "Not logged into JARVIS Managed. Run `jarvis login nous` first."
                 )
 
             try:
@@ -124,17 +124,17 @@ class NousPortalAdapter(UpstreamAdapter):
                         quarantine_reason="proxy_refresh_failure",
                     )
                 raise RuntimeError(
-                    f"Failed to refresh Nous Portal credentials: {exc}"
+                    f"Failed to refresh JARVIS Managed credentials: {exc}"
                 ) from exc
             except Exception as exc:
                 raise RuntimeError(
-                    f"Failed to refresh Nous Portal credentials: {exc}"
+                    f"Failed to refresh JARVIS Managed credentials: {exc}"
                 ) from exc
 
             agent_key = refreshed.get("api_key")
             if not agent_key:
                 raise RuntimeError(
-                    "Nous Portal refresh did not return a usable agent_key. "
+                    "JARVIS Managed refresh did not return a usable agent_key. "
                     "Try `jarvis login nous` to re-authenticate."
                 )
 

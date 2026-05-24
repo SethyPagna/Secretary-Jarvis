@@ -1731,7 +1731,7 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
     },
     {
         "id": "nous",
-        "name": "Nous Portal",
+        "name": "JARVIS Managed",
         "flow": "device_code",
         "cli_command": "jarvis auth add nous",
         "docs_url": "https://portal.nousresearch.com",
@@ -1783,7 +1783,7 @@ def _resolve_provider_status(provider_id: str, status_fn) -> Dict[str, Any]:
             return {
                 "logged_in": bool(raw.get("logged_in")),
                 "source": "nous_portal",
-                "source_label": raw.get("portal_base_url") or "Nous Portal",
+                "source_label": raw.get("portal_base_url") or "JARVIS Managed",
                 "token_preview": _truncate_token(raw.get("access_token")),
                 "expires_at": raw.get("access_expires_at"),
                 "has_refresh_token": bool(raw.get("has_refresh_token")),

@@ -373,11 +373,16 @@ def _hermetic_environment(tmp_path, monkeypatch):
     monkeypatch.delenv("GMI_BASE_URL", raising=False)
 
 
-# Backward-compat alias — old tests reference this fixture name. Keep it
-# as a no-op wrapper so imports don't break.
+# JARVIS_HOME isolation is provided by _hermetic_environment above.
 @pytest.fixture(autouse=True)
-def _isolate_hermes_home(_hermetic_environment):
-    """Alias preserved for any test that yields this name explicitly."""
+def _isolate_jarvis_home(_hermetic_environment):
+    """Autouse JARVIS_HOME isolation fixture."""
+    return None
+
+
+@pytest.fixture
+def _isolate_hermes_home(_isolate_jarvis_home):
+    """Backward-compatible alias for tests that request the old name."""
     return None
 
 

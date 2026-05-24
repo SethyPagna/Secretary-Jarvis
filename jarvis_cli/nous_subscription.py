@@ -1,4 +1,4 @@
-"""Helpers for Nous subscription managed-tool capabilities."""
+"""Helpers for JARVIS Managed tool capabilities."""
 
 from __future__ import annotations
 
@@ -437,7 +437,7 @@ def get_nous_subscription_features(
             managed_by_nous=image_managed,
             direct_override=image_active and not image_managed,
             toolset_enabled=image_tool_enabled,
-            current_provider="FAL" if direct_fal else ("Nous Subscription" if image_managed else ""),
+            current_provider="FAL" if direct_fal else ("JARVIS Managed" if image_managed else ""),
             explicit_configured=direct_fal,
         ),
         "tts": NousFeatureState(
@@ -601,8 +601,8 @@ def get_gateway_eligible_tools(
     - has_direct: tools where the user has their own API keys
     - already_managed: tools already routed through the gateway
 
-    All lists are empty when the user is not a paid Nous subscriber or
-    is not using Nous as their provider.
+    All lists are empty when the user is not a paid JARVIS Managed subscriber
+    or is not using the managed provider.
     """
     if not managed_nous_tools_enabled():
         return [], [], []
@@ -717,7 +717,7 @@ def prompt_enable_tool_gateway(config: Dict[str, object]) -> set[str]:
     desc_parts: list[str] = [
         "",
         "  The Tool Gateway gives you access to web search, image generation,",
-        "  text-to-speech, and browser automation through your Nous subscription.",
+        "  text-to-speech, and browser automation through your JARVIS Managed subscription.",
         "  No need to sign up for separate API keys — just pick the tools you want.",
         "",
     ]
@@ -766,7 +766,7 @@ def prompt_enable_tool_gateway(config: Dict[str, object]) -> set[str]:
 
     try:
         idx = prompt_choice(
-            "Your Nous subscription includes the Tool Gateway.",
+            "Your JARVIS Managed subscription includes the Tool Gateway.",
             choices,
             default_idx,
             description=description,
@@ -793,7 +793,7 @@ def prompt_enable_tool_gateway(config: Dict[str, object]) -> set[str]:
         newly_switched = changed - set(already_managed)
         for key in sorted(newly_switched):
             label = _GATEWAY_TOOL_LABELS.get(key, key)
-            print(f"  ✓ {label}: enabled via Nous subscription")
+            print(f"  ✓ {label}: enabled via JARVIS Managed")
         if already_managed and not newly_switched:
             print("  (all tools already using Tool Gateway)")
     return changed

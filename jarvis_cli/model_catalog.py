@@ -2,7 +2,7 @@
 
 The Jarvis docs site hosts a JSON manifest of curated models for providers
 we want to update without shipping a release (currently OpenRouter and
-Nous Portal). This module fetches, validates, and caches that manifest,
+JARVIS Managed). This module fetches, validates, and caches that manifest,
 falling back to the in-repo hardcoded lists when the network is unavailable.
 
 Pipeline
@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 DEFAULT_CATALOG_URL = (
-    "https://jarvis-agent.nousresearch.com/docs/api/model-catalog.json"
+    "https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/jarvis-remake/docs/api/model-catalog.json"
 )
 DEFAULT_TTL_HOURS = 24
 DEFAULT_FETCH_TIMEOUT = 8.0
@@ -307,7 +307,7 @@ def get_curated_openrouter_models() -> list[tuple[str, str]] | None:
 
 
 def get_curated_nous_models() -> list[str] | None:
-    """Return Nous Portal's curated list of model ids from the manifest.
+    """Return JARVIS Managed's curated list of model ids from the manifest.
 
     Returns ``None`` when the manifest is unavailable.
     """

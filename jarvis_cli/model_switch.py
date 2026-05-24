@@ -50,14 +50,14 @@ logger = logging.getLogger(__name__)
 # Non-agentic model warning
 # ---------------------------------------------------------------------------
 
-_HERMES_MODEL_WARNING = (
-    "Nous Research Jarvis 3 & 4 models are NOT agentic and are not designed "
+_LEGACY_NON_AGENTIC_MODEL_WARNING = (
+    "This selected legacy Jarvis 3/4 chat model is NOT agentic and is not designed "
     "for use with JARVIS. They lack the tool-calling capabilities "
     "required for agent workflows. Consider using an agentic model instead "
     "(Claude, GPT, Gemini, DeepSeek, etc.)."
 )
 
-# Match only the real Nous Research Jarvis 3 / Jarvis 4 chat families.
+# Match only the legacy Jarvis 3 / Jarvis 4 chat families.
 # The previous substring check (`"jarvis" in name.lower()`) false-positived on
 # unrelated local Modelfiles like ``jarvis-brain:qwen3-14b-ctx16k`` that just
 # happen to carry "jarvis" in their tag but are fully tool-capable.
@@ -66,14 +66,14 @@ _HERMES_MODEL_WARNING = (
 #   NousResearch/Jarvis-3-Llama-3.1-70B, jarvis-4-405b, openrouter/hermes3:70b
 # Negative examples it must NOT match:
 #   jarvis-brain:qwen3-14b-ctx16k, qwen3:14b, claude-opus-4-6
-_NOUS_HERMES_NON_AGENTIC_RE = re.compile(
+_LEGACY_JARVIS_NON_AGENTIC_RE = re.compile(
     r"(?:^|[/:])jarvis[-_ ]?[34](?:[-_.:]|$)",
     re.IGNORECASE,
 )
 
 
-def is_nous_hermes_non_agentic(model_name: str) -> bool:
-    """Return True if *model_name* is a real Nous Jarvis 3/4 chat model.
+def is_legacy_jarvis_non_agentic(model_name: str) -> bool:
+    """Return True if *model_name* is a legacy Jarvis 3/4 chat model.
 
     Used to decide whether to surface the non-agentic warning at startup.
     Callers in :mod:`cli.py` and here should go through this single helper
@@ -81,14 +81,24 @@ def is_nous_hermes_non_agentic(model_name: str) -> bool:
     """
     if not model_name:
         return False
-    return bool(_NOUS_HERMES_NON_AGENTIC_RE.search(model_name))
+    return bool(_LEGACY_JARVIS_NON_AGENTIC_RE.search(model_name))
+
+
+def is_nous_hermes_non_agentic(model_name: str) -> bool:
+    """Backward-compatible alias for old imports."""
+    return is_legacy_jarvis_non_agentic(model_name)
+
+
+def _check_jarvis_model_warning(model_name: str) -> str:
+    """Return a warning string if *model_name* is a legacy Jarvis 3/4 chat model."""
+    if is_legacy_jarvis_non_agentic(model_name):
+        return _LEGACY_NON_AGENTIC_MODEL_WARNING
+    return ""
 
 
 def _check_hermes_model_warning(model_name: str) -> str:
-    """Return a warning string if *model_name* is a Nous Jarvis 3/4 chat model."""
-    if is_nous_hermes_non_agentic(model_name):
-        return _HERMES_MODEL_WARNING
-    return ""
+    """Backward-compatible alias for old imports."""
+    return _check_jarvis_model_warning(model_name)
 
 
 # ---------------------------------------------------------------------------
@@ -1162,7 +1172,7 @@ def list_authenticated_providers(
     curated: dict[str, list[str]] = dict(_PROVIDER_MODELS)
     curated["openrouter"] = [mid for mid, _ in OPENROUTER_MODELS]
     # "nous" pulls from the remote model-catalog manifest published at
-    # https://jarvis-agent.nousresearch.com/docs/api/model-catalog.json so
+    # the JARVIS model catalog so
     # newly added Portal models surface in the /model picker without
     # requiring a Jarvis release. Falls back to the in-repo
     # _PROVIDER_MODELS["nous"] snapshot when the manifest is unreachable.

@@ -198,7 +198,7 @@ def show_status(args):
     nous_error = nous_status.get("error")
     nous_label = "logged in" if nous_logged_in else "not logged in (run: jarvis auth add nous --type oauth)"
     print(
-        f"  {'Nous Portal':<12}  {check_mark(nous_logged_in)} "
+        f"  {'JARVIS Managed':<12}  {check_mark(nous_logged_in)} "
         f"{nous_label}"
     )
     portal_url = nous_status.get("portal_base_url") or "(unknown)"
@@ -260,7 +260,7 @@ def show_status(args):
         print(f"    Error:      {minimax_status.get('error')}")
 
     # xAI OAuth — separate try/except so an import failure here cannot
-    # disrupt the already-printed Nous/Codex/Qwen/MiniMax rows above.
+    # disrupt the already-printed managed/Codex/Qwen/MiniMax rows above.
     try:
         from jarvis_cli.auth import get_xai_oauth_auth_status
         xai_oauth_status = get_xai_oauth_auth_status() or {}
@@ -281,19 +281,19 @@ def show_status(args):
         print(f"    Error:      {xai_oauth_status.get('error')}")
 
     # =========================================================================
-    # Nous Subscription Features
+    # JARVIS Managed Features
     # =========================================================================
     if managed_nous_tools_enabled():
         features = get_nous_subscription_features(config)
         print()
-        print(color("◆ Nous Tool Gateway", Colors.CYAN, Colors.BOLD))
+        print(color("◆ JARVIS Tool Gateway", Colors.CYAN, Colors.BOLD))
         if not features.nous_auth_present:
-            print("  Nous Portal   ✗ not logged in")
+            print("  JARVIS Managed   ✗ not logged in")
         else:
-            print("  Nous Portal   ✓ managed tools available")
+            print("  JARVIS Managed   ✓ managed tools available")
         for feature in features.items():
             if feature.managed_by_nous:
-                state = "active via Nous subscription"
+                state = "active via JARVIS Managed subscription"
             elif feature.active:
                 current = feature.current_provider or "configured provider"
                 state = f"active via {current}"
@@ -305,10 +305,10 @@ def show_status(args):
                 state = "not configured"
             print(f"  {feature.label:<15} {check_mark(feature.available or feature.active or feature.managed_by_nous)} {state}")
     elif nous_logged_in:
-        # Logged into Nous but on the free tier — show upgrade nudge
+        # Logged into the managed provider but on the free tier — show upgrade nudge
         print()
-        print(color("◆ Nous Tool Gateway", Colors.CYAN, Colors.BOLD))
-        print("  Your free-tier Nous account does not include Tool Gateway access.")
+        print(color("◆ JARVIS Tool Gateway", Colors.CYAN, Colors.BOLD))
+        print("  Your free-tier JARVIS Managed account does not include Tool Gateway access.")
         print("  Upgrade your subscription to unlock managed web, image, TTS, and browser tools.")
         try:
             portal_url = nous_status.get("portal_base_url", "").rstrip("/")
