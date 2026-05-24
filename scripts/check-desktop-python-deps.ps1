@@ -26,8 +26,10 @@ try {
 
     & $Python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('PyInstaller') else 1)"
     $pyInstallerExit = $LASTEXITCODE
+    & $Python -c "import importlib.util, sys; mods=['kokoro','soundfile','faster_whisper']; missing=[m for m in mods if importlib.util.find_spec(m) is None]; print(','.join(missing)); sys.exit(0 if not missing else 1)"
+    $voiceMissing = $LASTEXITCODE
 
-    if ($preflightExit -eq 0 -and $pyInstallerExit -eq 0) {
+    if ($preflightExit -eq 0 -and $pyInstallerExit -eq 0 -and $voiceMissing -eq 0) {
         Write-Host "JARVIS desktop Python dependencies are ready."
         return
     }
@@ -43,10 +45,16 @@ try {
         Write-Host ""
         Write-Host "Missing build dependency: PyInstaller"
     }
+    if ($voiceMissing -ne 0) {
+        Write-Host ""
+        Write-Host "Missing voice/STT dependency: Kokoro, soundfile, or faster-whisper"
+    }
 
     Write-Host ""
     Write-Host "Online recovery:"
-    Write-Host "  $Python -m pip install --no-build-isolation -e . pyinstaller"
+    Write-Host "  $Python -m pip install --no-build-isolation -e `".[voice,pty]`" pyinstaller"
+    Write-Host "  If pypi.org is slow from this network, use:"
+    Write-Host "  $Python -m pip install --no-build-isolation -e `".[voice,pty]`" pyinstaller -i https://pypi.tuna.tsinghua.edu.cn/simple"
 
     if (Test-Path $wheelhousePath) {
         Write-Host ""

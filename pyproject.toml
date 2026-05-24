@@ -67,6 +67,10 @@ dependencies = [
   # install is allowed in the packaged app startup path.
   "fastapi==0.133.1",
   "uvicorn[standard]==0.41.0",
+  # Desktop voice runtime. Kokoro currently publishes wheels for Python
+  # 3.11/3.12, so the desktop packager intentionally builds with Python 3.11.
+  "kokoro==0.9.4; python_version < '3.13'",
+  "soundfile==0.13.1; python_version < '3.13'",
 ]
 
 [project.optional-dependencies]

@@ -55,7 +55,7 @@ Implemented checkpoints:
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
 | Permissions/platforms/workflows/settings | Not started | Planned phases 6-8 |
-| Packaging/installers | Done for local Windows build | `release/JARVIS Setup 1.0.0.exe` and `release/win-unpacked/JARVIS.exe` are produced by `scripts/build-desktop.ps1`; local build is unsigned |
+| Packaging/installers | Done for local Windows build | `scripts/build-desktop.ps1` now produces one visible portable artifact: `release/JARVIS 1.0.0.exe`; setup/unpacked outputs are removed after packaging |
 
 ## Production Readiness Gates
 
@@ -449,17 +449,19 @@ Latest local smoke result from this workspace:
 
 - LLM: ready with llama.cpp on `127.0.0.1:8081` using `qwen3.5-9b-q4_k_m`; smoke returned `ready` in 259.49 ms.
 - LLM retest after local voice changes: ready with llama.cpp on `127.0.0.1:8081`; smoke returned `ready` in 236.10 ms at 8.47 tokens/sec for the tiny two-token completion.
-- TTS local fallback retest: ready with system TTS; produced a real 115328 byte WAV in 911.83 ms.
-- STT retest: ready with local faster-whisper `tiny.en` on CPU/int8; transcribed `Jarvis runtime smoke ready.` in 2750.01 ms from the generated WAV.
-- Production readiness is true for the currently verified LLM plus system TTS plus local STT smoke path. Kokoro and OmniVoice assets are discovered, but their Python runtimes are not installed yet in this workspace.
+- Packaged exe LLM retest: ready with llama.cpp on `127.0.0.1:8081` using `qwen3.5-9b-q4_k_m`; direct OpenAI-compatible probe returned `ready` in 330 ms.
+- Packaged exe TTS retest: ready with local Kokoro; `/api/voice/synthesize` produced a 195644 byte WAV with provider `kokoro`, engine `kokoro-local`, and no fallback.
+- Packaged exe STT retest: ready with local faster-whisper; `/api/voice/transcribe` transcribed the generated Kokoro WAV in 3299 ms.
+- Packaged exe UI/shutdown retest: Electron remote-debug DOM had non-empty app text plus orb canvas, and close left no `JARVIS`, `jarvis-backend`, or `llama-server` processes running.
+- Production readiness is true for the verified packaged LLM, Kokoro TTS, and local faster-whisper STT path.
 
 Latest autoconfig result from this workspace:
 
 - Preferred LLM order: llama.cpp with local Q4_K_M GGUF first, vLLM safetensors serving second, Ollama registered models last.
 - Current live LLM smoke: llama.cpp is active on `8081`; autoconfig skipped occupied `8080` and reused the running OpenAI-compatible endpoint.
 - Preferred TTS order: Kokoro local assets first, then OmniVoice local voice simulation, then system TTS. Edge was only a temporary smoke path and is no longer the product fallback.
-- Current autoconfig TTS provider: system TTS, because Kokoro assets are present but `kokoro-onnx` is not installed. Target provider remains Kokoro once the runtime is installed; OmniVoice uses the downloaded `models/k2-fsa__OmniVoice` assets and local reference voices.
+- Current autoconfig TTS provider: Kokoro when the Python 3.11/3.12 desktop runtime is used and the downloaded `models/hexgrad__Kokoro-82M` assets are present. OmniVoice uses the downloaded `models/k2-fsa__OmniVoice` assets and local reference voices.
 - Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.
 - STT dependency status: `faster-whisper==1.2.1` is installed. Non-interactive pip flags were required: `PIP_NO_INPUT=1` and `PIP_DISABLE_PIP_VERSION_CHECK=1`.
 - STT model cache status: `Systran/faster-whisper-tiny.en` is downloaded. The Hugging Face Xet path stalled on larger model blobs, so first-run downloads should set `HF_HUB_DISABLE_XET=1`.
-- Packaging status: Electron/web/native-runtime configuration checks pass, FastAPI/Uvicorn are core packaged deps, and `scripts/build-desktop.ps1` completed locally after installing exact pins from the reachable Tsinghua PyPI mirror. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced `release/JARVIS Setup 1.0.0.exe` plus `release/win-unpacked/JARVIS.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.
+- Packaging status: Electron/web/native-runtime configuration checks pass, FastAPI/Uvicorn/Kokoro/soundfile are packaged deps, and `scripts/build-desktop.ps1` completed locally with Python 3.11. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced one visible portable executable at `release/JARVIS 1.0.0.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.

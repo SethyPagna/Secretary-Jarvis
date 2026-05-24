@@ -83,6 +83,35 @@ class DesktopVoiceTests(unittest.TestCase):
         self.assertIn("disabled", result["error"].lower())
         self.assertFalse(called)
 
+    def test_synthesize_desktop_speech_uses_kokoro_before_system_fallback(self) -> None:
+        def fake_kokoro(text: str, output_path: Path):
+            self.assertEqual(text, "Local voice")
+            output_path.write_bytes(b"wav-audio")
+            return {
+                "success": True,
+                "file_path": str(output_path),
+                "provider": "kokoro",
+                "engine": "kokoro-local",
+            }
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch(
+            "jarvis_cli.desktop_voice._synthesize_kokoro_voice",
+            fake_kokoro,
+        ), patch(
+            "jarvis_cli.desktop_voice._synthesize_windows_system_voice",
+            side_effect=AssertionError("system fallback should not run when Kokoro succeeds"),
+        ):
+            result = synthesize_desktop_speech(
+                "Local voice",
+                Path(temp_dir),
+                provider="kokoro",
+            )
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["provider"], "kokoro")
+        self.assertEqual(result["engine"], "kokoro-local")
+        self.assertEqual(result["audio_bytes"], len(b"wav-audio"))
+
     def test_synthesize_desktop_speech_rejects_removed_docker_voice_runtime(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             result = synthesize_desktop_speech(

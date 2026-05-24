@@ -36,7 +36,8 @@ class JarvisRunFilesContractTests(unittest.TestCase):
         self.assertNotIn("JARVIS_DOCKER_AUTOSTART", source)
         self.assertNotIn("DockerProfile", source)
         self.assertIn("JARVIS_MINIMIZE_TO_TRAY", source)
-        self.assertIn("release/win-unpacked/JARVIS.exe", source)
+        self.assertIn("release/JARVIS 1.0.0.exe", source)
+        self.assertNotIn("release/win-unpacked", source)
         self.assertIn("npm.Source run desktop:dev", source)
 
     def test_stop_script_stops_owned_desktop_processes_without_docker(self) -> None:

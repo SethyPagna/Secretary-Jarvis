@@ -1,5 +1,6 @@
 param(
     [string]$PyInstallerSpec = "packaging/jarvis-backend.spec",
+    [string]$Python = "",
     [switch]$SkipInstaller,
     [switch]$SkipSmoke,
     [int]$SmokePort = 18765
@@ -30,10 +31,26 @@ try {
         $npm = Get-Command npm -ErrorAction Stop
     }
 
-    $python = Get-Command python -ErrorAction Stop
+    if (-not $Python) {
+        $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+        if ($pyLauncher) {
+            $candidate = & $pyLauncher.Source -3.11 -c "import sys; print(sys.executable)" 2>$null
+            if ($LASTEXITCODE -eq 0 -and $candidate) {
+                $Python = $candidate.Trim()
+            }
+        }
+    }
+    if (-not $Python) {
+        $pythonCommand = Get-Command python -ErrorAction Stop
+        $Python = $pythonCommand.Source
+    }
+    $pythonVersion = & $Python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
+    if ([version]$pythonVersion -ge [version]"3.13") {
+        throw "JARVIS desktop packaging requires Python 3.11 or 3.12 so Kokoro local TTS can be bundled. Found Python $pythonVersion at $Python."
+    }
 
     $dependencyCheck = Join-Path $PSScriptRoot "check-desktop-python-deps.ps1"
-    & $dependencyCheck -Python $python.Source
+    & $dependencyCheck -Python $Python
 
     if (-not (Test-Path "web/node_modules")) {
         Invoke-Checked $npm.Source --prefix web install
@@ -58,7 +75,7 @@ try {
         throw "Vite build output not found. Expected web/dist or jarvis_cli/web_dist."
     }
 
-    Invoke-Checked $python.Source -m PyInstaller $PyInstallerSpec --noconfirm --clean
+    Invoke-Checked $Python -m PyInstaller $PyInstallerSpec --noconfirm --clean
 
     $backendExe = Join-Path $RepoRoot "dist/jarvis-backend/jarvis-backend.exe"
     $backendBin = Join-Path $RepoRoot "dist/jarvis-backend/jarvis-backend"
@@ -82,6 +99,16 @@ try {
 
     if (-not $SkipInstaller) {
         Invoke-Checked $npm.Source run desktop:pack
+        Get-ChildItem -Path (Join-Path $RepoRoot "release") -Force -ErrorAction SilentlyContinue |
+            Where-Object {
+                ($_.PSIsContainer -and $_.Name -eq "win-unpacked") -or
+                ((-not $_.PSIsContainer) -and (
+                    $_.Name -like "JARVIS Setup*.exe" -or
+                    $_.Name -like "JARVIS Setup*.blockmap" -or
+                    $_.Name -in @("latest.yml", "builder-debug.yml")
+                ))
+            } |
+            Remove-Item -Recurse -Force
     }
 }
 finally {

@@ -31,25 +31,25 @@ On Windows, use the root launchers:
 ```
 
 `run-jarvis.cmd` prefers the packaged desktop app at
-`release\win-unpacked\JARVIS.exe` when it exists. Otherwise it falls back to the
-Electron development shell. It also enables minimize-to-tray and sets the Docker
-profile explicitly.
+`release\JARVIS 1.0.0.exe` when it exists. Otherwise it falls back to the
+Electron development shell. It also enables minimize-to-tray and points the
+backend at the sibling `models\` folder when that folder exists.
 
-The packaged exe starts Docker local models by default unless
-`JARVIS_DOCKER_AUTOSTART=0` is set. This keeps double-clicking `JARVIS.exe`
-straightforward while still letting development runs opt out.
+The packaged exe does not start Docker. Local AI runs through native helpers
+owned by the desktop lifecycle: llama.cpp first, vLLM second when configured,
+and Ollama only as a final user-configured fallback.
 
 Useful launch switches:
 
 ```powershell
-.\run-jarvis.cmd -DockerProfile llamacpp
-.\run-jarvis.cmd -DockerProfile vllm
-.\run-jarvis.cmd -NoDocker
-.\run-jarvis.cmd -NoVoice
+.\run-jarvis.cmd
+.\run-jarvis.cmd -ModelsDir "C:\path\to\models"
+.\run-jarvis.cmd -NoTray
 .\run-jarvis.cmd -Dev
 ```
 
-To terminate everything JARVIS owns, including Docker model containers:
+To terminate everything JARVIS owns, including backend and local model helper
+children:
 
 ```powershell
 .\stop-jarvis.cmd
@@ -75,9 +75,8 @@ npm run desktop:dev
 
 The Electron shell starts the backend as a hidden child process, opens the
 frameless desktop window, and calls `/api/shutdown` before terminating backend
-children. When `JARVIS_DOCKER_AUTOSTART=1` is set, the shell also asks the
-backend to start the Docker local model profile and stops those containers
-before backend shutdown.
+children. The local runtime manager starts native model helpers as child
+processes and stops them before backend shutdown.
 
 ## Runtime Priorities
 
@@ -110,8 +109,7 @@ JARVIS is only ready to ship when automated checks prove:
 - STT transcribes microphone audio into the Home input and dispatches it into the live terminal/chat stream.
 - Stats are real process/system values, not placeholders.
 - Window close, tray quit, and backend shutdown terminate all owned child processes.
-- Docker/WSL development paths do not hard-cap resources in this repo.
-- PyInstaller and electron-builder packaging produce a launchable app bundle or installer.
+- PyInstaller and electron-builder packaging produce a launchable portable desktop executable.
 
 ## Repository
 

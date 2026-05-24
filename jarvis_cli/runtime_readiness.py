@@ -270,6 +270,11 @@ def _tts_status(
     executable_available: ExecutableChecker,
 ) -> dict[str, Any]:
     provider = str(_cfg(config, "tts", "provider", default="kokoro") or "kokoro").strip().lower()
+    if provider in {"", "edge", "system", "system-tts", "windows", "sapi"}:
+        kokoro_assets = _kokoro_assets(config, model_roots)
+        kokoro_package_ok = package_available("kokoro") or package_available("kokoro_onnx")
+        if kokoro_package_ok and kokoro_assets["model_files"] and kokoro_assets["voices"]:
+            provider = "kokoro"
     engine = {
         "kokoro": "kokoro",
         "omnivoice": "omnivoice",
