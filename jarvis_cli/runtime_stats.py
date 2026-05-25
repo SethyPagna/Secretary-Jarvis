@@ -90,6 +90,27 @@ def _counter_value(counter: Mapping[str, Any] | None, *keys: str) -> int:
     return 0
 
 
+def _read_current_tokens(jarvis_home: Path) -> dict[str, int]:
+    payload = _read_json_mapping(jarvis_home / "stats.json")
+    current = payload.get("desktop_current_tokens")
+    if not isinstance(current, Mapping):
+        current = payload.get("current_tokens")
+    if not isinstance(current, Mapping):
+        return {"input": 0, "output": 0}
+    return {
+        "input": _counter_value(current, "input", "tokens_input", "input_tokens"),
+        "output": _counter_value(current, "output", "tokens_output", "output_tokens"),
+    }
+
+
+def _read_json_mapping(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def _cpu_temperature(psutil_module: Any) -> float | None:
     sensors = getattr(psutil_module, "sensors_temperatures", None)
     if not callable(sensors):
@@ -379,6 +400,7 @@ def collect_runtime_stats(
         _HARDWARE_CACHE["expires_at"] = current_time + _HARDWARE_CACHE_TTL_SECONDS
     uptime_seconds = int(max(0, current_time - started_at)) if started_at else 0
     soul_status = _read_soul_status()
+    current_tokens = _read_current_tokens(home) if token_counter is None else {}
 
     return {
         "type": "stats",
@@ -399,8 +421,12 @@ def collect_runtime_stats(
             "gpu_temp_source": "nvidia-smi" if gpu_stats.get("gpu_temp_c") is not None else "unavailable",
             "cpu_temp_source": "psutil/wmi" if cpu_temp_c is not None else "unavailable",
         },
-        "tokens_input": _counter_value(token_counter, "input", "tokens_input"),
-        "tokens_output": _counter_value(token_counter, "output", "tokens_output"),
+        "tokens_input": _counter_value(token_counter, "input", "tokens_input")
+        if token_counter is not None
+        else current_tokens["input"],
+        "tokens_output": _counter_value(token_counter, "output", "tokens_output")
+        if token_counter is not None
+        else current_tokens["output"],
         "tokens_total_lifetime": _read_lifetime_tokens(home),
         "active_skills": int(active_skills or 0),
         "gateway_connections": _active_gateway_connections(gateway_status),

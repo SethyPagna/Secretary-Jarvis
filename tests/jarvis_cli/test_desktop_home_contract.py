@@ -120,7 +120,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("voiceChunksRef", source)
         self.assertIn("api.transcribeVoice", source)
         self.assertIn("setTerminalInput(transcript)", source)
-        self.assertIn("runLiveCommand(transcript", source)
+        self.assertIn('runDesktopAgentTurn(transcript, "voice")', source)
         self.assertIn("Transcribing voice input", source)
         self.assertNotIn("await navigator.mediaDevices?.getUserMedia({ audio: true });\n      setListening(true);", source)
 
@@ -137,8 +137,26 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("handleTerminalOutput", home_source)
         self.assertIn("awaitingVoiceResponseRef", home_source)
         self.assertIn("api.synthesizeSpeech", home_source)
+        self.assertIn("queueVoiceDelta", home_source)
         self.assertIn("audioPlayerRef", home_source)
         self.assertIn("onOutputData={handleTerminalOutput}", home_source)
+
+    def test_home_uses_desktop_agent_stream_for_plain_language(self) -> None:
+        home_source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+            encoding="utf-8",
+        )
+        api_source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(
+            encoding="utf-8",
+        )
+        server_source = (ROOT / "jarvis_cli" / "web_server.py").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("isExplicitShellCommand", home_source)
+        self.assertIn("api.streamDesktopChat", home_source)
+        self.assertIn("/api/desktop/chat/stream", api_source)
+        self.assertIn('@app.post("/api/desktop/chat/stream")', server_source)
+        self.assertIn("run_desktop_chat_turn", server_source)
 
     def test_api_client_exposes_voice_stt_and_tts_endpoints(self) -> None:
         source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")

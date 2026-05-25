@@ -19,6 +19,22 @@ let backendProcess = null
 let tray = null
 let shutdownStarted = false
 let shutdownFinished = false
+let desktopLogPath = null
+
+function appendDesktopLog(message, detail = '') {
+  try {
+    if (!desktopLogPath && app?.isReady?.()) {
+      desktopLogPath = path.join(app.getPath('userData'), 'desktop.log')
+    }
+    if (!desktopLogPath) {
+      return
+    }
+    const suffix = detail ? ` ${detail}` : ''
+    fs.appendFileSync(desktopLogPath, `[${new Date().toISOString()}] ${message}${suffix}\n`, 'utf8')
+  } catch {
+    // Logging must never block app startup.
+  }
+}
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -116,6 +132,12 @@ function backendEnv() {
 
 function runBackendPreflight() {
   const launch = resolveBackendLaunch()
+  appendDesktopLog('[jarvis-backend] preflight starting', JSON.stringify({
+    command: launch.command,
+    args: launch.preflightArgs,
+    cwd: launch.options?.cwd || path.resolve(__dirname, '..'),
+    exists: fs.existsSync(launch.command)
+  }))
   const result = spawnSync(launch.command, launch.preflightArgs, {
     cwd: path.resolve(__dirname, '..'),
     env: backendEnv(),
@@ -126,18 +148,25 @@ function runBackendPreflight() {
 
   if (result.error) {
     console.error('[jarvis-backend] backend preflight failed', result.error)
+    appendDesktopLog('[jarvis-backend] backend preflight failed', result.error.stack || String(result.error))
     return false
   }
 
   const output = [result.stdout, result.stderr].filter(Boolean).join('\n').trim()
   if (result.status !== 0) {
     console.error(`[jarvis-backend] backend preflight failed\n${output}`)
+    appendDesktopLog('[jarvis-backend] backend preflight failed', JSON.stringify({
+      status: result.status,
+      signal: result.signal,
+      output
+    }))
     return false
   }
 
   if (output) {
     console.log(`[jarvis-backend] preflight ${output}`)
   }
+  appendDesktopLog('[jarvis-backend] preflight ok', output)
   return true
 }
 
@@ -147,6 +176,12 @@ function startBackendProcess() {
   }
 
   const launch = resolveBackendLaunch()
+  appendDesktopLog('[jarvis-backend] starting', JSON.stringify({
+    command: launch.command,
+    args: launch.args,
+    cwd: launch.options?.cwd || path.resolve(__dirname, '..'),
+    exists: fs.existsSync(launch.command)
+  }))
   backendProcess = spawn(launch.command, launch.args, {
     cwd: path.resolve(__dirname, '..'),
     env: backendEnv(),
@@ -156,20 +191,26 @@ function startBackendProcess() {
   })
 
   backendProcess.stdout?.on('data', (chunk) => {
-    console.log(`[jarvis-backend] ${chunk.toString().trimEnd()}`)
+    const text = chunk.toString().trimEnd()
+    console.log(`[jarvis-backend] ${text}`)
+    appendDesktopLog('[jarvis-backend stdout]', text)
   })
 
   backendProcess.stderr?.on('data', (chunk) => {
-    console.error(`[jarvis-backend] ${chunk.toString().trimEnd()}`)
+    const text = chunk.toString().trimEnd()
+    console.error(`[jarvis-backend] ${text}`)
+    appendDesktopLog('[jarvis-backend stderr]', text)
   })
 
   backendProcess.once('error', (error) => {
     console.error('[jarvis-backend] failed to start', error)
+    appendDesktopLog('[jarvis-backend] failed to start', error.stack || String(error))
     backendProcess = null
   })
 
   backendProcess.once('exit', (code, signal) => {
     console.log(`[jarvis-backend] exited code=${code ?? 'null'} signal=${signal ?? 'null'}`)
+    appendDesktopLog('[jarvis-backend] exited', `code=${code ?? 'null'} signal=${signal ?? 'null'}`)
     backendProcess = null
   })
 
@@ -506,16 +547,26 @@ ipcMain.handle('jarvis:window-control', (_event, action) => {
 })
 
 app.whenReady().then(async () => {
+  desktopLogPath = path.join(app.getPath('userData'), 'desktop.log')
+  appendDesktopLog('[jarvis-desktop] ready', JSON.stringify({
+    isPackaged: app.isPackaged,
+    resourcesPath: process.resourcesPath,
+    exePath: app.getPath('exe'),
+    backendPort: BACKEND_PORT
+  }))
   if (runBackendPreflight()) {
     startBackendProcess()
   } else {
     console.warn('[jarvis-desktop] backend preflight failed; opening offline-capable shell')
+    appendDesktopLog('[jarvis-desktop] backend preflight failed; opening offline-capable shell')
   }
 
   try {
     await waitForBackend()
+    appendDesktopLog('[jarvis-desktop] backend ready')
   } catch (error) {
     console.warn('[jarvis-desktop] backend readiness check failed; opening offline-capable shell', error)
+    appendDesktopLog('[jarvis-desktop] backend readiness check failed', error.stack || String(error))
   }
 
   createMainWindow()

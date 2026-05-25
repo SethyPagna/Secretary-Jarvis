@@ -88,6 +88,14 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     }),
+  streamDesktopChat: (
+    prompt: string,
+    handlers: {
+      onDelta?: (text: string) => void;
+      onDone?: (result: DesktopChatResponse) => void;
+      onError?: (message: string) => void;
+    },
+  ) => streamDesktopChat(prompt, handlers),
   getSessions: (limit = 20, offset = 0) =>
     fetchJSON<PaginatedSessions>(`/api/sessions?limit=${limit}&offset=${offset}`),
   getSessionMessages: (id: string) =>
@@ -501,6 +509,69 @@ export interface VoiceSynthesisResponse {
   engine?: string;
   latency_ms?: number;
   error?: string;
+}
+
+export interface DesktopChatResponse {
+  response: string;
+  input_tokens: number;
+  output_tokens: number;
+  model: string;
+  provider: string;
+  latency_ms: number;
+}
+
+async function streamDesktopChat(
+  prompt: string,
+  handlers: {
+    onDelta?: (text: string) => void;
+    onDone?: (result: DesktopChatResponse) => void;
+    onError?: (message: string) => void;
+  },
+): Promise<void> {
+  const headers = new Headers({ "Content-Type": "application/json" });
+  const token = window.__JARVIS_SESSION_TOKEN__;
+  if (token) setSessionHeader(headers, token);
+  const res = await fetch(`${BASE}/api/desktop/chat/stream`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ prompt }),
+  });
+  if (!res.ok || !res.body) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status}: ${text}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  const consumeEvent = (raw: string) => {
+    let event = "message";
+    const data: string[] = [];
+    for (const line of raw.split(/\r?\n/)) {
+      if (line.startsWith("event:")) event = line.slice(6).trim();
+      if (line.startsWith("data:")) data.push(line.slice(5).trimStart());
+    }
+    const payloadText = data.join("\n");
+    if (!payloadText) return;
+    const payload = JSON.parse(payloadText);
+    if (event === "delta") handlers.onDelta?.(String(payload.text ?? ""));
+    if (event === "done") handlers.onDone?.(payload as DesktopChatResponse);
+    if (event === "error") handlers.onError?.(String(payload.error ?? "Desktop chat failed."));
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+    let boundary = buffer.indexOf("\n\n");
+    while (boundary >= 0) {
+      const raw = buffer.slice(0, boundary).trim();
+      buffer = buffer.slice(boundary + 2);
+      if (raw) consumeEvent(raw);
+      boundary = buffer.indexOf("\n\n");
+    }
+    if (done) break;
+  }
 }
 
 export interface SessionInfo {

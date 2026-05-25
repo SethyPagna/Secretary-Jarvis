@@ -22,6 +22,7 @@ import { JarvisOrb, type OrbState } from "@/components/JarvisOrb";
 import { StatsPanel } from "@/components/StatsPanel";
 import {
   api,
+  type DesktopChatResponse,
   type RuntimeReadinessResponse,
   type RuntimeSmokeResponse,
   type RuntimeStatsResponse,
@@ -64,6 +65,16 @@ function terminalTextForSpeech(text: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 1800);
+}
+
+function isExplicitShellCommand(command: string): boolean {
+  const trimmed = command.trim();
+  if (!trimmed) return false;
+  if (/^[$>]/.test(trimmed)) return true;
+  if (/^(powershell|pwsh|cmd|dir|cd|ls|type|cat|git|npm|py|python|node|jarvis)\b/i.test(trimmed)) {
+    return true;
+  }
+  return false;
 }
 
 const TOOL_TOGGLES = [
@@ -110,6 +121,7 @@ export default function HomePage() {
   const awaitingVoiceResponseRef = useRef(false);
   const voiceOutputBufferRef = useRef("");
   const voiceOutputTimerRef = useRef<number | null>(null);
+  const speechQueueRef = useRef<Promise<void>>(Promise.resolve());
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
@@ -231,6 +243,20 @@ export default function HomePage() {
     ]);
   }, []);
 
+  const appendTerminalOutput = useCallback((text: string) => {
+    if (!text) return;
+    setTerminalEntries((entries) => {
+      const last = entries.at(-1);
+      if (last?.kind === "output") {
+        return [
+          ...entries.slice(0, -1),
+          { ...last, text: `${last.text}${text}` },
+        ];
+      }
+      return [...entries, { kind: "output", text }];
+    });
+  }, []);
+
   const runSmoke = async () => {
     setSmokeRunning(true);
     setTerminalEntries((entries) => [
@@ -276,19 +302,24 @@ export default function HomePage() {
       return;
     }
 
-    if (command.toLowerCase() !== "status") {
-      runLiveCommand(command);
+    if (command.toLowerCase() === "status") {
+      setTerminalEntries((entries) => [
+        ...entries,
+        { kind: "input", text: command },
+        {
+          kind: "output",
+          text: `Backend ${compactStatus(status, readiness)}. Gateway ${status?.gateway_state ?? "unknown"}.`,
+        },
+      ]);
       return;
     }
 
-    setTerminalEntries((entries) => [
-      ...entries,
-      { kind: "input", text: command },
-      {
-        kind: "output",
-        text: `Backend ${compactStatus(status, readiness)}. Gateway ${status?.gateway_state ?? "unknown"}.`,
-      },
-    ]);
+    if (isExplicitShellCommand(command)) {
+      runLiveCommand(command.replace(/^[$>]\s*/, ""));
+      return;
+    }
+
+    void runDesktopAgentTurn(command, "typed");
   };
 
   const playSynthesizedSpeech = useCallback(
@@ -346,6 +377,96 @@ export default function HomePage() {
     [voiceOutput],
   );
 
+  const queueSynthesizedSpeech = useCallback(
+    (rawText: string) => {
+      const text = terminalTextForSpeech(rawText);
+      if (!text || !voiceOutput) return;
+      speechQueueRef.current = speechQueueRef.current
+        .catch(() => undefined)
+        .then(() => playSynthesizedSpeech(text));
+    },
+    [playSynthesizedSpeech, voiceOutput],
+  );
+
+  const flushVoiceOutputBuffer = useCallback(() => {
+    const bufferedOutput = voiceOutputBufferRef.current;
+    voiceOutputBufferRef.current = "";
+    if (bufferedOutput.trim()) {
+      queueSynthesizedSpeech(bufferedOutput);
+    }
+  }, [queueSynthesizedSpeech]);
+
+  const queueVoiceDelta = useCallback(
+    (chunk: string, force = false) => {
+      if (!voiceOutput) return;
+      voiceOutputBufferRef.current += chunk;
+      const buffered = voiceOutputBufferRef.current;
+      if (
+        force ||
+        buffered.length > 220 ||
+        /[.!?]\s$/.test(buffered) ||
+        /\n\n$/.test(buffered)
+      ) {
+        flushVoiceOutputBuffer();
+      }
+    },
+    [flushVoiceOutputBuffer, voiceOutput],
+  );
+
+  const handleDesktopChatDone = useCallback(
+    (result: DesktopChatResponse) => {
+      queueVoiceDelta("", true);
+      setTerminalEntries((entries) => [
+        ...entries,
+        {
+          kind: "output",
+          text: `\n[${result.input_tokens} in / ${result.output_tokens} out | ${Math.round(result.latency_ms)} ms]`,
+        },
+      ]);
+      void api.getRuntimeStats().then(setStats).catch(() => undefined);
+    },
+    [queueVoiceDelta],
+  );
+
+  const runDesktopAgentTurn = useCallback(
+    async (prompt: string, source: "typed" | "voice") => {
+      const cleanPrompt = prompt.trim();
+      if (!cleanPrompt) return;
+      setVoiceBusy(true);
+      setTerminalLive(false);
+      voiceOutputBufferRef.current = "";
+      awaitingVoiceResponseRef.current = voiceOutput;
+      setTerminalEntries((entries) => [
+        ...entries,
+        { kind: "input", text: source === "voice" ? `voice: ${cleanPrompt}` : cleanPrompt },
+        { kind: "output", text: "" },
+      ]);
+
+      try {
+        await api.streamDesktopChat(cleanPrompt, {
+          onDelta: (text) => {
+            appendTerminalOutput(text);
+            queueVoiceDelta(text);
+          },
+          onDone: handleDesktopChatDone,
+          onError: (message) => {
+            appendTerminalOutput(`\n${message}`);
+            awaitingVoiceResponseRef.current = false;
+          },
+        });
+      } catch (error) {
+        appendTerminalOutput(
+          `\n${error instanceof Error ? error.message : String(error)}`,
+        );
+      } finally {
+        awaitingVoiceResponseRef.current = false;
+        queueVoiceDelta("", true);
+        setVoiceBusy(false);
+      }
+    },
+    [appendTerminalOutput, handleDesktopChatDone, queueVoiceDelta, voiceOutput],
+  );
+
   const handleTerminalOutput = useCallback(
     (chunk: string) => {
       if (!awaitingVoiceResponseRef.current || !voiceOutput) return;
@@ -388,10 +509,14 @@ export default function HomePage() {
 
         setTerminalInput(transcript);
         voiceOutputBufferRef.current = "";
-        awaitingVoiceResponseRef.current = voiceOutput;
-        runLiveCommand(transcript,
-          `Voice transcript (${result.provider ?? result.engine ?? "stt"}): ${transcript}`,
-        );
+        setTerminalEntries((entries) => [
+          ...entries,
+          {
+            kind: "output",
+            text: `Voice transcript (${result.provider ?? result.engine ?? "stt"}): ${transcript}`,
+          },
+        ]);
+        await runDesktopAgentTurn(transcript, "voice");
       } catch (error) {
         awaitingVoiceResponseRef.current = false;
         setTerminalEntries((entries) => [
@@ -405,7 +530,7 @@ export default function HomePage() {
         setVoiceBusy(false);
       }
     },
-    [runLiveCommand, voiceOutput],
+    [runDesktopAgentTurn],
   );
 
   const stopVoiceStream = useCallback(() => {

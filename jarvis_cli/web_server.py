@@ -23,7 +23,7 @@ import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import yaml
 
@@ -52,7 +52,7 @@ from gateway.status import get_running_pid, read_runtime_status
 try:
     from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+    from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
     from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel
 except ImportError as exc:
@@ -69,7 +69,7 @@ except ImportError as exc:
         _lazy_ensure("tool.dashboard", prompt=False)
         from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
         from fastapi.middleware.cors import CORSMiddleware
-        from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+        from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
         from fastapi.staticfiles import StaticFiles
         from pydantic import BaseModel
     except Exception:
@@ -502,6 +502,12 @@ class VoiceSynthesizeRequest(BaseModel):
     text: str
 
 
+class DesktopChatRequest(BaseModel):
+    prompt: str
+    model: str = ""
+    provider: str = ""
+
+
 _GATEWAY_HEALTH_URL = os.getenv("GATEWAY_HEALTH_URL")
 try:
     _GATEWAY_HEALTH_TIMEOUT = float(os.getenv("GATEWAY_HEALTH_TIMEOUT", "3"))
@@ -714,6 +720,64 @@ async def post_voice_synthesize(body: VoiceSynthesizeRequest):
         body.text,
         get_jarvis_home() / "voice-output",
     )
+
+
+@app.post("/api/desktop/chat")
+async def post_desktop_chat(body: DesktopChatRequest):
+    """Run one desktop-native agent chat turn."""
+    from jarvis_cli.desktop_chat import run_desktop_chat_turn
+
+    result = await asyncio.to_thread(
+        run_desktop_chat_turn,
+        body.prompt,
+        jarvis_home=get_jarvis_home(),
+        model=body.model or None,
+        provider=body.provider or None,
+    )
+    return {"ok": True, **result.as_dict()}
+
+
+def _sse_event(event: str, payload: Mapping[str, Any]) -> str:
+    return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+@app.post("/api/desktop/chat/stream")
+async def post_desktop_chat_stream(body: DesktopChatRequest):
+    """Stream one desktop-native agent chat turn as text/event-stream."""
+    import queue
+
+    from jarvis_cli.desktop_chat import run_desktop_chat_turn
+
+    def stream_events():
+        events: "queue.Queue[tuple[str, dict[str, Any]]]" = queue.Queue()
+
+        def on_delta(delta: str) -> None:
+            if delta:
+                events.put(("delta", {"text": delta}))
+
+        def worker() -> None:
+            try:
+                result = run_desktop_chat_turn(
+                    body.prompt,
+                    jarvis_home=get_jarvis_home(),
+                    on_delta=on_delta,
+                    model=body.model or None,
+                    provider=body.provider or None,
+                )
+                events.put(("done", result.as_dict()))
+            except Exception as exc:
+                events.put(("error", {"error": f"{type(exc).__name__}: {exc}"}))
+
+        thread = threading.Thread(target=worker, name="jarvis-desktop-chat", daemon=True)
+        thread.start()
+        yield _sse_event("ready", {"ok": True})
+        while True:
+            event, payload = events.get()
+            yield _sse_event(event, payload)
+            if event in {"done", "error"}:
+                break
+
+    return StreamingResponse(stream_events(), media_type="text/event-stream")
 
 
 @app.get("/api/runtime/autoconfig")
