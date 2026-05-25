@@ -128,10 +128,10 @@ class HolographicMemoryProvider(MemoryProvider):
     def is_available(self) -> bool:
         return True  # SQLite is always available, numpy is optional
 
-    def save_config(self, values, hermes_home):
+    def save_config(self, values, jarvis_home):
         """Write config to config.yaml under plugins.jarvis-memory-store."""
         from pathlib import Path
-        config_path = Path(hermes_home) / "config.yaml"
+        config_path = Path(jarvis_home) / "config.yaml"
         try:
             import yaml
             existing = {}
@@ -157,15 +157,15 @@ class HolographicMemoryProvider(MemoryProvider):
 
     def initialize(self, session_id: str, **kwargs) -> None:
         from jarvis_constants import get_jarvis_home
-        _hermes_home = str(get_jarvis_home())
-        _default_db = _hermes_home + "/memory_store.db"
+        _jarvis_home = str(get_jarvis_home())
+        _default_db = _jarvis_home + "/memory_store.db"
         db_path = self._config.get("db_path", _default_db)
         # Expand $JARVIS_HOME in user-supplied paths so config values like
         # "$JARVIS_HOME/memory_store.db" or "~/.jarvis/memory_store.db" both
         # resolve to the active profile's directory.
         if isinstance(db_path, str):
-            db_path = db_path.replace("$JARVIS_HOME", _hermes_home)
-            db_path = db_path.replace("${JARVIS_HOME}", _hermes_home)
+            db_path = db_path.replace("$JARVIS_HOME", _jarvis_home)
+            db_path = db_path.replace("${JARVIS_HOME}", _jarvis_home)
         default_trust = float(self._config.get("default_trust", 0.5))
         hrr_dim = int(self._config.get("hrr_dim", 1024))
         hrr_weight = float(self._config.get("hrr_weight", 0.3))

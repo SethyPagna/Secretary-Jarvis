@@ -2374,7 +2374,7 @@ class TestSlashCommands:
         assert msg.text == "/model anthropic/claude-sonnet-4"
 
     @pytest.mark.asyncio
-    async def test_legacy_hermes_prefix_still_works(self, adapter):
+    async def test_legacy_jarvis_prefix_still_works(self, adapter):
         """Backward compat: /jarvis btw foo must still route to /btw foo.
 
         Old workspace manifests only declared /jarvis as the single slash.
@@ -2392,7 +2392,7 @@ class TestSlashCommands:
         assert msg.text == "/btw run the tests"
 
     @pytest.mark.asyncio
-    async def test_legacy_hermes_freeform_question(self, adapter):
+    async def test_legacy_jarvis_freeform_question(self, adapter):
         """/jarvis <free-form text> must stay as the raw text (non-command)."""
         command = {
             "command": "/jarvis",
@@ -3085,7 +3085,7 @@ class TestSlashEphemeralAck:
         assert ("C_Q", "U_Q") in adapter._slash_command_contexts
 
     @pytest.mark.asyncio
-    async def test_legacy_hermes_slash_stashes_context(self, adapter):
+    async def test_legacy_jarvis_slash_stashes_context(self, adapter):
         """Legacy /jarvis <subcommand> also stashes context."""
         command = {
             "command": "/jarvis",
@@ -3100,7 +3100,7 @@ class TestSlashEphemeralAck:
         assert ("C_H", "U_H") in adapter._slash_command_contexts
 
     @pytest.mark.asyncio
-    async def test_freeform_hermes_question_does_not_stash_context(self, adapter):
+    async def test_freeform_jarvis_question_does_not_stash_context(self, adapter):
         """Free-form /jarvis <question> must NOT route agent reply ephemeral."""
         command = {
             "command": "/jarvis",

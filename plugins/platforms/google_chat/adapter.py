@@ -144,7 +144,7 @@ from gateway.platforms.base import (
 # Pin the logger name to the legacy module path so operator log filters,
 # grep aliases, and the gateway's bundled log views keep matching after
 # the in-tree → plugin migration. ``__name__`` resolves to
-# ``hermes_plugins.platforms__google_chat.adapter`` once the plugin
+# ``jarvis_plugins.platforms__google_chat.adapter`` once the plugin
 # loader namespaces this module, which would silently break every
 # downstream log-monitor that greps for ``gateway.platforms.google_chat``.
 logger = logging.getLogger("gateway.platforms.google_chat")
@@ -522,12 +522,12 @@ class GoogleChatAdapter(BasePlatformAdapter):
         # made the in-memory version of this heuristic flaky for
         # multi-restart sessions).
         try:
-            from jarvis_constants import get_jarvis_home as _get_hermes_home
-            _hermes_home = _get_hermes_home()
+            from jarvis_constants import get_jarvis_home as _get_jarvis_home
+            _jarvis_home = _get_jarvis_home()
         except (ModuleNotFoundError, ImportError):
-            _hermes_home = _Path.home() / ".jarvis"
+            _jarvis_home = _Path.home() / ".jarvis"
         self._thread_count_store = _ThreadCountStore(
-            _hermes_home / "google_chat_thread_counts.json"
+            _jarvis_home / "google_chat_thread_counts.json"
         )
         # In-flight typing-card creates per chat_id. send_typing() reserves
         # an Event here BEFORE starting the API call so concurrent calls

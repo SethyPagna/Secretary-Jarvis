@@ -79,7 +79,7 @@ def _discord_request(
         headers={
             "Authorization": f"Bot {token}",
             "Content-Type": "application/json",
-            "User-Agent": "Jarvis-Agent (https://github.com/NousResearch/jarvis-agent)",
+            "User-Agent": "Jarvis-Agent (https://github.com/JARVISProject/jarvis-agent)",
         },
     )
 

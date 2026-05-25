@@ -217,9 +217,9 @@ def _apply_profile_override() -> None:
     # still read active_profile — the user may have switched profiles via
     # `jarvis profile use` and the gateway should honour that choice.
     # See issue #22502.
-    hermes_home_env = os.environ.get("JARVIS_HOME", "")
-    if profile_name is None and hermes_home_env:
-        if Path(hermes_home_env).parent.name == "profiles":
+    jarvis_home_env = os.environ.get("JARVIS_HOME", "")
+    if profile_name is None and jarvis_home_env:
+        if Path(jarvis_home_env).parent.name == "profiles":
             return
 
     # 2. If no flag, check active_profile in the jarvis root
@@ -241,7 +241,7 @@ def _apply_profile_override() -> None:
         try:
             from jarvis_cli.profiles import resolve_profile_env
 
-            hermes_home = resolve_profile_env(profile_name)
+            jarvis_home = resolve_profile_env(profile_name)
         except (ValueError, FileNotFoundError) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             sys.exit(1)
@@ -252,7 +252,7 @@ def _apply_profile_override() -> None:
                 file=sys.stderr,
             )
             return
-        os.environ["JARVIS_HOME"] = hermes_home
+        os.environ["JARVIS_HOME"] = jarvis_home
         # Strip the flag from argv so argparse doesn't choke
         if consume > 0:
             for i, arg in enumerate(argv):
@@ -504,7 +504,7 @@ def _has_any_provider_configured() -> bool:
         _model_name = model_cfg.strip()
     else:
         _model_name = ""
-    _has_hermes_config = _model_name and _model_name != _DEFAULT_MODEL
+    _has_jarvis_config = _model_name and _model_name != _DEFAULT_MODEL
 
     # Check env vars (may be set by .env or shell).
     # OPENAI_BASE_URL alone counts — local models (vLLM, llama.cpp, etc.)
@@ -580,7 +580,7 @@ def _has_any_provider_configured() -> bool:
     # Check for Claude Code OAuth credentials (~/.claude/.credentials.json)
     # Only count these if Jarvis has been explicitly configured — Claude Code
     # being installed doesn't mean the user wants Jarvis to use their tokens.
-    if _has_hermes_config:
+    if _has_jarvis_config:
         try:
             from agent.anthropic_adapter import (
                 read_claude_code_credentials,
@@ -886,14 +886,14 @@ def _exec_in_container(container_info: dict, cli_args: list):
     On failure, OSError propagates naturally.
 
     Args:
-        container_info: dict with backend, container_name, exec_user, hermes_bin
+        container_info: dict with backend, container_name, exec_user, jarvis_bin
         cli_args: the original CLI arguments (everything after 'jarvis')
     """
 
     backend = container_info["backend"]
     container_name = container_info["container_name"]
     exec_user = container_info["exec_user"]
-    hermes_bin = container_info["hermes_bin"]
+    jarvis_bin = container_info["jarvis_bin"]
 
     runtime = shutil.which(backend)
     if not runtime:
@@ -963,7 +963,7 @@ def _exec_in_container(container_info: dict, cli_args: list):
         + tty_flags
         + ["-u", exec_user]
         + env_flags
-        + [container_name, hermes_bin]
+        + [container_name, jarvis_bin]
         + cli_args
     )
 
@@ -1255,7 +1255,7 @@ def _ensure_tui_node() -> None:
     if not helper.is_file():
         return
 
-    hermes_home = os.environ.get("JARVIS_HOME") or str(Path.home() / ".jarvis")
+    jarvis_home = os.environ.get("JARVIS_HOME") or str(Path.home() / ".jarvis")
     try:
         # Helper writes logs to stderr; we ask bash to print `command -v node`
         # on stdout once ensure_node succeeds. Subshell PATH edits don't leak
@@ -1266,7 +1266,7 @@ def _ensure_tui_node() -> None:
                 "-c",
                 f'source "{helper}" >&2 && ensure_node >&2 && command -v node',
             ],
-            env={**os.environ, "JARVIS_HOME": hermes_home},
+            env={**os.environ, "JARVIS_HOME": jarvis_home},
             capture_output=True,
             text=True,
             check=False,
@@ -1281,7 +1281,7 @@ def _ensure_tui_node() -> None:
     if resolved:
         extras.append(Path(resolved).resolve().parent)
 
-    extras.extend([Path(hermes_home) / "node" / "bin", Path.home() / ".local" / "bin"])
+    extras.extend([Path(jarvis_home) / "node" / "bin", Path.home() / ".local" / "bin"])
 
     for extra in extras:
         s = str(extra)
@@ -1290,11 +1290,11 @@ def _ensure_tui_node() -> None:
     os.environ["PATH"] = os.pathsep.join(parts)
 
 
-def _find_bundled_tui(hermes_cli_dir: Path | None = None) -> Path | None:
+def _find_bundled_tui(jarvis_cli_dir: Path | None = None) -> Path | None:
     """Find a pre-built TUI entry.js bundled in the wheel."""
-    if hermes_cli_dir is None:
-        hermes_cli_dir = Path(__file__).parent
-    bundled = hermes_cli_dir / "tui_dist" / "entry.js"
+    if jarvis_cli_dir is None:
+        jarvis_cli_dir = Path(__file__).parent
+    bundled = jarvis_cli_dir / "tui_dist" / "entry.js"
     return bundled if bundled.is_file() else None
 
 
@@ -2369,8 +2369,8 @@ def select_provider_and_model(args=None):
         _model_flow_openrouter(config, current_model)
     elif selected_provider == "ai-gateway":
         _model_flow_ai_gateway(config, current_model)
-    elif selected_provider == "nous":
-        _model_flow_nous(config, current_model, args=args)
+    elif selected_provider == "jarvis_managed":
+        _model_flow_jarvis_managed(config, current_model, args=args)
     elif selected_provider == "openai-codex":
         _model_flow_openai_codex(config, current_model)
     elif selected_provider == "xai-oauth":
@@ -2981,17 +2981,17 @@ def _model_flow_ai_gateway(config, current_model=""):
         print("No change.")
 
 
-def _model_flow_nous(config, current_model="", args=None):
+def _model_flow_jarvis_managed(config, current_model="", args=None):
     """JARVIS Managed provider: ensure logged in, then pick model."""
     from jarvis_cli.auth import (
         get_provider_auth_state,
         _prompt_model_selection,
         _save_model_choice,
         _update_config_for_provider,
-        resolve_nous_runtime_credentials,
+        resolve_jarvis_managed_runtime_credentials,
         AuthError,
         format_auth_error,
-        _login_nous,
+        _login_jarvis_managed,
         PROVIDER_REGISTRY,
     )
     from jarvis_cli.config import (
@@ -3000,9 +3000,9 @@ def _model_flow_nous(config, current_model="", args=None):
         save_config,
         save_env_value,
     )
-    from jarvis_cli.nous_subscription import prompt_enable_tool_gateway
+    from jarvis_cli.jarvis_managed_subscription import prompt_enable_tool_gateway
 
-    state = get_provider_auth_state("nous")
+    state = get_provider_auth_state("jarvis_managed")
     if not state or not state.get("access_token"):
         print("Not logged into JARVIS Managed. Starting login...")
         print()
@@ -3017,7 +3017,7 @@ def _model_flow_nous(config, current_model="", args=None):
                 ca_bundle=getattr(args, "ca_bundle", None),
                 insecure=bool(getattr(args, "insecure", False)),
             )
-            _login_nous(mock_args, PROVIDER_REGISTRY["nous"])
+            _login_jarvis_managed(mock_args, PROVIDER_REGISTRY["jarvis_managed"])
             # Offer Tool Gateway enablement for paid subscribers
             try:
                 _refreshed = load_config() or {}
@@ -3030,29 +3030,29 @@ def _model_flow_nous(config, current_model="", args=None):
         except Exception as exc:
             print(f"Login failed: {exc}")
             return
-        # login_nous already handles model selection + config update
+        # login_jarvis_managed already handles model selection + config update
         return
 
     # Already logged in — use curated model list (same as OpenRouter defaults).
     # The live /models endpoint returns hundreds of models; the curated list
     # shows only agentic models users recognize from OpenRouter.
     from jarvis_cli.models import (
-        get_curated_nous_model_ids,
+        get_curated_jarvis_managed_model_ids,
         get_pricing_for_provider,
-        check_nous_free_tier,
-        partition_nous_models_by_tier,
+        check_jarvis_managed_free_tier,
+        partition_jarvis_managed_models_by_tier,
         union_with_portal_free_recommendations,
         union_with_portal_paid_recommendations,
     )
 
-    model_ids = get_curated_nous_model_ids()
+    model_ids = get_curated_jarvis_managed_model_ids()
     if not model_ids:
         print("No curated models available for JARVIS Managed.")
         return
 
     # Verify credentials are still valid (catches expired sessions early)
     try:
-        creds = resolve_nous_runtime_credentials(min_key_ttl_seconds=5 * 60)
+        creds = resolve_jarvis_managed_runtime_credentials(min_key_ttl_seconds=5 * 60)
     except Exception as exc:
         relogin = isinstance(exc, AuthError) and exc.relogin_required
         msg = format_auth_error(exc) if isinstance(exc, AuthError) else str(exc)
@@ -3070,7 +3070,7 @@ def _model_flow_nous(config, current_model="", args=None):
                     ca_bundle=None,
                     insecure=False,
                 )
-                _login_nous(mock_args, PROVIDER_REGISTRY["nous"])
+                _login_jarvis_managed(mock_args, PROVIDER_REGISTRY["jarvis_managed"])
             except Exception as login_exc:
                 print(f"Re-login failed: {login_exc}")
             return
@@ -3078,18 +3078,18 @@ def _model_flow_nous(config, current_model="", args=None):
         return
 
     # Fetch live pricing (non-blocking — returns empty dict on failure)
-    pricing = get_pricing_for_provider("nous")
+    pricing = get_pricing_for_provider("jarvis_managed")
 
     # Check if user is on free tier
-    free_tier = check_nous_free_tier()
+    free_tier = check_jarvis_managed_free_tier()
 
     # Resolve portal URL early — needed both for upgrade links and for the
     # freeRecommendedModels endpoint below.
-    _nous_portal_url = ""
+    _jarvis_managed_portal_url = ""
     try:
-        _nous_state = get_provider_auth_state("nous")
-        if _nous_state:
-            _nous_portal_url = _nous_state.get("portal_base_url", "")
+        _jarvis_managed_state = get_provider_auth_state("jarvis_managed")
+        if _jarvis_managed_state:
+            _jarvis_managed_portal_url = _jarvis_managed_state.get("portal_base_url", "")
     except Exception:
         pass
 
@@ -3105,14 +3105,14 @@ def _model_flow_nous(config, current_model="", args=None):
     unavailable_models: list[str] = []
     if free_tier:
         model_ids, pricing = union_with_portal_free_recommendations(
-            model_ids, pricing, _nous_portal_url,
+            model_ids, pricing, _jarvis_managed_portal_url,
         )
-        model_ids, unavailable_models = partition_nous_models_by_tier(
+        model_ids, unavailable_models = partition_jarvis_managed_models_by_tier(
             model_ids, pricing, free_tier=True
         )
     else:
         model_ids, pricing = union_with_portal_paid_recommendations(
-            model_ids, pricing, _nous_portal_url,
+            model_ids, pricing, _jarvis_managed_portal_url,
         )
 
     if not model_ids and not unavailable_models:
@@ -3122,9 +3122,9 @@ def _model_flow_nous(config, current_model="", args=None):
     if free_tier and not model_ids:
         print("No free models currently available.")
         if unavailable_models:
-            from jarvis_cli.auth import DEFAULT_NOUS_PORTAL_URL
+            from jarvis_cli.auth import DEFAULT_JARVIS_MANAGED_PORTAL_URL
 
-            _url = (_nous_portal_url or DEFAULT_NOUS_PORTAL_URL).rstrip("/")
+            _url = (_jarvis_managed_portal_url or DEFAULT_JARVIS_MANAGED_PORTAL_URL).rstrip("/")
             print(f"Upgrade at {_url} to access paid models.")
         return
 
@@ -3137,13 +3137,13 @@ def _model_flow_nous(config, current_model="", args=None):
         current_model=current_model,
         pricing=pricing,
         unavailable_models=unavailable_models,
-        portal_url=_nous_portal_url,
+        portal_url=_jarvis_managed_portal_url,
     )
     if selected:
         _save_model_choice(selected)
-        # Reactivate Nous as the provider and update config
+        # Reactivate JARVIS Managed as the provider and update config
         inference_url = creds.get("base_url", "")
-        _update_config_for_provider("nous", inference_url)
+        _update_config_for_provider("jarvis_managed", inference_url)
         current_model_cfg = config.get("model")
         if isinstance(current_model_cfg, dict):
             model_cfg = dict(current_model_cfg)
@@ -3151,7 +3151,7 @@ def _model_flow_nous(config, current_model="", args=None):
             model_cfg = {"default": current_model_cfg.strip()}
         else:
             model_cfg = {}
-        model_cfg["provider"] = "nous"
+        model_cfg["provider"] = "jarvis_managed"
         model_cfg["default"] = selected
         if inference_url and inference_url.strip():
             model_cfg["base_url"] = inference_url.rstrip("/")
@@ -5607,7 +5607,7 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
                 print()
                 print(
                     "   Alternatives with workable free usage: DeepSeek, "
-                    "OpenRouter (free models), Groq, Nous."
+                    "OpenRouter (free models), Groq, JARVIS Managed."
                 )
                 print()
                 print("Not saving Gemini as the default provider.")
@@ -7591,7 +7591,7 @@ def _venv_scripts_dir() -> Path | None:
     return scripts if scripts.is_dir() else None
 
 
-def _hermes_exe_shims(scripts_dir: Path) -> list[Path]:
+def _jarvis_exe_shims(scripts_dir: Path) -> list[Path]:
     """Entry-point shims that uv may try to rewrite during ``pip install -e .``.
 
     On Windows these are .exe launchers generated by setuptools/uv. On POSIX
@@ -7606,7 +7606,7 @@ def _hermes_exe_shims(scripts_dir: Path) -> list[Path]:
     ]
 
 
-def _detect_concurrent_hermes_instances(
+def _detect_concurrent_jarvis_instances(
     scripts_dir: Path, *, exclude_pid: int | None = None
 ) -> list[tuple[int, str]]:
     """Find other live processes whose .exe is one of our entry-point shims.
@@ -7639,7 +7639,7 @@ def _detect_concurrent_hermes_instances(
 
     # Resolve every shim path to its canonical form once for cheap comparison.
     shim_paths: set[str] = set()
-    for shim in _hermes_exe_shims(scripts_dir):
+    for shim in _jarvis_exe_shims(scripts_dir):
         try:
             shim_paths.add(str(shim.resolve()).lower())
         except OSError:
@@ -7692,7 +7692,7 @@ def _format_concurrent_instances_message(
     return "\n".join(lines)
 
 
-def _quarantine_running_hermes_exe(
+def _quarantine_running_jarvis_exe(
     scripts_dir: Path, *, max_attempts: int = 4
 ) -> list[tuple[Path, Path]]:
     """Pre-empt Windows file lock on the running ``jarvis.exe``.
@@ -7740,7 +7740,7 @@ def _quarantine_running_hermes_exe(
     backoff_ms = [0, 100, 250, 500, 1000]
     attempts = max(1, min(max_attempts, len(backoff_ms)))
 
-    for shim in _hermes_exe_shims(scripts_dir):
+    for shim in _jarvis_exe_shims(scripts_dir):
         if not shim.exists():
             continue
         target = shim.with_suffix(shim.suffix + f".old.{stamp}")
@@ -7831,7 +7831,7 @@ def _schedule_replace_on_reboot(shim: Path, quarantine_target: Path) -> bool:
 
 
 def _restore_quarantined_exes(moved: list[tuple[Path, Path]]) -> None:
-    """Roll back ``_quarantine_running_hermes_exe`` if uv didn't write replacements."""
+    """Roll back ``_quarantine_running_jarvis_exe`` if uv didn't write replacements."""
     for original, quarantined in moved:
         try:
             if not original.exists() and quarantined.exists():
@@ -7945,14 +7945,14 @@ def _install_python_dependencies_with_optional_fallback(
     On Windows, pre-renames live ``jarvis.exe`` / ``jarvis-gateway.exe`` shims
     in the venv Scripts dir before each install attempt so uv can write fresh
     copies (Windows blocks REPLACE on a running .exe but allows RENAME). See
-    ``_quarantine_running_hermes_exe`` for the rationale.
+    ``_quarantine_running_jarvis_exe`` for the rationale.
     """
     scripts_dir = _venv_scripts_dir() if _is_windows() else None
 
     def _install(args: list[str]) -> None:
         moved: list[tuple[Path, Path]] = []
         if scripts_dir is not None:
-            moved = _quarantine_running_hermes_exe(scripts_dir)
+            moved = _quarantine_running_jarvis_exe(scripts_dir)
         try:
             _run_install_with_heartbeat(install_cmd_prefix + args, env=env)
         except BaseException:
@@ -8234,9 +8234,9 @@ def _install_hangup_protection(gateway_mode: bool = False):
     try:
         # Late-bound import so tests can monkeypatch
         # jarvis_cli.config.get_jarvis_home to simulate setup failure.
-        from jarvis_cli.config import get_jarvis_home as _get_hermes_home
+        from jarvis_cli.config import get_jarvis_home as _get_jarvis_home
 
-        logs_dir = _get_hermes_home() / "logs"
+        logs_dir = _get_jarvis_home() / "logs"
         logs_dir.mkdir(parents=True, exist_ok=True)
         log_path = logs_dir / "update.log"
         log_file = open(log_path, "a", buffering=1, encoding="utf-8")
@@ -8620,7 +8620,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
     if _is_windows() and not getattr(args, "force", False):
         scripts_dir = _venv_scripts_dir()
         if scripts_dir is not None:
-            concurrent = _detect_concurrent_hermes_instances(scripts_dir)
+            concurrent = _detect_concurrent_jarvis_instances(scripts_dir)
             if concurrent:
                 print(_format_concurrent_instances_message(concurrent, scripts_dir))
                 sys.exit(2)
@@ -9728,15 +9728,15 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # every `jarvis update` surfaces the issue until the user migrates.
         try:
             from jarvis_cli.gateway import (
-                has_legacy_hermes_units,
-                _find_legacy_hermes_units,
+                has_legacy_jarvis_units,
+                _find_legacy_jarvis_units,
                 supports_systemd_services,
             )
 
-            if supports_systemd_services() and has_legacy_hermes_units():
+            if supports_systemd_services() and has_legacy_jarvis_units():
                 print()
                 print("⚠ Legacy Jarvis gateway unit(s) detected:")
-                for name, path, is_sys in _find_legacy_hermes_units():
+                for name, path, is_sys in _find_legacy_jarvis_units():
                     scope = "system" if is_sys else "user"
                     print(f"    {path}  ({scope} scope)")
                 print()
@@ -10288,7 +10288,7 @@ def cmd_profile(args):
             # Preview: stage the distribution into a scratch dir, show the
             # manifest, then do the real install.  The double-stage avoids
             # any side-effects if the user declines.
-            with tempfile.TemporaryDirectory(prefix="hermes_dist_preview_") as tmp:
+            with tempfile.TemporaryDirectory(prefix="jarvis_dist_preview_") as tmp:
                 plan = plan_install(
                     args.source,
                     Path(tmp),
@@ -10397,8 +10397,8 @@ def cmd_profile(args):
             print(f"Author:       {data['author']}")
         if data.get("license"):
             print(f"License:      {data['license']}")
-        if data.get("hermes_requires"):
-            print(f"Requires:     Jarvis {data['hermes_requires']}")
+        if data.get("jarvis_requires"):
+            print(f"Requires:     Jarvis {data['jarvis_requires']}")
         if data.get("source"):
             print(f"Source:       {data['source']}")
         if data.get("installed_at"):
@@ -10426,8 +10426,8 @@ def _render_distribution_plan(plan) -> None:
         print(f"  {mf.description}")
     if mf.author:
         print(f"  Author:   {mf.author}")
-    if mf.hermes_requires:
-        print(f"  Requires: Jarvis {mf.hermes_requires}")
+    if mf.jarvis_requires:
+        print(f"  Requires: Jarvis {mf.jarvis_requires}")
     print(f"  Source:   {plan.provenance}")
     print(f"  Target:   {plan.target_dir}")
     if plan.existing:
@@ -10623,7 +10623,7 @@ def _build_provider_choices() -> list[str]:
     except Exception:
         # Fallback: static list guarantees the CLI always works
         return [
-            "auto", "openrouter", "nous", "openai-codex", "xai-oauth", "copilot-acp", "copilot",
+            "auto", "openrouter", "jarvis_managed", "openai-codex", "xai-oauth", "copilot-acp", "copilot",
             "anthropic", "gemini", "google-gemini-cli", "xai", "bedrock", "azure-foundry",
             "ollama-cloud", "huggingface", "zai", "kimi-coding", "kimi-coding-cn",
             "stepfun", "minimax", "minimax-cn", "kilocode", "novita", "xiaomi", "arcee",
@@ -10929,7 +10929,7 @@ def main():
 
     # Sweep stale ``jarvis.exe.old.*`` quarantine files left by previous
     # ``jarvis update`` runs on Windows. Silent no-op on non-Windows or when
-    # there's nothing to clean. See ``_quarantine_running_hermes_exe``.
+    # there's nothing to clean. See ``_quarantine_running_jarvis_exe``.
     try:
         _cleanup_quarantined_exes()
     except Exception:
@@ -10955,24 +10955,24 @@ def main():
     )
     model_parser.add_argument(
         "--portal-url",
-        help="Portal base URL for Nous login (default: production portal)",
+        help="Portal base URL for JARVIS Managed login (default: production portal)",
     )
     model_parser.add_argument(
         "--inference-url",
-        help="Inference API base URL for Nous login (default: production inference API)",
+        help="Inference API base URL for JARVIS Managed login (default: production inference API)",
     )
     model_parser.add_argument(
         "--client-id",
         default=None,
-        help="OAuth client id to use for Nous login (default: jarvis-cli)",
+        help="OAuth client id to use for JARVIS Managed login (default: jarvis-cli)",
     )
     model_parser.add_argument(
-        "--scope", default=None, help="OAuth scope to request for Nous login"
+        "--scope", default=None, help="OAuth scope to request for JARVIS Managed login"
     )
     model_parser.add_argument(
         "--no-browser",
         action="store_true",
-        help="Do not attempt to open the browser automatically during Nous login",
+        help="Do not attempt to open the browser automatically during JARVIS Managed login",
     )
     model_parser.add_argument(
         "--manual-paste",
@@ -10988,15 +10988,15 @@ def main():
         "--timeout",
         type=float,
         default=15.0,
-        help="HTTP request timeout in seconds for Nous login (default: 15)",
+        help="HTTP request timeout in seconds for JARVIS Managed login (default: 15)",
     )
     model_parser.add_argument(
-        "--ca-bundle", help="Path to CA bundle PEM file for Nous TLS verification"
+        "--ca-bundle", help="Path to CA bundle PEM file for JARVIS Managed TLS verification"
     )
     model_parser.add_argument(
         "--insecure",
         action="store_true",
-        help="Disable TLS verification for Nous login (testing only)",
+        help="Disable TLS verification for JARVIS Managed login (testing only)",
     )
     model_parser.set_defaults(func=cmd_model)
 
@@ -11312,8 +11312,8 @@ def main():
     )
     proxy_start.add_argument(
         "--provider",
-        default="nous",
-        help="Upstream provider: nous or xai (default: nous). See `jarvis proxy providers`.",
+        default="jarvis_managed",
+        help="Upstream provider: jarvis_managed or xai (default: jarvis_managed). See `jarvis proxy providers`.",
     )
     proxy_start.add_argument(
         "--host",
@@ -11471,9 +11471,9 @@ def main():
     )
     login_parser.add_argument(
         "--provider",
-        choices=["nous", "openai-codex", "xai-oauth"],
+        choices=["jarvis_managed", "openai-codex", "xai-oauth"],
         default=None,
-        help="Provider to authenticate with (default: nous)",
+        help="Provider to authenticate with (default: jarvis_managed)",
     )
     login_parser.add_argument(
         "--portal-url", help="Portal base URL (default: production portal)"
@@ -11517,7 +11517,7 @@ def main():
     )
     logout_parser.add_argument(
         "--provider",
-        choices=["nous", "openai-codex", "xai-oauth", "spotify"],
+        choices=["jarvis_managed", "openai-codex", "xai-oauth", "spotify"],
         default=None,
         help="Provider to log out from (default: active provider)",
     )
@@ -11543,8 +11543,8 @@ def main():
     auth_add.add_argument(
         "--api-key", help="API key value (otherwise prompted securely)"
     )
-    auth_add.add_argument("--portal-url", help="Nous portal base URL")
-    auth_add.add_argument("--inference-url", help="Nous inference base URL")
+    auth_add.add_argument("--portal-url", help="JARVIS Managed portal base URL")
+    auth_add.add_argument("--inference-url", help="JARVIS Managed inference base URL")
     auth_add.add_argument("--client-id", help="OAuth client id")
     auth_add.add_argument("--scope", help="OAuth scope override")
     auth_add.add_argument(

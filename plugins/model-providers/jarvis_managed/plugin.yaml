@@ -1,0 +1,5 @@
+name: jarvis_managed-provider
+kind: model-provider
+version: 1.0.0
+description: JARVIS Project Portal
+author: JARVIS Project

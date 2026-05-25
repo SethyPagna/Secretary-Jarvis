@@ -3,7 +3,7 @@
 Browser Tool Module
 
 This module provides browser automation tools using agent-browser CLI.  It
-supports multiple backends — **Browser Use** (cloud, default for Nous
+supports multiple backends — **Browser Use** (cloud, default for JARVIS Managed
 subscribers), **Browserbase** (cloud, direct credentials), and **local
 Chromium** — with identical agent-facing behaviour.  The backend is
 auto-detected from config and available credentials.
@@ -156,11 +156,11 @@ def _discover_homebrew_node_dirs() -> tuple[str, ...]:
 
 def _browser_candidate_path_dirs() -> list[str]:
     """Return ordered browser CLI PATH candidates shared by discovery and execution."""
-    hermes_home = get_jarvis_home()
-    hermes_node_bin = str(hermes_home / "node" / "bin")
-    hermes_node_root = str(hermes_home / "node")
-    hermes_nm_bin = str(hermes_home / "node_modules" / ".bin")
-    return [hermes_node_bin, hermes_node_root, hermes_nm_bin, *list(_discover_homebrew_node_dirs()), *_SANE_PATH_DIRS]
+    jarvis_home = get_jarvis_home()
+    jarvis_node_bin = str(jarvis_home / "node" / "bin")
+    jarvis_node_root = str(jarvis_home / "node")
+    jarvis_nm_bin = str(jarvis_home / "node_modules" / ".bin")
+    return [jarvis_node_bin, jarvis_node_root, jarvis_nm_bin, *list(_discover_homebrew_node_dirs()), *_SANE_PATH_DIRS]
 
 
 def _merge_browser_path(existing_path: str = "") -> str:
@@ -491,7 +491,7 @@ def _get_cloud_provider() -> Optional[CloudBrowserProvider]:
 
     Reads ``config["browser"]["cloud_provider"]`` once and caches the result
     for the process lifetime. An explicit ``local`` provider disables cloud
-    fallback. If unset, fall back to Browser Use (managed Nous gateway or
+    fallback. If unset, fall back to Browser Use (managed JARVIS Managed gateway or
     direct API key) and then Browserbase (direct credentials only) — the
     historic auto-detect order, now expressed as the
     :data:`agent.browser_registry._LEGACY_PREFERENCE` walk.
@@ -561,7 +561,7 @@ def _get_cloud_provider() -> Optional[CloudBrowserProvider]:
         logger.debug("Could not read cloud_provider from config: %s", e)
 
     if resolved is None:
-        # Auto-detect path: Browser Use first (managed Nous gateway or
+        # Auto-detect path: Browser Use first (managed JARVIS Managed gateway or
         # direct API key), then Browserbase (direct credentials). Uses
         # the legacy class names imported at the top of this module so
         # tests that ``monkeypatch.setattr(browser_tool, "BrowserUseProvider", ...)``
@@ -835,7 +835,7 @@ def _run_chrome_fallback_command(
             hint = (
                 "Chrome fallback requires Chromium, but it is missing. "
                 "You're running in Docker — pull the latest image: "
-                "docker pull ghcr.io/nousresearch/jarvis-agent:latest"
+                "docker pull ghcr.io/jarvisproject/jarvis-agent:latest"
             )
         else:
             hint = (
@@ -1137,7 +1137,7 @@ def _socket_safe_tmpdir() -> str:
     """Return a short temp directory path suitable for Unix domain sockets.
 
     macOS sets ``TMPDIR`` to ``/var/folders/xx/.../T/`` (~51 chars).  When we
-    append ``agent-browser-hermes_…`` the resulting socket path exceeds the
+    append ``agent-browser-jarvis_…`` the resulting socket path exceeds the
     104-byte macOS limit for ``AF_UNIX`` addresses, causing agent-browser to
     fail with "Failed to create socket directory" or silent screenshot failures.
 
@@ -1321,7 +1321,7 @@ def _reap_orphaned_browser_sessions():
     # Also pick up CDP sessions
     socket_dirs += glob.glob(os.path.join(tmpdir, "agent-browser-cdp_*"))
     # Also pick up cloud-provider sessions (browser-use/browserbase/firecrawl)
-    socket_dirs += glob.glob(os.path.join(tmpdir, "agent-browser-hermes_*"))
+    socket_dirs += glob.glob(os.path.join(tmpdir, "agent-browser-jarvis_*"))
 
     if not socket_dirs:
         return
@@ -1826,14 +1826,14 @@ def _find_agent_browser() -> str:
             if not recheck and extended_path:
                 recheck = shutil.which("agent-browser", path=extended_path)
             if not recheck:
-                hermes_nm = str(get_jarvis_home() / "node_modules" / ".bin")
-                recheck = shutil.which("agent-browser", path=hermes_nm)
+                jarvis_nm = str(get_jarvis_home() / "node_modules" / ".bin")
+                recheck = shutil.which("agent-browser", path=jarvis_nm)
             if not recheck:
-                hermes_node_bin = str(get_jarvis_home() / "node" / "bin")
-                recheck = shutil.which("agent-browser", path=hermes_node_bin)
+                jarvis_node_bin = str(get_jarvis_home() / "node" / "bin")
+                recheck = shutil.which("agent-browser", path=jarvis_node_bin)
             if not recheck:
-                hermes_node_root = str(get_jarvis_home() / "node")
-                recheck = shutil.which("agent-browser", path=hermes_node_root)
+                jarvis_node_root = str(get_jarvis_home() / "node")
+                recheck = shutil.which("agent-browser", path=jarvis_node_root)
             if recheck:
                 _cached_agent_browser = recheck
                 _agent_browser_resolved = True
@@ -1918,7 +1918,7 @@ def _run_browser_command(
             hint = (
                 "Chromium browser is missing. You're running in Docker — pull "
                 "the latest image to get the bundled Chromium: "
-                "docker pull ghcr.io/nousresearch/jarvis-agent:latest"
+                "docker pull ghcr.io/jarvisproject/jarvis-agent:latest"
             )
         else:
             hint = (
@@ -2940,14 +2940,14 @@ def _maybe_start_recording(task_id: str):
             return
     try:
         from jarvis_cli.config import read_raw_config
-        hermes_home = get_jarvis_home()
+        jarvis_home = get_jarvis_home()
         cfg = read_raw_config()
         record_enabled = cfg_get(cfg, "browser", "record_sessions", default=False)
 
         if not record_enabled:
             return
 
-        recordings_dir = hermes_home / "browser_recordings"
+        recordings_dir = jarvis_home / "browser_recordings"
         recordings_dir.mkdir(parents=True, exist_ok=True)
         _cleanup_old_recordings(max_age_hours=72)
 
@@ -3313,8 +3313,8 @@ def _cleanup_old_screenshots(screenshots_dir, max_age_hours=24):
 def _cleanup_old_recordings(max_age_hours=72):
     """Remove browser recordings older than max_age_hours to prevent disk bloat."""
     try:
-        hermes_home = get_jarvis_home()
-        recordings_dir = hermes_home / "browser_recordings"
+        jarvis_home = get_jarvis_home()
+        recordings_dir = jarvis_home / "browser_recordings"
         if not recordings_dir.exists():
             return
         cutoff = time.time() - (max_age_hours * 3600)
@@ -3683,7 +3683,7 @@ if __name__ == "__main__":
                         "     Docker: pull the latest image — the current one "
                         "predates the bundled Chromium install"
                     )
-                    print("       docker pull ghcr.io/nousresearch/jarvis-agent:latest")
+                    print("       docker pull ghcr.io/jarvisproject/jarvis-agent:latest")
                 else:
                     print("     Install it with:")
                     print("       npx agent-browser install --with-deps")

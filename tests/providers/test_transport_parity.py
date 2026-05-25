@@ -161,26 +161,26 @@ class TestOpenRouterParity:
         assert kw["extra_body"]["reasoning"] == {"enabled": True, "effort": "medium"}
 
 
-class TestNousParity:
-    """Nous: product tags, reasoning, omit when disabled."""
+class TestJarvisManagedParity:
+    """JARVIS Managed: product tags, reasoning, omit when disabled."""
 
     def test_tags(self, transport):
-        from agent.portal_tags import nous_portal_tags
+        from agent.portal_tags import jarvis_managed_portal_tags
         kw = transport.build_kwargs(
             model="jarvis-3-llama-3.1-405b",
             messages=_simple_messages(),
             tools=None,
-            provider_profile=get_provider_profile("nous"),
+            provider_profile=get_provider_profile("jarvis_managed"),
         )
-        assert kw["extra_body"]["tags"] == nous_portal_tags()
+        assert kw["extra_body"]["tags"] == jarvis_managed_portal_tags()
 
     def test_reasoning_omitted_when_disabled(self, transport):
-        """Nous special case: reasoning omitted entirely when disabled."""
+        """JARVIS Managed special case: reasoning omitted entirely when disabled."""
         kw = transport.build_kwargs(
             model="jarvis-3-llama-3.1-405b",
             messages=_simple_messages(),
             tools=None,
-            provider_profile=get_provider_profile("nous"),
+            provider_profile=get_provider_profile("jarvis_managed"),
             supports_reasoning=True,
             reasoning_config={"enabled": False},
         )
@@ -192,7 +192,7 @@ class TestNousParity:
             model="jarvis-3-llama-3.1-405b",
             messages=_simple_messages(),
             tools=None,
-            provider_profile=get_provider_profile("nous"),
+            provider_profile=get_provider_profile("jarvis_managed"),
             supports_reasoning=True,
             reasoning_config=rc,
         )

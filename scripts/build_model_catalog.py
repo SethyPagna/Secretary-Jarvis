@@ -2,7 +2,7 @@
 """Build the Jarvis Model Catalog — a centralized JSON manifest of curated models.
 
 This script reads the in-repo hardcoded curated lists (``OPENROUTER_MODELS``,
-``_PROVIDER_MODELS["nous"]``) and writes them to a JSON manifest that the
+``_PROVIDER_MODELS["jarvis_managed"]``) and writes them to a JSON manifest that the
 Jarvis CLI fetches at runtime. Publishing the catalog through the docs site
 lets maintainers update model lists without shipping a Jarvis release.
 
@@ -17,7 +17,7 @@ Usage::
 Output: ``website/static/api/model-catalog.json``
 
 Live URL (after ``deploy-site.yml`` runs on merge to main):
-``https://jarvis-agent.nousresearch.com/docs/api/model-catalog.json``
+``https://jarvis-agent.jarvis.local/docs/api/model-catalog.json``
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ def build_catalog() -> dict:
         "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "metadata": {
             "source": "jarvis-agent repo",
-            "docs": "https://jarvis-agent.nousresearch.com/docs/reference/model-catalog",
+            "docs": "https://jarvis-agent.jarvis.local/docs/reference/model-catalog",
         },
         "providers": {
             "openrouter": {
@@ -61,17 +61,17 @@ def build_catalog() -> dict:
                     for mid, desc in OPENROUTER_MODELS
                 ],
             },
-            "nous": {
+            "jarvis_managed": {
                 "metadata": {
-                    "display_name": "Nous Portal",
+                    "display_name": "JARVIS Managed",
                     "note": (
                         "Free-tier gating is determined live via Portal pricing "
-                        "(partition_nous_models_by_tier), not this manifest."
+                        "(partition_jarvis_managed_models_by_tier), not this manifest."
                     ),
                 },
                 "models": [
                     {"id": mid}
-                    for mid in _PROVIDER_MODELS.get("nous", [])
+                    for mid in _PROVIDER_MODELS.get("jarvis_managed", [])
                 ],
             },
         },

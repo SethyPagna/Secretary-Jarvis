@@ -35,11 +35,11 @@ No clone needed. Nix fetches, builds, and runs everything:
 
 ```bash
 # Run directly (builds on first use, cached after)
-nix run github:NousResearch/jarvis-agent -- setup
-nix run github:NousResearch/jarvis-agent -- chat
+nix run github:JARVISProject/jarvis-agent -- setup
+nix run github:JARVISProject/jarvis-agent -- chat
 
 # Or install persistently
-nix profile install github:NousResearch/jarvis-agent
+nix profile install github:JARVISProject/jarvis-agent
 jarvis setup
 jarvis chat
 ```
@@ -50,7 +50,7 @@ After `nix profile install`, `jarvis`, `jarvis-agent`, and `jarvis-acp` are on y
 <summary><strong>Building from a local clone</strong></summary>
 
 ```bash
-git clone https://github.com/NousResearch/jarvis-agent.git
+git clone https://github.com/JARVISProject/jarvis-agent.git
 cd jarvis-agent
 nix build
 ./result/bin/jarvis setup
@@ -75,7 +75,7 @@ This module requires NixOS. For non-NixOS systems (macOS, other Linux distros), 
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    jarvis-agent.url = "github:NousResearch/jarvis-agent";
+    jarvis-agent.url = "github:JARVISProject/jarvis-agent";
   };
 
   outputs = { nixpkgs, jarvis-agent, ... }: {
@@ -624,7 +624,7 @@ Plugins are symlinked into `$JARVIS_HOME/plugins/` at activation time. Jarvis di
 
 ### Entry-Point Plugins (`extraPythonPackages`)
 
-For pip-packaged plugins that register via `[project.entry-points."hermes_agent.plugins"]` (e.g., [rtk-jarvis](https://github.com/ogallotti/rtk-jarvis)):
+For pip-packaged plugins that register via `[project.entry-points."jarvis_agent.plugins"]` (e.g., [rtk-jarvis](https://github.com/ogallotti/rtk-jarvis)):
 
 ```nix
 services.jarvis-agent.extraPythonPackages = [
@@ -685,7 +685,7 @@ External flakes can override the package directly:
 
 ```nix
 {
-  inputs.jarvis-agent.url = "github:NousResearch/jarvis-agent";
+  inputs.jarvis-agent.url = "github:JARVISProject/jarvis-agent";
   outputs = { jarvis-agent, nixpkgs, ... }: {
     nixpkgs.overlays = [ jarvis-agent.overlays.default ];
     # Then:

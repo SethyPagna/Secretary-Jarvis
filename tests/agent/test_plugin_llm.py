@@ -724,9 +724,9 @@ class TestConfigDrivenPolicy:
     def test_policy_loaded_from_yaml(self, tmp_path, monkeypatch):
         from agent.plugin_llm import _resolve_trust_policy
 
-        hermes_home = tmp_path / ".jarvis"
-        hermes_home.mkdir()
-        (hermes_home / "config.yaml").write_text(
+        jarvis_home = tmp_path / ".jarvis"
+        jarvis_home.mkdir()
+        (jarvis_home / "config.yaml").write_text(
             """
 plugins:
   entries:
@@ -742,7 +742,7 @@ plugins:
 """,
             encoding="utf-8",
         )
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
         from jarvis_cli import config as _config_mod
         _config_mod._config_cache = None  # type: ignore[attr-defined]
 
@@ -758,10 +758,10 @@ plugins:
     def test_missing_plugin_entry_yields_default_deny(self, tmp_path, monkeypatch):
         from agent.plugin_llm import _resolve_trust_policy
 
-        hermes_home = tmp_path / ".jarvis"
-        hermes_home.mkdir()
-        (hermes_home / "config.yaml").write_text("plugins: {}\n", encoding="utf-8")
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / ".jarvis"
+        jarvis_home.mkdir()
+        (jarvis_home / "config.yaml").write_text("plugins: {}\n", encoding="utf-8")
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
         from jarvis_cli import config as _config_mod
         _config_mod._config_cache = None  # type: ignore[attr-defined]
 

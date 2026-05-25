@@ -31,7 +31,7 @@ The following is the complete skill definition that Jarvis loads when this skill
 
 # Spotify
 
-Control the user's Spotify account via the Jarvis Spotify toolset (7 tools). Setup guide: https://jarvis-agent.nousresearch.com/docs/user-guide/features/spotify
+Control the user's Spotify account via the Jarvis Spotify toolset (7 tools). Setup guide: https://jarvis-agent.jarvis.local/docs/user-guide/features/spotify
 
 ## When to use this skill
 

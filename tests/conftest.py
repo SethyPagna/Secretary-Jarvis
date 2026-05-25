@@ -85,7 +85,7 @@ _CREDENTIAL_NAMES = frozenset({
     "GITHUB_TOKEN",
     "OPENAI_API_KEY",
     "OPENROUTER_API_KEY",
-    "NOUS_API_KEY",
+    "JARVIS_MANAGED_API_KEY",
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
     "GROQ_API_KEY",
@@ -172,7 +172,7 @@ def _looks_like_credential(name: str) -> bool:
 
 # JARVIS_* vars that change test behavior by being set. Unset all of these
 # unconditionally — individual tests that need them set do so explicitly.
-_HERMES_BEHAVIORAL_VARS = frozenset({
+_JARVIS_BEHAVIORAL_VARS = frozenset({
     "JARVIS_YOLO_MODE",
     "JARVIS_INTERACTIVE",
     "JARVIS_QUIET",
@@ -322,7 +322,7 @@ def _hermetic_environment(tmp_path, monkeypatch):
             monkeypatch.delenv(name, raising=False)
 
     # 2. Blank behavioral JARVIS_* vars that could change test semantics.
-    for name in _HERMES_BEHAVIORAL_VARS:
+    for name in _JARVIS_BEHAVIORAL_VARS:
         monkeypatch.delenv(name, raising=False)
 
     # 3. Redirect JARVIS_HOME to a per-test tempdir. Code that reads
@@ -335,13 +335,13 @@ def _hermetic_environment(tmp_path, monkeypatch):
     #    fixture. Any code in the codebase reading ``~/.jarvis/*`` via
     #    ``Path.home() / ".jarvis"`` instead of ``get_jarvis_home()``
     #    is a bug to fix at the callsite.
-    fake_hermes_home = tmp_path / "hermes_test"
-    fake_hermes_home.mkdir()
-    (fake_hermes_home / "sessions").mkdir()
-    (fake_hermes_home / "cron").mkdir()
-    (fake_hermes_home / "memories").mkdir()
-    (fake_hermes_home / "skills").mkdir()
-    monkeypatch.setenv("JARVIS_HOME", str(fake_hermes_home))
+    fake_jarvis_home = tmp_path / "jarvis_test"
+    fake_jarvis_home.mkdir()
+    (fake_jarvis_home / "sessions").mkdir()
+    (fake_jarvis_home / "cron").mkdir()
+    (fake_jarvis_home / "memories").mkdir()
+    (fake_jarvis_home / "skills").mkdir()
+    monkeypatch.setenv("JARVIS_HOME", str(fake_jarvis_home))
 
     # 4. Deterministic locale / timezone / hashseed. CI runs in UTC with
     #    C.UTF-8 locale; local dev often doesn't. Pin everything.
@@ -381,7 +381,7 @@ def _isolate_jarvis_home(_hermetic_environment):
 
 
 @pytest.fixture
-def _isolate_hermes_home(_isolate_jarvis_home):
+def _isolate_jarvis_home(_isolate_jarvis_home):
     """Backward-compatible alias for tests that request the old name."""
     return None
 
@@ -628,7 +628,7 @@ def _live_system_guard(request, monkeypatch):
         monkeypatch.setattr(_os, "killpg", _guarded_killpg)
 
     # ── Subprocess command-string inspection (whole-line) ──────────
-    _HERMES_TOKENS = (
+    _JARVIS_TOKENS = (
         "jarvis-gateway",
         "jarvis.service",
         "jarvis_cli.main gateway",
@@ -660,15 +660,15 @@ def _live_system_guard(request, monkeypatch):
                 return ""
         return str(cmd)
 
-    def _matches_hermes_gateway(cmd_str: str) -> bool:
+    def _matches_jarvis_gateway(cmd_str: str) -> bool:
         low = cmd_str.lower()
-        return any(tok in low for tok in _HERMES_TOKENS)
+        return any(tok in low for tok in _JARVIS_TOKENS)
 
     def _is_blocked_systemctl(cmd) -> bool:
         cmd_str = _cmd_to_string(cmd)
         if "systemctl" not in cmd_str:
             return False
-        if not _matches_hermes_gateway(cmd_str):
+        if not _matches_jarvis_gateway(cmd_str):
             return False
         try:
             tokens = _shlex.split(cmd_str)

@@ -75,14 +75,14 @@ def _send_imap_id(imap: "imaplib.IMAP4") -> None:
     """
     try:
         try:
-            from jarvis_cli import __version__ as _hermes_version
+            from jarvis_cli import __version__ as _jarvis_version
         except Exception:  # noqa: BLE001 — keep ID best-effort if import fails
-            _hermes_version = "0"
+            _jarvis_version = "0"
         imap.xatom(
             "ID",
-            f'("name" "jarvis-agent" "version" "{_hermes_version}" '
-            '"vendor" "NousResearch" '
-            '"support-email" "noreply@nousresearch.com")',
+            f'("name" "jarvis-agent" "version" "{_jarvis_version}" '
+            '"vendor" "JARVISProject" '
+            '"support-email" "noreply@jarvis.local")',
         )
     except Exception as e:  # noqa: BLE001 — best-effort, never fatal
         logger.debug("[Email] IMAP ID command not accepted: %s", e)

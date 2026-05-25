@@ -25,7 +25,7 @@ jarvis chat -q "Hello"
 jarvis chat --model "anthropic/claude-sonnet-4"
 
 # With a specific provider
-jarvis chat --provider nous        # Use Nous Portal
+jarvis chat --provider jarvis_managed        # Use JARVIS Managed
 jarvis chat --provider openrouter  # Force OpenRouter
 
 # With specific toolsets

@@ -97,14 +97,14 @@ def _load_env() -> None:
     """Load .env from JARVIS_HOME (default ``~/.jarvis``)."""
     from jarvis_cli.env_loader import load_jarvis_dotenv
 
-    hermes_home = get_jarvis_home()
-    loaded = load_jarvis_dotenv(hermes_home=hermes_home)
+    jarvis_home = get_jarvis_home()
+    loaded = load_jarvis_dotenv(jarvis_home=jarvis_home)
     if loaded:
         for env_file in loaded:
             logging.getLogger(__name__).info("Loaded env from %s", env_file)
     else:
         logging.getLogger(__name__).info(
-            "No .env found at %s, using system env", hermes_home / ".env"
+            "No .env found at %s, using system env", jarvis_home / ".env"
         )
 
 
@@ -142,25 +142,25 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def _print_version() -> None:
-    from jarvis_cli import __version__ as hermes_version
+    from jarvis_cli import __version__ as jarvis_version
 
-    print(hermes_version)
+    print(jarvis_version)
 
 
 def _run_check() -> None:
     import acp  # noqa: F401
-    from acp_adapter.server import HermesACPAgent  # noqa: F401
+    from acp_adapter.server import JarvisACPAgent  # noqa: F401
 
     print("Jarvis ACP check OK")
 
 
 def _run_setup() -> None:
-    from jarvis_cli.main import main as hermes_main
+    from jarvis_cli.main import main as jarvis_main
 
     old_argv = sys.argv[:]
     try:
         sys.argv = [old_argv[0] if old_argv else "jarvis", "model"]
-        hermes_main()
+        jarvis_main()
     finally:
         sys.argv = old_argv
 
@@ -239,7 +239,7 @@ def main(argv: list[str] | None = None) -> None:
         sys.path.insert(0, project_root)
 
     import acp
-    from .server import HermesACPAgent
+    from .server import JarvisACPAgent
 
     # MCP tool discovery from config.yaml — run before asyncio.run() so
     # it's safe to use blocking waits.  (ACP also registers per-session
@@ -252,7 +252,7 @@ def main(argv: list[str] | None = None) -> None:
     except Exception:
         logger.debug("MCP tool discovery failed at ACP startup", exc_info=True)
 
-    agent = HermesACPAgent()
+    agent = JarvisACPAgent()
     try:
         asyncio.run(acp.run_agent(agent, use_unstable_protocol=True))
     except KeyboardInterrupt:

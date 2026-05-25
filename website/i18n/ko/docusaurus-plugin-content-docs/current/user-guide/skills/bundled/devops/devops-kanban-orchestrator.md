@@ -23,7 +23,7 @@ Kanban을 통해 작업을 라우팅하는 orchestrator profile을 위한 작업
 ## Reference: full SKILL.md
 
 :::info
-아래 내용은 이 skill이 트리거될 때 Hermes가 실제로 로드하는 **전체 skill 정의**입니다. 즉, skill이 활성화되었을 때 agent가 실제 지침으로 보는 텍스트입니다.
+아래 내용은 이 skill이 트리거될 때 Jarvis가 실제로 로드하는 **전체 skill 정의**입니다. 즉, skill이 활성화되었을 때 agent가 실제 지침으로 보는 텍스트입니다.
 :::
 
 # Kanban Orchestrator — 작업 분해 playbook

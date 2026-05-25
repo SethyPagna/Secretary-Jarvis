@@ -21,9 +21,9 @@ import { Toast } from "@/components/Toast";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { useToast } from "@/hooks/useToast";
 import { OAuthProvidersCard } from "@/components/OAuthProvidersCard";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
+import { Button } from "@jarvis_managed-research/ui/ui/components/button";
+import { ListItem } from "@jarvis_managed-research/ui/ui/components/list-item";
+import { Spinner } from "@jarvis_managed-research/ui/ui/components/spinner";
 import {
   Card,
   CardContent,
@@ -31,7 +31,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
+import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
@@ -45,7 +45,7 @@ import { PluginSlot } from "@/plugins";
 /** Map env-var key prefixes to a human-friendly provider name + ordering. */
 const PROVIDER_GROUPS: { prefix: string; name: string; priority: number }[] = [
   // Managed JARVIS credentials first; legacy env var prefix is kept for compatibility.
-  { prefix: "NOUS_", name: "JARVIS Managed", priority: 0 },
+  { prefix: "JARVIS_MANAGED_", name: "JARVIS Managed", priority: 0 },
   // Then alphabetical by display name
   { prefix: "ANTHROPIC_", name: "Anthropic", priority: 1 },
   { prefix: "DASHSCOPE_", name: "DashScope (Qwen)", priority: 2 },

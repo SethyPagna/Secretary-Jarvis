@@ -77,7 +77,7 @@ def _extract_inherited_flags(argv: Sequence[str]) -> list[str]:
     return flags
 
 
-def resolve_hermes_bin() -> Optional[str]:
+def resolve_jarvis_bin() -> Optional[str]:
     """Find the jarvis entry point.
 
     Priority:
@@ -136,7 +136,7 @@ def build_relaunch_argv(
         original_argv: The original argv to scan for flags (defaults to
             ``sys.argv[1:]``).
     """
-    bin_path = resolve_hermes_bin()
+    bin_path = resolve_jarvis_bin()
 
     if bin_path:
         argv = [bin_path]
@@ -195,7 +195,7 @@ def relaunch(
             # cryptic.  Common causes: ``jarvis`` not on PATH yet (install
             # hasn't propagated User PATH into this shell) or a stale shim.
             print(
-                f"\nHermes relaunch failed: {exc}\n"
+                f"\nJarvis relaunch failed: {exc}\n"
                 f"Command: {' '.join(new_argv)}\n"
                 f"Fix: open a new terminal so PATH picks up, then re-run jarvis.",
                 file=sys.stderr,

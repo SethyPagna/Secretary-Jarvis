@@ -43,10 +43,10 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { ListItem } from "@nous-research/ui/ui/components/list-item";
-import { SelectionSwitcher } from "@nous-research/ui/ui/components/selection-switcher";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
+import { Button } from "@jarvis_managed-research/ui/ui/components/button";
+import { ListItem } from "@jarvis_managed-research/ui/ui/components/list-item";
+import { SelectionSwitcher } from "@jarvis_managed-research/ui/ui/components/selection-switcher";
+import { Spinner } from "@jarvis_managed-research/ui/ui/components/spinner";
 import { cn } from "@/lib/utils";
 import { Backdrop } from "@/components/Backdrop";
 import { SidebarFooter } from "@/components/SidebarFooter";

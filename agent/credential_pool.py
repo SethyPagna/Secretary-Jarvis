@@ -165,15 +165,15 @@ class PooledCredential:
 
     @property
     def runtime_api_key(self) -> str:
-        if self.provider == "nous":
-            # Nous stores the runtime inference credential in agent_key for
+        if self.provider == "jarvis_managed":
+            # JARVIS Managed stores the runtime inference credential in agent_key for
             # compatibility. It may be a NAS invoke JWT or legacy opaque key.
             return str(self.agent_key or self.access_token or "")
         return str(self.access_token or "")
 
     @property
     def runtime_base_url(self) -> Optional[str]:
-        if self.provider == "nous":
+        if self.provider == "jarvis_managed":
             return self.inference_base_url or self.base_url
         return self.base_url
 
@@ -494,7 +494,7 @@ class CredentialPool:
         though fresh credentials are sitting on disk — and every request
         fails with "no available entries (all exhausted or empty)".
 
-        Mirrors the Nous/Anthropic resync paths above.  Only applies to
+        Mirrors the JARVIS Managed/Anthropic resync paths above.  Only applies to
         device_code-sourced entries; env/API-key-sourced entries have no
         auth.json shadow to sync from.
         """
@@ -603,22 +603,22 @@ class CredentialPool:
             logger.debug("Failed to sync xAI OAuth entry from auth.json: %s", exc)
         return entry
 
-    def _sync_nous_entry_from_auth_store(self, entry: PooledCredential) -> PooledCredential:
-        """Sync a Nous pool entry from auth.json if tokens differ.
+    def _sync_jarvis_managed_entry_from_auth_store(self, entry: PooledCredential) -> PooledCredential:
+        """Sync a JARVIS Managed pool entry from auth.json if tokens differ.
 
-        Nous OAuth refresh tokens are single-use.  When another process
+        JARVIS Managed OAuth refresh tokens are single-use.  When another process
         (e.g. a concurrent cron) refreshes the token via
-        ``resolve_nous_runtime_credentials``, it writes fresh tokens to
+        ``resolve_jarvis_managed_runtime_credentials``, it writes fresh tokens to
         auth.json under ``_auth_store_lock``.  The pool entry's tokens
         become stale.  This method detects that and adopts the newer pair,
-        avoiding a "refresh token reuse" revocation on the Nous Portal.
+        avoiding a "refresh token reuse" revocation on the JARVIS Managed.
         """
-        if self.provider != "nous" or entry.source != "device_code":
+        if self.provider != "jarvis_managed" or entry.source != "device_code":
             return entry
         try:
             with _auth_store_lock():
                 auth_store = _load_auth_store()
-                state = _load_provider_state(auth_store, "nous")
+                state = _load_provider_state(auth_store, "jarvis_managed")
             if not state:
                 return entry
             store_refresh = state.get("refresh_token", "")
@@ -637,7 +637,7 @@ class CredentialPool:
             )
             if should_sync:
                 logger.debug(
-                    "Pool entry %s: syncing Nous state from auth.json",
+                    "Pool entry %s: syncing JARVIS Managed state from auth.json",
                     entry.id,
                 )
                 field_updates: Dict[str, Any] = {
@@ -672,7 +672,7 @@ class CredentialPool:
                 self._persist()
                 return updated
         except Exception as exc:
-            logger.debug("Failed to sync Nous entry from auth.json: %s", exc)
+            logger.debug("Failed to sync JARVIS Managed entry from auth.json: %s", exc)
         return entry
 
     def _sync_device_code_entry_to_auth_store(self, entry: PooledCredential) -> None:
@@ -685,12 +685,12 @@ class CredentialPool:
         re-seeding a consumed single-use refresh token.
 
         Applies to any OAuth provider whose singleton lives in auth.json
-        (currently Nous, OpenAI Codex, and xAI Grok OAuth).
+        (currently JARVIS Managed, OpenAI Codex, and xAI Grok OAuth).
 
         ``set_active=False`` on every write: a pool sync-back is a
         token-rotation side effect, not the user choosing a provider.
         Using ``_save_provider_state`` (which sets ``active_provider``)
-        here would mean every Nous/Codex/xAI refresh in a multi-provider
+        here would mean every JARVIS Managed/Codex/xAI refresh in a multi-provider
         setup silently flips the ``active_provider`` flag — the next
         ``jarvis`` invocation that defaults to the active provider
         (e.g. setup wizard, ``jarvis auth status``) would land on
@@ -705,8 +705,8 @@ class CredentialPool:
         try:
             with _auth_store_lock():
                 auth_store = _load_auth_store()
-                if self.provider == "nous":
-                    state = _load_provider_state(auth_store, "nous")
+                if self.provider == "jarvis_managed":
+                    state = _load_provider_state(auth_store, "jarvis_managed")
                     if state is None:
                         return
                     state["access_token"] = entry.access_token
@@ -726,7 +726,7 @@ class CredentialPool:
                             state[extra_key] = val
                     if entry.inference_base_url:
                         state["inference_base_url"] = entry.inference_base_url
-                    _store_provider_state(auth_store, "nous", state, set_active=False)
+                    _store_provider_state(auth_store, "jarvis_managed", state, set_active=False)
 
                 elif self.provider == "openai-codex":
                     state = _load_provider_state(auth_store, "openai-codex")
@@ -775,7 +775,7 @@ class CredentialPool:
 
                 refreshed = refresh_anthropic_oauth_pure(
                     entry.refresh_token,
-                    use_json=entry.source.endswith("hermes_pkce"),
+                    use_json=entry.source.endswith("jarvis_pkce"),
                 )
                 updated = replace(
                     entry,
@@ -833,19 +833,19 @@ class CredentialPool:
                     refresh_token=refreshed["refresh_token"],
                     last_refresh=refreshed.get("last_refresh"),
                 )
-            elif self.provider == "nous":
-                synced = self._sync_nous_entry_from_auth_store(entry)
+            elif self.provider == "jarvis_managed":
+                synced = self._sync_jarvis_managed_entry_from_auth_store(entry)
                 if synced is not entry:
                     entry = synced
-                auth_mod.resolve_nous_runtime_credentials(
+                auth_mod.resolve_jarvis_managed_runtime_credentials(
                     min_key_ttl_seconds=DEFAULT_AGENT_KEY_MIN_TTL_SECONDS,
                     inference_auth_mode=(
-                        auth_mod.NOUS_INFERENCE_AUTH_MODE_LEGACY
+                        auth_mod.JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY
                         if force
-                        else auth_mod.NOUS_INFERENCE_AUTH_MODE_AUTO
+                        else auth_mod.JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO
                     ),
                 )
-                updated = self._sync_nous_entry_from_auth_store(entry)
+                updated = self._sync_jarvis_managed_entry_from_auth_store(entry)
             else:
                 return entry
         except Exception as exc:
@@ -861,7 +861,7 @@ class CredentialPool:
                         from agent.anthropic_adapter import refresh_anthropic_oauth_pure
                         refreshed = refresh_anthropic_oauth_pure(
                             synced.refresh_token,
-                            use_json=synced.source.endswith("hermes_pkce"),
+                            use_json=synced.source.endswith("jarvis_pkce"),
                         )
                         updated = replace(
                             synced,
@@ -890,7 +890,7 @@ class CredentialPool:
                     # Credentials file had a valid (non-expired) token — use it directly
                     logger.debug("Credentials file has valid token, using without refresh")
                     return synced
-            # For xai-oauth: same race as nous — another process may have
+            # For xai-oauth: same race as jarvis_managed — another process may have
             # consumed the refresh token between our proactive sync and the
             # HTTP call.  Re-check auth.json and adopt the fresh tokens if
             # they have rotated since.  Only meaningful for singleton-seeded
@@ -918,7 +918,7 @@ class CredentialPool:
                 # refresh_token is dead.  Clear it from auth.json so the next
                 # session does not re-seed the same revoked credentials, and
                 # remove all singleton-seeded (loopback_pkce) entries from the
-                # in-memory pool.  Mirrors the Nous quarantine path above.
+                # in-memory pool.  Mirrors the JARVIS Managed quarantine path above.
                 if auth_mod._is_terminal_xai_oauth_refresh_error(exc):
                     logger.debug(
                         "xAI OAuth refresh token is terminally invalid; clearing local token state"
@@ -958,7 +958,7 @@ class CredentialPool:
                         self._current_id = None
                     self._persist()
                     return None
-            # For openai-codex: same race as xAI/nous — another Jarvis process
+            # For openai-codex: same race as xAI/jarvis_managed — another Jarvis process
             # may have consumed the refresh token between our proactive sync
             # and the HTTP call.  Re-check auth.json and adopt the fresh tokens
             # if they have rotated since.
@@ -984,7 +984,7 @@ class CredentialPool:
                 # refresh_token is dead.  Clear it from auth.json so the next
                 # session does not re-seed the same revoked credentials, and
                 # remove all singleton-seeded (device_code) entries from the
-                # in-memory pool.  Mirrors the xAI and Nous quarantine paths.
+                # in-memory pool.  Mirrors the xAI and JARVIS Managed quarantine paths.
                 if auth_mod._is_terminal_codex_oauth_refresh_error(exc):
                     logger.debug(
                         "Codex OAuth refresh token is terminally invalid; clearing local token state"
@@ -1024,13 +1024,13 @@ class CredentialPool:
                         self._current_id = None
                     self._persist()
                     return None
-            # For nous: another process may have consumed the refresh token
+            # For jarvis_managed: another process may have consumed the refresh token
             # between our proactive sync and the HTTP call.  Re-sync from
             # auth.json and adopt the fresh tokens if available.
-            if self.provider == "nous":
-                synced = self._sync_nous_entry_from_auth_store(entry)
+            if self.provider == "jarvis_managed":
+                synced = self._sync_jarvis_managed_entry_from_auth_store(entry)
                 if synced.refresh_token != entry.refresh_token:
-                    logger.debug("Nous refresh failed but auth.json has newer tokens — adopting")
+                    logger.debug("JARVIS Managed refresh failed but auth.json has newer tokens — adopting")
                     updated = replace(
                         synced,
                         last_status=STATUS_OK,
@@ -1044,12 +1044,12 @@ class CredentialPool:
                     self._persist()
                     self._sync_device_code_entry_to_auth_store(updated)
                     return updated
-                if auth_mod._is_terminal_nous_refresh_error(exc):
-                    logger.debug("Nous refresh token is terminally invalid; clearing local token state")
+                if auth_mod._is_terminal_jarvis_managed_refresh_error(exc):
+                    logger.debug("JARVIS Managed refresh token is terminally invalid; clearing local token state")
                     try:
                         with _auth_store_lock():
                             auth_store = _load_auth_store()
-                            state = _load_provider_state(auth_store, "nous") or {
+                            state = _load_provider_state(auth_store, "jarvis_managed") or {
                                 "client_id": entry.client_id,
                                 "portal_base_url": entry.portal_base_url,
                                 "inference_base_url": entry.inference_base_url,
@@ -1060,24 +1060,24 @@ class CredentialPool:
                             store_refresh = str(state.get("refresh_token") or "").strip()
                             entry_refresh = str(entry.refresh_token or "").strip()
                             if not store_refresh or store_refresh == entry_refresh:
-                                auth_mod._quarantine_nous_oauth_state(
+                                auth_mod._quarantine_jarvis_managed_oauth_state(
                                     state,
                                     exc,
                                     reason="credential_pool_refresh_failure",
                                 )
-                                auth_mod._quarantine_nous_pool_entries(
+                                auth_mod._quarantine_jarvis_managed_pool_entries(
                                     auth_store,
                                     exc,
                                     reason="credential_pool_refresh_failure",
                                 )
-                                _save_provider_state(auth_store, "nous", state)
+                                _save_provider_state(auth_store, "jarvis_managed", state)
                                 _save_auth_store(auth_store)
                     except Exception as clear_exc:
-                        logger.debug("Failed to clear terminal Nous OAuth state: %s", clear_exc)
+                        logger.debug("Failed to clear terminal JARVIS Managed OAuth state: %s", clear_exc)
 
                     singleton_sources = {
-                        auth_mod.NOUS_DEVICE_CODE_SOURCE,
-                        f"manual:{auth_mod.NOUS_DEVICE_CODE_SOURCE}",
+                        auth_mod.JARVIS_MANAGED_DEVICE_CODE_SOURCE,
+                        f"manual:{auth_mod.JARVIS_MANAGED_DEVICE_CODE_SOURCE}",
                     }
                     self._entries = [
                         item for item in self._entries
@@ -1124,8 +1124,8 @@ class CredentialPool:
                 entry.access_token,
                 auth_mod.XAI_ACCESS_TOKEN_REFRESH_SKEW_SECONDS,
             )
-        if self.provider == "nous":
-            # Nous refresh/mint can require network access and should happen when
+        if self.provider == "jarvis_managed":
+            # JARVIS Managed refresh/mint can require network access and should happen when
             # runtime credentials are actually resolved, not merely when the pool
             # is enumerated for listing, migration, or selection.
             return False
@@ -1155,14 +1155,14 @@ class CredentialPool:
                 if synced is not entry:
                     entry = synced
                     cleared_any = True
-            # For nous entries, sync from auth.json before status checks.
+            # For jarvis_managed entries, sync from auth.json before status checks.
             # Another process may have successfully refreshed via
-            # resolve_nous_runtime_credentials(), making this entry's
+            # resolve_jarvis_managed_runtime_credentials(), making this entry's
             # exhausted status stale.
-            if (self.provider == "nous"
+            if (self.provider == "jarvis_managed"
                     and entry.source == "device_code"
                     and entry.last_status == STATUS_EXHAUSTED):
-                synced = self._sync_nous_entry_from_auth_store(entry)
+                synced = self._sync_jarvis_managed_entry_from_auth_store(entry)
                 if synced is not entry:
                     entry = synced
                     cleared_any = True
@@ -1445,7 +1445,7 @@ def _normalize_pool_priorities(provider: str, entries: List[PooledCredential]) -
     source_rank = {
         "env:ANTHROPIC_TOKEN": 0,
         "env:CLAUDE_CODE_OAUTH_TOKEN": 1,
-        "hermes_pkce": 2,
+        "jarvis_pkce": 2,
         "claude_code": 3,
         "env:ANTHROPIC_API_KEY": 4,
     }
@@ -1497,10 +1497,10 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
         except ImportError:
             pass
 
-        from agent.anthropic_adapter import read_claude_code_credentials, read_hermes_oauth_credentials
+        from agent.anthropic_adapter import read_claude_code_credentials, read_jarvis_oauth_credentials
 
         for source_name, creds in (
-            ("hermes_pkce", read_hermes_oauth_credentials()),
+            ("jarvis_pkce", read_jarvis_oauth_credentials()),
             ("claude_code", read_claude_code_credentials()),
         ):
             if creds and creds.get("accessToken"):
@@ -1521,8 +1521,8 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
                     },
                 )
 
-    elif provider == "nous":
-        state = _load_provider_state(auth_store, "nous")
+    elif provider == "jarvis_managed":
+        state = _load_provider_state(auth_store, "jarvis_managed")
         has_runtime_material = bool(
             isinstance(state, dict)
             and (
@@ -1541,8 +1541,8 @@ def _seed_from_singletons(provider: str, entries: List[PooledCredential]) -> Tup
         if state and has_runtime_material and not _is_suppressed(provider, "device_code"):
             active_sources.add("device_code")
             # Prefer a user-supplied label embedded in the singleton state
-            # (set by persist_nous_credentials(label=...) when the user ran
-            # `jarvis auth add nous --label <name>`).  Fall back to the
+            # (set by persist_jarvis_managed_credentials(label=...) when the user ran
+            # `jarvis auth add jarvis_managed --label <name>`).  Fall back to the
             # auto-derived token fingerprint for logins that didn't supply one.
             custom_label = str(state.get("label") or "").strip()
             seeded_label = custom_label or label_from_token(
@@ -1848,7 +1848,7 @@ def _prune_stale_seeded_entries(entries: List[PooledCredential], active_sources:
         or entry.source in active_sources
         or not (
             entry.source.startswith("env:")
-            or entry.source in {"claude_code", "hermes_pkce"}
+            or entry.source in {"claude_code", "jarvis_pkce"}
         )
     ]
     if len(retained) == len(entries):

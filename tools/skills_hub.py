@@ -442,9 +442,9 @@ class GitHubSource(SkillSource):
         tags = []
         metadata = fm.get("metadata", {})
         if isinstance(metadata, dict):
-            hermes_meta = metadata.get("jarvis", {})
-            if isinstance(hermes_meta, dict):
-                tags = hermes_meta.get("tags", [])
+            jarvis_meta = metadata.get("jarvis", {})
+            if isinstance(jarvis_meta, dict):
+                tags = jarvis_meta.get("tags", [])
         if not tags:
             raw_tags = fm.get("tags", [])
             tags = raw_tags if isinstance(raw_tags, list) else []
@@ -1037,9 +1037,9 @@ class UrlSource(SkillSource):
         tags: List[str] = []
         metadata = fm.get("metadata", {})
         if isinstance(metadata, dict):
-            hermes_meta = metadata.get("jarvis", {})
-            if isinstance(hermes_meta, dict):
-                raw_tags = hermes_meta.get("tags", [])
+            jarvis_meta = metadata.get("jarvis", {})
+            if isinstance(jarvis_meta, dict):
+                raw_tags = jarvis_meta.get("tags", [])
                 if isinstance(raw_tags, list):
                     tags = [str(t) for t in raw_tags]
         return SkillMeta(
@@ -2536,7 +2536,7 @@ class OptionalSkillSource(SkillSource):
     """
     Fetch skills from the optional-skills/ directory shipped with the repo.
 
-    These skills are official (maintained by Nous Research) but not activated
+    These skills are official (maintained by JARVIS Project) but not activated
     by default — they don't appear in the system prompt and aren't copied to
     ~/.jarvis/skills/ during setup.  They are discoverable via the Skills Hub
     (search / install / inspect) and labelled "official" with "builtin" trust.
@@ -2668,9 +2668,9 @@ class OptionalSkillSource(SkillSource):
             tags = []
             meta_block = fm.get("metadata", {})
             if isinstance(meta_block, dict):
-                hermes_meta = meta_block.get("jarvis", {})
-                if isinstance(hermes_meta, dict):
-                    tags = hermes_meta.get("tags", [])
+                jarvis_meta = meta_block.get("jarvis", {})
+                if isinstance(jarvis_meta, dict):
+                    tags = jarvis_meta.get("tags", [])
 
             rel_path = str(parent.relative_to(self._optional_dir))
 
@@ -3100,12 +3100,12 @@ def check_for_skill_updates(
 # Jarvis centralized index source
 # ---------------------------------------------------------------------------
 
-JARVIS_INDEX_URL = "https://jarvis-agent.nousresearch.com/docs/api/skills-index.json"
+JARVIS_INDEX_URL = "https://jarvis-agent.jarvis.local/docs/api/skills-index.json"
 JARVIS_INDEX_CACHE_FILE = INDEX_CACHE_DIR / "jarvis-index.json"
 JARVIS_INDEX_TTL = 6 * 3600  # 6 hours
 
 
-def _load_hermes_index() -> Optional[dict]:
+def _load_jarvis_index() -> Optional[dict]:
     """Fetch the centralized skills index, with local cache.
 
     The index is a JSON file hosted on the docs site, rebuilt daily by CI.
@@ -3156,7 +3156,7 @@ def _load_stale_index_cache() -> Optional[dict]:
     return None
 
 
-class HermesIndexSource(SkillSource):
+class JarvisIndexSource(SkillSource):
     """Skill source backed by the centralized Jarvis Skills Index.
 
     The index is a JSON catalog published to the docs site and rebuilt
@@ -3178,7 +3178,7 @@ class HermesIndexSource(SkillSource):
 
     def _ensure_loaded(self) -> dict:
         if not self._loaded:
-            self._index = _load_hermes_index()
+            self._index = _load_jarvis_index()
             self._loaded = True
         return self._index or {}
 
@@ -3325,7 +3325,7 @@ def create_source_router(auth: Optional[GitHubAuth] = None) -> List[SkillSource]
 
     sources: List[SkillSource] = [
         OptionalSkillSource(),        # Official optional skills (highest priority)
-        HermesIndexSource(auth=auth), # Centralized index (search + resolved install paths)
+        JarvisIndexSource(auth=auth), # Centralized index (search + resolved install paths)
         SkillsShSource(auth=auth),
         WellKnownSkillSource(),
         UrlSource(),                  # Direct HTTP(S) URL to a SKILL.md file

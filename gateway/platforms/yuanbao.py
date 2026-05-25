@@ -98,12 +98,12 @@ logger = logging.getLogger(__name__)
 # Version / platform constants (used in AUTH_BIND and sign-token headers)
 # ---------------------------------------------------------------------------
 try:
-    from jarvis_cli import __version__ as _HERMES_VERSION
+    from jarvis_cli import __version__ as _JARVIS_VERSION
 except ImportError:
-    _HERMES_VERSION = "0.0.0"
+    _JARVIS_VERSION = "0.0.0"
 
-_APP_VERSION = _HERMES_VERSION
-_BOT_VERSION = _HERMES_VERSION
+_APP_VERSION = _JARVIS_VERSION
+_BOT_VERSION = _JARVIS_VERSION
 _YUANBAO_INSTANCE_ID = str(JARVIS_INSTANCE_ID)  # single source: yuanbao_proto.JARVIS_INSTANCE_ID
 _OPERATION_SYSTEM = sys.platform
 

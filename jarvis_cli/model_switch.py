@@ -63,7 +63,7 @@ _LEGACY_NON_AGENTIC_MODEL_WARNING = (
 # happen to carry "jarvis" in their tag but are fully tool-capable.
 #
 # Positive examples the regex must match:
-#   NousResearch/Jarvis-3-Llama-3.1-70B, jarvis-4-405b, openrouter/hermes3:70b
+#   JARVISProject/Jarvis-3-Llama-3.1-70B, jarvis-4-405b, openrouter/jarvis3:70b
 # Negative examples it must NOT match:
 #   jarvis-brain:qwen3-14b-ctx16k, qwen3:14b, claude-opus-4-6
 _LEGACY_JARVIS_NON_AGENTIC_RE = re.compile(
@@ -84,7 +84,7 @@ def is_legacy_jarvis_non_agentic(model_name: str) -> bool:
     return bool(_LEGACY_JARVIS_NON_AGENTIC_RE.search(model_name))
 
 
-def is_nous_hermes_non_agentic(model_name: str) -> bool:
+def is_jarvis_managed_jarvis_non_agentic(model_name: str) -> bool:
     """Backward-compatible alias for old imports."""
     return is_legacy_jarvis_non_agentic(model_name)
 
@@ -96,7 +96,7 @@ def _check_jarvis_model_warning(model_name: str) -> str:
     return ""
 
 
-def _check_hermes_model_warning(model_name: str) -> str:
+def _check_jarvis_model_warning(model_name: str) -> str:
     """Backward-compatible alias for old imports."""
     return _check_jarvis_model_warning(model_name)
 
@@ -562,10 +562,10 @@ def _resolve_alias_fallback(
 ) -> Optional[tuple[str, str, str]]:
     """Try to resolve an alias on the user's authenticated providers.
 
-    Falls back to ``("openrouter", "nous")`` only when no authenticated
+    Falls back to ``("openrouter", "jarvis_managed")`` only when no authenticated
     providers are supplied (backwards compat for non-interactive callers).
     """
-    providers = authenticated_providers or ("openrouter", "nous")
+    providers = authenticated_providers or ("openrouter", "jarvis_managed")
     for provider in providers:
         result = resolve_alias(raw_input, provider)
         if result is not None:
@@ -588,7 +588,7 @@ def resolve_display_context_length(
     but provider-enforced limits can be lower (e.g. Codex OAuth caps the
     same slug at 272k). The authoritative source is
     ``agent.model_metadata.get_model_context_length`` which already knows
-    about Codex OAuth, Copilot, Nous, and falls back to models.dev for the
+    about Codex OAuth, Copilot, JARVIS Managed, and falls back to models.dev for the
     rest.
 
     When ``custom_providers`` is provided, per-model ``context_length``
@@ -1028,9 +1028,9 @@ def switch_model(
     warnings: list[str] = []
     if validation.get("message"):
         warnings.append(validation["message"])
-    hermes_warn = _check_hermes_model_warning(new_model)
-    if hermes_warn:
-        warnings.append(hermes_warn)
+    jarvis_warn = _check_jarvis_model_warning(new_model)
+    if jarvis_warn:
+        warnings.append(jarvis_warn)
 
     # --- Build result ---
     return ModelSwitchResult(
@@ -1089,7 +1089,7 @@ def list_authenticated_providers(
     from jarvis_cli.models import (
         OPENROUTER_MODELS, _PROVIDER_MODELS,
         _MODELS_DEV_PREFERRED, _merge_with_models_dev, provider_model_ids,
-        get_curated_nous_model_ids,
+        get_curated_jarvis_managed_model_ids,
     )
 
     results: List[dict] = []
@@ -1171,12 +1171,12 @@ def list_authenticated_providers(
     # Build curated model lists keyed by jarvis provider ID
     curated: dict[str, list[str]] = dict(_PROVIDER_MODELS)
     curated["openrouter"] = [mid for mid, _ in OPENROUTER_MODELS]
-    # "nous" pulls from the remote model-catalog manifest published at
+    # "jarvis_managed" pulls from the remote model-catalog manifest published at
     # the JARVIS model catalog so
     # newly added Portal models surface in the /model picker without
     # requiring a Jarvis release. Falls back to the in-repo
-    # _PROVIDER_MODELS["nous"] snapshot when the manifest is unreachable.
-    curated["nous"] = get_curated_nous_model_ids()
+    # _PROVIDER_MODELS["jarvis_managed"] snapshot when the manifest is unreachable.
+    curated["jarvis_managed"] = get_curated_jarvis_managed_model_ids()
     # Ollama Cloud uses dynamic discovery (no static curated list)
     if "ollama-cloud" not in curated:
         from jarvis_cli.models import fetch_ollama_cloud_models
@@ -1211,7 +1211,7 @@ def list_authenticated_providers(
         curated["lmstudio"] = live
 
     # --- 1. Check Jarvis-mapped providers ---
-    for hermes_id, mdev_id in PROVIDER_TO_MODELS_DEV.items():
+    for jarvis_id, mdev_id in PROVIDER_TO_MODELS_DEV.items():
         # Skip aliases that map to the same models.dev provider (e.g.
         # kimi-coding and kimi-coding-cn both → kimi-for-coding).
         # The first one with valid credentials wins (#10526).
@@ -1224,7 +1224,7 @@ def list_authenticated_providers(
         # Prefer auth.py PROVIDER_REGISTRY for env var names — it's our
         # source of truth.  models.dev can have wrong mappings (e.g.
         # minimax-cn → MINIMAX_API_KEY instead of MINIMAX_CN_API_KEY).
-        pconfig = PROVIDER_REGISTRY.get(hermes_id)
+        pconfig = PROVIDER_REGISTRY.get(jarvis_id)
         # Skip non-API-key auth providers here — they are handled in
         # section 2 (JARVIS_OVERLAYS) with proper auth store checking.
         if pconfig and pconfig.auth_type != "api_key":
@@ -1242,7 +1242,7 @@ def list_authenticated_providers(
             try:
                 from jarvis_cli.auth import _load_auth_store
                 store = _load_auth_store()
-                if store and store.get("credential_pool", {}).get(hermes_id):
+                if store and store.get("credential_pool", {}).get(jarvis_id):
                     has_creds = True
             except Exception:
                 pass
@@ -1253,13 +1253,13 @@ def list_authenticated_providers(
         # For preferred providers, merge models.dev entries into the curated
         # catalog so newly released models (e.g. mimo-v2.5-pro on opencode-go)
         # show up in the picker without requiring a Jarvis release.
-        model_ids = curated.get(hermes_id, [])
-        if hermes_id in _MODELS_DEV_PREFERRED:
-            model_ids = _merge_with_models_dev(hermes_id, model_ids)
+        model_ids = curated.get(jarvis_id, [])
+        if jarvis_id in _MODELS_DEV_PREFERRED:
+            model_ids = _merge_with_models_dev(jarvis_id, model_ids)
         total = len(model_ids)
         top = model_ids[:max_models]
 
-        slug = hermes_id
+        slug = jarvis_id
         pinfo = _mdev_pinfo(mdev_id)
         display_name = pinfo.name if pinfo else mdev_id
 
@@ -1276,33 +1276,33 @@ def list_authenticated_providers(
         seen_mdev_ids.add(mdev_id)
         _record_builtin_endpoint(slug)
 
-    # --- 2. Check Jarvis-only providers (nous, openai-codex, copilot, opencode-go) ---
+    # --- 2. Check Jarvis-only providers (jarvis_managed, openai-codex, copilot, opencode-go) ---
     from jarvis_cli.providers import JARVIS_OVERLAYS
     from jarvis_cli.auth import PROVIDER_REGISTRY as _auth_registry
 
     # Build reverse mapping: models.dev ID → Jarvis provider ID.
     # JARVIS_OVERLAYS keys may be models.dev IDs (e.g. "github-copilot")
     # while _PROVIDER_MODELS and config.yaml use Jarvis IDs ("copilot").
-    _mdev_to_hermes = {v: k for k, v in PROVIDER_TO_MODELS_DEV.items()}
+    _mdev_to_jarvis = {v: k for k, v in PROVIDER_TO_MODELS_DEV.items()}
 
     for pid, overlay in JARVIS_OVERLAYS.items():
         if pid.lower() in seen_slugs:
             continue
 
         # Resolve Jarvis slug — e.g. "github-copilot" → "copilot"
-        hermes_slug = _mdev_to_hermes.get(pid, pid)
-        if hermes_slug.lower() in seen_slugs:
+        jarvis_slug = _mdev_to_jarvis.get(pid, pid)
+        if jarvis_slug.lower() in seen_slugs:
             continue
 
         # Check if credentials exist
         has_creds = False
         if overlay.auth_type == "aws_sdk":
-            has_creds = _has_aws_sdk_creds_for_listing(hermes_slug)
+            has_creds = _has_aws_sdk_creds_for_listing(jarvis_slug)
         elif overlay.extra_env_vars:
             has_creds = any(os.environ.get(ev) for ev in overlay.extra_env_vars)
         # Also check api_key_env_vars from PROVIDER_REGISTRY for api_key auth_type
         if not has_creds and overlay.auth_type == "api_key":
-            for _key in (pid, hermes_slug):
+            for _key in (pid, jarvis_slug):
                 pcfg = _auth_registry.get(_key)
                 if pcfg and pcfg.api_key_env_vars:
                     if any(os.environ.get(ev) for ev in pcfg.api_key_env_vars):
@@ -1317,7 +1317,7 @@ def list_authenticated_providers(
                 from jarvis_cli.auth import _load_auth_store
                 store = _load_auth_store()
                 providers_store = store.get("providers", {})
-                if store and (pid in providers_store or hermes_slug in providers_store):
+                if store and (pid in providers_store or jarvis_slug in providers_store):
                     has_creds = True
             except Exception as exc:
                 logger.debug("Auth store check failed for %s: %s", pid, exc)
@@ -1328,11 +1328,11 @@ def list_authenticated_providers(
         if not has_creds:
             try:
                 from agent.credential_pool import load_pool
-                pool = load_pool(hermes_slug)
+                pool = load_pool(jarvis_slug)
                 if pool.has_credentials():
                     has_creds = True
             except Exception as exc:
-                logger.debug("Credential pool check failed for %s: %s", hermes_slug, exc)
+                logger.debug("Credential pool check failed for %s: %s", jarvis_slug, exc)
         # Fallback: check external credential files directly.
         # The credential pool gates anthropic behind
         # is_provider_explicitly_configured() to prevent auxiliary tasks
@@ -1340,15 +1340,15 @@ def list_authenticated_providers(
         # But the /model picker is discovery-oriented — we WANT to show
         # providers the user can switch to, even if they aren't currently
         # configured.
-        if not has_creds and hermes_slug == "anthropic":
+        if not has_creds and jarvis_slug == "anthropic":
             try:
                 from agent.anthropic_adapter import (
                     read_claude_code_credentials,
-                    read_hermes_oauth_credentials,
+                    read_jarvis_oauth_credentials,
                 )
-                hermes_creds = read_hermes_oauth_credentials()
+                jarvis_creds = read_jarvis_oauth_credentials()
                 cc_creds = read_claude_code_credentials()
-                if (hermes_creds and hermes_creds.get("accessToken")) or \
+                if (jarvis_creds and jarvis_creds.get("accessToken")) or \
                    (cc_creds and cc_creds.get("accessToken")):
                     has_creds = True
             except Exception as exc:
@@ -1356,7 +1356,7 @@ def list_authenticated_providers(
         if not has_creds:
             continue
 
-        if hermes_slug in {"openai-codex", "copilot", "copilot-acp"}:
+        if jarvis_slug in {"openai-codex", "copilot", "copilot-acp"}:
             # Use live OAuth-backed discovery so the gateway /model picker
             # matches what the user's authenticated Codex/Copilot backend
             # actually serves — including ChatGPT-Pro-only Codex slugs
@@ -1364,37 +1364,37 @@ def list_authenticated_providers(
             # catalog. ``provider_model_ids()`` falls back to the curated
             # list when the live endpoint is unreachable, so this is safe
             # for unauthenticated and offline cases too.
-            model_ids = provider_model_ids(hermes_slug)
+            model_ids = provider_model_ids(jarvis_slug)
         # For aws_sdk providers (bedrock), use live discovery so the list
         # reflects the active region (eu.*, ap.*) not the static us.* list.
         elif overlay.auth_type == "aws_sdk":
             try:
                 from agent.bedrock_adapter import bedrock_model_ids_or_none
                 _ids = bedrock_model_ids_or_none()
-                model_ids = _ids if _ids is not None else (curated.get(hermes_slug, []) or curated.get(pid, []))
+                model_ids = _ids if _ids is not None else (curated.get(jarvis_slug, []) or curated.get(pid, []))
             except Exception:
-                model_ids = curated.get(hermes_slug, []) or curated.get(pid, [])
+                model_ids = curated.get(jarvis_slug, []) or curated.get(pid, [])
         else:
             # Use curated list — look up by Jarvis slug, fall back to overlay key
-            model_ids = curated.get(hermes_slug, []) or curated.get(pid, [])
+            model_ids = curated.get(jarvis_slug, []) or curated.get(pid, [])
             # Merge with models.dev for preferred providers (same rationale as above).
-            if hermes_slug in _MODELS_DEV_PREFERRED:
-                model_ids = _merge_with_models_dev(hermes_slug, model_ids)
+            if jarvis_slug in _MODELS_DEV_PREFERRED:
+                model_ids = _merge_with_models_dev(jarvis_slug, model_ids)
         total = len(model_ids)
         top = model_ids[:max_models]
 
         results.append({
-            "slug": hermes_slug,
-            "name": get_label(hermes_slug),
-            "is_current": hermes_slug == current_provider or pid == current_provider,
+            "slug": jarvis_slug,
+            "name": get_label(jarvis_slug),
+            "is_current": jarvis_slug == current_provider or pid == current_provider,
             "is_user_defined": False,
             "models": top,
             "total_models": total,
             "source": "jarvis",
         })
         seen_slugs.add(pid.lower())
-        seen_slugs.add(hermes_slug.lower())
-        _record_builtin_endpoint(hermes_slug)
+        seen_slugs.add(jarvis_slug.lower())
+        _record_builtin_endpoint(jarvis_slug)
 
     # --- 2b. Cross-check canonical provider list ---
     # Catches providers that are in CANONICAL_PROVIDERS but weren't found

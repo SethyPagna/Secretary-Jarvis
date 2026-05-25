@@ -23,11 +23,11 @@ import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { useModalBehavior } from "@/hooks/useModalBehavior";
 import { Toast } from "@/components/Toast";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
+import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
+import { Button } from "@jarvis_managed-research/ui/ui/components/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
+import { Checkbox } from "@jarvis_managed-research/ui/ui/components/checkbox";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { cn, themedBody } from "@/lib/utils";
@@ -339,7 +339,7 @@ export default function ProfilesPage() {
                 <Checkbox
                   checked={cloneFromDefault}
                   id="clone-from-default"
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: boolean | "indeterminate") =>
                     setCloneFromDefault(checked === true)
                   }
                 />

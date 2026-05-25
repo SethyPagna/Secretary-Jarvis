@@ -104,7 +104,7 @@ def adapter():
         tree=FakeTree(),
         get_channel=lambda _id: None,
         fetch_channel=AsyncMock(),
-        user=SimpleNamespace(id=99999, name="HermesBot"),
+        user=SimpleNamespace(id=99999, name="JarvisBot"),
     )
     adapter._text_batch_delay_seconds = 0  # disable batching for tests
     # Slash auth is exercised in test_discord_slash_auth.py — bypass it here
@@ -537,7 +537,7 @@ async def test_auto_create_thread_strips_mention_syntax_from_name(adapter):
 
 
 @pytest.mark.asyncio
-async def test_auto_create_thread_falls_back_to_hermes_when_only_mentions(adapter):
+async def test_auto_create_thread_falls_back_to_jarvis_when_only_mentions(adapter):
     """If a message contains only mention syntax, the stripped content is
     empty — fall back to the 'Jarvis' default rather than ''."""
     thread = SimpleNamespace(id=999, name="Jarvis")
@@ -761,15 +761,15 @@ def test_discord_auto_thread_config_bridge(monkeypatch, tmp_path):
     from pathlib import Path
 
     # Write a config.yaml the loader will find
-    hermes_dir = tmp_path / ".jarvis"
-    hermes_dir.mkdir()
-    config_path = hermes_dir / "config.yaml"
+    jarvis_dir = tmp_path / ".jarvis"
+    jarvis_dir.mkdir()
+    config_path = jarvis_dir / "config.yaml"
     config_path.write_text(yaml.dump({
         "discord": {"auto_thread": True},
     }))
 
     monkeypatch.delenv("DISCORD_AUTO_THREAD", raising=False)
-    monkeypatch.setenv("JARVIS_HOME", str(hermes_dir))
+    monkeypatch.setenv("JARVIS_HOME", str(jarvis_dir))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
     from gateway.config import load_gateway_config

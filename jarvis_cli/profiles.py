@@ -233,12 +233,6 @@ def _get_default_jarvis_home() -> Path:
     from jarvis_constants import get_default_jarvis_root
     return get_default_jarvis_root()
 
-
-def _get_default_hermes_home() -> Path:
-    """Backward-compatible alias for older tests/imports."""
-    return _get_default_jarvis_home()
-
-
 def _get_active_profile_path() -> Path:
     """Return the path to the sticky active_profile file."""
     return _get_default_jarvis_home() / "active_profile"
@@ -1109,8 +1103,8 @@ def get_active_profile_name() -> str:
     Returns ``"custom"`` if JARVIS_HOME is set to an unrecognized path.
     """
     from jarvis_constants import get_jarvis_home
-    hermes_home = get_jarvis_home()
-    resolved = hermes_home.resolve()
+    jarvis_home = get_jarvis_home()
+    resolved = jarvis_home.resolve()
 
     default_resolved = _get_default_jarvis_home().resolve()
     if resolved == default_resolved:
@@ -1320,7 +1314,7 @@ def import_profile(archive_path: str, name: Optional[str] = None) -> Path:
     profiles_root = _get_profiles_root()
     profiles_root.mkdir(parents=True, exist_ok=True)
 
-    with tempfile.TemporaryDirectory(prefix="hermes_profile_import_") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="jarvis_profile_import_") as tmpdir:
         staging_root = Path(tmpdir)
         _safe_extract_profile_archive(archive, staging_root)
 

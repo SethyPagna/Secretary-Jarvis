@@ -260,20 +260,20 @@ def uninstall_gateway_service():
 # or open a new terminal anyway).
 
 
-def _hermes_path_markers(hermes_home: Path) -> list[str]:
+def _jarvis_path_markers(jarvis_home: Path) -> list[str]:
     """Path-entry substrings that identify Jarvis-owned User-PATH entries."""
-    root = str(hermes_home).rstrip("\\/")
+    root = str(jarvis_home).rstrip("\\/")
     # Match on prefix so sub-entries (git\cmd, git\bin, git\usr\bin, node, etc.)
     # all get swept.  Also match the bare jarvis-agent install dir.
     markers = [root + "\\jarvis-agent", root + "\\git", root + "\\node", root + "\\venv"]
     # Also match if JARVIS_HOME was customised to somewhere else — find-and-nuke
     # any entry whose path component contains "jarvis".  We don't want to catch
-    # unrelated entries like "chermes-foo" or "ephermeral", so we look for
+    # unrelated entries like "cjarvis-foo" or "ephermeral", so we look for
     # backslash-jarvis as a word-ish boundary.
     return markers
 
 
-def remove_path_from_windows_registry(hermes_home: Path) -> list[str]:
+def remove_path_from_windows_registry(jarvis_home: Path) -> list[str]:
     """Strip Jarvis-owned entries from User-scope PATH in the registry.
 
     Returns the list of removed path entries.  Operates on HKCU\\Environment,
@@ -295,7 +295,7 @@ def remove_path_from_windows_registry(hermes_home: Path) -> list[str]:
                 return []
             # Preserve REG_EXPAND_SZ vs REG_SZ so unexpanded %VARS% survive.
             entries = [e for e in path_value.split(";") if e]
-            markers = _hermes_path_markers(hermes_home)
+            markers = _jarvis_path_markers(jarvis_home)
             kept: list[str] = []
             for entry in entries:
                 entry_norm = entry.rstrip("\\/")
@@ -312,7 +312,7 @@ def remove_path_from_windows_registry(hermes_home: Path) -> list[str]:
     return removed
 
 
-def remove_hermes_env_vars_windows() -> list[str]:
+def remove_jarvis_env_vars_windows() -> list[str]:
     """Delete JARVIS_HOME and JARVIS_GIT_BASH_PATH from User-scope env vars."""
     try:
         import winreg
@@ -338,13 +338,13 @@ def remove_hermes_env_vars_windows() -> list[str]:
     return removed
 
 
-def remove_portable_tooling_windows(hermes_home: Path) -> list[Path]:
+def remove_portable_tooling_windows(jarvis_home: Path) -> list[Path]:
     """Delete PortableGit and Node installs the Windows installer created under
     ``%LOCALAPPDATA%\\jarvis\\``.  Only called on full uninstall; they're
     isolated from any system Git / Node so they cannot break other tools."""
     removed: list[Path] = []
     for sub in ("git", "node", "gateway-service"):
-        target = hermes_home / sub
+        target = jarvis_home / sub
         if target.exists():
             try:
                 shutil.rmtree(target, ignore_errors=False)
@@ -359,11 +359,11 @@ def _is_windows() -> bool:
     return sys.platform == "win32"
 
 
-def _is_default_hermes_home(hermes_home: Path) -> bool:
-    """Return True when ``hermes_home`` points at the default (non-profile) root."""
+def _is_default_jarvis_home(jarvis_home: Path) -> bool:
+    """Return True when ``jarvis_home`` points at the default (non-profile) root."""
     try:
         from jarvis_constants import get_default_jarvis_root
-        return hermes_home.resolve() == get_default_jarvis_root().resolve()
+        return jarvis_home.resolve() == get_default_jarvis_root().resolve()
     except Exception:
         return False
 
@@ -400,11 +400,11 @@ def _uninstall_profile(profile) -> None:
     # 1. Stop and remove this profile's gateway service.
     #    Use `python -m jarvis_cli.main` so we don't depend on a `jarvis`
     #    wrapper that may be half-removed mid-uninstall.
-    hermes_invocation = [_sys.executable, "-m", "jarvis_cli.main", "--profile", name]
+    jarvis_invocation = [_sys.executable, "-m", "jarvis_cli.main", "--profile", name]
     for subcmd in ("stop", "uninstall"):
         try:
             subprocess.run(
-                hermes_invocation + ["gateway", subcmd],
+                jarvis_invocation + ["gateway", subcmd],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -442,12 +442,12 @@ def run_uninstall(args):
     - Keep data: removes code but keeps ~/.jarvis/ for future reinstall
     """
     project_root = get_project_root()
-    hermes_home = get_jarvis_home()
+    jarvis_home = get_jarvis_home()
 
     # Detect named profiles when uninstalling from the default root —
     # offer to clean them up too instead of leaving zombie JARVIS_HOMEs
     # and systemd units behind.
-    is_default_profile = _is_default_hermes_home(hermes_home)
+    is_default_profile = _is_default_jarvis_home(jarvis_home)
     named_profiles = _discover_named_profiles() if is_default_profile else []
 
     print()
@@ -459,9 +459,9 @@ def run_uninstall(args):
     # Show what will be affected
     print(color("Current Installation:", Colors.CYAN, Colors.BOLD))
     print(f"  Code:    {project_root}")
-    print(f"  Config:  {hermes_home / 'config.yaml'}")
-    print(f"  Secrets: {hermes_home / '.env'}")
-    print(f"  Data:    {hermes_home / 'cron/'}, {hermes_home / 'sessions/'}, {hermes_home / 'logs/'}")
+    print(f"  Config:  {jarvis_home / 'config.yaml'}")
+    print(f"  Secrets: {jarvis_home / '.env'}")
+    print(f"  Data:    {jarvis_home / 'cron/'}, {jarvis_home / 'sessions/'}, {jarvis_home / 'logs/'}")
     print()
 
     if named_profiles:
@@ -568,10 +568,10 @@ def run_uninstall(args):
 
     if _is_windows():
         log_info("Removing PATH entries from Windows User environment...")
-        # Expand %LOCALAPPDATA% etc. in hermes_home so the marker matching is
+        # Expand %LOCALAPPDATA% etc. in jarvis_home so the marker matching is
         # against fully resolved paths — installer writes literal strings
         # like C:\Users\<u>\AppData\Local\jarvis\git\cmd, not %LOCALAPPDATA%.
-        removed_path_entries = remove_path_from_windows_registry(Path(os.path.expandvars(str(hermes_home))))
+        removed_path_entries = remove_path_from_windows_registry(Path(os.path.expandvars(str(jarvis_home))))
         if removed_path_entries:
             for entry in removed_path_entries:
                 log_success(f"Removed from User PATH: {entry}")
@@ -579,7 +579,7 @@ def run_uninstall(args):
             log_info("No Jarvis-owned PATH entries in User environment")
 
         log_info("Removing JARVIS_HOME / JARVIS_GIT_BASH_PATH User env vars...")
-        removed_env = remove_hermes_env_vars_windows()
+        removed_env = remove_jarvis_env_vars_windows()
         if removed_env:
             for name in removed_env:
                 log_success(f"Removed User env var: {name}")
@@ -603,7 +603,7 @@ def run_uninstall(args):
     try:
         if project_root.exists():
             # If the install is inside ~/.jarvis/, just remove the jarvis-agent subdir
-            if hermes_home in project_root.parents or project_root.parent == hermes_home:
+            if jarvis_home in project_root.parents or project_root.parent == jarvis_home:
                 shutil.rmtree(project_root)
                 log_success(f"Removed {project_root}")
             else:
@@ -618,11 +618,11 @@ def run_uninstall(args):
     #     PortableGit, bundled Node, gateway-service dir.  Installer put them
     #     under JARVIS_HOME but they're install tooling, not config — safe to
     #     remove even in "keep data" mode.  If we're doing a full uninstall
-    #     the step-5 rmtree(hermes_home) would sweep them anyway; calling
+    #     the step-5 rmtree(jarvis_home) would sweep them anyway; calling
     #     this helper there is a no-op since they'll already be gone.
     if _is_windows():
         log_info("Removing Windows installer artifacts (PortableGit, Node, gateway-service)...")
-        removed_artifacts = remove_portable_tooling_windows(hermes_home)
+        removed_artifacts = remove_portable_tooling_windows(jarvis_home)
         if removed_artifacts:
             for path in removed_artifacts:
                 log_success(f"Removed {path}")
@@ -642,14 +642,14 @@ def run_uninstall(args):
 
         log_info("Removing configuration and data...")
         try:
-            if hermes_home.exists():
-                shutil.rmtree(hermes_home)
-                log_success(f"Removed {hermes_home}")
+            if jarvis_home.exists():
+                shutil.rmtree(jarvis_home)
+                log_success(f"Removed {jarvis_home}")
         except Exception as e:
-            log_warn(f"Could not fully remove {hermes_home}: {e}")
+            log_warn(f"Could not fully remove {jarvis_home}: {e}")
             log_info("You may need to manually remove it")
     else:
-        log_info(f"Keeping configuration and data in {hermes_home}")
+        log_info(f"Keeping configuration and data in {jarvis_home}")
     
     # Done
     print()
@@ -660,7 +660,7 @@ def run_uninstall(args):
     
     if not full_uninstall:
         print(color("Your configuration and data have been preserved:", Colors.CYAN))
-        print(f"  {hermes_home}/")
+        print(f"  {jarvis_home}/")
         print()
         print("To reinstall later with your existing settings:")
         if _is_windows():

@@ -46,8 +46,8 @@ Jarvis 默认配置目录为 `~/.jarvis/`（在 WSL 内即 Linux 家目录）。
 
 ## 4. 模型与 Tool Gateway
 
-1. 在 WSL 内运行 `jarvis model`，按提示绑定 **Nous Portal**（或其他提供商）。  
-2. 付费订阅用户可启用 **[Tool Gateway](/user-guide/features/tool-gateway)**，用于网页搜索、文生图、TTS、浏览器自动化等，而无需单独配置 `FAL_KEY` / Firecrawl 等（详见该页）。  
+1. 在 WSL 内运行 `jarvis model`，按提示绑定 **JARVIS Managed**（或其他提供商）。
+2. 付费订阅用户可启用 **[Tool Gateway](/user-guide/features/tool-gateway)**，用于网页搜索、文生图、TTS、浏览器自动化等，而无需单独配置 `FAL_KEY` / Firecrawl 等（详见该页）。
 3. 文生图模型列表与计费说明见 **[文生图](/user-guide/features/image-generation)**。
 
 ## 5. 常见故障速查
@@ -60,6 +60,6 @@ Jarvis 默认配置目录为 `~/.jarvis/`（在 WSL 内即 Linux 家目录）。
 
 ## 6. 下一步
 
-- 英文摘要页（默认语言）：仍保留轻量说明，便于非中文读者理解 WSL2 要求。  
-- 深入 CLI：见 [CLI 界面](/user-guide/cli)。  
-- 全局配置项：见 [配置说明](/user-guide/configuration)。  
+- 英文摘要页（默认语言）：仍保留轻量说明，便于非中文读者理解 WSL2 要求。
+- 深入 CLI：见 [CLI 界面](/user-guide/cli)。
+- 全局配置项：见 [配置说明](/user-guide/configuration)。

@@ -4,7 +4,7 @@ Verifies that subprocesses (terminal, execute_code, background processes)
 receive a per-profile HOME directory while the Python process's own HOME
 and Path.home() remain unchanged.
 
-See: https://github.com/NousResearch/jarvis-agent/issues/4426
+See: https://github.com/JARVISProject/jarvis-agent/issues/4426
 """
 
 import os
@@ -22,25 +22,25 @@ import pytest
 class TestGetSubprocessHome:
     """Unit tests for jarvis_constants.get_subprocess_home()."""
 
-    def test_returns_none_when_hermes_home_unset(self, monkeypatch):
+    def test_returns_none_when_jarvis_home_unset(self, monkeypatch):
         monkeypatch.delenv("JARVIS_HOME", raising=False)
         from jarvis_constants import get_subprocess_home
         assert get_subprocess_home() is None
 
     def test_returns_none_when_home_dir_missing(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / ".jarvis"
-        hermes_home.mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / ".jarvis"
+        jarvis_home.mkdir()
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
         # No home/ subdirectory created
         from jarvis_constants import get_subprocess_home
         assert get_subprocess_home() is None
 
     def test_returns_path_when_home_dir_exists(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / ".jarvis"
-        hermes_home.mkdir()
-        profile_home = hermes_home / "home"
+        jarvis_home = tmp_path / ".jarvis"
+        jarvis_home.mkdir()
+        profile_home = jarvis_home / "home"
         profile_home.mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
         from jarvis_constants import get_subprocess_home
         assert get_subprocess_home() == str(profile_home)
 
@@ -122,23 +122,23 @@ class TestMakeRunEnvHomeInjection:
     """Verify _make_run_env() injects HOME into subprocess envs."""
 
     def test_injects_home_when_profile_home_exists(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "jarvis"
-        hermes_home.mkdir()
-        (hermes_home / "home").mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / "jarvis"
+        jarvis_home.mkdir()
+        (jarvis_home / "home").mkdir()
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
         monkeypatch.setenv("HOME", "/root")
         monkeypatch.setenv("PATH", "/usr/bin:/bin")
 
         from tools.environments.local import _make_run_env
         result = _make_run_env({})
 
-        assert result["HOME"] == str(hermes_home / "home")
+        assert result["HOME"] == str(jarvis_home / "home")
 
     def test_no_injection_when_home_dir_missing(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "jarvis"
-        hermes_home.mkdir()
+        jarvis_home = tmp_path / "jarvis"
+        jarvis_home.mkdir()
         # No home/ subdirectory
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
         monkeypatch.setenv("HOME", "/root")
         monkeypatch.setenv("PATH", "/usr/bin:/bin")
 
@@ -147,7 +147,7 @@ class TestMakeRunEnvHomeInjection:
 
         assert result["HOME"] == "/root"
 
-    def test_no_injection_when_hermes_home_unset(self, monkeypatch):
+    def test_no_injection_when_jarvis_home_unset(self, monkeypatch):
         monkeypatch.delenv("JARVIS_HOME", raising=False)
         monkeypatch.setenv("HOME", "/home/user")
         monkeypatch.setenv("PATH", "/usr/bin:/bin")
@@ -188,21 +188,21 @@ class TestSanitizeSubprocessEnvHomeInjection:
     """Verify _sanitize_subprocess_env() injects HOME for background procs."""
 
     def test_injects_home_when_profile_home_exists(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "jarvis"
-        hermes_home.mkdir()
-        (hermes_home / "home").mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / "jarvis"
+        jarvis_home.mkdir()
+        (jarvis_home / "home").mkdir()
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
 
         base_env = {"HOME": "/root", "PATH": "/usr/bin", "USER": "root"}
         from tools.environments.local import _sanitize_subprocess_env
         result = _sanitize_subprocess_env(base_env)
 
-        assert result["HOME"] == str(hermes_home / "home")
+        assert result["HOME"] == str(jarvis_home / "home")
 
     def test_no_injection_when_home_dir_missing(self, tmp_path, monkeypatch):
-        hermes_home = tmp_path / "jarvis"
-        hermes_home.mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / "jarvis"
+        jarvis_home.mkdir()
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
 
         base_env = {"HOME": "/root", "PATH": "/usr/bin"}
         from tools.environments.local import _sanitize_subprocess_env
@@ -265,10 +265,10 @@ class TestPythonProcessUnchanged:
     def test_path_home_unchanged_after_subprocess_home_resolved(
         self, tmp_path, monkeypatch
     ):
-        hermes_home = tmp_path / "jarvis"
-        hermes_home.mkdir()
-        (hermes_home / "home").mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / "jarvis"
+        jarvis_home.mkdir()
+        (jarvis_home / "home").mkdir()
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
 
         original_home = os.environ.get("HOME")
         original_path_home = str(Path.home())

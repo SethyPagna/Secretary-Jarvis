@@ -682,30 +682,30 @@ def test_resolve_model_strips_config_model(monkeypatch):
     monkeypatch.delenv("JARVIS_MODEL", raising=False)
     monkeypatch.delenv("JARVIS_INFERENCE_MODEL", raising=False)
     monkeypatch.setattr(
-        server, "_load_cfg", lambda: {"model": {"default": " nous/jarvis-test "}}
+        server, "_load_cfg", lambda: {"model": {"default": " jarvis_managed/jarvis-test "}}
     )
 
-    assert server._resolve_model() == "nous/jarvis-test"
+    assert server._resolve_model() == "jarvis_managed/jarvis-test"
 
 
 def test_startup_runtime_uses_tui_provider_env(monkeypatch):
-    monkeypatch.setenv("JARVIS_MODEL", "nous/jarvis-test")
-    monkeypatch.setenv("JARVIS_TUI_PROVIDER", "nous")
+    monkeypatch.setenv("JARVIS_MODEL", "jarvis_managed/jarvis-test")
+    monkeypatch.setenv("JARVIS_TUI_PROVIDER", "jarvis_managed")
     monkeypatch.delenv("JARVIS_INFERENCE_PROVIDER", raising=False)
 
-    assert server._resolve_startup_runtime() == ("nous/jarvis-test", "nous")
+    assert server._resolve_startup_runtime() == ("jarvis_managed/jarvis-test", "jarvis_managed")
 
 
 def test_startup_runtime_does_not_treat_inference_provider_as_explicit(monkeypatch):
-    monkeypatch.setenv("JARVIS_MODEL", "nous/jarvis-test")
+    monkeypatch.setenv("JARVIS_MODEL", "jarvis_managed/jarvis-test")
     monkeypatch.delenv("JARVIS_TUI_PROVIDER", raising=False)
-    monkeypatch.setenv("JARVIS_INFERENCE_PROVIDER", "nous")
+    monkeypatch.setenv("JARVIS_INFERENCE_PROVIDER", "jarvis_managed")
     monkeypatch.setattr(
         "jarvis_cli.models.detect_static_provider_for_model",
         lambda model, provider: None,
     )
 
-    assert server._resolve_startup_runtime() == ("nous/jarvis-test", None)
+    assert server._resolve_startup_runtime() == ("jarvis_managed/jarvis-test", None)
 
 
 def test_startup_runtime_detects_provider_for_model_env(monkeypatch):
@@ -1402,7 +1402,7 @@ def test_config_set_statusbar_survives_non_dict_display(tmp_path, monkeypatch):
 
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text(yaml.safe_dump({"display": "broken"}))
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_jarvis_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -1426,7 +1426,7 @@ def test_config_set_details_mode_pins_all_sections(tmp_path, monkeypatch):
             {"display": {"sections": {"tools": "expanded", "activity": "hidden"}}}
         )
     )
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_jarvis_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -1451,7 +1451,7 @@ def test_config_set_section_writes_per_section_override(tmp_path, monkeypatch):
     import yaml
 
     cfg_path = tmp_path / "config.yaml"
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_jarvis_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -1475,7 +1475,7 @@ def test_config_set_section_clears_override_on_empty_value(tmp_path, monkeypatch
             {"display": {"sections": {"activity": "hidden", "tools": "expanded"}}}
         )
     )
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_jarvis_home", tmp_path)
 
     resp = server.handle_request(
         {
@@ -1491,7 +1491,7 @@ def test_config_set_section_clears_override_on_empty_value(tmp_path, monkeypatch
 
 
 def test_config_set_section_rejects_unknown_section_or_mode(tmp_path, monkeypatch):
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_jarvis_home", tmp_path)
 
     bad_section = server.handle_request(
         {
@@ -1657,7 +1657,7 @@ def test_complete_slash_details_args():
 
 
 def test_config_set_reasoning_updates_live_session_and_agent(tmp_path, monkeypatch):
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_jarvis_home", tmp_path)
     agent = types.SimpleNamespace(reasoning_config=None)
     server._sessions["sid"] = _session(agent=agent)
 
@@ -1695,7 +1695,7 @@ def test_config_set_reasoning_updates_live_session_and_agent(tmp_path, monkeypat
 
 
 def test_config_set_verbose_updates_session_mode_and_agent(tmp_path, monkeypatch):
-    monkeypatch.setattr(server, "_hermes_home", tmp_path)
+    monkeypatch.setattr(server, "_jarvis_home", tmp_path)
     agent = types.SimpleNamespace(verbose_logging=False)
     server._sessions["sid"] = _session(agent=agent)
 
@@ -2036,7 +2036,7 @@ def test_session_compress_syncs_session_key_after_rotation(monkeypatch):
     """When AIAgent._compress_context rotates session_id (compression split),
     the gateway session_key must follow so subsequent approval routing,
     DB title/history lookups, and slash worker resume target the new
-    continuation session — mirrors HermesCLI._manual_compress's
+    continuation session — mirrors JarvisCLI._manual_compress's
     session_id sync (cli.py).
     """
     agent = types.SimpleNamespace(session_id="rotated-id")
@@ -3530,7 +3530,7 @@ def test_session_delete_success_returns_deleted_id(monkeypatch):
     assert resp["result"] == {"deleted": "old-1"}
     assert captured["sid"] == "old-1"
     # sessions_dir must be forwarded so transcript files get cleaned up
-    # too — not just the SQLite row.  The autouse _isolate_hermes_home
+    # too — not just the SQLite row.  The autouse _isolate_jarvis_home
     # fixture pins JARVIS_HOME to a temp dir; the handler should append
     # /sessions to it.
     assert captured["sessions_dir"] is not None
@@ -3549,13 +3549,13 @@ def test_model_options_does_not_overwrite_curated_models(monkeypatch):
     Regression: earlier versions of this handler unconditionally replaced
     each provider's curated ``models`` field with ``provider_model_ids()``
     (live /models catalog).  That pulled in hundreds of non-agentic models
-    for providers like Nous whose /models endpoint returns image/video
+    for providers like JARVIS Managed whose /models endpoint returns image/video
     generators, rerankers, embeddings, and TTS models alongside chat models.
     """
     curated_providers = [
         {
-            "slug": "nous",
-            "name": "Nous",
+            "slug": "jarvis_managed",
+            "name": "JARVIS Managed",
             "models": ["moonshotai/kimi-k2.5", "anthropic/claude-opus-4.7"],
             "total_models": 30,
             "source": "built-in",
@@ -3582,13 +3582,13 @@ def test_model_options_does_not_overwrite_curated_models(monkeypatch):
 
     assert "result" in resp, resp
     providers = resp["result"]["providers"]
-    nous = next((p for p in providers if p.get("slug") == "nous"), None)
-    assert nous is not None
-    assert nous["models"] == [
+    jarvis_managed = next((p for p in providers if p.get("slug") == "jarvis_managed"), None)
+    assert jarvis_managed is not None
+    assert jarvis_managed["models"] == [
         "moonshotai/kimi-k2.5",
         "anthropic/claude-opus-4.7",
     ]
-    assert nous["total_models"] == 30
+    assert jarvis_managed["total_models"] == 30
     # Handler must not consult the live catalog — curated is the truth.
     live_fetch.assert_not_called()
     # list_authenticated_providers is the single source.
@@ -4587,7 +4587,7 @@ def test_config_set_indicator_none_keeps_blank_repr(monkeypatch):
 # ── reload.env ───────────────────────────────────────────────────────
 
 
-def test_reload_env_rpc_calls_hermes_cli_reload_env(monkeypatch):
+def test_reload_env_rpc_calls_jarvis_cli_reload_env(monkeypatch):
     """reload.env mirrors classic CLI's `/reload` — re-reads ~/.jarvis/.env
     into the gateway process and reports the count of vars updated."""
     calls = {"n": 0}

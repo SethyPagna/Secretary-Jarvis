@@ -23,7 +23,7 @@ def server():
         "sys.modules",
         {
             "jarvis_constants": MagicMock(
-                get_jarvis_home=MagicMock(return_value="/tmp/hermes_test_review_summary")
+                get_jarvis_home=MagicMock(return_value="/tmp/jarvis_test_review_summary")
             ),
             "jarvis_cli.env_loader": MagicMock(),
             "jarvis_cli.banner": MagicMock(),

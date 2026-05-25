@@ -24,11 +24,11 @@ from jarvis_cli.config import (
     load_config, save_config, get_env_value, save_env_value,
 )
 from jarvis_cli.colors import Colors, color
-from jarvis_cli.nous_subscription import (
-    apply_nous_managed_defaults,
-    get_nous_subscription_features,
+from jarvis_cli.jarvis_managed_subscription import (
+    apply_jarvis_managed_managed_defaults,
+    get_jarvis_managed_subscription_features,
 )
-from tools.tool_backend_helpers import fal_key_is_configured, managed_nous_tools_enabled
+from tools.tool_backend_helpers import fal_key_is_configured, managed_jarvis_managed_tools_enabled
 from utils import base_url_hostname, is_truthy_value
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ CONFIGURABLE_TOOLSETS = [
 ]
 
 # Toolsets that are OFF by default for new installs.
-# They're still in _HERMES_CORE_TOOLS (available at runtime if enabled),
+# They're still in _JARVIS_CORE_TOOLS (available at runtime if enabled),
 # but the setup checklist won't pre-select them for first-time users.
 #
 # Video gen is off by default — it's a niche, paid, slow feature. Users
@@ -206,8 +206,8 @@ TOOL_CATEGORIES = {
                 "tag": "Managed OpenAI TTS through your subscription",
                 "env_vars": [],
                 "tts_provider": "openai",
-                "requires_nous_auth": True,
-                "managed_nous_feature": "tts",
+                "requires_jarvis_managed_auth": True,
+                "managed_jarvis_managed_feature": "tts",
                 "override_env_vars": ["VOICE_TOOLS_OPENAI_KEY", "OPENAI_API_KEY"],
             },
             {
@@ -282,7 +282,7 @@ TOOL_CATEGORIES = {
         # in _visible_providers(). Only non-provider UX setup-flow rows
         # for the firecrawl backend are listed here:
         #   - "JARVIS Managed" — managed Firecrawl through the managed
-        #     subscription (requires_nous_auth + override_env_vars).
+        #     subscription (requires_jarvis_managed_auth + override_env_vars).
         #   - "Firecrawl Self-Hosted" — points firecrawl at a private
         #     Docker instance via FIRECRAWL_API_URL only.
         # See PR #25182 for the migration rationale.
@@ -293,8 +293,8 @@ TOOL_CATEGORIES = {
                 "tag": "Managed Firecrawl through your subscription",
                 "web_backend": "firecrawl",
                 "env_vars": [],
-                "requires_nous_auth": True,
-                "managed_nous_feature": "web",
+                "requires_jarvis_managed_auth": True,
+                "managed_jarvis_managed_feature": "web",
                 "override_env_vars": ["FIRECRAWL_API_KEY", "FIRECRAWL_API_URL"],
             },
             {
@@ -317,7 +317,7 @@ TOOL_CATEGORIES = {
         # ``_plugin_image_gen_providers()`` in ``_visible_providers``.
         # Only non-provider UX setup-flow rows remain here:
         #   - "JARVIS Managed" — managed FAL through the managed
-        #     subscription (requires_nous_auth + override_env_vars).
+        #     subscription (requires_jarvis_managed_auth + override_env_vars).
         #     Uses the fal plugin as the underlying backend but has a
         #     distinct setup UX.
         # Mirrors the shape browser/video_gen ship today.
@@ -327,8 +327,8 @@ TOOL_CATEGORIES = {
                 "badge": "subscription",
                 "tag": "Managed FAL image generation through your subscription",
                 "env_vars": [],
-                "requires_nous_auth": True,
-                "managed_nous_feature": "image_gen",
+                "requires_jarvis_managed_auth": True,
+                "managed_jarvis_managed_feature": "image_gen",
                 "override_env_vars": ["FAL_KEY"],
                 "imagegen_backend": "fal",
             },
@@ -384,7 +384,7 @@ TOOL_CATEGORIES = {
         # _plugin_browser_providers() in _visible_providers(). Only
         # non-provider UX setup-flow rows remain here:
         #   - "JARVIS Managed (Browser Use cloud)" — managed Browser Use
-        #     through the managed subscription (requires_nous_auth +
+        #     through the managed subscription (requires_jarvis_managed_auth +
         #     override_env_vars). Uses the browser-use plugin as the
         #     underlying backend but has a distinct setup UX.
         #   - "Local Browser" — non-cloud option, no CloudBrowserProvider.
@@ -397,8 +397,8 @@ TOOL_CATEGORIES = {
                 "tag": "Managed Browser Use through your subscription",
                 "env_vars": [],
                 "browser_provider": "browser-use",
-                "requires_nous_auth": True,
-                "managed_nous_feature": "browser",
+                "requires_jarvis_managed_auth": True,
+                "managed_jarvis_managed_feature": "browser",
                 "override_env_vars": ["BROWSER_USE_API_KEY"],
                 "post_setup": "agent_browser",
             },
@@ -1143,7 +1143,7 @@ def _get_platform_tools(
     # If the saved list contains any configurable keys directly, the user
     # has explicitly configured this platform — use direct membership.
     # This avoids the subset-inference bug where composite toolsets like
-    # "jarvis-cli" (which include all _HERMES_CORE_TOOLS) cause disabled
+    # "jarvis-cli" (which include all _JARVIS_CORE_TOOLS) cause disabled
     # toolsets to re-appear as enabled.
     has_explicit_config = any(ts in configurable_keys for ts in toolset_names)
 
@@ -1414,9 +1414,9 @@ def _toolset_has_keys(ts_key: str, config: dict = None) -> bool:
             return False
 
     if ts_key in {"web", "image_gen", "tts", "browser"}:
-        features = get_nous_subscription_features(config)
+        features = get_jarvis_managed_subscription_features(config)
         feature = features.features.get(ts_key)
-        if feature and (feature.available or feature.managed_by_nous):
+        if feature and (feature.available or feature.managed_by_jarvis_managed):
             return True
 
     # Check TOOL_CATEGORIES first (provider-aware)
@@ -1755,12 +1755,12 @@ def _plugin_browser_providers() -> list[dict]:
 
 def _visible_providers(cat: dict, config: dict) -> list[dict]:
     """Return provider entries visible for the current auth/config state."""
-    features = get_nous_subscription_features(config)
+    features = get_jarvis_managed_subscription_features(config)
     visible = []
     for provider in cat.get("providers", []):
-        if provider.get("managed_nous_feature") and not managed_nous_tools_enabled():
+        if provider.get("managed_jarvis_managed_feature") and not managed_jarvis_managed_tools_enabled():
             continue
-        if provider.get("requires_nous_auth") and not features.nous_auth_present:
+        if provider.get("requires_jarvis_managed_auth") and not features.jarvis_managed_auth_present:
             continue
         visible.append(provider)
 
@@ -1968,9 +1968,9 @@ def _is_provider_active(provider: dict, config: dict) -> bool:
         video_cfg = config.get("video_gen", {})
         return isinstance(video_cfg, dict) and video_cfg.get("provider") == video_plugin_name
 
-    managed_feature = provider.get("managed_nous_feature")
+    managed_feature = provider.get("managed_jarvis_managed_feature")
     if managed_feature:
-        features = get_nous_subscription_features(config)
+        features = get_jarvis_managed_subscription_features(config)
         feature = features.features.get(managed_feature)
         if feature is None:
             return False
@@ -1982,19 +1982,19 @@ def _is_provider_active(provider: dict, config: dict) -> bool:
                     return False
                 if image_cfg.get("use_gateway") is not None and not is_truthy_value(image_cfg.get("use_gateway"), default=False):
                     return False
-            return feature.managed_by_nous
+            return feature.managed_by_jarvis_managed
         if provider.get("tts_provider"):
             return (
-                feature.managed_by_nous
+                feature.managed_by_jarvis_managed
                 and cfg_get(config, "tts", "provider") == provider["tts_provider"]
             )
         if "browser_provider" in provider:
             current = cfg_get(config, "browser", "cloud_provider")
-            return feature.managed_by_nous and provider["browser_provider"] == current
+            return feature.managed_by_jarvis_managed and provider["browser_provider"] == current
         if provider.get("web_backend"):
             current = cfg_get(config, "web", "backend")
-            return feature.managed_by_nous and current == provider["web_backend"]
-        return feature.managed_by_nous
+            return feature.managed_by_jarvis_managed and current == provider["web_backend"]
+        return feature.managed_by_jarvis_managed
 
     if provider.get("tts_provider"):
         return cfg_get(config, "tts", "provider") == provider["tts_provider"]
@@ -2326,11 +2326,11 @@ def _select_plugin_video_gen_provider(plugin_name: str, config: dict) -> None:
 def _configure_provider(provider: dict, config: dict):
     """Configure a single provider - prompt for API keys and set config."""
     env_vars = provider.get("env_vars", [])
-    managed_feature = provider.get("managed_nous_feature")
+    managed_feature = provider.get("managed_jarvis_managed_feature")
 
-    if provider.get("requires_nous_auth"):
-        features = get_nous_subscription_features(config)
-        if not features.nous_auth_present:
+    if provider.get("requires_jarvis_managed_auth"):
+        features = get_jarvis_managed_subscription_features(config)
+        if not features.jarvis_managed_auth_present:
             _print_warning("  JARVIS Managed tools are available after logging into JARVIS Managed.")
             return
 
@@ -2611,11 +2611,11 @@ def _configure_tool_category_for_reconfig(ts_key: str, cat: dict, config: dict):
 def _reconfigure_provider(provider: dict, config: dict):
     """Reconfigure a provider - update API keys."""
     env_vars = provider.get("env_vars", [])
-    managed_feature = provider.get("managed_nous_feature")
+    managed_feature = provider.get("managed_jarvis_managed_feature")
 
-    if provider.get("requires_nous_auth"):
-        features = get_nous_subscription_features(config)
-        if not features.nous_auth_present:
+    if provider.get("requires_jarvis_managed_auth"):
+        features = get_jarvis_managed_subscription_features(config)
+        if not features.jarvis_managed_auth_present:
             _print_warning("  JARVIS Managed tools are available after logging into JARVIS Managed.")
             return
 
@@ -2814,11 +2814,11 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
                     label = next((l for k, l, _ in _get_effective_configurable_toolsets() if k == ts), ts)
                     print(color(f"  - {label}", Colors.RED))
 
-            auto_configured = apply_nous_managed_defaults(
+            auto_configured = apply_jarvis_managed_managed_defaults(
                 config,
                 enabled_toolsets=new_enabled,
             )
-            if managed_nous_tools_enabled():
+            if managed_jarvis_managed_tools_enabled():
                 for ts_key in sorted(auto_configured):
                     label = next((l for k, l, _ in CONFIGURABLE_TOOLSETS if k == ts_key), ts_key)
                     print(color(f"  ✓ {label}: using your JARVIS Managed defaults", Colors.GREEN))

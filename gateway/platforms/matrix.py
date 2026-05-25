@@ -125,9 +125,9 @@ MAX_MESSAGE_LENGTH = 4000
 
 # Store directory for E2EE keys and sync state.
 # Uses get_jarvis_home() so each profile gets its own Matrix store.
-from jarvis_constants import get_jarvis_dir as _get_hermes_dir
+from jarvis_constants import get_jarvis_dir as _get_jarvis_dir
 
-_STORE_DIR = _get_hermes_dir("platforms/matrix/store", "matrix/store")
+_STORE_DIR = _get_jarvis_dir("platforms/matrix/store", "matrix/store")
 _CRYPTO_DB_PATH = _STORE_DIR / "crypto.db"
 
 # Grace period: ignore messages older than this many seconds before startup.

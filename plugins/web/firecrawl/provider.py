@@ -37,7 +37,7 @@ Env vars::
 
     FIRECRAWL_API_KEY=...            # direct cloud auth
     FIRECRAWL_API_URL=...            # self-hosted Firecrawl
-    FIRECRAWL_GATEWAY_URL=...        # Nous tool-gateway (subscribers)
+    FIRECRAWL_GATEWAY_URL=...        # JARVIS Managed tool-gateway (subscribers)
     TOOL_GATEWAY_DOMAIN=...          # alternate gateway env
     TOOL_GATEWAY_SCHEME=...
     TOOL_GATEWAY_USER_TOKEN=...
@@ -144,18 +144,18 @@ def _get_firecrawl_gateway_url() -> str:
 
 
 def _is_tool_gateway_ready() -> bool:
-    """Return True when gateway URL + Nous Subscriber token are available.
+    """Return True when gateway URL + JARVIS Managed Subscriber token are available.
 
-    Reads ``read_nous_access_token`` and ``resolve_managed_tool_gateway``
+    Reads ``read_jarvis_managed_access_token`` and ``resolve_managed_tool_gateway``
     via :mod:`tools.web_tools` rather than direct imports, so unit tests
-    that ``patch("tools.web_tools._read_nous_access_token", ...)`` see
+    that ``patch("tools.web_tools._read_jarvis_managed_access_token", ...)`` see
     their patches honored. The names are re-exported on
     :mod:`tools.web_tools` for exactly this reason.
     """
     import tools.web_tools as _wt
 
     return _wt.resolve_managed_tool_gateway(
-        "firecrawl", token_reader=_wt._read_nous_access_token
+        "firecrawl", token_reader=_wt._read_jarvis_managed_access_token
     ) is not None
 
 
@@ -177,10 +177,10 @@ def _firecrawl_backend_help_suffix() -> str:
     """Return optional managed-gateway guidance for Firecrawl help text."""
     import tools.web_tools as _wt
 
-    if not _wt.managed_nous_tools_enabled():
+    if not _wt.managed_jarvis_managed_tools_enabled():
         return ""
     return (
-        ", or use the Nous Tool Gateway via your subscription "
+        ", or use the JARVIS Tool Gateway via your subscription "
         "(FIRECRAWL_GATEWAY_URL or TOOL_GATEWAY_DOMAIN)"
     )
 
@@ -194,10 +194,10 @@ def _raise_web_backend_configuration_error() -> None:
         "Set FIRECRAWL_API_KEY for cloud Firecrawl or set FIRECRAWL_API_URL "
         "for a self-hosted Firecrawl instance."
     )
-    if _wt.managed_nous_tools_enabled():
+    if _wt.managed_jarvis_managed_tools_enabled():
         message += (
-            " With your Nous subscription you can also use the Tool Gateway — "
-            "run `jarvis tools` and select Nous Subscription as the web provider."
+            " With your JARVIS Managed subscription you can also use the Tool Gateway — "
+            "run `jarvis tools` and select JARVIS Managed as the web provider."
         )
     raise ValueError(message)
 
@@ -216,7 +216,7 @@ def _get_firecrawl_client() -> Any:
     this plugin module so that unit tests that reset the cache via
     ``tools.web_tools._firecrawl_client = None`` keep working. Helper
     functions (``prefers_gateway``, ``resolve_managed_tool_gateway``,
-    ``_read_nous_access_token``, ``Firecrawl``) are also looked up via
+    ``_read_jarvis_managed_access_token``, ``Firecrawl``) are also looked up via
     :mod:`tools.web_tools` for the same reason — see
     :func:`_is_tool_gateway_ready`.
     """
@@ -227,7 +227,7 @@ def _get_firecrawl_client() -> Any:
         kwargs, client_config = direct_config
     else:
         managed_gateway = _wt.resolve_managed_tool_gateway(
-            "firecrawl", token_reader=_wt._read_nous_access_token
+            "firecrawl", token_reader=_wt._read_jarvis_managed_access_token
         )
         if managed_gateway is None:
             logger.error(
@@ -237,13 +237,13 @@ def _get_firecrawl_client() -> Any:
             _raise_web_backend_configuration_error()
 
         kwargs = {
-            "api_key": managed_gateway.nous_user_token,
+            "api_key": managed_gateway.jarvis_managed_user_token,
             "api_url": managed_gateway.gateway_origin,
         }
         client_config = (
             "tool-gateway",
             kwargs["api_url"],
-            managed_gateway.nous_user_token,
+            managed_gateway.jarvis_managed_user_token,
         )
 
     cached = getattr(_wt, "_firecrawl_client", None)
@@ -761,7 +761,7 @@ class FirecrawlWebSearchProvider(WebSearchProvider):
             "badge": "paid · optional gateway",
             "tag": (
                 "Full search + extract + crawl; supports direct API and "
-                "Nous tool-gateway routing."
+                "JARVIS Managed tool-gateway routing."
             ),
             "env_vars": [
                 {

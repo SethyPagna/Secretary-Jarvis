@@ -28,7 +28,7 @@ from typing import List, Dict, Any, Set, Optional
 
 # Shared tool list for CLI and all messaging platform toolsets.
 # Edit this once to update all platforms simultaneously.
-_HERMES_CORE_TOOLS = [
+_JARVIS_CORE_TOOLS = [
     # Web
     "web_search", "web_extract",
     # Terminal + process management
@@ -382,7 +382,7 @@ TOOLSETS = {
     
     "jarvis-cli": {
         "description": "Full interactive CLI toolset - all default tools plus cronjob management",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
@@ -393,19 +393,19 @@ TOOLSETS = {
         # homeassistant) are excluded by _get_platform_tools() unless
         # the user explicitly enables them.
         "description": "Default cron toolset - same core tools as jarvis-cli; gated by `jarvis tools`",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-telegram": {
         "description": "Telegram bot toolset - full access for personal use (terminal has safety checks)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
     
     "jarvis-discord": {
         "description": "Discord bot toolset - full access (terminal has safety checks via dangerous command approval)",
-        "tools": _HERMES_CORE_TOOLS + [
+        "tools": _JARVIS_CORE_TOOLS + [
             "discord",
             "discord_admin",
         ],
@@ -414,61 +414,61 @@ TOOLSETS = {
     
     "jarvis-whatsapp": {
         "description": "WhatsApp bot toolset - similar to Telegram (personal messaging, more trusted)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
     
     "jarvis-slack": {
         "description": "Slack bot toolset - full access for workspace use (terminal has safety checks)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
     
     "jarvis-signal": {
         "description": "Signal bot toolset - encrypted messaging platform (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-bluebubbles": {
         "description": "BlueBubbles iMessage bot toolset - Apple iMessage via local BlueBubbles server",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-homeassistant": {
         "description": "Home Assistant bot toolset - smart home event monitoring and control",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-email": {
         "description": "Email bot toolset - interact with Jarvis via email (IMAP/SMTP)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-mattermost": {
         "description": "Mattermost bot toolset - self-hosted team messaging (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-matrix": {
         "description": "Matrix bot toolset - decentralized encrypted messaging (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-dingtalk": {
         "description": "DingTalk bot toolset - enterprise messaging platform (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-feishu": {
         "description": "Feishu/Lark bot toolset - enterprise messaging via Feishu/Lark (full access)",
-        "tools": _HERMES_CORE_TOOLS + [
+        "tools": _JARVIS_CORE_TOOLS + [
             "feishu_doc_read",
             "feishu_drive_list_comments",
             "feishu_drive_list_comment_replies",
@@ -480,31 +480,31 @@ TOOLSETS = {
 
     "jarvis-weixin": {
         "description": "Weixin bot toolset - personal WeChat messaging via iLink (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-qqbot": {
         "description": "QQBot toolset - QQ messaging via Official Bot API v2 (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-wecom": {
         "description": "WeCom bot toolset - enterprise WeChat messaging (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-wecom-callback": {
         "description": "WeCom callback toolset - enterprise self-built app messaging (full access)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-yuanbao": {
         "description": "Yuanbao Bot 元宝消息平台工具集 - 群信息、成员查询、私聊、贴纸表情",
-        "tools": _HERMES_CORE_TOOLS + [
+        "tools": _JARVIS_CORE_TOOLS + [
             "yb_query_group_info",
             "yb_query_group_members",
             "yb_send_dm",
@@ -517,13 +517,13 @@ TOOLSETS = {
 
     "jarvis-sms": {
         "description": "SMS bot toolset - interact with Jarvis via SMS (Twilio)",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
     "jarvis-webhook": {
         "description": "Webhook toolset - receive and process external webhook events",
-        "tools": _HERMES_CORE_TOOLS,
+        "tools": _JARVIS_CORE_TOOLS,
         "includes": []
     },
 
@@ -626,14 +626,14 @@ def resolve_toolset(name: str, visited: Set[str] = None) -> List[str]:
     toolset = get_toolset(name)
     if not toolset:
         # Auto-generate a toolset for plugin platforms (jarvis-<name>).
-        # Gives them _HERMES_CORE_TOOLS plus any tools the plugin registered
+        # Gives them _JARVIS_CORE_TOOLS plus any tools the plugin registered
         # into a toolset matching the platform name.
         if name.startswith("jarvis-"):
             platform_name = name[len("jarvis-"):]
             try:
                 from gateway.platform_registry import platform_registry
                 if platform_registry.is_registered(platform_name):
-                    plugin_tools = set(_HERMES_CORE_TOOLS)
+                    plugin_tools = set(_JARVIS_CORE_TOOLS)
                     try:
                         from tools.registry import registry
                         plugin_tools.update(

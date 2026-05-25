@@ -72,7 +72,7 @@ def generate_bash(parser: argparse.ArgumentParser) -> str:
                 f"                    return\n"
                 f"                    ;;\n"
                 f"                {profile_actions.replace(' ', '|')})\n"
-                f"                    COMPREPLY=($(compgen -W \"$(_hermes_profiles)\" -- \"$cur\"))\n"
+                f"                    COMPREPLY=($(compgen -W \"$(_jarvis_profiles)\" -- \"$cur\"))\n"
                 f"                    return\n"
                 f"                    ;;\n"
                 f"            esac\n"
@@ -101,7 +101,7 @@ def generate_bash(parser: argparse.ArgumentParser) -> str:
 # Add to ~/.bashrc:
 #   eval "$(jarvis completion bash)"
 
-_hermes_profiles() {{
+_jarvis_profiles() {{
     local profiles_dir="$HOME/.jarvis/profiles"
     local profiles="default"
     if [ -d "$profiles_dir" ]; then
@@ -110,7 +110,7 @@ _hermes_profiles() {{
     echo "$profiles"
 }}
 
-_hermes_completion() {{
+_jarvis_completion() {{
     local cur prev
     COMPREPLY=()
     cur="${{COMP_WORDS[COMP_CWORD]}}"
@@ -118,7 +118,7 @@ _hermes_completion() {{
 
     # Complete profile names after -p / --profile
     if [[ "$prev" == "-p" || "$prev" == "--profile" ]]; then
-        COMPREPLY=($(compgen -W "$(_hermes_profiles)" -- "$cur"))
+        COMPREPLY=($(compgen -W "$(_jarvis_profiles)" -- "$cur"))
         return
     fi
 
@@ -133,7 +133,7 @@ _hermes_completion() {{
     fi
 }}
 
-complete -F _hermes_completion jarvis
+complete -F _jarvis_completion jarvis
 """
 
 
@@ -167,7 +167,7 @@ def generate_zsh(parser: argparse.ArgumentParser) -> str:
                 f"                profile)\n"
                 f"                    case ${{line[2]}} in\n"
                 f"                        use|delete|show|alias|rename|export)\n"
-                f"                            _hermes_profiles\n"
+                f"                            _jarvis_profiles\n"
                 f"                            ;;\n"
                 f"                        *)\n"
                 f"                            local -a profile_cmds\n"
@@ -202,7 +202,7 @@ def generate_zsh(parser: argparse.ArgumentParser) -> str:
 # Add to ~/.zshrc:
 #   eval "$(jarvis completion zsh)"
 
-_hermes_profiles() {{
+_jarvis_profiles() {{
     local -a profiles
     profiles=(default)
     if [[ -d "$HOME/.jarvis/profiles" ]]; then
@@ -211,14 +211,14 @@ _hermes_profiles() {{
     _describe 'profile' profiles
 }}
 
-_hermes() {{
+_jarvis() {{
     local context state line
     typeset -A opt_args
 
     _arguments -C \\
         '(-)'{{-h,--help}}'[Show help and exit]' \\
         '(-)'{{-V,--version}}'[Show version and exit]' \\
-        '(-)'{{-p,--profile}}'[Profile name]:profile:_hermes_profiles' \\
+        '(-)'{{-p,--profile}}'[Profile name]:profile:_jarvis_profiles' \\
         '1:command:->commands' \\
         '*::arg:->args'
 
@@ -238,7 +238,7 @@ _hermes() {{
     esac
 }}
 
-compdef _hermes jarvis
+compdef _jarvis jarvis
 """
 
 
@@ -257,7 +257,7 @@ def generate_fish(parser: argparse.ArgumentParser) -> str:
         "#   jarvis completion fish | source",
         "",
         "# Helper: list available profiles",
-        "function __hermes_profiles",
+        "function __jarvis_profiles",
         "    echo default",
         "    if test -d $HOME/.jarvis/profiles",
         "        ls $HOME/.jarvis/profiles 2>/dev/null",
@@ -269,7 +269,7 @@ def generate_fish(parser: argparse.ArgumentParser) -> str:
         "",
         "# Complete profile names after -p / --profile",
         "complete -c jarvis -f -s p -l profile"
-        " -d 'Profile name' -xa '(__hermes_profiles)'",
+        " -d 'Profile name' -xa '(__jarvis_profiles)'",
         "",
         "# Top-level subcommands",
     ]
@@ -308,7 +308,7 @@ def generate_fish(parser: argparse.ArgumentParser) -> str:
                     f"complete -c jarvis -f "
                     f"-n '__fish_seen_subcommand_from {action}; "
                     f"and __fish_seen_subcommand_from profile' "
-                    f"-a '(__hermes_profiles)' -d 'Profile name'"
+                    f"-a '(__jarvis_profiles)' -d 'Profile name'"
                 )
 
     lines.append("")

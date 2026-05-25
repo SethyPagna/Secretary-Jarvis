@@ -361,7 +361,7 @@ jarvis skills install devops/kanban-orchestrator
 
 ## Dashboard (GUI)
 
-`/kanban` CLI와 slash command만으로도 headless 운영은 가능하지만, triage, cross-profile supervision, comment thread 읽기, 카드 drag/drop 같은 작업은 사람이 보기엔 시각 보드가 더 편합니다. Hermes는 이를 core 기능이 아니라 `plugins/kanban/`의 **bundled dashboard plugin**으로 제공합니다.
+`/kanban` CLI와 slash command만으로도 headless 운영은 가능하지만, triage, cross-profile supervision, comment thread 읽기, 카드 drag/drop 같은 작업은 사람이 보기엔 시각 보드가 더 편합니다. Jarvis는 이를 core 기능이 아니라 `plugins/kanban/`의 **bundled dashboard plugin**으로 제공합니다.
 
 열기:
 

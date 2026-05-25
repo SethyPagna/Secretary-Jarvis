@@ -38,7 +38,7 @@ from urllib.parse import urljoin
 
 from utils import is_truthy_value
 from tools.managed_tool_gateway import resolve_managed_tool_gateway
-from tools.tool_backend_helpers import managed_nous_tools_enabled, resolve_openai_audio_api_key
+from tools.tool_backend_helpers import managed_jarvis_managed_tools_enabled, resolve_openai_audio_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -976,7 +976,7 @@ def _transcribe_xai(file_path: str, model_name: str) -> Dict[str, Any]:
 
     try:
         import requests
-        from tools.xai_http import hermes_xai_user_agent
+        from tools.xai_http import jarvis_xai_user_agent
 
         data: Dict[str, str] = {}
         if language:
@@ -991,7 +991,7 @@ def _transcribe_xai(file_path: str, model_name: str) -> Dict[str, Any]:
                 f"{base_url}/stt",
                 headers={
                     "Authorization": f"Bearer {api_key}",
-                    "User-Agent": hermes_xai_user_agent(),
+                    "User-Agent": jarvis_xai_user_agent(),
                 },
                 files={
                     "file": (Path(file_path).name, audio_file),
@@ -1154,11 +1154,11 @@ def _resolve_openai_audio_client_config() -> tuple[str, str]:
     managed_gateway = resolve_managed_tool_gateway("openai-audio")
     if managed_gateway is None:
         message = "Neither stt.openai.api_key in config nor VOICE_TOOLS_OPENAI_KEY/OPENAI_API_KEY is set"
-        if managed_nous_tools_enabled():
+        if managed_jarvis_managed_tools_enabled():
             message += ", and the managed OpenAI audio gateway is unavailable"
         raise ValueError(message)
 
-    return managed_gateway.nous_user_token, urljoin(
+    return managed_gateway.jarvis_managed_user_token, urljoin(
         f"{managed_gateway.gateway_origin.rstrip('/')}/", "v1"
     )
 

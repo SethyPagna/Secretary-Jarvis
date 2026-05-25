@@ -117,5 +117,5 @@ secrets:
     auto_install: true
 
 ### Footer strip (bottom, black-on-cream)
-PR #30035 · commit 7f9b05668 · NousResearch/jarvis-agent
+PR #30035 · commit 7f9b05668 · JARVISProject/jarvis-agent
 10 files · +1743 / -1 · agent/secret_sources/ · jarvis_cli/secrets_cli.py

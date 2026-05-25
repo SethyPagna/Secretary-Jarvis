@@ -106,7 +106,7 @@ Every `ctx.*` API below is available inside a plugin's `register(ctx)` function.
 | Ship data files | `Path(__file__).parent / "data" / "file.yaml"` |
 | Bundle skills | `ctx.register_skill(name, path)` — namespaced as `plugin:skill`, loaded via `skill_view("plugin:skill")` |
 | Gate on env vars | `requires_env: [API_KEY]` in plugin.yaml — prompted during `jarvis plugins install` |
-| Distribute via pip | `[project.entry-points."hermes_agent.plugins"]` |
+| Distribute via pip | `[project.entry-points."jarvis_agent.plugins"]` |
 | Register a gateway platform (Discord, Telegram, IRC, …) | `ctx.register_platform(name, label, adapter_factory, check_fn, ...)` — see [Adding Platform Adapters](/docs/developer-guide/adding-platform-adapters) |
 | Register an image-generation backend | `ctx.register_image_gen_provider(provider)` — see [Image Generation Provider Plugins](/docs/developer-guide/image-gen-provider-plugin) |
 | Register a video-generation backend | `ctx.register_video_gen_provider(provider)` — see [Video Generation Provider Plugins](/docs/developer-guide/video-gen-provider-plugin) |
@@ -122,7 +122,7 @@ Every `ctx.*` API below is available inside a plugin's `register(ctx)` function.
 | Bundled | `<repo>/plugins/` | Ships with Jarvis — see [Built-in Plugins](/docs/user-guide/features/built-in-plugins) |
 | User | `~/.jarvis/plugins/` | Personal plugins |
 | Project | `.jarvis/plugins/` | Project-specific plugins (requires `JARVIS_ENABLE_PROJECT_PLUGINS=true`) |
-| pip | `hermes_agent.plugins` entry_points | Distributed packages |
+| pip | `jarvis_agent.plugins` entry_points | Distributed packages |
 | Nix | `services.jarvis-agent.extraPlugins` / `extraPythonPackages` | NixOS declarative installs — see [Nix Setup](/docs/getting-started/nix-setup#plugins) |
 
 Later sources override earlier ones on name collision, so a user plugin with the same name as a bundled plugin replaces it.

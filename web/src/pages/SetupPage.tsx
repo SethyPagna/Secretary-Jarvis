@@ -9,8 +9,8 @@ import {
   Volume2,
   XCircle,
 } from "lucide-react";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
+import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
+import { Button } from "@jarvis_managed-research/ui/ui/components/button";
 import { KnowledgePage } from "@/components/KnowledgePage";
 import { setupItems, setupSections } from "@/content/knowledge";
 import { api, type LocalModelsResponse } from "@/lib/api";

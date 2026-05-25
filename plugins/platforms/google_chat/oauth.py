@@ -77,7 +77,7 @@ try:
 except (ModuleNotFoundError, ImportError):
     # Fallback for environments where jarvis_constants isn't importable
     # (mirrors the same fallback used by the google-workspace skill's
-    # _hermes_home.py shim).
+    # _jarvis_home.py shim).
     def get_jarvis_home() -> Path:
         val = os.environ.get("JARVIS_HOME", "").strip()
         return Path(val) if val else Path.home() / ".jarvis"
@@ -90,7 +90,7 @@ except (ModuleNotFoundError, ImportError):
             return str(home)
 
 
-def _hermes_home() -> Path:
+def _jarvis_home() -> Path:
     """Resolve JARVIS_HOME at call time (NOT module import).
 
     Tests and ``JARVIS_HOME=...`` env overrides need this to be late-
@@ -113,19 +113,19 @@ def _sanitize_email(email: str) -> str:
 
 
 def _legacy_token_path() -> Path:
-    return _hermes_home() / "google_chat_user_token.json"
+    return _jarvis_home() / "google_chat_user_token.json"
 
 
 def _user_tokens_dir() -> Path:
-    return _hermes_home() / "google_chat_user_tokens"
+    return _jarvis_home() / "google_chat_user_tokens"
 
 
 def _legacy_pending_path() -> Path:
-    return _hermes_home() / "google_chat_user_oauth_pending.json"
+    return _jarvis_home() / "google_chat_user_oauth_pending.json"
 
 
 def _user_pending_dir() -> Path:
-    return _hermes_home() / "google_chat_user_oauth_pending"
+    return _jarvis_home() / "google_chat_user_oauth_pending"
 
 
 def _token_path(email: Optional[str] = None) -> Path:
@@ -136,7 +136,7 @@ def _token_path(email: Optional[str] = None) -> Path:
 
 
 def _client_secret_path() -> Path:
-    return _hermes_home() / "google_chat_user_client_secret.json"
+    return _jarvis_home() / "google_chat_user_client_secret.json"
 
 
 def _pending_auth_path(email: Optional[str] = None) -> Path:

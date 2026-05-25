@@ -234,7 +234,7 @@ def rewrite_relative_links(body: str, meta: dict[str, Any]) -> str:
     pointing to the file in the repo.
     """
     source_dir = "skills" if meta["source_kind"] == "bundled" else "optional-skills"
-    base = f"https://github.com/NousResearch/jarvis-agent/blob/main/{source_dir}/{meta['rel_path']}"
+    base = f"https://github.com/JARVISProject/jarvis-agent/blob/main/{source_dir}/{meta['rel_path']}"
 
     def sub_link(m: re.Match) -> str:
         text = m.group(1)
@@ -343,9 +343,9 @@ def render_skill_page(
     # Heuristic nicer title from name
     display_name = name.replace("-", " ").replace("_", " ").title()
 
-    hermes_meta = (fm.get("metadata") or {}).get("jarvis") or {}
-    tags = hermes_meta.get("tags") or []
-    related = hermes_meta.get("related_skills") or []
+    jarvis_meta = (fm.get("metadata") or {}).get("jarvis") or {}
+    tags = jarvis_meta.get("tags") or []
+    related = jarvis_meta.get("related_skills") or []
     platforms = fm.get("platforms")
     version = fm.get("version")
     author = fm.get("author")

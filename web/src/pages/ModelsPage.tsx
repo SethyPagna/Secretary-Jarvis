@@ -23,11 +23,11 @@ import type {
 } from "@/lib/api";
 import { timeAgo, cn, themedBody } from "@/lib/utils";
 import { formatTokenCount } from "@/lib/format";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
-import { Stats } from "@nous-research/ui/ui/components/stats";
+import { Button } from "@jarvis_managed-research/ui/ui/components/button";
+import { Spinner } from "@jarvis_managed-research/ui/ui/components/spinner";
+import { Stats } from "@jarvis_managed-research/ui/ui/components/stats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
+import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useModalBehavior } from "@/hooks/useModalBehavior";
 import { usePageHeader } from "@/contexts/usePageHeader";

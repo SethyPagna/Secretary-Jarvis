@@ -21,10 +21,10 @@ _DHH = display_jarvis_home()  # user-facing display path (e.g. ~/.jarvis or ~/.j
 
 # Load environment variables from ~/.jarvis/.env so API key checks work
 _env_path = get_env_path()
-load_jarvis_dotenv(hermes_home=_env_path.parent, project_env=PROJECT_ROOT / ".env")
+load_jarvis_dotenv(jarvis_home=_env_path.parent, project_env=PROJECT_ROOT / ".env")
 
 from jarvis_cli.colors import Colors, color
-from jarvis_cli.models import _HERMES_USER_AGENT
+from jarvis_cli.models import _JARVIS_USER_AGENT
 from jarvis_cli.vercel_auth import describe_vercel_auth
 from jarvis_constants import OPENROUTER_MODELS_URL
 from utils import base_url_host_matches
@@ -36,7 +36,7 @@ _PROVIDER_ENV_HINTS = (
     "ANTHROPIC_API_KEY",
     "ANTHROPIC_TOKEN",
     "OPENAI_BASE_URL",
-    "NOUS_API_KEY",
+    "JARVIS_MANAGED_API_KEY",
     "GLM_API_KEY",
     "ZAI_API_KEY",
     "Z_AI_API_KEY",
@@ -627,7 +627,7 @@ def run_doctor(args):
                 "opencode-zen",
                 "huggingface",
                 "lmstudio",
-                "nous",
+                "jarvis_managed",
             }
             if (
                 default_model
@@ -806,14 +806,14 @@ def run_doctor(args):
 
     try:
         from jarvis_cli.auth import (
-            get_nous_auth_status,
+            get_jarvis_managed_auth_status,
             get_codex_auth_status,
             get_gemini_oauth_auth_status,
             get_minimax_oauth_auth_status,
         )
 
-        nous_status = get_nous_auth_status()
-        if nous_status.get("logged_in"):
+        jarvis_managed_status = get_jarvis_managed_auth_status()
+        if jarvis_managed_status.get("logged_in"):
             check_ok("JARVIS Managed auth", "(logged in)")
         else:
             check_warn("JARVIS Managed auth", "(not logged in)")
@@ -860,7 +860,7 @@ def run_doctor(args):
         check_warn("Auth provider status", f"(could not check: {e})")
 
     # xAI OAuth — separate try/except so an import failure here cannot
-    # disrupt the already-printed Nous/Codex/Gemini/MiniMax rows above.
+    # disrupt the already-printed JARVIS Managed/Codex/Gemini/MiniMax rows above.
     try:
         from jarvis_cli.auth import get_xai_oauth_auth_status
         xai_oauth_status = get_xai_oauth_auth_status() or {}
@@ -874,11 +874,11 @@ def run_doctor(args):
         pass
 
     _section("Directory Structure")
-    hermes_home = JARVIS_HOME
-    if hermes_home.exists():
+    jarvis_home = JARVIS_HOME
+    if jarvis_home.exists():
         check_ok(f"{_DHH} directory exists")
     elif should_fix:
-        hermes_home.mkdir(parents=True, exist_ok=True)
+        jarvis_home.mkdir(parents=True, exist_ok=True)
         check_ok(f"Created {_DHH} directory")
         fixed_count += 1
     else:
@@ -887,7 +887,7 @@ def run_doctor(args):
     # Check expected subdirectories
     expected_subdirs = ["cron", "sessions", "logs", "skills", "memories"]
     for subdir_name in expected_subdirs:
-        subdir_path = hermes_home / subdir_name
+        subdir_path = jarvis_home / subdir_name
         if subdir_path.exists():
             check_ok(f"{_DHH}/{subdir_name}/ exists")
         elif should_fix:
@@ -898,7 +898,7 @@ def run_doctor(args):
             check_warn(f"{_DHH}/{subdir_name}/ not found", "(will be created on first use)")
     
     # Check for SOUL.md persona file
-    soul_path = hermes_home / "SOUL.md"
+    soul_path = jarvis_home / "SOUL.md"
     if soul_path.exists():
         content = soul_path.read_text(encoding="utf-8").strip()
         # Check if it's just the template comments (no real content)
@@ -921,7 +921,7 @@ def run_doctor(args):
             fixed_count += 1
     
     # Check memory directory
-    memories_dir = hermes_home / "memories"
+    memories_dir = jarvis_home / "memories"
     if memories_dir.exists():
         check_ok(f"{_DHH}/memories/ directory exists")
         memory_file = memories_dir / "MEMORY.md"
@@ -944,7 +944,7 @@ def run_doctor(args):
             fixed_count += 1
     
     # Check SQLite session store
-    state_db_path = hermes_home / "state.db"
+    state_db_path = jarvis_home / "state.db"
     if state_db_path.exists():
         try:
             import sqlite3
@@ -959,7 +959,7 @@ def run_doctor(args):
         check_info(f"{_DHH}/state.db not created yet (will be created on first session)")
 
     # Check WAL file size (unbounded growth indicates missed checkpoints)
-    wal_path = hermes_home / "state.db-wal"
+    wal_path = jarvis_home / "state.db-wal"
     if wal_path.exists():
         try:
             wal_size = wal_path.stat().st_size
@@ -1536,7 +1536,7 @@ def run_doctor(args):
             url = (base.rstrip("/") + "/models") if base else default_url
             headers = {
                 "Authorization": f"Bearer {key}",
-                "User-Agent": _HERMES_USER_AGENT,
+                "User-Agent": _JARVIS_USER_AGENT,
             }
             if base_url_host_matches(base, "api.kimi.com"):
                 headers["User-Agent"] = "claude-code/0.1.0"

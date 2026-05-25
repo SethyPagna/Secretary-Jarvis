@@ -6,7 +6,7 @@ so they don't have to live in plaintext in ``~/.jarvis/.env``.
 Design summary
 --------------
 
-* The ``bws`` binary is auto-installed into ``<hermes_home>/bin/bws`` on
+* The ``bws`` binary is auto-installed into ``<jarvis_home>/bin/bws`` on
   first use.  Jarvis pins one version (``_BWS_VERSION``) and downloads
   the matching asset from the official GitHub Releases page, verifying
   the SHA-256 against the release's published checksum file.
@@ -111,7 +111,7 @@ class FetchResult:
 # ---------------------------------------------------------------------------
 
 
-def _hermes_bin_dir() -> Path:
+def _jarvis_bin_dir() -> Path:
     """Where Jarvis stores its managed binaries.  Profile-aware."""
     from jarvis_constants import get_jarvis_home
 
@@ -122,13 +122,13 @@ def find_bws(*, install_if_missing: bool = False) -> Optional[Path]:
     """Return a path to a usable ``bws`` binary, or None.
 
     Resolution order:
-      1. ``<hermes_home>/bin/bws``  (our managed copy — preferred)
+      1. ``<jarvis_home>/bin/bws``  (our managed copy — preferred)
       2. ``shutil.which("bws")``    (system PATH)
 
     When ``install_if_missing`` is True and neither resolves, this calls
     :func:`install_bws` to download and verify the pinned version.
     """
-    managed = _hermes_bin_dir() / _platform_binary_name()
+    managed = _jarvis_bin_dir() / _platform_binary_name()
     if managed.exists() and os.access(managed, os.X_OK):
         return managed
 
@@ -199,7 +199,7 @@ def install_bws(*, force: bool = False) -> Path:
     path catch these; the user-facing ``jarvis secrets bitwarden setup``
     surface lets them propagate so the wizard can show a clear error.
     """
-    bin_dir = _hermes_bin_dir()
+    bin_dir = _jarvis_bin_dir()
     bin_dir.mkdir(parents=True, exist_ok=True)
     target = bin_dir / _platform_binary_name()
 

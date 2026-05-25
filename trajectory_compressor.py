@@ -51,9 +51,9 @@ from agent.retry_utils import jittered_backoff
 # Load .env from JARVIS_HOME first, then project root as a dev fallback.
 from jarvis_cli.env_loader import load_jarvis_dotenv
 
-_hermes_home = get_jarvis_home()
+_jarvis_home = get_jarvis_home()
 _project_env = Path(__file__).parent / ".env"
-load_jarvis_dotenv(hermes_home=_hermes_home, project_env=_project_env)
+load_jarvis_dotenv(jarvis_home=_jarvis_home, project_env=_project_env)
 
 
 def _effective_temperature_for_model(
@@ -437,8 +437,8 @@ class TrajectoryCompressor:
         url = self.config.base_url or ""
         if base_url_host_matches(url, "openrouter.ai"):
             return "openrouter"
-        if base_url_host_matches(url, "nousresearch.com"):
-            return "nous"
+        if base_url_host_matches(url, "jarvis.local"):
+            return "jarvis_managed"
         if (
             base_url_hostname(url) == "chatgpt.com"
             and "/backend-api/codex" in url.lower()

@@ -142,14 +142,14 @@ class TestOpenRouterProfileParity:
         assert profile["extra_body"]["reasoning"] == legacy["extra_body"]["reasoning"]
 
 
-class TestNousProfileParity:
+class TestJarvisManagedProfileParity:
     def test_tags(self, transport):
         legacy = transport.build_kwargs(
-            model="jarvis-3", messages=_msgs(), tools=None, provider_profile=get_provider_profile("nous"),
+            model="jarvis-3", messages=_msgs(), tools=None, provider_profile=get_provider_profile("jarvis_managed"),
         )
         profile = transport.build_kwargs(
             model="jarvis-3", messages=_msgs(), tools=None,
-            provider_profile=get_provider_profile("nous"),
+            provider_profile=get_provider_profile("jarvis_managed"),
         )
         assert profile["extra_body"]["tags"] == legacy["extra_body"]["tags"]
 
@@ -157,11 +157,11 @@ class TestNousProfileParity:
         rc = {"enabled": False}
         legacy = transport.build_kwargs(
             model="jarvis-3", messages=_msgs(), tools=None,
-            provider_profile=get_provider_profile("nous"), supports_reasoning=True, reasoning_config=rc,
+            provider_profile=get_provider_profile("jarvis_managed"), supports_reasoning=True, reasoning_config=rc,
         )
         profile = transport.build_kwargs(
             model="jarvis-3", messages=_msgs(), tools=None,
-            provider_profile=get_provider_profile("nous"),
+            provider_profile=get_provider_profile("jarvis_managed"),
             supports_reasoning=True, reasoning_config=rc,
         )
         assert "reasoning" not in legacy.get("extra_body", {})
@@ -273,13 +273,13 @@ class TestRequestOverridesParity:
 
     def test_extra_body_override_merges_with_provider_body(self, transport):
         """Override extra_body merges WITH provider extra_body, not replaces."""
-        from agent.portal_tags import nous_portal_tags
+        from agent.portal_tags import jarvis_managed_portal_tags
         kw = transport.build_kwargs(
             model="jarvis-3", messages=_msgs(), tools=None,
-            provider_profile=get_provider_profile("nous"),
+            provider_profile=get_provider_profile("jarvis_managed"),
             request_overrides={"extra_body": {"custom": True}},
         )
-        assert kw["extra_body"]["tags"] == nous_portal_tags()  # from profile
+        assert kw["extra_body"]["tags"] == jarvis_managed_portal_tags()  # from profile
         assert kw["extra_body"]["custom"] is True  # from override
 
     def test_top_level_override(self, transport):

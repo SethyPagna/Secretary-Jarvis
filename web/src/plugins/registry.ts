@@ -19,15 +19,15 @@ import React, {
 } from "react";
 import { api, fetchJSON } from "@/lib/api";
 import { cn, timeAgo, isoTimeAgo } from "@/lib/utils";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { Checkbox } from "@nous-research/ui/ui/components/checkbox";
-import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
+import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
+import { Button } from "@jarvis_managed-research/ui/ui/components/button";
+import { Checkbox } from "@jarvis_managed-research/ui/ui/components/checkbox";
+import { Select, SelectOption } from "@jarvis_managed-research/ui/ui/components/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger } from "@nous-research/ui/ui/components/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@jarvis_managed-research/ui/ui/components/tabs";
 import { useI18n } from "@/i18n";
 import { registerSlot, PluginSlot } from "./slots";
 
@@ -122,7 +122,7 @@ export function exposePluginSDK() {
     // Raw fetchJSON for plugin-specific endpoints
     fetchJSON,
 
-    // UI components — Nous DS where available, shadcn/ui primitives elsewhere.
+    // UI components — JARVIS Managed DS where available, shadcn/ui primitives elsewhere.
     components: {
       Card,
       CardHeader,

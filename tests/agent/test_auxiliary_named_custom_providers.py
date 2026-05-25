@@ -9,11 +9,11 @@ import pytest
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path, monkeypatch):
     """Redirect JARVIS_HOME and clear module caches."""
-    hermes_home = tmp_path / ".jarvis"
-    hermes_home.mkdir()
-    monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+    jarvis_home = tmp_path / ".jarvis"
+    jarvis_home.mkdir()
+    monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
     # Write a minimal config so load_config doesn't fail
-    (hermes_home / "config.yaml").write_text("model:\n  default: test-model\n")
+    (jarvis_home / "config.yaml").write_text("model:\n  default: test-model\n")
 
 
 def _write_config(tmp_path, config_dict):
@@ -238,7 +238,7 @@ class TestResolveVisionProviderClientModelNormalization:
             "model": {"default": "zai/glm-5.1", "provider": "zai"},
         })
         with (
-            patch("agent.auxiliary_client._read_nous_auth", return_value=None),
+            patch("agent.auxiliary_client._read_jarvis_managed_auth", return_value=None),
             patch("jarvis_cli.auth.resolve_api_key_provider_credentials", return_value={
                 "api_key": "glm-key",
                 "base_url": "https://api.z.ai/api/paas/v4",

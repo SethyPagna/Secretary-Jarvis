@@ -46,7 +46,7 @@ That does not stop Jarvis from working well as a phone-native CLI agent — it j
 Jarvis now ships a Termux-aware installer path:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NousResearch/jarvis-agent/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JARVISProject/jarvis-agent/main/scripts/install.sh | bash
 ```
 
 On Termux, the installer automatically:
@@ -80,7 +80,7 @@ Why these packages?
 ### 2. Clone Jarvis
 
 ```bash
-git clone --recurse-submodules https://github.com/NousResearch/jarvis-agent.git
+git clone --recurse-submodules https://github.com/JARVISProject/jarvis-agent.git
 cd jarvis-agent
 ```
 

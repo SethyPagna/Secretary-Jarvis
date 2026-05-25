@@ -19,10 +19,10 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _isolate_home(tmp_path, monkeypatch):
-    hermes_home = tmp_path / ".jarvis"
-    hermes_home.mkdir()
-    monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
-    yield hermes_home
+    jarvis_home = tmp_path / ".jarvis"
+    jarvis_home.mkdir()
+    monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
+    yield jarvis_home
 
 
 # ---------------------------------------------------------------------------
@@ -212,7 +212,7 @@ def test_registry_resolve_by_name(tmp_path):
     assert r.resolve("ghost") is None
 
 
-def test_registry_defaults_to_hermes_home(tmp_path, monkeypatch):
+def test_registry_defaults_to_jarvis_home(tmp_path, monkeypatch):
     from plugins.google_meet.node.registry import NodeRegistry
 
     # _isolate_home already set JARVIS_HOME to tmp_path/.jarvis; the

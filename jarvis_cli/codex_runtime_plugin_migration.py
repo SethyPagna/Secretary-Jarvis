@@ -106,7 +106,7 @@ class MigrationReport:
 # Jarvis keys that codex's MCP schema doesn't support — dropped during
 # migration with a warning. Anything not on the keep list AND not the
 # transport keys is added to skipped.
-_KNOWN_HERMES_KEYS = {
+_KNOWN_JARVIS_KEYS = {
     # transport — stdio
     "command", "args", "env", "cwd",
     # transport — http
@@ -125,21 +125,21 @@ _KEYS_DROPPED_WITH_WARNING = {
 
 
 def _translate_one_server(
-    name: str, hermes_cfg: dict
+    name: str, jarvis_cfg: dict
 ) -> tuple[Optional[dict], list[str]]:
     """Translate one Jarvis MCP server config to the codex inline-table dict
     representation. Returns (codex_entry, skipped_keys).
 
     codex_entry is a dict ready for TOML serialization, or None when the
     server can't be translated (e.g. neither command nor url present)."""
-    if not isinstance(hermes_cfg, dict):
+    if not isinstance(jarvis_cfg, dict):
         return None, []
 
     skipped: list[str] = []
     out: dict[str, Any] = {}
 
-    has_command = bool(hermes_cfg.get("command"))
-    has_url = bool(hermes_cfg.get("url"))
+    has_command = bool(jarvis_cfg.get("command"))
+    has_url = bool(jarvis_cfg.get("url"))
 
     if has_command and has_url:
         skipped.append("url (both command and url set; preferring stdio)")
@@ -147,50 +147,50 @@ def _translate_one_server(
 
     if has_command:
         # Stdio transport
-        out["command"] = str(hermes_cfg["command"])
-        args = hermes_cfg.get("args") or []
+        out["command"] = str(jarvis_cfg["command"])
+        args = jarvis_cfg.get("args") or []
         if args:
             out["args"] = [str(a) for a in args]
-        env = hermes_cfg.get("env") or {}
+        env = jarvis_cfg.get("env") or {}
         if env:
             # Codex expects string values
             out["env"] = {str(k): str(v) for k, v in env.items()}
-        cwd = hermes_cfg.get("cwd")
+        cwd = jarvis_cfg.get("cwd")
         if cwd:
             out["cwd"] = str(cwd)
     elif has_url:
         # streamable_http transport (codex covers both http and SSE here)
-        out["url"] = str(hermes_cfg["url"])
-        headers = hermes_cfg.get("headers") or {}
+        out["url"] = str(jarvis_cfg["url"])
+        headers = jarvis_cfg.get("headers") or {}
         if headers:
             out["http_headers"] = {str(k): str(v) for k, v in headers.items()}
         # Jarvis' transport: sse hint is informational; codex auto-negotiates
-        if hermes_cfg.get("transport") == "sse":
+        if jarvis_cfg.get("transport") == "sse":
             skipped.append("transport=sse (codex auto-negotiates)")
     else:
         return None, ["no command or url field"]
 
     # Timeouts
-    if "timeout" in hermes_cfg:
+    if "timeout" in jarvis_cfg:
         try:
-            out["tool_timeout_sec"] = float(hermes_cfg["timeout"])
+            out["tool_timeout_sec"] = float(jarvis_cfg["timeout"])
         except (TypeError, ValueError):
             skipped.append("timeout (not numeric)")
-    if "connect_timeout" in hermes_cfg:
+    if "connect_timeout" in jarvis_cfg:
         try:
-            out["startup_timeout_sec"] = float(hermes_cfg["connect_timeout"])
+            out["startup_timeout_sec"] = float(jarvis_cfg["connect_timeout"])
         except (TypeError, ValueError):
             skipped.append("connect_timeout (not numeric)")
 
     # Enabled flag (codex defaults to true so we only emit when explicitly false)
-    if hermes_cfg.get("enabled") is False:
+    if jarvis_cfg.get("enabled") is False:
         out["enabled"] = False
 
     # Detect keys we explicitly drop with warning
-    for key in hermes_cfg:
+    for key in jarvis_cfg:
         if key in _KEYS_DROPPED_WITH_WARNING:
             skipped.append(f"{key} (no codex equivalent)")
-        elif key not in _KNOWN_HERMES_KEYS:
+        elif key not in _KNOWN_JARVIS_KEYS:
             skipped.append(f"{key} (unknown Jarvis key)")
 
     return out, skipped
@@ -554,7 +554,7 @@ def _looks_like_test_tempdir(path: str) -> bool:
     return any(needle in normalized for needle in needles)
 
 
-def _build_hermes_tools_mcp_entry() -> dict:
+def _build_jarvis_tools_mcp_entry() -> dict:
     """Build the codex stdio-transport entry that launches Jarvis' own
     tool surface as an MCP server. Codex's subprocess will call back into
     this for browser/web/delegate_task/vision/memory/skills tools.
@@ -579,11 +579,11 @@ def _build_hermes_tools_mcp_entry() -> dict:
     # a sibling test's monkeypatch.setenv("JARVIS_HOME", tmp_path) would
     # otherwise leak a transient pytest tempdir into the user's real
     # ~/.codex/config.toml and silently brick codex once the tempdir is GC'd.
-    hermes_home = os.environ.get("JARVIS_HOME") or ""
-    if hermes_home and _looks_like_test_tempdir(hermes_home):
-        hermes_home = ""
-    if hermes_home:
-        env["JARVIS_HOME"] = hermes_home
+    jarvis_home = os.environ.get("JARVIS_HOME") or ""
+    if jarvis_home and _looks_like_test_tempdir(jarvis_home):
+        jarvis_home = ""
+    if jarvis_home:
+        env["JARVIS_HOME"] = jarvis_home
     # PYTHONPATH passes through so a worktree-launched jarvis finds the
     # branch's modules instead of the installed package.
     pythonpath = os.environ.get("PYTHONPATH")
@@ -595,7 +595,7 @@ def _build_hermes_tools_mcp_entry() -> dict:
 
     out: dict[str, Any] = {
         "command": sys.executable,
-        "args": ["-m", "agent.transports.hermes_tools_mcp_server"],
+        "args": ["-m", "agent.transports.jarvis_tools_mcp_server"],
     }
     if env:
         out["env"] = env
@@ -607,19 +607,19 @@ def _build_hermes_tools_mcp_entry() -> dict:
 
 
 def migrate(
-    hermes_config: dict,
+    jarvis_config: dict,
     *,
     codex_home: Optional[Path] = None,
     dry_run: bool = False,
     discover_plugins: bool = True,
     default_permission_profile: Optional[str] = ":workspace",
-    expose_hermes_tools: bool = True,
+    expose_jarvis_tools: bool = True,
 ) -> MigrationReport:
     """Translate Jarvis mcp_servers config + Codex curated plugins into
     ~/.codex/config.toml.
 
     Args:
-        hermes_config: full ~/.jarvis/config.yaml dict
+        jarvis_config: full ~/.jarvis/config.yaml dict
         codex_home: override CODEX_HOME (defaults to ~/.codex)
         dry_run: skip the actual write; report what would happen
         discover_plugins: when True (default), query `plugin/list` against
@@ -635,7 +635,7 @@ def migrate(
             configured in their own [permissions.<name>] table. Set None
             to leave permissions unset and let codex use its compiled-in
             default (which is read-only).
-        expose_hermes_tools: when True (default), register Jarvis' own
+        expose_jarvis_tools: when True (default), register Jarvis' own
             tool surface (web_search, browser_*, delegate_task, vision,
             memory, skills, etc.) as an MCP server in ~/.codex/config.toml
             so the codex subprocess can call back into Jarvis for tools
@@ -646,15 +646,15 @@ def migrate(
     target = codex_home / "config.toml"
     report.target_path = target
 
-    hermes_servers = (hermes_config or {}).get("mcp_servers") or {}
-    if not isinstance(hermes_servers, dict):
+    jarvis_servers = (jarvis_config or {}).get("mcp_servers") or {}
+    if not isinstance(jarvis_servers, dict):
         report.errors.append(
             "mcp_servers in Jarvis config is not a dict; cannot migrate."
         )
         return report
 
     translated: dict[str, dict] = {}
-    for name, cfg in hermes_servers.items():
+    for name, cfg in jarvis_servers.items():
         out, skipped = _translate_one_server(str(name), cfg or {})
         if out is None:
             report.errors.append(
@@ -691,10 +691,10 @@ def migrate(
     # codex subprocess can call back into Jarvis for the tools codex
     # doesn't ship with — web_search, browser_*, delegate_task, vision,
     # memory, skills, session_search, image_generate, text_to_speech.
-    # The server itself is agent/transports/hermes_tools_mcp_server.py
+    # The server itself is agent/transports/jarvis_tools_mcp_server.py
     # and is launched on demand by codex (stdio MCP).
-    if expose_hermes_tools:
-        translated["jarvis-tools"] = _build_hermes_tools_mcp_entry()
+    if expose_jarvis_tools:
+        translated["jarvis-tools"] = _build_jarvis_tools_mcp_entry()
         if "jarvis-tools" not in report.migrated:
             report.migrated.append("jarvis-tools")
 

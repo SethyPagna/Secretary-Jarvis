@@ -1,10 +1,10 @@
-# nix/packages.nix — Hermes Agent package built with uv2nix
+# nix/packages.nix — JARVIS package built with uv2nix
 { inputs, ... }:
 {
   perSystem =
     { pkgs, inputs', ... }:
     let
-      hermesAgent = pkgs.callPackage ./hermes-agent.nix {
+      jarvisAgent = pkgs.callPackage ./jarvis-agent.nix {
         inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
         npm-lockfile-fix = inputs'.npm-lockfile-fix.packages.default;
         # Only embed clean revs — dirtyRev doesn't represent any upstream
@@ -14,12 +14,12 @@
     in
     {
       packages = {
-        default = hermesAgent;
-        tui = hermesAgent.hermesTui;
-        web = hermesAgent.hermesWeb;
+        default = jarvisAgent;
+        tui = jarvisAgent.jarvisTui;
+        web = jarvisAgent.jarvisWeb;
 
-        fix-lockfiles = hermesAgent.hermesNpmLib.mkFixLockfiles {
-          packages = [ hermesAgent.hermesTui hermesAgent.hermesWeb ];
+        fix-lockfiles = jarvisAgent.jarvisNpmLib.mkFixLockfiles {
+          packages = [ jarvisAgent.jarvisTui jarvisAgent.jarvisWeb ];
         };
       };
     };

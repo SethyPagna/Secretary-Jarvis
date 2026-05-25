@@ -1,10 +1,10 @@
-import { useGpuTier } from "@nous-research/ui/hooks/use-gpu-tier";
+import { useGpuTier } from "@jarvis_managed-research/ui/hooks/use-gpu-tier";
 
-import fillerBgUrl from "@nous-research/ui/assets/filler-bg0.webp";
+import fillerBgUrl from "@jarvis_managed-research/ui/assets/filler-bg0.webp";
 
 /**
  * Replicates the visual layer stack of `<Overlays dark />` from
- * `@nous-research/ui` without pulling in its leva / gsap / three peer deps.
+ * `@jarvis_managed-research/ui` without pulling in its leva / gsap / three peer deps.
  *
  * See `design-language/src/ui/components/overlays/index.tsx` for the source of
  * truth. Defaults match LENS_0 (the Jarvis teal dark preset); the deep canvas

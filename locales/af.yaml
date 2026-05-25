@@ -292,7 +292,7 @@ gateway:
   update:
     platform_not_messaging:  "✗ /update is slegs beskikbaar vanaf boodskapplatforms. Voer `jarvis update` vanaf die terminale uit."
     not_git_repo:            "✗ Nie 'n git-bewaarplek nie — kan nie opdateer nie."
-    hermes_cmd_not_found:    "✗ Kon nie die `jarvis`-opdrag vind nie. Jarvis loop, maar die opdateeropdrag kon nie die uitvoerbare lêer op PATH of via die huidige Python-vertolker vind nie. Probeer `jarvis update` met die hand in jou terminale uitvoer."
+    jarvis_cmd_not_found:    "✗ Kon nie die `jarvis`-opdrag vind nie. Jarvis loop, maar die opdateeropdrag kon nie die uitvoerbare lêer op PATH of via die huidige Python-vertolker vind nie. Probeer `jarvis update` met die hand in jou terminale uitvoer."
     start_failed:            "✗ Kon nie opdatering begin nie: {error}"
     starting:                "⚕ Begin Jarvis-opdatering… Ek sal vordering hier stroom."
 

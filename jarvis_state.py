@@ -1954,7 +1954,7 @@ class SessionDB:
             if row["platform_message_id"]:
                 msg["message_id"] = row["platform_message_id"]
             # Restore reasoning fields on assistant messages so providers
-            # that replay reasoning (OpenRouter, OpenAI, Nous) receive
+            # that replay reasoning (OpenRouter, OpenAI, JARVIS Managed) receive
             # coherent multi-turn reasoning context.
             if row["role"] == "assistant":
                 if row["finish_reason"]:

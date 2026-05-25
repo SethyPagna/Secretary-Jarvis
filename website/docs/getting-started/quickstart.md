@@ -61,7 +61,7 @@ PyPI releases track tagged versions (major/minor releases), not every commit on 
 
 ```bash
 # Linux / macOS / WSL2 / Android (Termux)
-curl -fsSL https://raw.githubusercontent.com/NousResearch/jarvis-agent/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JARVISProject/jarvis-agent/main/scripts/install.sh | bash
 ```
 
 :::tip Android / Termux
@@ -92,7 +92,7 @@ Good defaults:
 
 | Provider | What it is | How to set up |
 |----------|-----------|---------------|
-| **Nous Portal** | Subscription-based, zero-config | OAuth login via `jarvis model` |
+| **JARVIS Managed** | Subscription-based, zero-config | OAuth login via `jarvis model` |
 | **OpenAI Codex** | ChatGPT OAuth, uses Codex models | Device code auth via `jarvis model` |
 | **Anthropic** | Claude models directly — Max plan + extra usage credits (OAuth), or API key for pay-per-token | `jarvis model` → OAuth login (requires Max + extra credits), or an Anthropic API key |
 | **OpenRouter** | Multi-provider routing across many models | Enter your API key |

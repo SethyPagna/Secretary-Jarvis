@@ -53,9 +53,9 @@ def get_env_value(name: str, default=None):
     xAI credential resolver.
     """
     try:
-        from jarvis_cli.config import get_env_value as _hermes_get_env_value
+        from jarvis_cli.config import get_env_value as _jarvis_get_env_value
 
-        value = _hermes_get_env_value(name)
+        value = _jarvis_get_env_value(name)
         if value is not None:
             return value
     except Exception:
@@ -63,7 +63,7 @@ def get_env_value(name: str, default=None):
     return os.environ.get(name, default)
 
 
-def hermes_xai_user_agent() -> str:
+def jarvis_xai_user_agent() -> str:
     """Return a stable Jarvis-specific User-Agent for xAI HTTP calls."""
     try:
         from jarvis_cli import __version__

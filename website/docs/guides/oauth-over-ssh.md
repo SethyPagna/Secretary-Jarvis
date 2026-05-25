@@ -10,7 +10,7 @@ Some Jarvis providers — currently **xAI Grok OAuth** and **Spotify** — use a
 
 This works perfectly when Jarvis and your browser are on the same machine. It breaks the moment they aren't: your laptop's browser tries to reach `127.0.0.1` on **your laptop**, but the listener is bound to `127.0.0.1` on **the remote server**.
 
-The fix is a one-line SSH local-forward — **or**, when you don't have a real SSH client (GCP Cloud Shell, GitHub Codespaces, EC2 Instance Connect, Gitpod, browser-based web IDEs), the new `--manual-paste` flag introduced in [#26923](https://github.com/NousResearch/jarvis-agent/issues/26923).
+The fix is a one-line SSH local-forward — **or**, when you don't have a real SSH client (GCP Cloud Shell, GitHub Codespaces, EC2 Instance Connect, Gitpod, browser-based web IDEs), the new `--manual-paste` flag introduced in [#26923](https://github.com/JARVISProject/jarvis-agent/issues/26923).
 
 ## TL;DR
 
@@ -52,7 +52,7 @@ Jarvis uses the **same PKCE verifier, state and nonce** for both paths, so the u
 | Spotify | `43827` | Yes, when Jarvis is remote |
 | `anthropic` (Claude Pro/Max) | n/a | No — paste-the-code flow |
 | `openai-codex` (ChatGPT Plus/Pro) | n/a | No — device code flow |
-| `minimax`, `nous-portal` | n/a | No — device code flow |
+| `minimax`, `jarvis_managed-portal` | n/a | No — device code flow |
 
 If your provider isn't in the table, you don't need a tunnel.
 

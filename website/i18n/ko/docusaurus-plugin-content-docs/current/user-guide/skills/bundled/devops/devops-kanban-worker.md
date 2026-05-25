@@ -23,7 +23,7 @@ Jarvis Kanban worker를 위한 pitfalls, examples, edge cases 문서입니다. l
 ## Reference: full SKILL.md
 
 :::info
-아래는 이 skill이 트리거될 때 Hermes가 실제로 로드하는 **전체 skill 정의**입니다. 즉, skill이 활성화되었을 때 agent가 실제 instruction으로 보는 내용입니다.
+아래는 이 skill이 트리거될 때 Jarvis가 실제로 로드하는 **전체 skill 정의**입니다. 즉, skill이 활성화되었을 때 agent가 실제 instruction으로 보는 내용입니다.
 :::
 
 # Kanban Worker — Pitfalls and Examples

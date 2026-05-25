@@ -8,8 +8,8 @@ description: "Text-to-speech and voice message transcription across all platform
 
 JARVIS supports both text-to-speech output and voice message transcription across all messaging platforms.
 
-:::tip Nous Subscribers
-If you have a paid [Nous Portal](https://portal.nousresearch.com) subscription, OpenAI TTS is available through the **[Tool Gateway](tool-gateway.md)** without a separate OpenAI API key. Run `jarvis model` or `jarvis tools` to enable it.
+:::tip JARVIS Managed Users
+If you have a paid [JARVIS Managed](https://portal.jarvis.local) subscription, OpenAI TTS is available through the **[Tool Gateway](tool-gateway.md)** without a separate OpenAI API key. Run `jarvis model` or `jarvis tools` to enable it.
 :::
 
 ## Text-to-Speech

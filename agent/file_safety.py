@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 
-def _hermes_home_path() -> Path:
+def _jarvis_home_path() -> Path:
     """Resolve the active JARVIS_HOME (profile-aware) without circular imports."""
     try:
         from jarvis_constants import get_jarvis_home  # local import to avoid cycles
@@ -16,7 +16,7 @@ def _hermes_home_path() -> Path:
         return Path(os.path.expanduser("~/.jarvis"))
 
 
-def _hermes_root_path() -> Path:
+def _jarvis_root_path() -> Path:
     """Resolve the Jarvis root dir (always the parent of any profile, never per-profile)."""
     try:
         from jarvis_constants import get_default_jarvis_root  # local import to avoid cycles
@@ -27,8 +27,8 @@ def _hermes_root_path() -> Path:
 
 def build_write_denied_paths(home: str) -> set[str]:
     """Return exact sensitive paths that must never be written."""
-    hermes_home = _hermes_home_path()
-    hermes_root = _hermes_root_path()
+    jarvis_home = _jarvis_home_path()
+    jarvis_root = _jarvis_root_path()
     return {
         os.path.realpath(p)
         for p in [
@@ -37,10 +37,10 @@ def build_write_denied_paths(home: str) -> set[str]:
             os.path.join(home, ".ssh", "id_ed25519"),
             os.path.join(home, ".ssh", "config"),
             # Active profile .env (or top-level .env when not in profile mode).
-            str(hermes_home / ".env"),
+            str(jarvis_home / ".env"),
             # Top-level .env, even when running under a profile — overwriting it
             # leaks credentials across every profile that inherits from root (#15981).
-            str(hermes_root / ".env"),
+            str(jarvis_root / ".env"),
             os.path.join(home, ".bashrc"),
             os.path.join(home, ".zshrc"),
             os.path.join(home, ".profile"),
@@ -98,23 +98,23 @@ def is_write_denied(path: str) -> bool:
             return True
 
     # Jarvis control-plane files: block both the ACTIVE profile's view
-    # (hermes_home) AND the global root view. Without the root pass, a
+    # (jarvis_home) AND the global root view. Without the root pass, a
     # profile-mode session leaves <root>/auth.json + <root>/config.yaml
     # writable — letting a prompt-injected write_file overwrite the global
     # files that every profile inherits from (same shape as #15981).
     control_file_names = ("auth.json", "config.yaml", "webhook_subscriptions.json")
     mcp_tokens_dir_name = "mcp-tokens"
 
-    hermes_dirs = []
-    for base in (_hermes_home_path(), _hermes_root_path()):
+    jarvis_dirs = []
+    for base in (_jarvis_home_path(), _jarvis_root_path()):
         try:
             real = os.path.realpath(base)
-            if real not in hermes_dirs:
-                hermes_dirs.append(real)
+            if real not in jarvis_dirs:
+                jarvis_dirs.append(real)
         except Exception:
             continue
 
-    for base_real in hermes_dirs:
+    for base_real in jarvis_dirs:
         for name in control_file_names:
             try:
                 if resolved == os.path.realpath(os.path.join(base_real, name)):
@@ -180,17 +180,17 @@ def get_read_block_error(path: str) -> Optional[str]:
     # blocked when running under a profile (JARVIS_HOME points at
     # <root>/profiles/<name> in profile mode). Same shape as the write
     # deny widening (#15981, #14157).
-    hermes_dirs: list[Path] = []
-    for base in (_hermes_home_path(), _hermes_root_path()):
+    jarvis_dirs: list[Path] = []
+    for base in (_jarvis_home_path(), _jarvis_root_path()):
         try:
             real = base.resolve()
-            if real not in hermes_dirs:
-                hermes_dirs.append(real)
+            if real not in jarvis_dirs:
+                jarvis_dirs.append(real)
         except Exception:
             continue
 
     # Skills .hub: prompt-injection carriers.
-    for hd in hermes_dirs:
+    for hd in jarvis_dirs:
         blocked_dirs = [
             hd / "skills" / ".hub" / "index-cache",
             hd / "skills" / ".hub",
@@ -215,7 +215,7 @@ def get_read_block_error(path: str) -> Optional[str]:
         ".env",
         "webhook_subscriptions.json",
     )
-    for hd in hermes_dirs:
+    for hd in jarvis_dirs:
         for name in credential_file_names:
             try:
                 blocked = (hd / name).resolve()
@@ -232,7 +232,7 @@ def get_read_block_error(path: str) -> Optional[str]:
 
     # mcp-tokens/: directory prefix match — anything inside is OAuth
     # token material.
-    for hd in hermes_dirs:
+    for hd in jarvis_dirs:
         try:
             mcp_tokens = (hd / "mcp-tokens").resolve()
         except Exception:

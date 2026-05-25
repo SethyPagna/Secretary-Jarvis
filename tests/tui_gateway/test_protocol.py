@@ -22,7 +22,7 @@ def _restore_stdout():
 @pytest.fixture()
 def server():
     with patch.dict("sys.modules", {
-        "jarvis_constants": MagicMock(get_jarvis_home=MagicMock(return_value="/tmp/hermes_test")),
+        "jarvis_constants": MagicMock(get_jarvis_home=MagicMock(return_value="/tmp/jarvis_test")),
         "jarvis_cli.env_loader": MagicMock(),
         "jarvis_cli.banner": MagicMock(),
         "jarvis_state": MagicMock(),
@@ -334,12 +334,12 @@ def test_session_resume_returns_hydrated_messages(server, monkeypatch):
 
 
 def test_config_load_missing(server, tmp_path):
-    server._hermes_home = tmp_path
+    server._jarvis_home = tmp_path
     assert server._load_cfg() == {}
 
 
 def test_config_roundtrip(server, tmp_path):
-    server._hermes_home = tmp_path
+    server._jarvis_home = tmp_path
     server._save_cfg({"model": "test/model"})
     assert server._load_cfg()["model"] == "test/model"
 

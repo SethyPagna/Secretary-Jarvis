@@ -16,11 +16,11 @@ from difflib import get_close_matches
 from pathlib import Path
 from typing import Any, NamedTuple, Optional
 
-from jarvis_cli import __version__ as _HERMES_VERSION
+from jarvis_cli import __version__ as _JARVIS_VERSION
 
 # Identify ourselves so endpoints fronted by Cloudflare's Browser Integrity
 # Check (error 1010) don't reject the default ``Python-urllib/*`` signature.
-_HERMES_USER_AGENT = f"jarvis-cli/{_HERMES_VERSION}"
+_JARVIS_USER_AGENT = f"jarvis-cli/{_JARVIS_VERSION}"
 
 COPILOT_BASE_URL = "https://api.githubcopilot.com"
 COPILOT_MODELS_URL = f"{COPILOT_BASE_URL}/models"
@@ -161,7 +161,7 @@ def _xai_curated_models() -> list[str]:
 
 
 _PROVIDER_MODELS: dict[str, list[str]] = {
-    "nous": [
+    "jarvis_managed": [
         "anthropic/claude-opus-4.7",
         "anthropic/claude-opus-4.6",
         "anthropic/claude-sonnet-4.6",
@@ -495,7 +495,7 @@ def _is_model_free(model_id: str, pricing: dict[str, dict[str, str]]) -> bool:
 # JARVIS Managed account tier detection
 # ---------------------------------------------------------------------------
 
-def fetch_nous_account_tier(access_token: str, portal_base_url: str = "") -> dict[str, Any]:
+def fetch_jarvis_managed_account_tier(access_token: str, portal_base_url: str = "") -> dict[str, Any]:
     """Fetch the user's JARVIS Managed account/subscription info.
 
     Calls ``<portal>/api/oauth/account`` with the OAuth access token.
@@ -515,7 +515,7 @@ def fetch_nous_account_tier(access_token: str, portal_base_url: str = "") -> dic
 
     Returns an empty dict on any failure (network, auth, parse).
     """
-    base = (portal_base_url or "https://portal.nousresearch.com").rstrip("/")
+    base = (portal_base_url or "https://portal.jarvis.local").rstrip("/")
     url = f"{base}/api/oauth/account"
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -529,7 +529,7 @@ def fetch_nous_account_tier(access_token: str, portal_base_url: str = "") -> dic
         return {}
 
 
-def is_nous_free_tier(account_info: dict[str, Any]) -> bool:
+def is_jarvis_managed_free_tier(account_info: dict[str, Any]) -> bool:
     """Return True if the account info indicates a free (unpaid) tier.
 
     Checks ``subscription.monthly_charge == 0``.  Returns False when
@@ -547,12 +547,12 @@ def is_nous_free_tier(account_info: dict[str, Any]) -> bool:
         return False
 
 
-def partition_nous_models_by_tier(
+def partition_jarvis_managed_models_by_tier(
     model_ids: list[str],
     pricing: dict[str, dict[str, str]],
     free_tier: bool,
 ) -> tuple[list[str], list[str]]:
-    """Split Nous models into (selectable, unavailable) based on user tier.
+    """Split JARVIS Managed models into (selectable, unavailable) based on user tier.
 
     For paid-tier users: all models are selectable, none unavailable.
 
@@ -584,9 +584,9 @@ def union_with_portal_free_recommendations(
 ) -> tuple[list[str], dict[str, dict[str, str]]]:
     """Augment curated list + pricing with the Portal's ``freeRecommendedModels``.
 
-    The Portal's ``/api/nous/recommended-models`` endpoint advertises which
+    The Portal's ``/api/jarvis_managed/recommended-models`` endpoint advertises which
     models are free *right now* — independent of what the in-repo
-    ``_PROVIDER_MODELS["nous"]`` list happens to contain or whether the
+    ``_PROVIDER_MODELS["jarvis_managed"]`` list happens to contain or whether the
     docs-hosted catalog manifest has been rebuilt since the last release.
 
     For free-tier users this is the source of truth: any model the Portal
@@ -599,13 +599,13 @@ def union_with_portal_free_recommendations(
       appended at the front (so the picker shows them first).
     * ``pricing`` gets a synthetic ``{"prompt": "0", "completion": "0"}``
       entry for any free recommendation missing from the live pricing
-      map, so :func:`partition_nous_models_by_tier` keeps it.
+      map, so :func:`partition_jarvis_managed_models_by_tier` keeps it.
 
     Failures (network, parse, missing field) are silent and degrade to
     returning the inputs unchanged.
     """
     try:
-        payload = fetch_nous_recommended_models(
+        payload = fetch_jarvis_managed_recommended_models(
             portal_base_url, force_refresh=force_refresh
         )
     except Exception:
@@ -650,9 +650,9 @@ def union_with_portal_paid_recommendations(
     """Augment curated list with the Portal's ``paidRecommendedModels``.
 
     Mirror of :func:`union_with_portal_free_recommendations` for paid-tier
-    users. The Portal's ``/api/nous/recommended-models`` endpoint advertises
+    users. The Portal's ``/api/jarvis_managed/recommended-models`` endpoint advertises
     which paid models are blessed *right now* — independent of what the
-    in-repo ``_PROVIDER_MODELS["nous"]`` list happens to contain or whether
+    in-repo ``_PROVIDER_MODELS["jarvis_managed"]`` list happens to contain or whether
     the docs-hosted catalog manifest has been rebuilt since the last release.
 
     For paid-tier users this lets newly-launched paid models surface in the
@@ -667,7 +667,7 @@ def union_with_portal_paid_recommendations(
       via :func:`get_pricing_for_provider`; if the live endpoint hasn't
       published pricing yet, the picker shows a blank price column rather
       than fabricating numbers. (The free helper synthesizes ``$0`` so
-      :func:`partition_nous_models_by_tier` keeps free models selectable;
+      :func:`partition_jarvis_managed_models_by_tier` keeps free models selectable;
       no equivalent gating applies on the paid side, so synthesis would
       only mislead the user.)
 
@@ -676,7 +676,7 @@ def union_with_portal_paid_recommendations(
     Portal-side hiccup.
     """
     try:
-        payload = fetch_nous_recommended_models(
+        payload = fetch_jarvis_managed_recommended_models(
             portal_base_url, force_refresh=force_refresh
         )
     except Exception:
@@ -713,7 +713,7 @@ _FREE_TIER_CACHE_TTL: int = 180  # seconds (3 minutes)
 _free_tier_cache: tuple[bool, float] | None = None  # (result, timestamp)
 
 
-def check_nous_free_tier() -> bool:
+def check_jarvis_managed_free_tier() -> bool:
     """Check if the current JARVIS Managed user is on a free (unpaid) tier.
 
     Results are cached for ``_FREE_TIER_CACHE_TTL`` seconds to avoid
@@ -730,12 +730,12 @@ def check_nous_free_tier() -> bool:
             return cached_result
 
     try:
-        from jarvis_cli.auth import get_provider_auth_state, resolve_nous_runtime_credentials
+        from jarvis_cli.auth import get_provider_auth_state, resolve_jarvis_managed_runtime_credentials
 
         # Ensure we have a fresh token (triggers refresh if needed)
-        resolve_nous_runtime_credentials(min_key_ttl_seconds=60)
+        resolve_jarvis_managed_runtime_credentials(min_key_ttl_seconds=60)
 
-        state = get_provider_auth_state("nous")
+        state = get_provider_auth_state("jarvis_managed")
         if not state:
             _free_tier_cache = (False, now)
             return False
@@ -745,8 +745,8 @@ def check_nous_free_tier() -> bool:
             _free_tier_cache = (False, now)
             return False
 
-        account_info = fetch_nous_account_tier(access_token, portal_url)
-        result = is_nous_free_tier(account_info)
+        account_info = fetch_jarvis_managed_account_tier(access_token, portal_url)
+        result = is_jarvis_managed_free_tier(account_info)
         _free_tier_cache = (result, now)
         return result
     except Exception:
@@ -774,13 +774,13 @@ def check_nous_free_tier() -> bool:
 #   }
 # ---------------------------------------------------------------------------
 
-NOUS_RECOMMENDED_MODELS_PATH = "/api/nous/recommended-models"
-_NOUS_RECOMMENDED_CACHE_TTL: int = 600  # seconds (10 minutes)
+JARVIS_MANAGED_RECOMMENDED_MODELS_PATH = "/api/jarvis_managed/recommended-models"
+_JARVIS_MANAGED_RECOMMENDED_CACHE_TTL: int = 600  # seconds (10 minutes)
 # (result_dict, timestamp) keyed by portal_base_url so staging vs prod don't collide.
-_nous_recommended_cache: dict[str, tuple[dict[str, Any], float]] = {}
+_jarvis_managed_recommended_cache: dict[str, tuple[dict[str, Any], float]] = {}
 
 
-def fetch_nous_recommended_models(
+def fetch_jarvis_managed_recommended_models(
     portal_base_url: str = "",
     timeout: float = 5.0,
     *,
@@ -788,24 +788,24 @@ def fetch_nous_recommended_models(
 ) -> dict[str, Any]:
     """Fetch the JARVIS Managed curated recommended-models payload.
 
-    Hits ``<portal>/api/nous/recommended-models``. The endpoint is public —
+    Hits ``<portal>/api/jarvis_managed/recommended-models``. The endpoint is public —
     no auth is required. Results are cached per portal URL for
-    ``_NOUS_RECOMMENDED_CACHE_TTL`` seconds; pass ``force_refresh=True`` to
+    ``_JARVIS_MANAGED_RECOMMENDED_CACHE_TTL`` seconds; pass ``force_refresh=True`` to
     bypass the cache.
 
     Returns the parsed JSON dict on success, or ``{}`` on any failure
     (network, parse, non-2xx). Callers must treat missing/null fields as
     "no recommendation" and fall back to their own default.
     """
-    base = (portal_base_url or "https://portal.nousresearch.com").rstrip("/")
+    base = (portal_base_url or "https://portal.jarvis.local").rstrip("/")
     now = time.monotonic()
-    cached = _nous_recommended_cache.get(base)
+    cached = _jarvis_managed_recommended_cache.get(base)
     if not force_refresh and cached is not None:
         payload, cached_at = cached
-        if now - cached_at < _NOUS_RECOMMENDED_CACHE_TTL:
+        if now - cached_at < _JARVIS_MANAGED_RECOMMENDED_CACHE_TTL:
             return payload
 
-    url = f"{base}{NOUS_RECOMMENDED_MODELS_PATH}"
+    url = f"{base}{JARVIS_MANAGED_RECOMMENDED_MODELS_PATH}"
     try:
         req = urllib.request.Request(
             url,
@@ -818,24 +818,24 @@ def fetch_nous_recommended_models(
     except Exception:
         data = {}
 
-    _nous_recommended_cache[base] = (data, now)
+    _jarvis_managed_recommended_cache[base] = (data, now)
     return data
 
 
-def _resolve_nous_portal_url() -> str:
+def _resolve_jarvis_managed_portal_url() -> str:
     """Best-effort lookup of the Portal base URL the user is authed against."""
     try:
         from jarvis_cli.auth import (
-            DEFAULT_NOUS_PORTAL_URL,
+            DEFAULT_JARVIS_MANAGED_PORTAL_URL,
             get_provider_auth_state,
         )
-        state = get_provider_auth_state("nous") or {}
+        state = get_provider_auth_state("jarvis_managed") or {}
         portal = str(state.get("portal_base_url") or "").strip()
         if portal:
             return portal.rstrip("/")
-        return str(DEFAULT_NOUS_PORTAL_URL).rstrip("/")
+        return str(DEFAULT_JARVIS_MANAGED_PORTAL_URL).rstrip("/")
     except Exception:
-        return "https://portal.nousresearch.com"
+        return "https://portal.jarvis.local"
 
 
 def _extract_model_name(entry: Any) -> Optional[str]:
@@ -848,7 +848,7 @@ def _extract_model_name(entry: Any) -> Optional[str]:
     return None
 
 
-def get_nous_recommended_aux_model(
+def get_jarvis_managed_recommended_aux_model(
     *,
     vision: bool = False,
     free_tier: Optional[bool] = None,
@@ -865,7 +865,7 @@ def get_nous_recommended_aux_model(
                          ``freeRecommendedCompactionModel``
 
     When ``free_tier`` is ``None`` (default) the user's tier is auto-detected
-    via :func:`check_nous_free_tier`. Pass an explicit bool to bypass the
+    via :func:`check_jarvis_managed_free_tier`. Pass an explicit bool to bypass the
     detection — useful for tests or when the caller already knows the tier.
 
     For paid-tier users we prefer the paid recommendation but gracefully fall
@@ -876,14 +876,14 @@ def get_nous_recommended_aux_model(
     fails — callers should fall back to their own default (currently
     ``google/gemini-3-flash-preview``).
     """
-    base = portal_base_url or _resolve_nous_portal_url()
-    payload = fetch_nous_recommended_models(base, force_refresh=force_refresh)
+    base = portal_base_url or _resolve_jarvis_managed_portal_url()
+    payload = fetch_jarvis_managed_recommended_models(base, force_refresh=force_refresh)
     if not payload:
         return None
 
     if free_tier is None:
         try:
-            free_tier = check_nous_free_tier()
+            free_tier = check_jarvis_managed_free_tier()
         except Exception:
             # On any detection error, assume paid — paid users see both fields
             # anyway so this is a safe default that maximises model quality.
@@ -922,7 +922,7 @@ class ProviderEntry(NamedTuple):
     tui_desc: str   # detailed description for `jarvis model` TUI
 
 CANONICAL_PROVIDERS: list[ProviderEntry] = [
-    ProviderEntry("nous",           "JARVIS Managed",           "JARVIS Managed (subscription models)"),
+    ProviderEntry("jarvis_managed",           "JARVIS Managed",           "JARVIS Managed (subscription models)"),
     ProviderEntry("openrouter",     "OpenRouter",               "OpenRouter (100+ models, pay-per-use)"),
     ProviderEntry("novita",         "NovitaAI",                 "NovitaAI (AI-native cloud: Model API, Agent Sandbox, GPU Cloud)"),
     ProviderEntry("lmstudio",       "LM Studio",                "LM Studio (local desktop app with built-in model server)"),
@@ -1188,22 +1188,22 @@ def model_ids(*, force_refresh: bool = False) -> list[str]:
     return [mid for mid, _ in fetch_openrouter_models(force_refresh=force_refresh)]
 
 
-def get_curated_nous_model_ids() -> list[str]:
+def get_curated_jarvis_managed_model_ids() -> list[str]:
     """Return the curated JARVIS Managed model-id list.
 
     Prefers the remotely-hosted catalog manifest (published under
     ``website/static/api/model-catalog.json``); falls back to the in-repo
-    snapshot in ``_PROVIDER_MODELS["nous"]`` when the manifest is
+    snapshot in ``_PROVIDER_MODELS["jarvis_managed"]`` when the manifest is
     unreachable. Always returns a list (never None).
     """
     try:
-        from jarvis_cli.model_catalog import get_curated_nous_models
-        remote = get_curated_nous_models()
+        from jarvis_cli.model_catalog import get_curated_jarvis_managed_models
+        remote = get_curated_jarvis_managed_models()
     except Exception:
         remote = None
     if remote:
         return list(remote)
-    return list(_PROVIDER_MODELS.get("nous", []))
+    return list(_PROVIDER_MODELS.get("jarvis_managed", []))
 
 
 def _ai_gateway_model_is_free(pricing: Any) -> bool:
@@ -1408,7 +1408,7 @@ def fetch_models_with_pricing(
     url = cache_key.rstrip("/") + "/v1/models"
     headers: dict[str, str] = {
         "Accept": "application/json",
-        "User-Agent": _HERMES_USER_AGENT,
+        "User-Agent": _JARVIS_USER_AGENT,
     }
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
@@ -1495,13 +1495,13 @@ def _resolve_openrouter_api_key() -> str:
     return os.getenv("OPENROUTER_API_KEY", "").strip()
 
 
-_DEFAULT_NOUS_INFERENCE_BASE = "https://inference-api.nousresearch.com"
+_DEFAULT_JARVIS_MANAGED_INFERENCE_BASE = "https://inference-api.jarvis.local"
 
 
-def _resolve_nous_pricing_credentials() -> tuple[str, str]:
+def _resolve_jarvis_managed_pricing_credentials() -> tuple[str, str]:
     """Return ``(api_key, base_url)`` for JARVIS Managed pricing.
 
-    The Nous inference ``/v1/models`` endpoint exposes pricing without
+    The JARVIS Managed inference ``/v1/models`` endpoint exposes pricing without
     authentication, so the api_key is best-effort: when runtime credential
     resolution fails (expired refresh token, missing auth.json, etc.) we
     still return the default inference base URL so the picker keeps
@@ -1511,17 +1511,17 @@ def _resolve_nous_pricing_credentials() -> tuple[str, str]:
     look broken ("No free models currently available").
     """
     try:
-        from jarvis_cli.auth import resolve_nous_runtime_credentials
-        creds = resolve_nous_runtime_credentials()
+        from jarvis_cli.auth import resolve_jarvis_managed_runtime_credentials
+        creds = resolve_jarvis_managed_runtime_credentials()
         if creds:
             return (creds.get("api_key", ""), creds.get("base_url", ""))
     except Exception:
         pass
-    return ("", _DEFAULT_NOUS_INFERENCE_BASE)
+    return ("", _DEFAULT_JARVIS_MANAGED_INFERENCE_BASE)
 
 
 def get_pricing_for_provider(provider: str, *, force_refresh: bool = False) -> dict[str, dict[str, str]]:
-    """Return live pricing for providers that support it (openrouter, nous, ai-gateway, novita)."""
+    """Return live pricing for providers that support it (openrouter, jarvis_managed, ai-gateway, novita)."""
     normalized = normalize_provider(provider)
     if normalized == "openrouter":
         return fetch_models_with_pricing(
@@ -1533,10 +1533,10 @@ def get_pricing_for_provider(provider: str, *, force_refresh: bool = False) -> d
         return fetch_ai_gateway_pricing(force_refresh=force_refresh)
     if normalized == "novita":
         return _fetch_novita_pricing(force_refresh=force_refresh)
-    if normalized == "nous":
-        api_key, base_url = _resolve_nous_pricing_credentials()
+    if normalized == "jarvis_managed":
+        api_key, base_url = _resolve_jarvis_managed_pricing_credentials()
         if base_url:
-            # Nous base_url typically looks like https://inference-api.nousresearch.com/v1
+            # JARVIS Managed base_url typically looks like https://inference-api.jarvis.local/v1
             # We need the part before /v1 for our fetch function
             stripped = base_url.rstrip("/")
             if stripped.endswith("/v1"):
@@ -1577,7 +1577,7 @@ def _fetch_novita_pricing(
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Accept": "application/json",
-        "User-Agent": _HERMES_USER_AGENT,
+        "User-Agent": _JARVIS_USER_AGENT,
     }
 
     try:
@@ -1666,7 +1666,7 @@ def parse_model_input(raw: str, current_provider: str) -> tuple[str, str]:
     Supports ``provider:model`` syntax to switch providers at runtime::
 
         openrouter:anthropic/claude-sonnet-4.5  →  ("openrouter", "anthropic/claude-sonnet-4.5")
-        nous:jarvis-3                           →  ("nous", "jarvis-3")
+        jarvis_managed:jarvis-3                           →  ("jarvis_managed", "jarvis-3")
         anthropic/claude-sonnet-4.5             →  (current_provider, "anthropic/claude-sonnet-4.5")
         gpt-5.4                                 →  (current_provider, "gpt-5.4")
 
@@ -1724,7 +1724,7 @@ def curated_models_for_provider(
     if normalized == "openrouter":
         return fetch_openrouter_models(force_refresh=force_refresh)
 
-    # Try live API first (Codex, Nous, etc. all support /models)
+    # Try live API first (Codex, JARVIS Managed, etc. all support /models)
     live = provider_model_ids(normalized)
     if live:
         return [(m, "") for m in live]
@@ -1749,7 +1749,7 @@ def _model_in_provider_catalog(name_lower: str, providers: set[str]) -> bool:
 
 
 _AGGREGATOR_PROVIDERS = frozenset(
-    {"nous", "openrouter", "ai-gateway", "copilot", "kilocode"}
+    {"jarvis_managed", "openrouter", "ai-gateway", "copilot", "kilocode"}
 )
 
 
@@ -1823,7 +1823,7 @@ def detect_static_provider_for_model(
         return alias_match
 
     # --- Step 0: bare provider name typed as model ---
-    # If someone types `/model nous` or `/model anthropic`, treat it as a
+    # If someone types `/model jarvis_managed` or `/model anthropic`, treat it as a
     # provider switch and pick the first model from that provider's catalog.
     # Skip "custom" and "openrouter" — custom has no model catalog, and
     # openrouter requires an explicit model name to be useful.
@@ -2093,7 +2093,7 @@ def _resolve_copilot_catalog_api_key() -> str:
 # DELIBERATELY EXCLUDED:
 #   - "openrouter": curated list is already a hand-picked agentic subset of
 #     OpenRouter's 400+ catalog. Blindly merging would dump everything.
-#   - "nous": curated list and Portal /models endpoint are the source of
+#   - "jarvis_managed": curated list and Portal /models endpoint are the source of
 #     truth for the subscription tier.
 # Also excluded: providers that already have dedicated live-endpoint
 # branches below (copilot, anthropic, ai-gateway, ollama-cloud, custom,
@@ -2157,7 +2157,7 @@ def _merge_with_models_dev(provider: str, curated: list[str]) -> list[str]:
 def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) -> list[str]:
     """Return the best known model catalog for a provider.
 
-    Tries live API endpoints for providers that support them (Codex, Nous),
+    Tries live API endpoints for providers that support them (Codex, JARVIS Managed),
     falling back to static lists. For providers in ``_MODELS_DEV_PREFERRED``
     (opencode-go/zen, xiaomi, deepseek, smaller inference providers, etc.),
     models.dev entries are merged on top of curated so new models released
@@ -2193,13 +2193,13 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
             pass
         if normalized == "copilot-acp":
             return list(_PROVIDER_MODELS.get("copilot", []))
-    if normalized == "nous":
+    if normalized == "jarvis_managed":
         # Try live JARVIS Managed /models endpoint
         try:
-            from jarvis_cli.auth import fetch_nous_models, resolve_nous_runtime_credentials
-            creds = resolve_nous_runtime_credentials()
+            from jarvis_cli.auth import fetch_jarvis_managed_models, resolve_jarvis_managed_runtime_credentials
+            creds = resolve_jarvis_managed_runtime_credentials()
             if creds:
-                live = fetch_nous_models(api_key=creds.get("api_key", ""), inference_base_url=creds.get("base_url", ""))
+                live = fetch_jarvis_managed_models(api_key=creds.get("api_key", ""), inference_base_url=creds.get("base_url", ""))
                 if live:
                     return live
         except Exception:
@@ -2542,7 +2542,7 @@ def _lmstudio_server_root(base_url: Optional[str]) -> Optional[str]:
 
 def _lmstudio_request_headers(api_key: Optional[str] = None) -> dict:
     """Build HTTP headers for LM Studio native API requests."""
-    headers = {"User-Agent": _HERMES_USER_AGENT}
+    headers = {"User-Agent": _JARVIS_USER_AGENT}
     token = str(api_key or "").strip()
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -3101,7 +3101,7 @@ def probe_api_models(
         candidates.append((alternate_base, True))
 
     tried: list[str] = []
-    headers: dict[str, str] = {"User-Agent": _HERMES_USER_AGENT}
+    headers: dict[str, str] = {"User-Agent": _JARVIS_USER_AGENT}
     if api_key and api_mode == "anthropic_messages":
         headers["x-api-key"] = api_key
         headers["anthropic-version"] = "2023-06-01"
@@ -3149,7 +3149,7 @@ def _fetch_ai_gateway_models(timeout: float = 5.0) -> Optional[list[str]]:
     url = base_url.rstrip("/") + "/models"
     headers: dict[str, str] = {
         "Authorization": f"Bearer {api_key}",
-        "User-Agent": _HERMES_USER_AGENT,
+        "User-Agent": _JARVIS_USER_AGENT,
     }
     req = urllib.request.Request(url, headers=headers)
     try:

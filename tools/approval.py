@@ -117,10 +117,10 @@ def _is_gateway_approval_context() -> bool:
 # Sensitive write targets that should trigger approval even when referenced
 # via shell expansions like $HOME or $JARVIS_HOME.
 _SSH_SENSITIVE_PATH = r'(?:~|\$home|\$\{home\})/\.ssh(?:/|$)'
-_HERMES_ENV_PATH = (
+_JARVIS_ENV_PATH = (
     r'(?:~\/\.jarvis/|'
     r'(?:\$home|\$\{home\})/\.jarvis/|'
-    r'(?:\$hermes_home|\$\{hermes_home\})/)'
+    r'(?:\$jarvis_home|\$\{jarvis_home\})/)'
     r'\.env\b'
 )
 _PROJECT_ENV_PATH = r'(?:(?:/|\.{1,2}/)?(?:[^\s/"\'`]+/)*\.env(?:\.[^/\s"\'`]+)*)'
@@ -147,7 +147,7 @@ _SYSTEM_CONFIG_PATH = (
 _SENSITIVE_WRITE_TARGET = (
     rf'(?:{_SYSTEM_CONFIG_PATH}|/dev/sd|'
     rf'{_SSH_SENSITIVE_PATH}|'
-    rf'{_HERMES_ENV_PATH}|'
+    rf'{_JARVIS_ENV_PATH}|'
     rf'{_SHELL_RC_FILES}|'
     rf'{_CREDENTIAL_FILES})'
 )
@@ -360,8 +360,8 @@ DANGEROUS_PATTERNS = [
     # Gateway lifecycle protection: prevent the agent from killing its own
     # gateway process.  These commands trigger a gateway restart/stop that
     # terminates all running agents mid-work.
-    (r'\bhermes\s+gateway\s+(stop|restart)\b', "stop/restart jarvis gateway (kills running agents)"),
-    (r'\bhermes\s+update\b', "jarvis update (restarts gateway, kills running agents)"),
+    (r'\bjarvis\s+gateway\s+(stop|restart)\b', "stop/restart jarvis gateway (kills running agents)"),
+    (r'\bjarvis\s+update\b', "jarvis update (restarts gateway, kills running agents)"),
     # Gateway protection: never start gateway outside systemd management
     (r'gateway\s+run\b.*(&\s*$|&\s*;|\bdisown\b|\bsetsid\b)', "start gateway outside systemd (use 'systemctl --user restart jarvis-gateway')"),
     (r'\bnohup\b.*gateway\s+run\b', "start gateway outside systemd (use 'systemctl --user restart jarvis-gateway')"),

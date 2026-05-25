@@ -1649,7 +1649,7 @@ async def reveal_env_var(body: EnvVarReveal, request: Request):
 #
 # Phase 1 surfaces *which OAuth providers exist* and whether each is
 # connected, plus a disconnect button. The actual login flow (PKCE for
-# Anthropic, device-code for Nous/Codex) still runs in the CLI for now;
+# Anthropic, device-code for JARVIS Managed/Codex) still runs in the CLI for now;
 # Phase 2 will add in-browser flows. For unconnected providers we return
 # the canonical ``jarvis auth add <provider>`` command so the dashboard
 # can surface a one-click copy.
@@ -1700,20 +1700,20 @@ def _anthropic_oauth_status() -> Dict[str, Any]:
         read_jarvis_oauth_credentials = None  # type: ignore
         _JARVIS_OAUTH_FILE = None  # type: ignore
 
-    hermes_creds = None
+    jarvis_creds = None
     if read_jarvis_oauth_credentials:
         try:
-            hermes_creds = read_jarvis_oauth_credentials()
+            jarvis_creds = read_jarvis_oauth_credentials()
         except Exception:
-            hermes_creds = None
-    if hermes_creds and hermes_creds.get("accessToken"):
+            jarvis_creds = None
+    if jarvis_creds and jarvis_creds.get("accessToken"):
         return {
             "logged_in": True,
             "source": "jarvis_pkce",
             "source_label": f"Jarvis PKCE ({_JARVIS_OAUTH_FILE})",
-            "token_preview": _truncate_token(hermes_creds.get("accessToken")),
-            "expires_at": hermes_creds.get("expiresAt"),
-            "has_refresh_token": bool(hermes_creds.get("refreshToken")),
+            "token_preview": _truncate_token(jarvis_creds.get("accessToken")),
+            "expires_at": jarvis_creds.get("expiresAt"),
+            "has_refresh_token": bool(jarvis_creds.get("refreshToken")),
         }
 
     cc_creds = None
@@ -1794,12 +1794,12 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
         "status_fn": _claude_code_only_status,
     },
     {
-        "id": "nous",
+        "id": "jarvis_managed",
         "name": "JARVIS Managed",
         "flow": "device_code",
-        "cli_command": "jarvis auth add nous",
-        "docs_url": "https://portal.nousresearch.com",
-        "status_fn": None,  # dispatched via auth.get_nous_auth_status
+        "cli_command": "jarvis auth add jarvis_managed",
+        "docs_url": "https://portal.jarvis.local",
+        "status_fn": None,  # dispatched via auth.get_jarvis_managed_auth_status
     },
     {
         "id": "openai-codex",
@@ -1823,7 +1823,7 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
         # MiniMax's flow is structurally device-code (verification URI +
         # user code, backend polls the token endpoint) with a PKCE
         # extension for code-binding. The dashboard renders the same UX
-        # as Nous's device-code flow; the PKCE bit is a security
+        # as JARVIS Managed's device-code flow; the PKCE bit is a security
         # extension that doesn't change the operator experience.
         "flow": "device_code",
         "cli_command": "jarvis auth add minimax-oauth",
@@ -1842,11 +1842,11 @@ def _resolve_provider_status(provider_id: str, status_fn) -> Dict[str, Any]:
             return {"logged_in": False, "error": str(e)}
     try:
         from jarvis_cli import auth as hauth
-        if provider_id == "nous":
-            raw = hauth.get_nous_auth_status()
+        if provider_id == "jarvis_managed":
+            raw = hauth.get_jarvis_managed_auth_status()
             return {
                 "logged_in": bool(raw.get("logged_in")),
-                "source": "nous_portal",
+                "source": "jarvis_managed_portal",
                 "source_label": raw.get("portal_base_url") or "JARVIS Managed",
                 "token_preview": _truncate_token(raw.get("access_token")),
                 "expires_at": raw.get("access_expires_at"),
@@ -1980,8 +1980,8 @@ async def disconnect_oauth_provider(provider_id: str, request: Request):
 #          ? persists to ~/.jarvis/.anthropic_oauth.json AND credential pool
 #          ? returns { ok: true, status: "approved" }
 #
-#   Device code (Nous, OpenAI Codex):
-#     1. POST /api/providers/oauth/{nous|openai-codex}/start
+#   Device code (JARVIS Managed, OpenAI Codex):
+#     1. POST /api/providers/oauth/{jarvis_managed|openai-codex}/start
 #          ? server hits provider's device-auth endpoint
 #          ? gets { user_code, verification_url, device_code, interval, expires_in }
 #          ? spawns background poller thread that polls the token endpoint
@@ -2188,37 +2188,37 @@ def _submit_anthropic_pkce(session_id: str, code_input: str) -> Dict[str, Any]:
 
 
 async def _start_device_code_flow(provider_id: str) -> Dict[str, Any]:
-    """Initiate a device-code flow (Nous, OpenAI Codex, or MiniMax).
+    """Initiate a device-code flow (JARVIS Managed, OpenAI Codex, or MiniMax).
 
     Calls the provider's device-auth endpoint via the existing CLI helpers,
     then spawns a background poller. Returns the user-facing display fields
     so the UI can render the verification page link + user code.
     """
-    if provider_id == "nous":
+    if provider_id == "jarvis_managed":
         from jarvis_cli.auth import (
-            _nous_device_scope_with_env_override,
-            _request_nous_device_code_with_scope_fallback,
+            _jarvis_managed_device_scope_with_env_override,
+            _request_jarvis_managed_device_code_with_scope_fallback,
             PROVIDER_REGISTRY,
         )
         import httpx
-        pconfig = PROVIDER_REGISTRY["nous"]
+        pconfig = PROVIDER_REGISTRY["jarvis_managed"]
         portal_base_url = (
             os.getenv("JARVIS_PORTAL_BASE_URL")
-            or os.getenv("NOUS_PORTAL_BASE_URL")
+            or os.getenv("JARVIS_MANAGED_PORTAL_BASE_URL")
             or pconfig.portal_base_url
         ).rstrip("/")
         client_id = pconfig.client_id
-        scope, explicit_scope = _nous_device_scope_with_env_override(
+        scope, explicit_scope = _jarvis_managed_device_scope_with_env_override(
             None,
             default_scope=pconfig.scope,
         )
 
-        def _do_nous_device_request():
+        def _do_jarvis_managed_device_request():
             with httpx.Client(
                 timeout=httpx.Timeout(15.0),
                 headers={"Accept": "application/json"},
             ) as client:
-                return _request_nous_device_code_with_scope_fallback(
+                return _request_jarvis_managed_device_code_with_scope_fallback(
                     client=client,
                     portal_base_url=portal_base_url,
                     client_id=client_id,
@@ -2227,9 +2227,9 @@ async def _start_device_code_flow(provider_id: str) -> Dict[str, Any]:
                 )
 
         device_data, effective_scope = await asyncio.get_running_loop().run_in_executor(
-            None, _do_nous_device_request
+            None, _do_jarvis_managed_device_request
         )
-        sid, sess = _new_oauth_session("nous", "device_code")
+        sid, sess = _new_oauth_session("jarvis_managed", "device_code")
         sess["device_code"] = str(device_data["device_code"])
         sess["interval"] = int(device_data["interval"])
         sess["expires_at"] = time.time() + int(device_data["expires_in"])
@@ -2237,7 +2237,7 @@ async def _start_device_code_flow(provider_id: str) -> Dict[str, Any]:
         sess["client_id"] = client_id
         sess["scope"] = effective_scope
         threading.Thread(
-            target=_nous_poller, args=(sid,), daemon=True, name=f"oauth-poll-{sid[:6]}"
+            target=_jarvis_managed_poller, args=(sid,), daemon=True, name=f"oauth-poll-{sid[:6]}"
         ).start()
         return {
             "session_id": sid,
@@ -2286,7 +2286,7 @@ async def _start_device_code_flow(provider_id: str) -> Dict[str, Any]:
     if provider_id == "minimax-oauth":
         # MiniMax uses a device-code-style flow (verification URI + user
         # code + background poll) with a PKCE extension on top. From the
-        # operator's perspective it's identical to Nous's device-code
+        # operator's perspective it's identical to JARVIS Managed's device-code
         # flow; the PKCE bit (verifier + challenge from
         # _minimax_pkce_pair) is a security extension that binds the
         # token exchange to the original session.
@@ -2362,12 +2362,12 @@ async def _start_device_code_flow(provider_id: str) -> Dict[str, Any]:
     raise HTTPException(status_code=400, detail=f"Provider {provider_id} does not support device-code flow")
 
 
-def _nous_poller(session_id: str) -> None:
-    """Background poller that drives a Nous device-code flow to completion."""
+def _jarvis_managed_poller(session_id: str) -> None:
+    """Background poller that drives a JARVIS Managed device-code flow to completion."""
     from jarvis_cli.auth import (
-        NOUS_INFERENCE_AUTH_MODE_FRESH,
+        JARVIS_MANAGED_INFERENCE_AUTH_MODE_FRESH,
         _poll_for_token,
-        refresh_nous_oauth_from_state,
+        refresh_jarvis_managed_oauth_from_state,
     )
     from datetime import datetime, timezone
     import httpx
@@ -2391,7 +2391,7 @@ def _nous_poller(session_id: str) -> None:
                 expires_in=expires_in,
                 poll_interval=interval,
             )
-        # Same post-processing as _nous_device_code_login (mint agent key)
+        # Same post-processing as _jarvis_managed_device_code_login (mint agent key)
         now = datetime.now(timezone.utc)
         token_ttl = int(token_data.get("expires_in") or 0)
         auth_state = {
@@ -2409,20 +2409,20 @@ def _nous_poller(session_id: str) -> None:
             ),
             "expires_in": token_ttl,
         }
-        full_state = refresh_nous_oauth_from_state(
+        full_state = refresh_jarvis_managed_oauth_from_state(
             auth_state,
             min_key_ttl_seconds=300,
             timeout_seconds=15.0,
             force_refresh=False,
-            inference_auth_mode=NOUS_INFERENCE_AUTH_MODE_FRESH,
+            inference_auth_mode=JARVIS_MANAGED_INFERENCE_AUTH_MODE_FRESH,
         )
-        from jarvis_cli.auth import persist_nous_credentials
-        persist_nous_credentials(full_state)
+        from jarvis_cli.auth import persist_jarvis_managed_credentials
+        persist_jarvis_managed_credentials(full_state)
         with _oauth_sessions_lock:
             sess["status"] = "approved"
-        _log.info("oauth/device: nous login completed (session=%s)", session_id)
+        _log.info("oauth/device: jarvis_managed login completed (session=%s)", session_id)
     except Exception as e:
-        _log.warning("nous device-code poll failed (session=%s): %s", session_id, e)
+        _log.warning("jarvis_managed device-code poll failed (session=%s): %s", session_id, e)
         with _oauth_sessions_lock:
             sess["status"] = "error"
             sess["error_message"] = str(e)
@@ -2431,9 +2431,9 @@ def _nous_poller(session_id: str) -> None:
 def _minimax_poller(session_id: str) -> None:
     """Background poller that drives a MiniMax OAuth flow to completion.
 
-    Mirrors `_nous_poller` but calls the MiniMax-specific token endpoint,
+    Mirrors `_jarvis_managed_poller` but calls the MiniMax-specific token endpoint,
     which uses a PKCE-style ``code_verifier`` + ``user_code`` rather than
-    the ``device_code`` field used by Nous. On success, builds the same
+    the ``device_code`` field used by JARVIS Managed. On success, builds the same
     auth_state dict that ``_minimax_oauth_login`` (the CLI flow) builds
     and persists via ``_minimax_save_auth_state`` ? so the dashboard
     path leaves the system in the same state as

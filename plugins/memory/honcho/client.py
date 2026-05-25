@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from jarvis_constants import get_jarvis_home
-from jarvis_cli.profiles import _get_default_hermes_home
+from jarvis_cli.profiles import _get_default_jarvis_home
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -74,7 +74,7 @@ def resolve_config_path() -> Path:
         return local_path
 
     # Default profile's config — host blocks accumulate here via setup/clone
-    default_path = _get_default_hermes_home() / "honcho.json"
+    default_path = _get_default_jarvis_home() / "honcho.json"
     if default_path != local_path and default_path.exists():
         return default_path
 
@@ -720,8 +720,8 @@ def get_honcho_client(config: HonchoClientConfig | None = None) -> Honcho:
     if not resolved_base_url or resolved_timeout is None:
         try:
             from jarvis_cli.config import load_config
-            hermes_cfg = load_config()
-            honcho_cfg = hermes_cfg.get("honcho", {})
+            jarvis_cfg = load_config()
+            honcho_cfg = jarvis_cfg.get("honcho", {})
             if isinstance(honcho_cfg, dict):
                 if not resolved_base_url:
                     resolved_base_url = honcho_cfg.get("base_url", "").strip() or None

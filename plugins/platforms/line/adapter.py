@@ -1283,14 +1283,14 @@ class LineAdapter(BasePlatformAdapter):
 
         try:
             from jarvis_constants import get_jarvis_home
-            hermes_home = Path(get_jarvis_home()).resolve()
+            jarvis_home = Path(get_jarvis_home()).resolve()
         except Exception:
-            hermes_home = Path.home().joinpath(".jarvis").resolve()
+            jarvis_home = Path.home().joinpath(".jarvis").resolve()
 
         allowed_roots = {
             Path(tempfile.gettempdir()).resolve(),
             Path("/tmp").resolve(),  # → /private/tmp on macOS
-            hermes_home,
+            jarvis_home,
         }
         resolved = path.resolve()
         if not any(_is_relative_to(resolved, r) for r in allowed_roots):

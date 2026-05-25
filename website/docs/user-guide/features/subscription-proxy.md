@@ -1,7 +1,7 @@
 ---
 sidebar_position: 15
 title: "Subscription Proxy"
-description: "Use your Nous Portal subscription (or other OAuth provider) as an OpenAI-compatible endpoint for external apps"
+description: "Use your JARVIS Managed subscription (or other OAuth provider) as an OpenAI-compatible endpoint for external apps"
 ---
 
 # Subscription Proxy
@@ -29,10 +29,10 @@ proxy when you just want **the model** through your subscription.
 ### 1. Log into your provider (one-time)
 
 ```bash
-jarvis login nous
+jarvis login jarvis_managed
 ```
 
-This opens your browser for the Nous Portal OAuth flow. Jarvis stores
+This opens your browser for the JARVIS Managed OAuth flow. Jarvis stores
 the refresh token in `~/.jarvis/auth.json` — the same place all Jarvis
 provider logins live.
 
@@ -43,7 +43,7 @@ jarvis proxy start
 ```
 
 ```
-Starting Jarvis proxy for Nous Portal
+Starting Jarvis proxy for JARVIS Managed
   Listening on:  http://127.0.0.1:8645/v1
   Forwarding to: (resolved per-request from your subscription)
   Use any bearer token in the client — the proxy attaches your real credential.
@@ -72,7 +72,7 @@ automatically when the bearer approaches expiry.
 jarvis proxy providers
 ```
 
-Currently shipped: `nous` (Nous Portal). More OAuth providers can be
+Currently shipped: `jarvis_managed` (JARVIS Managed). More OAuth providers can be
 added by implementing the `UpstreamAdapter` interface in
 `jarvis_cli/proxy/adapters/`.
 
@@ -85,17 +85,17 @@ jarvis proxy status
 ```
 Jarvis proxy upstream adapters
 
-  [nous    ] Nous Portal — ready (bearer expires 2026-05-15T06:43:21Z)
+  [jarvis_managed    ] JARVIS Managed — ready (bearer expires 2026-05-15T06:43:21Z)
 ```
 
-If you see `not logged in`, run `jarvis login nous`. If you see
+If you see `not logged in`, run `jarvis login jarvis_managed`. If you see
 `credentials need attention`, your refresh token was revoked (rare —
 happens if you signed out from the Portal web UI) — just re-run
-`jarvis login nous`.
+`jarvis login jarvis_managed`.
 
 ## Allowed paths
 
-The proxy only forwards paths the upstream actually serves. For Nous
+The proxy only forwards paths the upstream actually serves. For JARVIS Managed
 Portal:
 
 | Path | Purpose |
@@ -142,7 +142,7 @@ openviking-server
 OpenViking's VLM calls now flow through your Portal subscription. The
 embedding model side still needs its own provider — Portal does serve
 `/v1/embeddings` but the model selection depends on what your tier
-supports; check `portal.nousresearch.com/models`.
+supports; check `portal.jarvis.local/models`.
 
 ## Configuring Karakeep (or any bookmark/summarizer app)
 
@@ -178,7 +178,7 @@ this beyond your trusted network.
 Your Portal tier's RPM/TPM limits apply across the whole proxy. The
 proxy doesn't fan out or pool — it's a single bearer with your full
 subscription quota. Monitor usage at
-[portal.nousresearch.com](https://portal.nousresearch.com).
+[portal.jarvis.local](https://portal.jarvis.local).
 
 ## Architecture
 

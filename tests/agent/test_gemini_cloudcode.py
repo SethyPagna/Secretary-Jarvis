@@ -368,7 +368,7 @@ class TestHeadlessDetection:
         monkeypatch.setenv("SSH_CONNECTION", "1.2.3.4 22 5.6.7.8 9876")
         assert _is_headless() is True
 
-    def test_detects_hermes_headless(self, monkeypatch):
+    def test_detects_jarvis_headless(self, monkeypatch):
         from agent.google_oauth import _is_headless
 
         monkeypatch.setenv("JARVIS_HEADLESS", "1")
@@ -1161,7 +1161,7 @@ class TestProviderRegistration:
     def test_oauth_capable_set_preserves_existing(self):
         from jarvis_cli.auth_commands import _OAUTH_CAPABLE_PROVIDERS
 
-        for required in ("anthropic", "nous", "openai-codex", "qwen-oauth", "google-gemini-cli"):
+        for required in ("anthropic", "jarvis_managed", "openai-codex", "qwen-oauth", "google-gemini-cli"):
             assert required in _OAUTH_CAPABLE_PROVIDERS
 
     def test_config_env_vars_registered(self):
@@ -1189,13 +1189,13 @@ class TestAuthStatus:
         save_credentials(GoogleCredentials(
             access_token="tok", refresh_token="rt",
             expires_ms=int((time.time() + 3600) * 1000),
-            email="tek@nous.ai",
+            email="tek@jarvis_managed.ai",
             project_id="tek-proj",
         ))
 
         s = get_auth_status("google-gemini-cli")
         assert s["logged_in"] is True
-        assert s["email"] == "tek@nous.ai"
+        assert s["email"] == "tek@jarvis_managed.ai"
         assert s["project_id"] == "tek-proj"
 
 

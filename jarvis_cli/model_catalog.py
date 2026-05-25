@@ -13,7 +13,7 @@ Pipeline
    - Fetches the master URL if disk cache is stale or missing.
    - On any fetch failure, keeps using the stale cache (or empty dict).
 
-2. ``get_curated_openrouter_models()`` / ``get_curated_nous_models()`` —
+2. ``get_curated_openrouter_models()`` / ``get_curated_jarvis_managed_models()`` —
    thin accessors returning the shapes existing callers expect. Each
    falls back to the in-repo hardcoded list on any lookup failure.
 
@@ -33,7 +33,7 @@ Schema (version 1)
              "metadata": {...}}          # free-form, model-level
           ]
         },
-        "nous": {...}
+        "jarvis_managed": {...}
       }
     }
 
@@ -52,7 +52,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from jarvis_cli import __version__ as _HERMES_VERSION
+from jarvis_cli import __version__ as _JARVIS_VERSION
 from utils import atomic_replace
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ DEFAULT_TTL_HOURS = 24
 DEFAULT_FETCH_TIMEOUT = 8.0
 SUPPORTED_SCHEMA_VERSION = 1
 
-_HERMES_USER_AGENT = f"jarvis-cli/{_HERMES_VERSION}"
+_JARVIS_USER_AGENT = f"jarvis-cli/{_JARVIS_VERSION}"
 
 # In-process cache to avoid repeated disk + parse work across multiple
 # calls within the same session. Invalidated by TTL against the disk file's
@@ -120,7 +120,7 @@ def _fetch_manifest(url: str, timeout: float) -> dict[str, Any] | None:
             url,
             headers={
                 "Accept": "application/json",
-                "User-Agent": _HERMES_USER_AGENT,
+                "User-Agent": _JARVIS_USER_AGENT,
             },
         )
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -306,12 +306,12 @@ def get_curated_openrouter_models() -> list[tuple[str, str]] | None:
     return out or None
 
 
-def get_curated_nous_models() -> list[str] | None:
+def get_curated_jarvis_managed_models() -> list[str] | None:
     """Return JARVIS Managed's curated list of model ids from the manifest.
 
     Returns ``None`` when the manifest is unavailable.
     """
-    block = _get_provider_block("nous")
+    block = _get_provider_block("jarvis_managed")
     if not block:
         return None
     out: list[str] = []

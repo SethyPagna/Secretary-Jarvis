@@ -50,7 +50,7 @@ class CopilotACPClientSafetyTests(unittest.TestCase):
         outcome = (((response.get("result") or {}).get("outcome") or {}).get("outcome"))
         self.assertEqual(outcome, "cancelled")
 
-    def test_read_text_file_blocks_internal_hermes_hub_files(self) -> None:
+    def test_read_text_file_blocks_internal_jarvis_hub_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             home = Path(tmpdir) / "home"
             blocked = home / ".jarvis" / "skills" / ".hub" / "index-cache" / "entry.json"
@@ -175,12 +175,12 @@ def _fake_popen_capture(captured):
 
 
 def test_run_prompt_prefers_profile_home_when_available(monkeypatch, tmp_path):
-    hermes_home = tmp_path / "jarvis"
-    profile_home = hermes_home / "home"
+    jarvis_home = tmp_path / "jarvis"
+    profile_home = jarvis_home / "home"
     profile_home.mkdir(parents=True)
 
     monkeypatch.delenv("HOME", raising=False)
-    monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+    monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
 
     captured = {}
     client = _make_home_client(tmp_path)

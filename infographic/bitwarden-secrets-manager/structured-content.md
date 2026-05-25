@@ -52,6 +52,6 @@ secrets:
 ```
 
 ## Footer
-PR #30035 · commit 7f9b05668 · NousResearch/jarvis-agent
+PR #30035 · commit 7f9b05668 · JARVISProject/jarvis-agent
 
 10 files changed · +1743 / -1 · agent/secret_sources/ · jarvis_cli/secrets_cli.py · tests · docs

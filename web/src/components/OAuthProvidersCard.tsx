@@ -7,9 +7,9 @@ import {
   Terminal,
 } from "lucide-react";
 import { api, type OAuthProvider } from "@/lib/api";
-import { Button } from "@nous-research/ui/ui/components/button";
-import { CopyButton } from "@nous-research/ui/ui/components/command-block";
-import { Spinner } from "@nous-research/ui/ui/components/spinner";
+import { Button } from "@jarvis_managed-research/ui/ui/components/button";
+import { CopyButton } from "@jarvis_managed-research/ui/ui/components/command-block";
+import { Spinner } from "@jarvis_managed-research/ui/ui/components/spinner";
 import {
   Card,
   CardContent,
@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@nous-research/ui/ui/components/badge";
+import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { OAuthLoginModal } from "@/components/OAuthLoginModal";
 import { useI18n } from "@/i18n";
@@ -50,7 +50,7 @@ function formatExpiresAt(
 }
 
 function displayProviderName(provider: OAuthProvider): string {
-  if (provider.id === "nous" || /nous/i.test(provider.name)) {
+  if (provider.id === "jarvis_managed" || /jarvis_managed/i.test(provider.name)) {
     return "JARVIS Managed";
   }
   return provider.name;

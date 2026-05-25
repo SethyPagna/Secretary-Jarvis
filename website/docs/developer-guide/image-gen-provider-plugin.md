@@ -18,7 +18,7 @@ Jarvis scans for image-gen backends in three places:
 
 1. **Bundled** — `<repo>/plugins/image_gen/<name>/` (auto-loaded with `kind: backend`, always available)
 2. **User** — `~/.jarvis/plugins/image_gen/<name>/` (opt-in via `plugins.enabled`)
-3. **Pip** — packages declaring a `hermes_agent.plugins` entry point
+3. **Pip** — packages declaring a `jarvis_agent.plugins` entry point
 
 Each plugin's `register(ctx)` function calls `ctx.register_image_gen_provider(...)` — that puts it into the registry in `agent/image_gen_registry.py`. The active provider is picked by `image_gen.provider` in `config.yaml`; `jarvis tools` walks users through selection.
 
@@ -275,7 +275,7 @@ Or interactively: `jarvis tools` → "Image Generation" → select `my-backend` 
 
 ```toml
 # pyproject.toml
-[project.entry-points."hermes_agent.plugins"]
+[project.entry-points."jarvis_agent.plugins"]
 my-backend-imggen = "my_backend_imggen_package"
 ```
 

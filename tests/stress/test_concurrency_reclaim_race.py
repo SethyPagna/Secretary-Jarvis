@@ -38,9 +38,9 @@ WORK_DURATION_S = 2.0  # longer than TTL => reclaimer wins
 WT = str(Path(__file__).resolve().parents[2])
 
 
-def worker_loop(worker_id: int, hermes_home: str, result_file: str) -> None:
-    os.environ["JARVIS_HOME"] = hermes_home
-    os.environ["HOME"] = hermes_home
+def worker_loop(worker_id: int, jarvis_home: str, result_file: str) -> None:
+    os.environ["JARVIS_HOME"] = jarvis_home
+    os.environ["HOME"] = jarvis_home
     sys.path.insert(0, WT)
     from jarvis_cli import kanban_db as kb
 
@@ -95,9 +95,9 @@ def worker_loop(worker_id: int, hermes_home: str, result_file: str) -> None:
         json.dump(events, f)
 
 
-def reclaimer_loop(hermes_home: str, result_file: str) -> None:
-    os.environ["JARVIS_HOME"] = hermes_home
-    os.environ["HOME"] = hermes_home
+def reclaimer_loop(jarvis_home: str, result_file: str) -> None:
+    os.environ["JARVIS_HOME"] = jarvis_home
+    os.environ["HOME"] = jarvis_home
     sys.path.insert(0, WT)
     from jarvis_cli import kanban_db as kb
 
@@ -121,7 +121,7 @@ def reclaimer_loop(hermes_home: str, result_file: str) -> None:
 
 
 def main():
-    home = tempfile.mkdtemp(prefix="hermes_reclaim_race_")
+    home = tempfile.mkdtemp(prefix="jarvis_reclaim_race_")
     os.environ["JARVIS_HOME"] = home
     os.environ["HOME"] = home
     sys.path.insert(0, WT)

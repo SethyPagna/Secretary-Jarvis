@@ -27,7 +27,7 @@ jarvis acp / jarvis-acp / python -m acp_adapter
   -> parse --version / --check / --setup before server startup
   -> load ~/.jarvis/.env
   -> configure stderr logging
-  -> construct HermesACPAgent
+  -> construct JarvisACPAgent
   -> acp.run_agent(agent, use_unstable_protocol=True)
 ```
 
@@ -37,7 +37,7 @@ Stdout is reserved for ACP JSON-RPC transport. Human-readable logs go to stderr.
 
 ## Major components
 
-### `HermesACPAgent`
+### `JarvisACPAgent`
 
 `acp_adapter/server.py` implements the ACP agent protocol.
 

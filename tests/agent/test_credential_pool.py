@@ -11,9 +11,9 @@ import pytest
 
 
 def _write_auth_store(tmp_path, payload: dict) -> None:
-    hermes_home = tmp_path / "jarvis"
-    hermes_home.mkdir(parents=True, exist_ok=True)
-    (hermes_home / "auth.json").write_text(json.dumps(payload, indent=2))
+    jarvis_home = tmp_path / "jarvis"
+    jarvis_home.mkdir(parents=True, exist_ok=True)
+    (jarvis_home / "auth.json").write_text(json.dumps(payload, indent=2))
 
 
 def _jwt_with_claims(claims: dict) -> str:
@@ -402,15 +402,15 @@ def test_load_pool_prefers_dotenv_over_stale_os_environ(tmp_path, monkeypatch):
     os.environ and silently wrote the stale value into auth.json, causing
     persistent 401 errors after key rotation.
     """
-    hermes_home = tmp_path / "jarvis"
-    hermes_home.mkdir()
-    monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+    jarvis_home = tmp_path / "jarvis"
+    jarvis_home.mkdir()
+    monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
 
     # Simulate the bug: parent shell exported a stale test key
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-STALE-from-shell")
 
     # User edited ~/.jarvis/.env with the fresh key
-    (hermes_home / ".env").write_text(
+    (jarvis_home / ".env").write_text(
         "OPENROUTER_API_KEY=sk-or-FRESH-from-dotenv\n"
     )
 
@@ -434,13 +434,13 @@ def test_load_pool_falls_back_to_os_environ_when_dotenv_empty(tmp_path, monkeypa
     os.environ. Guards against regressions that would break production
     deployments relying on runtime-injected env vars.
     """
-    hermes_home = tmp_path / "jarvis"
-    hermes_home.mkdir()
-    monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+    jarvis_home = tmp_path / "jarvis"
+    jarvis_home.mkdir()
+    monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-from-runtime-env")
 
     # .env exists but does not define OPENROUTER_API_KEY
-    (hermes_home / ".env").write_text("SOME_OTHER_VAR=unrelated\n")
+    (jarvis_home / ".env").write_text("SOME_OTHER_VAR=unrelated\n")
 
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
 
@@ -485,15 +485,15 @@ def test_load_pool_removes_stale_seeded_env_entry(tmp_path, monkeypatch):
     assert auth_payload["credential_pool"]["openrouter"] == []
 
 
-def test_load_pool_migrates_nous_provider_state(tmp_path, monkeypatch):
+def test_load_pool_migrates_jarvis_managed_provider_state(tmp_path, monkeypatch):
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis"))
     _write_auth_store(
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -511,7 +511,7 @@ def test_load_pool_migrates_nous_provider_state(tmp_path, monkeypatch):
 
     from agent.credential_pool import load_pool
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     entry = pool.select()
 
     assert entry is not None
@@ -520,7 +520,7 @@ def test_load_pool_migrates_nous_provider_state(tmp_path, monkeypatch):
     assert entry.agent_key == "agent-key"
 
 
-def test_load_pool_mirrors_nous_invoke_jwt_agent_key_runtime_api_key(tmp_path, monkeypatch):
+def test_load_pool_mirrors_jarvis_managed_invoke_jwt_agent_key_runtime_api_key(tmp_path, monkeypatch):
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis"))
     expires_at = datetime.fromtimestamp(time.time() + 3600, tz=timezone.utc).isoformat()
     token = _jwt_with_claims({
@@ -532,9 +532,9 @@ def test_load_pool_mirrors_nous_invoke_jwt_agent_key_runtime_api_key(tmp_path, m
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -552,7 +552,7 @@ def test_load_pool_mirrors_nous_invoke_jwt_agent_key_runtime_api_key(tmp_path, m
 
     from agent.credential_pool import load_pool
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     entry = pool.select()
 
     assert entry is not None
@@ -561,21 +561,21 @@ def test_load_pool_mirrors_nous_invoke_jwt_agent_key_runtime_api_key(tmp_path, m
     assert entry.runtime_api_key == token
 
     auth_payload = json.loads((tmp_path / "jarvis" / "auth.json").read_text())
-    pool_entry = auth_payload["credential_pool"]["nous"][0]
+    pool_entry = auth_payload["credential_pool"]["jarvis_managed"][0]
     assert pool_entry["agent_key"] == token
     assert pool_entry["agent_key_expires_at"] == expires_at
 
 
-def test_nous_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypatch):
+def test_jarvis_managed_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypatch):
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis"))
     monkeypatch.setenv("JARVIS_SHARED_AUTH_DIR", str(tmp_path / "shared"))
     _write_auth_store(
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -601,16 +601,16 @@ def test_nous_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypa
         refresh_calls["count"] += 1
         raise AuthError(
             "Refresh session has been revoked",
-            provider="nous",
+            provider="jarvis_managed",
             code="invalid_grant",
             relogin_required=True,
         )
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     selected = pool.select()
     assert selected is not None
     assert selected.source == "device_code"
-    pool.add_entry(PooledCredential.from_dict("nous", {
+    pool.add_entry(PooledCredential.from_dict("jarvis_managed", {
         "id": "legacy-seeded",
         "source": "manual:device_code",
         "auth_type": "oauth",
@@ -618,40 +618,40 @@ def test_nous_pool_terminal_refresh_removes_device_code_entry(tmp_path, monkeypa
         "refresh_token": "old-refresh-token",
         "agent_key": "old-agent-key",
     }))
-    pool.add_entry(PooledCredential.from_dict("nous", {
+    pool.add_entry(PooledCredential.from_dict("jarvis_managed", {
         "id": "manual-key",
         "source": "manual",
         "auth_type": "api_key",
-        "access_token": "manual-nous-key",
+        "access_token": "manual-jarvis_managed-key",
     }))
 
-    monkeypatch.setattr(auth_mod, "resolve_nous_runtime_credentials", _terminal_refresh_failure)
+    monkeypatch.setattr(auth_mod, "resolve_jarvis_managed_runtime_credentials", _terminal_refresh_failure)
 
     assert pool.try_refresh_current() is None
 
     assert [entry.id for entry in pool.entries()] == ["manual-key"]
 
     auth_payload = json.loads((tmp_path / "jarvis" / "auth.json").read_text())
-    nous_state = auth_payload["providers"]["nous"]
-    assert not nous_state.get("refresh_token")
-    assert not nous_state.get("access_token")
-    assert not nous_state.get("agent_key")
-    assert nous_state["last_auth_error"]["code"] == "invalid_grant"
-    assert [entry["id"] for entry in auth_payload["credential_pool"]["nous"]] == ["manual-key"]
+    jarvis_managed_state = auth_payload["providers"]["jarvis_managed"]
+    assert not jarvis_managed_state.get("refresh_token")
+    assert not jarvis_managed_state.get("access_token")
+    assert not jarvis_managed_state.get("agent_key")
+    assert jarvis_managed_state["last_auth_error"]["code"] == "invalid_grant"
+    assert [entry["id"] for entry in auth_payload["credential_pool"]["jarvis_managed"]] == ["manual-key"]
 
     assert pool.try_refresh_current() is None
     assert refresh_calls["count"] == 1
 
 
-def test_load_pool_removes_nous_device_code_when_singleton_quarantined(tmp_path, monkeypatch):
+def test_load_pool_removes_jarvis_managed_device_code_when_singleton_quarantined(tmp_path, monkeypatch):
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis"))
     _write_auth_store(
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -659,7 +659,7 @@ def test_load_pool_removes_nous_device_code_when_singleton_quarantined(tmp_path,
                 }
             },
             "credential_pool": {
-                "nous": [
+                "jarvis_managed": [
                     {
                         "id": "seeded-current",
                         "source": "device_code",
@@ -678,7 +678,7 @@ def test_load_pool_removes_nous_device_code_when_singleton_quarantined(tmp_path,
                         "id": "manual-key",
                         "source": "manual",
                         "auth_type": "api_key",
-                        "access_token": "manual-nous-key",
+                        "access_token": "manual-jarvis_managed-key",
                     },
                 ]
             },
@@ -687,11 +687,11 @@ def test_load_pool_removes_nous_device_code_when_singleton_quarantined(tmp_path,
 
     from agent.credential_pool import load_pool
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
 
     assert [entry.id for entry in pool.entries()] == ["manual-key"]
     auth_payload = json.loads((tmp_path / "jarvis" / "auth.json").read_text())
-    assert [entry["id"] for entry in auth_payload["credential_pool"]["nous"]] == ["manual-key"]
+    assert [entry["id"] for entry in auth_payload["credential_pool"]["jarvis_managed"]] == ["manual-key"]
 
 
 def test_load_pool_removes_stale_file_backed_singleton_entry(tmp_path, monkeypatch):
@@ -721,7 +721,7 @@ def test_load_pool_removes_stale_file_backed_singleton_entry(tmp_path, monkeypat
     )
 
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_jarvis_oauth_credentials",
         lambda: None,
     )
     monkeypatch.setattr(
@@ -739,15 +739,15 @@ def test_load_pool_removes_stale_file_backed_singleton_entry(tmp_path, monkeypat
     assert auth_payload["credential_pool"]["anthropic"] == []
 
 
-def test_load_pool_migrates_nous_provider_state_preserves_tls(tmp_path, monkeypatch):
+def test_load_pool_migrates_jarvis_managed_provider_state_preserves_tls(tmp_path, monkeypatch):
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis"))
     _write_auth_store(
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -760,7 +760,7 @@ def test_load_pool_migrates_nous_provider_state_preserves_tls(tmp_path, monkeypa
                     "agent_key_expires_at": "2026-03-24T13:30:00+00:00",
                     "tls": {
                         "insecure": True,
-                        "ca_bundle": "/tmp/nous-ca.pem",
+                        "ca_bundle": "/tmp/jarvis_managed-ca.pem",
                     },
                 }
             },
@@ -769,19 +769,19 @@ def test_load_pool_migrates_nous_provider_state_preserves_tls(tmp_path, monkeypa
 
     from agent.credential_pool import load_pool
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     entry = pool.select()
 
     assert entry is not None
     assert entry.tls == {
         "insecure": True,
-        "ca_bundle": "/tmp/nous-ca.pem",
+        "ca_bundle": "/tmp/jarvis_managed-ca.pem",
     }
 
     auth_payload = json.loads((tmp_path / "jarvis" / "auth.json").read_text())
-    assert auth_payload["credential_pool"]["nous"][0]["tls"] == {
+    assert auth_payload["credential_pool"]["jarvis_managed"][0]["tls"] == {
         "insecure": True,
-        "ca_bundle": "/tmp/nous-ca.pem",
+        "ca_bundle": "/tmp/jarvis_managed-ca.pem",
     }
 
 
@@ -802,7 +802,7 @@ def test_singleton_seed_does_not_clobber_manual_oauth_entry(tmp_path, monkeypatc
                         "label": "manual-pkce",
                         "auth_type": "oauth",
                         "priority": 0,
-                        "source": "manual:hermes_pkce",
+                        "source": "manual:jarvis_pkce",
                         "access_token": "manual-token",
                         "refresh_token": "manual-refresh",
                         "expires_at_ms": 1711234567000,
@@ -813,7 +813,7 @@ def test_singleton_seed_does_not_clobber_manual_oauth_entry(tmp_path, monkeypatc
     )
 
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_jarvis_oauth_credentials",
         lambda: {
             "accessToken": "seeded-token",
             "refreshToken": "seeded-refresh",
@@ -831,7 +831,7 @@ def test_singleton_seed_does_not_clobber_manual_oauth_entry(tmp_path, monkeypatc
     entries = pool.entries()
 
     assert len(entries) == 2
-    assert {entry.source for entry in entries} == {"manual:hermes_pkce", "hermes_pkce"}
+    assert {entry.source for entry in entries} == {"manual:jarvis_pkce", "jarvis_pkce"}
 
 
 def test_load_pool_prefers_anthropic_env_token_over_file_backed_oauth(tmp_path, monkeypatch):
@@ -842,7 +842,7 @@ def test_load_pool_prefers_anthropic_env_token_over_file_backed_oauth(tmp_path, 
     _write_auth_store(tmp_path, {"version": 1, "providers": {}})
 
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_jarvis_oauth_credentials",
         lambda: {
             "accessToken": "file-backed-token",
             "refreshToken": "refresh-token",
@@ -1317,7 +1317,7 @@ def test_load_pool_does_not_seed_claude_code_when_anthropic_not_configured(tmp_p
         lambda: {"accessToken": "sk-ant...oken", "refreshToken": "rt", "expiresAt": 9999999999999},
     )
     monkeypatch.setattr(
-        "agent.anthropic_adapter.read_hermes_oauth_credentials",
+        "agent.anthropic_adapter.read_jarvis_oauth_credentials",
         lambda: None,
     )
     # User configured kimi-coding, NOT anthropic
@@ -1419,11 +1419,11 @@ def test_load_pool_does_not_seed_qwen_oauth_when_no_token(tmp_path, monkeypatch)
     assert pool.entries() == []
 
 
-def test_nous_seed_from_singletons_preserves_obtained_at_timestamps(tmp_path, monkeypatch):
+def test_jarvis_managed_seed_from_singletons_preserves_obtained_at_timestamps(tmp_path, monkeypatch):
     """Regression test for #15099 secondary issue.
 
     When ``_seed_from_singletons`` materialises a device_code pool entry from
-    the ``providers.nous`` singleton, it must carry the mint/refresh
+    the ``providers.jarvis_managed`` singleton, it must carry the mint/refresh
     timestamps (``obtained_at``, ``agent_key_obtained_at``, ``expires_in``,
     etc.) into the pool entry.  Without them, freshness-sensitive consumers
     (self-heal hooks, pool pruning by age) treat just-minted credentials as
@@ -1435,18 +1435,18 @@ def test_nous_seed_from_singletons_preserves_obtained_at_timestamps(tmp_path, mo
         {
             "version": 1,
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "access_token": "at_XXXXXXXX",
                     "refresh_token": "rt_YYYYYYYY",
                     "client_id": "jarvis-cli",
-                    "portal_base_url": "https://portal.nousresearch.com",
-                    "inference_base_url": "https://inference.nousresearch.com/v1",
+                    "portal_base_url": "https://portal.jarvis.local",
+                    "inference_base_url": "https://inference.jarvis.local/v1",
                     "token_type": "Bearer",
                     "scope": "openid profile",
                     "obtained_at": "2026-04-24T10:00:00+00:00",
                     "expires_at": "2026-04-24T11:00:00+00:00",
                     "expires_in": 3600,
-                    "agent_key": "sk-nous-AAAA",
+                    "agent_key": "sk-jarvis_managed-AAAA",
                     "agent_key_id": "ak_123",
                     "agent_key_expires_at": "2026-04-25T10:00:00+00:00",
                     "agent_key_expires_in": 86400,
@@ -1460,7 +1460,7 @@ def test_nous_seed_from_singletons_preserves_obtained_at_timestamps(tmp_path, mo
 
     from agent.credential_pool import load_pool
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     entries = pool.entries()
 
     device_entries = [e for e in entries if e.source == "device_code"]
@@ -1471,7 +1471,7 @@ def test_nous_seed_from_singletons_preserves_obtained_at_timestamps(tmp_path, mo
     assert e.access_token == "at_XXXXXXXX"
     assert e.refresh_token == "rt_YYYYYYYY"
     assert e.expires_at == "2026-04-24T11:00:00+00:00"
-    assert e.agent_key == "sk-nous-AAAA"
+    assert e.agent_key == "sk-jarvis_managed-AAAA"
     assert e.agent_key_expires_at == "2026-04-25T10:00:00+00:00"
 
     # Extra fields — this is what regressed.  These must be carried through
@@ -1518,18 +1518,18 @@ class TestLeastUsedStrategy:
         )
 
 
-# ── PR #10160 salvage: Nous OAuth cross-process sync tests ─────────────────
+# ── PR #10160 salvage: JARVIS Managed OAuth cross-process sync tests ─────────────────
 
-def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypatch):
+def test_sync_jarvis_managed_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypatch):
     """When auth.json has a newer refresh token, the pool entry should adopt it."""
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis"))
     _write_auth_store(
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -1547,7 +1547,7 @@ def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypat
 
     from agent.credential_pool import load_pool
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     entry = pool.select()
     assert entry is not None
     assert entry.refresh_token == "refresh-OLD"
@@ -1557,9 +1557,9 @@ def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypat
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -1575,23 +1575,23 @@ def test_sync_nous_entry_from_auth_store_adopts_newer_tokens(tmp_path, monkeypat
         },
     )
 
-    synced = pool._sync_nous_entry_from_auth_store(entry)
+    synced = pool._sync_jarvis_managed_entry_from_auth_store(entry)
     assert synced is not entry
     assert synced.access_token == "access-NEW"
     assert synced.refresh_token == "refresh-NEW"
     assert synced.agent_key == "agent-key-NEW"
     assert synced.agent_key_expires_at == "2026-03-24T14:00:00+00:00"
 
-def test_sync_nous_entry_noop_when_tokens_match(tmp_path, monkeypatch):
+def test_sync_jarvis_managed_entry_noop_when_tokens_match(tmp_path, monkeypatch):
     """When auth.json has the same refresh token, sync should be a no-op."""
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis"))
     _write_auth_store(
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -1609,15 +1609,15 @@ def test_sync_nous_entry_noop_when_tokens_match(tmp_path, monkeypatch):
 
     from agent.credential_pool import load_pool
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     entry = pool.select()
     assert entry is not None
 
-    synced = pool._sync_nous_entry_from_auth_store(entry)
+    synced = pool._sync_jarvis_managed_entry_from_auth_store(entry)
     assert synced is entry
 
-def test_nous_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch):
-    """An exhausted Nous entry should recover when auth.json has newer tokens."""
+def test_jarvis_managed_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch):
+    """An exhausted JARVIS Managed entry should recover when auth.json has newer tokens."""
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis"))
     from agent.credential_pool import load_pool, STATUS_EXHAUSTED
     from dataclasses import replace as dc_replace
@@ -1626,9 +1626,9 @@ def test_nous_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -1644,7 +1644,7 @@ def test_nous_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch
         },
     )
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     entry = pool.select()
     assert entry is not None
 
@@ -1663,9 +1663,9 @@ def test_nous_exhausted_entry_recovers_via_auth_store_sync(tmp_path, monkeypatch
         tmp_path,
         {
             "version": 1,
-            "active_provider": "nous",
+            "active_provider": "jarvis_managed",
             "providers": {
-                "nous": {
+                "jarvis_managed": {
                     "portal_base_url": "https://portal.example.com",
                     "inference_base_url": "https://inference.example.com/v1",
                     "client_id": "jarvis-cli",
@@ -1862,9 +1862,9 @@ def test_is_terminal_xai_oauth_refresh_error():
     assert not _is_terminal_xai_oauth_refresh_error(
         AuthError("Rate limit", provider="xai-oauth", code="xai_refresh_failed", relogin_required=False)
     )
-    # Nous error does not trigger xAI check
+    # JARVIS Managed error does not trigger xAI check
     assert not _is_terminal_xai_oauth_refresh_error(
-        AuthError("Revoked", provider="nous", code="invalid_grant", relogin_required=True)
+        AuthError("Revoked", provider="jarvis_managed", code="invalid_grant", relogin_required=True)
     )
     # Generic exception
     assert not _is_terminal_xai_oauth_refresh_error(ValueError("oops"))

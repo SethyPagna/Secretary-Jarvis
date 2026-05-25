@@ -40,8 +40,8 @@ class TestSupportsMediaInToolResults:
     def test_openrouter_yes(self):
         assert _supports_media_in_tool_results("openrouter", "anthropic/claude-opus-4.6") is True
 
-    def test_nous_yes(self):
-        assert _supports_media_in_tool_results("nous", "anthropic/claude-sonnet-4.6") is True
+    def test_jarvis_managed_yes(self):
+        assert _supports_media_in_tool_results("jarvis_managed", "anthropic/claude-sonnet-4.6") is True
 
     def test_openai_chat_yes(self):
         assert _supports_media_in_tool_results("openai", "gpt-5.4") is True

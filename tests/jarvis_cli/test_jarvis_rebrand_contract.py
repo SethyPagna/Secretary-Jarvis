@@ -19,7 +19,7 @@ class JarvisRebrandContractTests(unittest.TestCase):
         self.assertEqual(scripts["jarvis-desktop-backend"], "jarvis_cli.desktop_entry:main")
         self.assertNotIn("jarvis", scripts)
         self.assertNotIn("jarvis-agent", scripts)
-        self.assertNotIn("hermes", scripts)
+        self.assertNotIn("jarvis", scripts)
         self.assertNotIn("cli", data["project"].get("optional-dependencies", {}))
         self.assertNotIn("tts-premium", data["project"].get("optional-dependencies", {}))
         self.assertFalse(
@@ -65,16 +65,16 @@ class JarvisRebrandContractTests(unittest.TestCase):
             any(req["name"] == "uvicorn" and "marker" not in req for req in requires_dist)
         )
         self.assertFalse(any(req["name"] == "elevenlabs" for req in requires_dist))
-        self.assertFalse(any(req["name"] == "hermes-agent" for req in requires_dist))
+        self.assertFalse(any(req["name"] == "jarvis-agent" for req in requires_dist))
         self.assertNotIn("cli", metadata["provides-extras"])
         self.assertNotIn("tts-premium", metadata["provides-extras"])
 
     def test_frontend_lock_keeps_canonical_third_party_package_names(self) -> None:
         package_lock = (ROOT / "web" / "package-lock.json").read_text(encoding="utf-8")
 
-        self.assertIn('"hermes-parser": "^0.25.1"', package_lock)
-        self.assertIn('"node_modules/hermes-parser"', package_lock)
-        self.assertIn('"node_modules/hermes-estree"', package_lock)
+        self.assertIn('"jarvis-parser": "^0.25.1"', package_lock)
+        self.assertIn('"node_modules/jarvis-parser"', package_lock)
+        self.assertIn('"node_modules/jarvis-estree"', package_lock)
         self.assertNotIn("jarvis-parser", package_lock)
         self.assertNotIn("jarvis-estree", package_lock)
 
@@ -94,24 +94,24 @@ class JarvisRebrandContractTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             previous_jarvis = os.environ.get("JARVIS_HOME")
-            previous_hermes = os.environ.get("HERMES_HOME")
+            previous_jarvis = os.environ.get("JARVIS_HOME")
             try:
                 os.environ["JARVIS_HOME"] = tmp_dir
-                os.environ["HERMES_HOME"] = str(Path(tmp_dir) / "wrong")
+                os.environ["JARVIS_HOME"] = str(Path(tmp_dir) / "wrong")
                 self.assertEqual(constants.get_jarvis_home(), Path(tmp_dir))
 
                 del os.environ["JARVIS_HOME"]
-                del os.environ["HERMES_HOME"]
+                del os.environ["JARVIS_HOME"]
                 self.assertEqual(constants.get_jarvis_home(), Path.home() / ".jarvis")
             finally:
                 if previous_jarvis is None:
                     os.environ.pop("JARVIS_HOME", None)
                 else:
                     os.environ["JARVIS_HOME"] = previous_jarvis
-                if previous_hermes is None:
-                    os.environ.pop("HERMES_HOME", None)
+                if previous_jarvis is None:
+                    os.environ.pop("JARVIS_HOME", None)
                 else:
-                    os.environ["HERMES_HOME"] = previous_hermes
+                    os.environ["JARVIS_HOME"] = previous_jarvis
 
     def test_default_soul_seed_is_jarvis_identity(self) -> None:
         soul_path = ROOT / "jarvis_cli" / "data" / "default_SOUL.md"
@@ -119,7 +119,7 @@ class JarvisRebrandContractTests(unittest.TestCase):
         content = soul_path.read_text(encoding="utf-8")
         self.assertIn("JARVIS", content)
         self.assertIn("Just A Rather Very Intelligent System", content)
-        self.assertNotIn("You are Hermes Agent", content)
+        self.assertNotIn("You are JARVIS", content)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ Architecture:
 - resolve_*_runtime_credentials() handles token refresh and key minting
 - logout_command() is the CLI entry point for clearing auth
 
-Nous authentication paths:
+JARVIS Managed authentication paths:
 - Invoke JWT (preferred): use a scoped access_token directly for inference.
 - Legacy session key (fallback): mint an opaque 24h key when JWT auth is
   unavailable, or when JARVIS_AGENT_USE_LEGACY_SESSION_KEYS is set for
@@ -70,28 +70,28 @@ AUTH_STORE_VERSION = 1
 AUTH_LOCK_TIMEOUT_SECONDS = 15.0
 
 # JARVIS Managed defaults
-DEFAULT_NOUS_PORTAL_URL = "https://portal.nousresearch.com"
-DEFAULT_NOUS_INFERENCE_URL = "https://inference-api.nousresearch.com/v1"
-DEFAULT_NOUS_CLIENT_ID = "jarvis-cli"
-NOUS_LEGACY_AGENT_KEY_SCOPE = "inference:mint_agent_key"
-NOUS_INFERENCE_INVOKE_SCOPE = "inference:invoke"
-DEFAULT_NOUS_SCOPE = f"{NOUS_INFERENCE_INVOKE_SCOPE} {NOUS_LEGACY_AGENT_KEY_SCOPE}"
-NOUS_LEGACY_SESSION_KEYS_ENV = "JARVIS_AGENT_USE_LEGACY_SESSION_KEYS"
-NOUS_DEVICE_CODE_SOURCE = "device_code"
-NOUS_INFERENCE_AUTH_MODE_AUTO = "auto"
-NOUS_INFERENCE_AUTH_MODE_FRESH = "fresh"
-NOUS_INFERENCE_AUTH_MODE_LEGACY = "legacy"
-NOUS_INFERENCE_AUTH_MODES = frozenset({
-    NOUS_INFERENCE_AUTH_MODE_AUTO,
-    NOUS_INFERENCE_AUTH_MODE_FRESH,
-    NOUS_INFERENCE_AUTH_MODE_LEGACY,
+DEFAULT_JARVIS_MANAGED_PORTAL_URL = "https://portal.jarvis.local"
+DEFAULT_JARVIS_MANAGED_INFERENCE_URL = "https://inference-api.jarvis.local/v1"
+DEFAULT_JARVIS_MANAGED_CLIENT_ID = "jarvis-cli"
+JARVIS_MANAGED_LEGACY_AGENT_KEY_SCOPE = "inference:mint_agent_key"
+JARVIS_MANAGED_INFERENCE_INVOKE_SCOPE = "inference:invoke"
+DEFAULT_JARVIS_MANAGED_SCOPE = f"{JARVIS_MANAGED_INFERENCE_INVOKE_SCOPE} {JARVIS_MANAGED_LEGACY_AGENT_KEY_SCOPE}"
+JARVIS_MANAGED_LEGACY_SESSION_KEYS_ENV = "JARVIS_AGENT_USE_LEGACY_SESSION_KEYS"
+JARVIS_MANAGED_DEVICE_CODE_SOURCE = "device_code"
+JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO = "auto"
+JARVIS_MANAGED_INFERENCE_AUTH_MODE_FRESH = "fresh"
+JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY = "legacy"
+JARVIS_MANAGED_INFERENCE_AUTH_MODES = frozenset({
+    JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO,
+    JARVIS_MANAGED_INFERENCE_AUTH_MODE_FRESH,
+    JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY,
 })
-NOUS_AUTH_PATH_INVOKE_JWT = "invoke_jwt"
-NOUS_AUTH_PATH_LEGACY_SESSION_KEY_CACHE = "legacy_session_key_cache"
-NOUS_AUTH_PATH_LEGACY_SESSION_KEY_MINT = "legacy_session_key_mint"
+JARVIS_MANAGED_AUTH_PATH_INVOKE_JWT = "invoke_jwt"
+JARVIS_MANAGED_AUTH_PATH_LEGACY_SESSION_KEY_CACHE = "legacy_session_key_cache"
+JARVIS_MANAGED_AUTH_PATH_LEGACY_SESSION_KEY_MINT = "legacy_session_key_mint"
 DEFAULT_AGENT_KEY_MIN_TTL_SECONDS = 30 * 60  # 30 minutes
 ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120       # refresh 2 min before expiry
-NOUS_INVOKE_JWT_MIN_TTL_SECONDS = ACCESS_TOKEN_REFRESH_SKEW_SECONDS
+JARVIS_MANAGED_INVOKE_JWT_MIN_TTL_SECONDS = ACCESS_TOKEN_REFRESH_SKEW_SECONDS
 DEVICE_AUTH_POLL_INTERVAL_CAP_SECONDS = 1     # poll at most every 1s
 DEFAULT_CODEX_BASE_URL = "https://chatgpt.com/backend-api/codex"
 DEFAULT_XAI_OAUTH_BASE_URL = "https://api.x.ai/v1"
@@ -181,14 +181,14 @@ class ProviderConfig:
 
 
 PROVIDER_REGISTRY: Dict[str, ProviderConfig] = {
-    "nous": ProviderConfig(
-        id="nous",
+    "jarvis_managed": ProviderConfig(
+        id="jarvis_managed",
         name="JARVIS Managed",
         auth_type="oauth_device_code",
-        portal_base_url=DEFAULT_NOUS_PORTAL_URL,
-        inference_base_url=DEFAULT_NOUS_INFERENCE_URL,
-        client_id=DEFAULT_NOUS_CLIENT_ID,
-        scope=DEFAULT_NOUS_SCOPE,
+        portal_base_url=DEFAULT_JARVIS_MANAGED_PORTAL_URL,
+        inference_base_url=DEFAULT_JARVIS_MANAGED_INFERENCE_URL,
+        client_id=DEFAULT_JARVIS_MANAGED_CLIENT_ID,
+        scope=DEFAULT_JARVIS_MANAGED_SCOPE,
     ),
     "openai-codex": ProviderConfig(
         id="openai-codex",
@@ -906,7 +906,7 @@ def _file_lock(
     Reentrant per-thread via ``holder.depth``. Falls back to a depth-only
     guard when neither ``fcntl`` nor ``msvcrt`` is available (rare).
     Callers supply their own ``threading.local`` so independent locks
-    (e.g. profile auth.json vs shared Nous store) don't share reentrancy
+    (e.g. profile auth.json vs shared JARVIS Managed store) don't share reentrancy
     state — that would let one lock's reentrant acquisition silently skip
     the other's kernel-level flock.
     """
@@ -971,8 +971,8 @@ def _auth_store_lock(timeout_seconds: float = AUTH_LOCK_TIMEOUT_SECONDS):
     """Cross-process advisory lock for auth.json reads+writes.  Reentrant.
 
     Lock ordering invariant: when this lock is held together with
-    ``_nous_shared_store_lock``, acquire ``_auth_store_lock`` FIRST
-    (outer) and the shared Nous lock SECOND (inner). All runtime
+    ``_jarvis_managed_shared_store_lock``, acquire ``_auth_store_lock`` FIRST
+    (outer) and the shared JARVIS Managed lock SECOND (inner). All runtime
     refresh paths follow this order; violating it risks deadlock
     against a concurrent import on the shared store.
     """
@@ -1017,10 +1017,10 @@ def _load_auth_store(auth_file: Optional[Path] = None) -> Dict[str, Any]:
     if isinstance(raw, dict) and isinstance(raw.get("systems"), dict):
         systems = raw["systems"]
         providers = {}
-        if "nous_portal" in systems:
-            providers["nous"] = systems["nous_portal"]
+        if "jarvis_managed_portal" in systems:
+            providers["jarvis_managed"] = systems["jarvis_managed_portal"]
         return {"version": AUTH_STORE_VERSION, "providers": providers,
-                "active_provider": "nous" if providers else None}
+                "active_provider": "jarvis_managed" if providers else None}
 
     return {"version": AUTH_STORE_VERSION, "providers": {}}
 
@@ -1231,7 +1231,7 @@ def get_provider_auth_state(provider_id: str) -> Optional[Dict[str, Any]]:
     ``read_credential_pool``'s per-provider shadowing semantics so that
     ``_seed_from_singletons`` can reseed a profile's credential pool from
     global-scope provider state (e.g. a globally-authenticated Anthropic
-    OAuth or Nous device-code session). See issue #18594 follow-up.
+    OAuth or JARVIS Managed device-code session). See issue #18594 follow-up.
     """
     auth_store = _load_auth_store()
     state = _load_provider_state(auth_store, provider_id)
@@ -1561,19 +1561,19 @@ def _optional_base_url(value: Any) -> Optional[str]:
 
 # Allowlist of hosts the JARVIS Managed proxy is willing to forward minted
 # bearer tokens to. The bearer is a long-lived agent_key minted by
-# portal.nousresearch.com — sending it anywhere else would leak it.
+# portal.jarvis.local — sending it anywhere else would leak it.
 #
 # This is consulted only for URLs coming from the NETWORK side (Portal
 # refresh / agent-key-mint responses). User-controlled env-var overrides
-# (NOUS_INFERENCE_BASE_URL) bypass validation — that's the documented
+# (JARVIS_MANAGED_INFERENCE_BASE_URL) bypass validation — that's the documented
 # dev/staging escape hatch and the env source is already trusted (the
 # user set it themselves).
-_ALLOWED_NOUS_INFERENCE_HOSTS: FrozenSet[str] = frozenset({
-    "inference-api.nousresearch.com",
+_ALLOWED_JARVIS_MANAGED_INFERENCE_HOSTS: FrozenSet[str] = frozenset({
+    "inference-api.jarvis.local",
 })
 
 
-def _validate_nous_inference_url_from_network(url: Optional[str]) -> Optional[str]:
+def _validate_jarvis_managed_inference_url_from_network(url: Optional[str]) -> Optional[str]:
     """Validate a Portal-returned inference URL against the host allowlist.
 
     Returns ``url`` (normalised by stripping trailing slashes) if it's a
@@ -1589,7 +1589,7 @@ def _validate_nous_inference_url_from_network(url: Optional[str]) -> Optional[st
     Validating scheme + host at the source closes that loop before the
     poisoned URL ever lands in ``auth.json``.
 
-    The env-var override path (``NOUS_INFERENCE_BASE_URL``) bypasses
+    The env-var override path (``JARVIS_MANAGED_INFERENCE_BASE_URL``) bypasses
     this — env values come from the trusted OS user, not from the
     network, and the override is documented for staging/dev use.
 
@@ -1606,13 +1606,13 @@ def _validate_nous_inference_url_from_network(url: Optional[str]) -> Optional[st
         return None
     if parsed.scheme != "https":
         logger.warning(
-            "nous: refusing non-https inference URL scheme %r from Portal response",
+            "jarvis_managed: refusing non-https inference URL scheme %r from Portal response",
             parsed.scheme,
         )
         return None
-    if parsed.hostname not in _ALLOWED_NOUS_INFERENCE_HOSTS:
+    if parsed.hostname not in _ALLOWED_JARVIS_MANAGED_INFERENCE_HOSTS:
         logger.warning(
-            "nous: refusing inference URL host %r from Portal response "
+            "jarvis_managed: refusing inference URL host %r from Portal response "
             "(not in allowlist); falling back to default",
             parsed.hostname,
         )
@@ -1649,31 +1649,31 @@ def _scope_values(raw_scope: Any) -> set[str]:
     return scopes
 
 
-def _nous_legacy_session_keys_forced() -> bool:
-    return is_truthy_value(os.getenv(NOUS_LEGACY_SESSION_KEYS_ENV), default=False)
+def _jarvis_managed_legacy_session_keys_forced() -> bool:
+    return is_truthy_value(os.getenv(JARVIS_MANAGED_LEGACY_SESSION_KEYS_ENV), default=False)
 
 
-def _nous_scope_has_invoke(raw_scope: Any) -> bool:
-    return NOUS_INFERENCE_INVOKE_SCOPE in _scope_values(raw_scope)
+def _jarvis_managed_scope_has_invoke(raw_scope: Any) -> bool:
+    return JARVIS_MANAGED_INFERENCE_INVOKE_SCOPE in _scope_values(raw_scope)
 
 
-def _normalize_nous_inference_auth_mode(inference_auth_mode: Optional[str]) -> str:
-    mode = str(inference_auth_mode or NOUS_INFERENCE_AUTH_MODE_AUTO).strip().lower()
-    if mode not in NOUS_INFERENCE_AUTH_MODES:
-        allowed = ", ".join(sorted(NOUS_INFERENCE_AUTH_MODES))
+def _normalize_jarvis_managed_inference_auth_mode(inference_auth_mode: Optional[str]) -> str:
+    mode = str(inference_auth_mode or JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO).strip().lower()
+    if mode not in JARVIS_MANAGED_INFERENCE_AUTH_MODES:
+        allowed = ", ".join(sorted(JARVIS_MANAGED_INFERENCE_AUTH_MODES))
         raise ValueError(
-            "Invalid Nous inference auth mode "
+            "Invalid JARVIS Managed inference auth mode "
             f"{inference_auth_mode!r}; expected one of: {allowed}"
         )
     return mode
 
 
-def _nous_invoke_jwt_status(
+def _jarvis_managed_invoke_jwt_status(
     token: Any,
     *,
     scope: Any = None,
     expires_at: Any = None,
-    min_ttl_seconds: int = NOUS_INVOKE_JWT_MIN_TTL_SECONDS,
+    min_ttl_seconds: int = JARVIS_MANAGED_INVOKE_JWT_MIN_TTL_SECONDS,
 ) -> Optional[str]:
     """Return None when the token can be used for inference, else a reason."""
     claims = _decode_jwt_claims(token)
@@ -1684,7 +1684,7 @@ def _nous_invoke_jwt_status(
         | _scope_values(claims.get("scope"))
         | _scope_values(claims.get("scp"))
     )
-    if NOUS_INFERENCE_INVOKE_SCOPE not in scopes:
+    if JARVIS_MANAGED_INFERENCE_INVOKE_SCOPE not in scopes:
         return "missing_inference_invoke_scope"
     exp = claims.get("exp")
     skew = max(0, int(min_ttl_seconds))
@@ -1697,15 +1697,15 @@ def _nous_invoke_jwt_status(
     return None
 
 
-def _nous_invoke_jwt_is_usable(
+def _jarvis_managed_invoke_jwt_is_usable(
     token: Any,
     *,
     scope: Any = None,
     expires_at: Any = None,
-    min_ttl_seconds: int = NOUS_INVOKE_JWT_MIN_TTL_SECONDS,
+    min_ttl_seconds: int = JARVIS_MANAGED_INVOKE_JWT_MIN_TTL_SECONDS,
 ) -> bool:
     return (
-        _nous_invoke_jwt_status(
+        _jarvis_managed_invoke_jwt_status(
             token,
             scope=scope,
             expires_at=expires_at,
@@ -1715,53 +1715,53 @@ def _nous_invoke_jwt_is_usable(
     )
 
 
-def _nous_legacy_session_key_reason(
+def _jarvis_managed_legacy_session_key_reason(
     token: Any,
     *,
     scope: Any = None,
     expires_at: Any = None,
-    inference_auth_mode: str = NOUS_INFERENCE_AUTH_MODE_AUTO,
+    inference_auth_mode: str = JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO,
 ) -> str:
-    if inference_auth_mode == NOUS_INFERENCE_AUTH_MODE_LEGACY:
+    if inference_auth_mode == JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY:
         return "forced_legacy_session_key"
-    if _nous_legacy_session_keys_forced():
+    if _jarvis_managed_legacy_session_keys_forced():
         return "forced_legacy_session_keys"
     return (
-        _nous_invoke_jwt_status(token, scope=scope, expires_at=expires_at)
+        _jarvis_managed_invoke_jwt_status(token, scope=scope, expires_at=expires_at)
         or "invoke_jwt_unavailable"
     )
 
 
-def _choose_nous_inference_auth_path(
+def _choose_jarvis_managed_inference_auth_path(
     state: Dict[str, Any],
     *,
     access_token: Any = None,
     min_key_ttl_seconds: int = DEFAULT_AGENT_KEY_MIN_TTL_SECONDS,
-    inference_auth_mode: str = NOUS_INFERENCE_AUTH_MODE_AUTO,
+    inference_auth_mode: str = JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO,
 ) -> Tuple[str, Optional[str]]:
-    inference_auth_mode = _normalize_nous_inference_auth_mode(inference_auth_mode)
+    inference_auth_mode = _normalize_jarvis_managed_inference_auth_mode(inference_auth_mode)
     token = state.get("access_token") if access_token is None else access_token
     if (
-        not _nous_legacy_session_keys_forced()
-        and inference_auth_mode != NOUS_INFERENCE_AUTH_MODE_LEGACY
-        and _nous_invoke_jwt_is_usable(
+        not _jarvis_managed_legacy_session_keys_forced()
+        and inference_auth_mode != JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY
+        and _jarvis_managed_invoke_jwt_is_usable(
             token,
             scope=state.get("scope"),
             expires_at=state.get("expires_at"),
         )
     ):
-        return NOUS_AUTH_PATH_INVOKE_JWT, None
+        return JARVIS_MANAGED_AUTH_PATH_INVOKE_JWT, None
     if (
-        inference_auth_mode == NOUS_INFERENCE_AUTH_MODE_AUTO
+        inference_auth_mode == JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO
         and _agent_key_is_usable(
             state,
             max(60, int(min_key_ttl_seconds)),
         )
     ):
-        return NOUS_AUTH_PATH_LEGACY_SESSION_KEY_CACHE, None
+        return JARVIS_MANAGED_AUTH_PATH_LEGACY_SESSION_KEY_CACHE, None
     return (
-        NOUS_AUTH_PATH_LEGACY_SESSION_KEY_MINT,
-        _nous_legacy_session_key_reason(
+        JARVIS_MANAGED_AUTH_PATH_LEGACY_SESSION_KEY_MINT,
+        _jarvis_managed_legacy_session_key_reason(
             token,
             scope=state.get("scope"),
             expires_at=state.get("expires_at"),
@@ -1770,38 +1770,38 @@ def _choose_nous_inference_auth_path(
     )
 
 
-def _log_nous_invoke_jwt_selected(
+def _log_jarvis_managed_invoke_jwt_selected(
     *,
     access_token: Any,
     sequence_id: Optional[str] = None,
 ) -> None:
-    logger.info("Nous inference auth: using NAS invoke JWT")
+    logger.info("JARVIS Managed inference auth: using NAS invoke JWT")
     _oauth_trace(
-        "nous_invoke_jwt_selected",
+        "jarvis_managed_invoke_jwt_selected",
         sequence_id=sequence_id,
         access_token_fp=_token_fingerprint(access_token),
     )
 
 
-def _log_nous_legacy_session_key_selected(
+def _log_jarvis_managed_legacy_session_key_selected(
     reason: str,
     *,
     access_token: Any,
     sequence_id: Optional[str] = None,
 ) -> None:
     logger.info(
-        "Nous inference auth: using legacy session key path (%s)",
+        "JARVIS Managed inference auth: using legacy session key path (%s)",
         reason,
     )
     _oauth_trace(
-        "nous_legacy_session_key_selected",
+        "jarvis_managed_legacy_session_key_selected",
         sequence_id=sequence_id,
         reason=reason,
         access_token_fp=_token_fingerprint(access_token),
     )
 
 
-def _nous_jwt_expires_at(token: Any, fallback_expires_at: Any = None) -> Optional[str]:
+def _jarvis_managed_jwt_expires_at(token: Any, fallback_expires_at: Any = None) -> Optional[str]:
     claims = _decode_jwt_claims(token)
     exp = claims.get("exp")
     if isinstance(exp, (int, float)):
@@ -1812,7 +1812,7 @@ def _nous_jwt_expires_at(token: Any, fallback_expires_at: Any = None) -> Optiona
     return fallback_expires_at if isinstance(fallback_expires_at, str) else None
 
 
-def _set_nous_agent_key_from_invoke_jwt(
+def _set_jarvis_managed_agent_key_from_invoke_jwt(
     state: Dict[str, Any],
     *,
     obtained_at: Optional[str] = None,
@@ -1832,7 +1832,7 @@ def _set_nous_agent_key_from_invoke_jwt(
         effective_obtained_at = existing_obtained_at
     else:
         effective_obtained_at = now.isoformat()
-    expires_at = _nous_jwt_expires_at(access_token, state.get("expires_at"))
+    expires_at = _jarvis_managed_jwt_expires_at(access_token, state.get("expires_at"))
     expires_epoch = _parse_iso_timestamp(expires_at)
     expires_in = (
         max(0, int(expires_epoch - time.time()))
@@ -1850,7 +1850,7 @@ def _set_nous_agent_key_from_invoke_jwt(
     state["agent_key_obtained_at"] = effective_obtained_at
 
 
-def _select_nous_invoke_jwt(
+def _select_jarvis_managed_invoke_jwt(
     state: Dict[str, Any],
     *,
     access_token: Any = None,
@@ -1858,14 +1858,14 @@ def _select_nous_invoke_jwt(
 ) -> None:
     if isinstance(access_token, str) and access_token.strip():
         state["access_token"] = access_token
-    _set_nous_agent_key_from_invoke_jwt(state)
-    _log_nous_invoke_jwt_selected(
+    _set_jarvis_managed_agent_key_from_invoke_jwt(state)
+    _log_jarvis_managed_invoke_jwt_selected(
         access_token=state.get("access_token"),
         sequence_id=sequence_id,
     )
 
 
-_NOUS_EFFECTIVE_STATE_IGNORED_KEYS = frozenset({
+_JARVIS_MANAGED_EFFECTIVE_STATE_IGNORED_KEYS = frozenset({
     # These are derived from expires_at/JWT exp and naturally tick down between
     # reads. Persisting only these changes makes auth.json noisy and defeats
     # the mtime-keyed auth-status cache.
@@ -1874,11 +1874,11 @@ _NOUS_EFFECTIVE_STATE_IGNORED_KEYS = frozenset({
 })
 
 
-def _nous_effective_provider_state(state: Dict[str, Any]) -> Dict[str, Any]:
+def _jarvis_managed_effective_provider_state(state: Dict[str, Any]) -> Dict[str, Any]:
     return {
         key: value
         for key, value in state.items()
-        if key not in _NOUS_EFFECTIVE_STATE_IGNORED_KEYS
+        if key not in _JARVIS_MANAGED_EFFECTIVE_STATE_IGNORED_KEYS
     }
 
 
@@ -3926,7 +3926,7 @@ def _request_device_code(
     return data
 
 
-def _is_nous_invoke_scope_refusal(exc: Exception) -> bool:
+def _is_jarvis_managed_invoke_scope_refusal(exc: Exception) -> bool:
     if not isinstance(exc, httpx.HTTPStatusError):
         return False
     response = exc.response
@@ -3950,23 +3950,23 @@ def _is_nous_invoke_scope_refusal(exc: Exception) -> bool:
     return (
         "invalid_scope" in text
         or "unsupported_scope" in text
-        or "scope" in text and NOUS_INFERENCE_INVOKE_SCOPE in text
+        or "scope" in text and JARVIS_MANAGED_INFERENCE_INVOKE_SCOPE in text
     )
 
 
-def _nous_device_scope_with_env_override(
+def _jarvis_managed_device_scope_with_env_override(
     requested_scope: Optional[str],
     *,
-    default_scope: str = DEFAULT_NOUS_SCOPE,
+    default_scope: str = DEFAULT_JARVIS_MANAGED_SCOPE,
 ) -> Tuple[str, bool]:
     explicit_scope = requested_scope is not None
     scope = requested_scope or default_scope
-    if _nous_legacy_session_keys_forced():
-        scope = NOUS_LEGACY_AGENT_KEY_SCOPE
+    if _jarvis_managed_legacy_session_keys_forced():
+        scope = JARVIS_MANAGED_LEGACY_AGENT_KEY_SCOPE
     return scope, explicit_scope
 
 
-def _request_nous_device_code_with_scope_fallback(
+def _request_jarvis_managed_device_code_with_scope_fallback(
     *,
     client: httpx.Client,
     portal_base_url: str,
@@ -3987,12 +3987,12 @@ def _request_nous_device_code_with_scope_fallback(
     except Exception as exc:
         if (
             allow_legacy_fallback
-            and _nous_scope_has_invoke(scope)
-            and _is_nous_invoke_scope_refusal(exc)
+            and _jarvis_managed_scope_has_invoke(scope)
+            and _is_jarvis_managed_invoke_scope_refusal(exc)
         ):
-            logger.info("Nous inference auth: NAS refused invoke scope, retrying legacy scope")
-            _oauth_trace("nous_device_code_invoke_scope_refused")
-            retry_scope = NOUS_LEGACY_AGENT_KEY_SCOPE
+            logger.info("JARVIS Managed inference auth: NAS refused invoke scope, retrying legacy scope")
+            _oauth_trace("jarvis_managed_device_code_invoke_scope_refused")
+            retry_scope = JARVIS_MANAGED_LEGACY_AGENT_KEY_SCOPE
             return (
                 _request_device_code(
                     client=client,
@@ -4059,12 +4059,12 @@ def _poll_for_token(
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Shared Nous token store — lets OAuth credentials persist across profiles
-# so a new `jarvis --profile <name> auth add nous --type oauth` can one-tap
+# Shared JARVIS Managed token store — lets OAuth credentials persist across profiles
+# so a new `jarvis --profile <name> auth add jarvis_managed --type oauth` can one-tap
 # import instead of running the full device-code flow every time.
 #
-# File lives at ${JARVIS_SHARED_AUTH_DIR}/nous_auth.json, defaulting to
-# ``<jarvis-root>/shared/nous_auth.json`` where ``<jarvis-root>`` is what
+# File lives at ${JARVIS_SHARED_AUTH_DIR}/jarvis_managed_auth.json, defaulting to
+# ``<jarvis-root>/shared/jarvis_managed_auth.json`` where ``<jarvis-root>`` is what
 # ``get_default_jarvis_root()`` returns — ``~/.jarvis`` on Linux/macOS,
 # ``%LOCALAPPDATA%\jarvis`` on native Windows, or the Docker/custom root.
 # It is OUTSIDE any named profile's JARVIS_HOME so named profiles (which
@@ -4077,12 +4077,12 @@ def _poll_for_token(
 # gracefully and the user falls back to the normal device-code flow.
 # -----------------------------------------------------------------------------
 
-NOUS_SHARED_STORE_FILENAME = "nous_auth.json"
-_nous_shared_lock_holder = threading.local()
+JARVIS_MANAGED_SHARED_STORE_FILENAME = "jarvis_managed_auth.json"
+_jarvis_managed_shared_lock_holder = threading.local()
 
 
-def _nous_shared_auth_dir() -> Path:
-    """Resolve the directory that holds the shared Nous token store.
+def _jarvis_managed_shared_auth_dir() -> Path:
+    """Resolve the directory that holds the shared JARVIS Managed token store.
 
     Honors ``JARVIS_SHARED_AUTH_DIR`` so tests can redirect it to a tmp
     path without touching the real user's home. Defaults to
@@ -4101,8 +4101,8 @@ def _nous_shared_auth_dir() -> Path:
     return get_default_jarvis_root() / "shared"
 
 
-def _nous_shared_store_path() -> Path:
-    path = _nous_shared_auth_dir() / NOUS_SHARED_STORE_FILENAME
+def _jarvis_managed_shared_store_path() -> Path:
+    path = _jarvis_managed_shared_auth_dir() / JARVIS_MANAGED_SHARED_STORE_FILENAME
     # Seat belt: if pytest is running and this resolves to a path under the
     # real user's Jarvis root, refuse rather than silently corrupt cross-profile
     # state. Tests must set JARVIS_SHARED_AUTH_DIR to a tmp_path (conftest
@@ -4112,7 +4112,7 @@ def _nous_shared_store_path() -> Path:
     if os.environ.get("PYTEST_CURRENT_TEST"):
         from jarvis_constants import get_default_jarvis_root
         real_home_shared = (
-            get_default_jarvis_root() / "shared" / NOUS_SHARED_STORE_FILENAME
+            get_default_jarvis_root() / "shared" / JARVIS_MANAGED_SHARED_STORE_FILENAME
         ).resolve(strict=False)
         try:
             resolved = path.resolve(strict=False)
@@ -4120,26 +4120,26 @@ def _nous_shared_store_path() -> Path:
             resolved = path
         if resolved == real_home_shared:
             raise RuntimeError(
-                f"Refusing to touch real user shared Nous auth store during test run: "
+                f"Refusing to touch real user shared JARVIS Managed auth store during test run: "
                 f"{path}. Set JARVIS_SHARED_AUTH_DIR to a tmp_path in your test fixture."
             )
     return path
 
 
 @contextmanager
-def _nous_shared_store_lock(timeout_seconds: float = AUTH_LOCK_TIMEOUT_SECONDS):
-    """Cross-profile lock for the shared Nous OAuth store.
+def _jarvis_managed_shared_store_lock(timeout_seconds: float = AUTH_LOCK_TIMEOUT_SECONDS):
+    """Cross-profile lock for the shared JARVIS Managed OAuth store.
 
     Lock ordering invariant: if both this and ``_auth_store_lock`` need
     to be held, acquire ``_auth_store_lock`` FIRST. All runtime refresh
     paths follow this order. The one exception is
-    ``_try_import_shared_nous_state``, which holds this lock alone for
+    ``_try_import_shared_jarvis_managed_state``, which holds this lock alone for
     the entire refresh+mint cycle so concurrent imports on sibling
     profiles can't race on the single-use shared refresh token; that
     helper must NOT be called with ``_auth_store_lock`` already held.
     """
     try:
-        lock_path = _nous_shared_store_path().with_suffix(".lock")
+        lock_path = _jarvis_managed_shared_store_path().with_suffix(".lock")
     except RuntimeError:
         # No JARVIS_HOME yet (pre-setup): fall through without locking.
         yield
@@ -4147,16 +4147,16 @@ def _nous_shared_store_lock(timeout_seconds: float = AUTH_LOCK_TIMEOUT_SECONDS):
 
     with _file_lock(
         lock_path,
-        _nous_shared_lock_holder,
+        _jarvis_managed_shared_lock_holder,
         timeout_seconds,
-        "Timed out waiting for shared Nous auth lock",
+        "Timed out waiting for shared JARVIS Managed auth lock",
     ):
         yield
 
 
-def _merge_shared_nous_oauth_state(state: Dict[str, Any]) -> bool:
-    """Copy fresher shared OAuth tokens into a profile-local Nous state."""
-    shared = _read_shared_nous_state()
+def _merge_shared_jarvis_managed_oauth_state(state: Dict[str, Any]) -> bool:
+    """Copy fresher shared OAuth tokens into a profile-local JARVIS Managed state."""
+    shared = _read_shared_jarvis_managed_state()
     if not shared:
         return False
 
@@ -4189,8 +4189,8 @@ def _merge_shared_nous_oauth_state(state: Dict[str, Any]) -> bool:
     return True
 
 
-def _write_shared_nous_state(state: Dict[str, Any]) -> None:
-    """Persist a minimal copy of the Nous OAuth state to the shared store.
+def _write_shared_jarvis_managed_state(state: Dict[str, Any]) -> None:
+    """Persist a minimal copy of the JARVIS Managed OAuth state to the shared store.
 
     Best-effort: any failure is swallowed after logging. The shared store
     is a convenience layer; the per-profile auth.json remains the source
@@ -4213,23 +4213,23 @@ def _write_shared_nous_state(state: Dict[str, Any]) -> None:
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": state.get("token_type") or "Bearer",
-        "scope": state.get("scope") or DEFAULT_NOUS_SCOPE,
-        "client_id": state.get("client_id") or DEFAULT_NOUS_CLIENT_ID,
-        "portal_base_url": state.get("portal_base_url") or DEFAULT_NOUS_PORTAL_URL,
-        "inference_base_url": state.get("inference_base_url") or DEFAULT_NOUS_INFERENCE_URL,
+        "scope": state.get("scope") or DEFAULT_JARVIS_MANAGED_SCOPE,
+        "client_id": state.get("client_id") or DEFAULT_JARVIS_MANAGED_CLIENT_ID,
+        "portal_base_url": state.get("portal_base_url") or DEFAULT_JARVIS_MANAGED_PORTAL_URL,
+        "inference_base_url": state.get("inference_base_url") or DEFAULT_JARVIS_MANAGED_INFERENCE_URL,
         "obtained_at": state.get("obtained_at"),
         "expires_at": state.get("expires_at"),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     try:
-        with _nous_shared_store_lock():
-            path = _nous_shared_store_path()
+        with _jarvis_managed_shared_store_lock():
+            path = _jarvis_managed_shared_store_path()
             path.parent.mkdir(parents=True, exist_ok=True)
             # secure_parent_dir refuses to chmod / or top-level dirs (#25821).
             secure_parent_dir(path)
             tmp = path.with_name(f"{path.name}.tmp.{os.getpid()}.{uuid.uuid4().hex}")
             # Create with 0o600 atomically via os.open(O_EXCL) — closes the TOCTOU
-            # window where write_text() + post-write chmod briefly exposed Nous
+            # window where write_text() + post-write chmod briefly exposed JARVIS Managed
             # refresh_token at process umask. See #19673, #21148.
             fd = os.open(
                 str(tmp),
@@ -4249,23 +4249,23 @@ def _write_shared_nous_state(state: Dict[str, Any]) -> None:
                 except OSError:
                     pass
         _oauth_trace(
-            "nous_shared_store_written",
+            "jarvis_managed_shared_store_written",
             path=str(path),
             refresh_token_fp=_token_fingerprint(refresh_token),
         )
     except Exception as exc:
-        logger.debug("Failed to write shared Nous auth store: %s", exc)
+        logger.debug("Failed to write shared JARVIS Managed auth store: %s", exc)
 
 
-def _read_shared_nous_state() -> Optional[Dict[str, Any]]:
-    """Return the shared Nous OAuth state if present and well-formed.
+def _read_shared_jarvis_managed_state() -> Optional[Dict[str, Any]]:
+    """Return the shared JARVIS Managed OAuth state if present and well-formed.
 
     Returns ``None`` when the file is missing, unreadable, malformed, or
     lacks required fields. Callers should treat ``None`` as "no shared
     credentials available — fall through to device-code".
     """
     try:
-        path = _nous_shared_store_path()
+        path = _jarvis_managed_shared_store_path()
     except RuntimeError:
         # Test seat belt tripped — treat as missing
         return None
@@ -4274,7 +4274,7 @@ def _read_shared_nous_state() -> Optional[Dict[str, Any]]:
     try:
         payload = json.loads(path.read_text())
     except (OSError, ValueError) as exc:
-        logger.debug("Shared Nous auth store at %s is unreadable: %s", path, exc)
+        logger.debug("Shared JARVIS Managed auth store at %s is unreadable: %s", path, exc)
         return None
     if not isinstance(payload, dict):
         return None
@@ -4287,25 +4287,25 @@ def _read_shared_nous_state() -> Optional[Dict[str, Any]]:
     return payload
 
 
-def _clear_shared_nous_state(reason: str) -> None:
-    """Remove the shared Nous OAuth store after a terminal token failure."""
+def _clear_shared_jarvis_managed_state(reason: str) -> None:
+    """Remove the shared JARVIS Managed OAuth store after a terminal token failure."""
     try:
-        with _nous_shared_store_lock():
-            path = _nous_shared_store_path()
+        with _jarvis_managed_shared_store_lock():
+            path = _jarvis_managed_shared_store_path()
             try:
                 path.unlink()
             except FileNotFoundError:
                 pass
-        _oauth_trace("nous_shared_store_cleared", reason=reason)
+        _oauth_trace("jarvis_managed_shared_store_cleared", reason=reason)
     except Exception as exc:
-        logger.debug("Failed to clear shared Nous auth store: %s", exc)
+        logger.debug("Failed to clear shared JARVIS Managed auth store: %s", exc)
 
 
-def _is_terminal_nous_refresh_error(exc: Exception) -> bool:
-    """True when retrying the same Nous refresh token cannot succeed."""
+def _is_terminal_jarvis_managed_refresh_error(exc: Exception) -> bool:
+    """True when retrying the same JARVIS Managed refresh token cannot succeed."""
     return (
         isinstance(exc, AuthError)
-        and exc.provider == "nous"
+        and exc.provider == "jarvis_managed"
         and exc.code in {"invalid_grant", "invalid_token", "refresh_token_reused"}
         and bool(exc.relogin_required)
     )
@@ -4351,7 +4351,7 @@ def _is_terminal_codex_oauth_refresh_error(exc: Exception) -> bool:
     )
 
 
-def _quarantine_nous_oauth_state(
+def _quarantine_jarvis_managed_oauth_state(
     state: Dict[str, Any],
     error: AuthError,
     *,
@@ -4373,34 +4373,34 @@ def _quarantine_nous_oauth_state(
     ):
         state.pop(key, None)
     state["last_auth_error"] = {
-        "provider": "nous",
+        "provider": "jarvis_managed",
         "code": error.code,
         "message": str(error),
         "reason": reason,
         "relogin_required": True,
         "at": datetime.now(timezone.utc).isoformat(),
     }
-    _clear_shared_nous_state(reason)
-    invalidate_nous_auth_status_cache()
+    _clear_shared_jarvis_managed_state(reason)
+    invalidate_jarvis_managed_auth_status_cache()
 
 
-def _quarantine_nous_pool_entries(
+def _quarantine_jarvis_managed_pool_entries(
     auth_store: Dict[str, Any],
     error: AuthError,
     *,
     reason: str,
 ) -> bool:
-    """Remove singleton-seeded Nous pool entries that contain dead OAuth state."""
+    """Remove singleton-seeded JARVIS Managed pool entries that contain dead OAuth state."""
     pool = auth_store.get("credential_pool")
     if not isinstance(pool, dict):
         return False
-    entries = pool.get("nous")
+    entries = pool.get("jarvis_managed")
     if not isinstance(entries, list):
         return False
 
     retained = []
     removed = False
-    singleton_sources = {NOUS_DEVICE_CODE_SOURCE, f"manual:{NOUS_DEVICE_CODE_SOURCE}"}
+    singleton_sources = {JARVIS_MANAGED_DEVICE_CODE_SOURCE, f"manual:{JARVIS_MANAGED_DEVICE_CODE_SOURCE}"}
     for entry in entries:
         if isinstance(entry, dict) and entry.get("source") in singleton_sources:
             removed = True
@@ -4408,26 +4408,26 @@ def _quarantine_nous_pool_entries(
         retained.append(entry)
 
     if removed:
-        pool["nous"] = retained
+        pool["jarvis_managed"] = retained
         _oauth_trace(
-            "nous_pool_device_code_quarantined",
+            "jarvis_managed_pool_device_code_quarantined",
             reason=reason,
             error_code=error.code,
         )
     return removed
 
 
-def _try_import_shared_nous_state(
+def _try_import_shared_jarvis_managed_state(
     *,
     timeout_seconds: float = 15.0,
     min_key_ttl_seconds: int = 5 * 60,
 ) -> Optional[Dict[str, Any]]:
-    """Attempt to rehydrate Nous OAuth state from the shared store.
+    """Attempt to rehydrate JARVIS Managed OAuth state from the shared store.
 
     Reads the shared file (if present), runs a forced refresh+mint using
     the stored refresh_token to produce a fresh access_token + agent_key
     scoped to this profile, and returns the full auth_state dict ready
-    for ``persist_nous_credentials()``.
+    for ``persist_jarvis_managed_credentials()``.
 
     Returns ``None`` when no shared state is available or the rehydrate
     fails for any reason (expired refresh_token, portal unreachable,
@@ -4435,22 +4435,22 @@ def _try_import_shared_nous_state(
     flow.
     """
     try:
-        with _nous_shared_store_lock(timeout_seconds=max(timeout_seconds + 5.0, AUTH_LOCK_TIMEOUT_SECONDS)):
-            shared = _read_shared_nous_state()
+        with _jarvis_managed_shared_store_lock(timeout_seconds=max(timeout_seconds + 5.0, AUTH_LOCK_TIMEOUT_SECONDS)):
+            shared = _read_shared_jarvis_managed_state()
             if not shared:
                 return None
 
-            # Build a full state dict so refresh_nous_oauth_from_state has every
+            # Build a full state dict so refresh_jarvis_managed_oauth_from_state has every
             # field it needs. force_refresh=True gets us a fresh access_token
             # for this profile; fresh auth mode avoids stale cached legacy keys.
             state: Dict[str, Any] = {
                 "access_token": shared.get("access_token"),
                 "refresh_token": shared.get("refresh_token"),
-                "client_id": shared.get("client_id") or DEFAULT_NOUS_CLIENT_ID,
-                "portal_base_url": shared.get("portal_base_url") or DEFAULT_NOUS_PORTAL_URL,
-                "inference_base_url": shared.get("inference_base_url") or DEFAULT_NOUS_INFERENCE_URL,
+                "client_id": shared.get("client_id") or DEFAULT_JARVIS_MANAGED_CLIENT_ID,
+                "portal_base_url": shared.get("portal_base_url") or DEFAULT_JARVIS_MANAGED_PORTAL_URL,
+                "inference_base_url": shared.get("inference_base_url") or DEFAULT_JARVIS_MANAGED_INFERENCE_URL,
                 "token_type": shared.get("token_type") or "Bearer",
-                "scope": shared.get("scope") or DEFAULT_NOUS_SCOPE,
+                "scope": shared.get("scope") or DEFAULT_JARVIS_MANAGED_SCOPE,
                 "obtained_at": shared.get("obtained_at"),
                 "expires_at": shared.get("expires_at"),
                 "agent_key": None,
@@ -4459,33 +4459,33 @@ def _try_import_shared_nous_state(
             }
 
             def _persist_shared_refresh(updated_state: Dict[str, Any], _reason: str) -> None:
-                _write_shared_nous_state(updated_state)
+                _write_shared_jarvis_managed_state(updated_state)
 
-            refreshed = refresh_nous_oauth_from_state(
+            refreshed = refresh_jarvis_managed_oauth_from_state(
                 state,
                 min_key_ttl_seconds=min_key_ttl_seconds,
                 timeout_seconds=timeout_seconds,
                 force_refresh=True,
-                inference_auth_mode=NOUS_INFERENCE_AUTH_MODE_FRESH,
+                inference_auth_mode=JARVIS_MANAGED_INFERENCE_AUTH_MODE_FRESH,
                 on_state_update=_persist_shared_refresh,
             )
-            _write_shared_nous_state(refreshed)
+            _write_shared_jarvis_managed_state(refreshed)
     except AuthError as exc:
         _oauth_trace(
-            "nous_shared_import_failed",
+            "jarvis_managed_shared_import_failed",
             error_type=type(exc).__name__,
             error_code=getattr(exc, "code", None),
         )
-        if _is_terminal_nous_refresh_error(exc):
-            _clear_shared_nous_state("shared_import_terminal_refresh_failure")
-        logger.debug("Shared Nous import failed: %s", exc)
+        if _is_terminal_jarvis_managed_refresh_error(exc):
+            _clear_shared_jarvis_managed_state("shared_import_terminal_refresh_failure")
+        logger.debug("Shared JARVIS Managed import failed: %s", exc)
         return None
     except Exception as exc:
         _oauth_trace(
-            "nous_shared_import_failed",
+            "jarvis_managed_shared_import_failed",
             error_type=type(exc).__name__,
         )
-        logger.debug("Shared Nous import failed: %s", exc)
+        logger.debug("Shared JARVIS Managed import failed: %s", exc)
         return None
 
     return refreshed
@@ -4500,7 +4500,7 @@ def _refresh_access_token(
 ) -> Dict[str, Any]:
     response = client.post(
         f"{portal_base_url}/api/oauth/token",
-        headers={"x-nous-refresh-token": refresh_token},
+        headers={"x-jarvis_managed-refresh-token": refresh_token},
         data={
             "grant_type": "refresh_token",
             "client_id": client_id,
@@ -4511,20 +4511,20 @@ def _refresh_access_token(
         payload = response.json()
         if "access_token" not in payload:
             raise AuthError("Refresh response missing access_token",
-                            provider="nous", code="invalid_token", relogin_required=True)
+                            provider="jarvis_managed", code="invalid_token", relogin_required=True)
         return payload
 
     try:
         error_payload = response.json()
     except Exception as exc:
         raise AuthError("Refresh token exchange failed",
-                        provider="nous", relogin_required=True) from exc
+                        provider="jarvis_managed", relogin_required=True) from exc
 
     code = str(error_payload.get("error", "invalid_grant"))
     description = str(error_payload.get("error_description") or "Refresh token exchange failed")
     relogin = code in {"invalid_grant", "invalid_token", "refresh_token_reused"}
 
-    # Detect the OAuth 2.1 "refresh token reuse" signal from the Nous portal
+    # Detect the OAuth 2.1 "refresh token reuse" signal from the JARVIS Managed portal
     # server and surface an actionable message.  This fires when an external
     # process (health-check script, monitoring tool, custom self-heal hook)
     # called POST /api/oauth/token with Jarvis's refresh_token without
@@ -4542,11 +4542,11 @@ def _refresh_access_token(
             "Managed refresh tokens are single-use — only Jarvis may call the "
             "refresh endpoint. For health checks, use `jarvis auth status` "
             "instead.\n"
-            "Re-authenticate with: jarvis auth add nous"
+            "Re-authenticate with: jarvis auth add jarvis_managed"
         )
         relogin = True
 
-    raise AuthError(description, provider="nous", code=code, relogin_required=relogin)
+    raise AuthError(description, provider="jarvis_managed", code=code, relogin_required=relogin)
 
 
 def _mint_agent_key(
@@ -4567,29 +4567,29 @@ def _mint_agent_key(
         payload = response.json()
         if "api_key" not in payload:
             raise AuthError("Mint response missing api_key",
-                            provider="nous", code="server_error")
+                            provider="jarvis_managed", code="server_error")
         return payload
 
     try:
         error_payload = response.json()
     except Exception as exc:
         raise AuthError("Agent key mint request failed",
-                        provider="nous", code="server_error") from exc
+                        provider="jarvis_managed", code="server_error") from exc
 
     code = str(error_payload.get("error", "server_error"))
     description = str(error_payload.get("error_description") or "Agent key mint request failed")
     relogin = code in {"invalid_token", "invalid_grant"}
-    raise AuthError(description, provider="nous", code=code, relogin_required=relogin)
+    raise AuthError(description, provider="jarvis_managed", code=code, relogin_required=relogin)
 
 
-def fetch_nous_models(
+def fetch_jarvis_managed_models(
     *,
     inference_base_url: str,
     api_key: str,
     timeout_seconds: float = 15.0,
     verify: bool | str = True,
 ) -> List[str]:
-    """Fetch available model IDs from the Nous inference API."""
+    """Fetch available model IDs from the JARVIS Managed inference API."""
     timeout = httpx.Timeout(timeout_seconds)
     with httpx.Client(timeout=timeout, headers={"Accept": "application/json"}, verify=verify) as client:
         response = client.get(
@@ -4604,7 +4604,7 @@ def fetch_nous_models(
             description = str(err.get("error_description") or err.get("error") or description)
         except Exception as e:
             logger.debug("Could not parse error response JSON: %s", e)
-        raise AuthError(description, provider="nous", code="models_fetch_failed")
+        raise AuthError(description, provider="jarvis_managed", code="models_fetch_failed")
 
     payload = response.json()
     data = payload.get("data")
@@ -4644,9 +4644,9 @@ def _agent_key_is_usable(state: Dict[str, Any], min_ttl_seconds: int) -> bool:
     if not isinstance(key, str) or not key.strip():
         return False
     if _decode_jwt_claims(key):
-        if _nous_legacy_session_keys_forced():
+        if _jarvis_managed_legacy_session_keys_forced():
             return False
-        return _nous_invoke_jwt_is_usable(
+        return _jarvis_managed_invoke_jwt_is_usable(
             key,
             scope=state.get("scope"),
             expires_at=state.get("agent_key_expires_at"),
@@ -4654,7 +4654,7 @@ def _agent_key_is_usable(state: Dict[str, Any], min_ttl_seconds: int) -> bool:
     return not _is_expiring(state.get("agent_key_expires_at"), min_ttl_seconds)
 
 
-def resolve_nous_access_token(
+def resolve_jarvis_managed_access_token(
     *,
     timeout_seconds: float = 15.0,
     insecure: Optional[bool] = None,
@@ -4664,45 +4664,45 @@ def resolve_nous_access_token(
     """Resolve a refresh-aware managed access token for tool gateways."""
     with _auth_store_lock():
         auth_store = _load_auth_store()
-        state = _load_provider_state(auth_store, "nous")
+        state = _load_provider_state(auth_store, "jarvis_managed")
 
         if not state:
             raise AuthError(
                 "Jarvis is not logged into JARVIS Managed.",
-                provider="nous",
+                provider="jarvis_managed",
                 relogin_required=True,
             )
 
         portal_base_url = (
             _optional_base_url(state.get("portal_base_url"))
             or os.getenv("JARVIS_PORTAL_BASE_URL")
-            or os.getenv("NOUS_PORTAL_BASE_URL")
-            or DEFAULT_NOUS_PORTAL_URL
+            or os.getenv("JARVIS_MANAGED_PORTAL_BASE_URL")
+            or DEFAULT_JARVIS_MANAGED_PORTAL_URL
         ).rstrip("/")
-        client_id = str(state.get("client_id") or DEFAULT_NOUS_CLIENT_ID)
+        client_id = str(state.get("client_id") or DEFAULT_JARVIS_MANAGED_CLIENT_ID)
         verify = _resolve_verify(insecure=insecure, ca_bundle=ca_bundle, auth_state=state)
 
-        with _nous_shared_store_lock(timeout_seconds=max(timeout_seconds + 5.0, AUTH_LOCK_TIMEOUT_SECONDS)):
-            merged_shared = _merge_shared_nous_oauth_state(state)
+        with _jarvis_managed_shared_store_lock(timeout_seconds=max(timeout_seconds + 5.0, AUTH_LOCK_TIMEOUT_SECONDS)):
+            merged_shared = _merge_shared_jarvis_managed_oauth_state(state)
             access_token = state.get("access_token")
             refresh_token = state.get("refresh_token")
             if not isinstance(access_token, str) or not access_token:
                 raise AuthError(
                     "No access token found for JARVIS Managed login.",
-                    provider="nous",
+                    provider="jarvis_managed",
                     relogin_required=True,
                 )
 
             if not _is_expiring(state.get("expires_at"), refresh_skew_seconds):
                 if merged_shared:
-                    _save_provider_state(auth_store, "nous", state)
+                    _save_provider_state(auth_store, "jarvis_managed", state)
                     _save_auth_store(auth_store)
                 return access_token
 
             if not isinstance(refresh_token, str) or not refresh_token:
                 raise AuthError(
                     "Session expired and no refresh token is available.",
-                    provider="nous",
+                    provider="jarvis_managed",
                     relogin_required=True,
                 )
 
@@ -4720,18 +4720,18 @@ def resolve_nous_access_token(
                         refresh_token=refresh_token,
                     )
                 except AuthError as exc:
-                    if _is_terminal_nous_refresh_error(exc):
-                        _quarantine_nous_oauth_state(
+                    if _is_terminal_jarvis_managed_refresh_error(exc):
+                        _quarantine_jarvis_managed_oauth_state(
                             state,
                             exc,
                             reason="managed_access_token_refresh_failure",
                         )
-                        _quarantine_nous_pool_entries(
+                        _quarantine_jarvis_managed_pool_entries(
                             auth_store,
                             exc,
                             reason="managed_access_token_refresh_failure",
                         )
-                        _save_provider_state(auth_store, "nous", state)
+                        _save_provider_state(auth_store, "jarvis_managed", state)
                         _save_auth_store(auth_store)
                     raise
 
@@ -4753,13 +4753,13 @@ def resolve_nous_access_token(
                 "insecure": verify is False,
                 "ca_bundle": verify if isinstance(verify, str) else None,
             }
-            _save_provider_state(auth_store, "nous", state)
+            _save_provider_state(auth_store, "jarvis_managed", state)
             _save_auth_store(auth_store)
-            _write_shared_nous_state(state)
+            _write_shared_jarvis_managed_state(state)
             return state["access_token"]
 
 
-def refresh_nous_oauth_pure(
+def refresh_jarvis_managed_oauth_pure(
     access_token: str,
     refresh_token: str,
     client_id: str,
@@ -4767,7 +4767,7 @@ def refresh_nous_oauth_pure(
     inference_base_url: str,
     *,
     token_type: str = "Bearer",
-    scope: str = DEFAULT_NOUS_SCOPE,
+    scope: str = DEFAULT_JARVIS_MANAGED_SCOPE,
     obtained_at: Optional[str] = None,
     expires_at: Optional[str] = None,
     agent_key: Optional[str] = None,
@@ -4777,24 +4777,24 @@ def refresh_nous_oauth_pure(
     insecure: Optional[bool] = None,
     ca_bundle: Optional[str] = None,
     force_refresh: bool = False,
-    inference_auth_mode: str = NOUS_INFERENCE_AUTH_MODE_AUTO,
+    inference_auth_mode: str = JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO,
     on_state_update: Optional[Callable[[Dict[str, Any], str], None]] = None,
 ) -> Dict[str, Any]:
-    """Refresh Nous OAuth state without mutating auth.json directly.
+    """Refresh JARVIS Managed OAuth state without mutating auth.json directly.
 
     ``on_state_update`` is called after a successful access-token refresh and
     before any subsequent agent-key mint. Callers that own persistent state can
     use it to save the newly rotated refresh token before later work can fail.
     """
-    inference_auth_mode = _normalize_nous_inference_auth_mode(inference_auth_mode)
+    inference_auth_mode = _normalize_jarvis_managed_inference_auth_mode(inference_auth_mode)
     state: Dict[str, Any] = {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "client_id": client_id or DEFAULT_NOUS_CLIENT_ID,
-        "portal_base_url": (portal_base_url or DEFAULT_NOUS_PORTAL_URL).rstrip("/"),
-        "inference_base_url": (inference_base_url or DEFAULT_NOUS_INFERENCE_URL).rstrip("/"),
+        "client_id": client_id or DEFAULT_JARVIS_MANAGED_CLIENT_ID,
+        "portal_base_url": (portal_base_url or DEFAULT_JARVIS_MANAGED_PORTAL_URL).rstrip("/"),
+        "inference_base_url": (inference_base_url or DEFAULT_JARVIS_MANAGED_INFERENCE_URL).rstrip("/"),
         "token_type": token_type or "Bearer",
-        "scope": scope or DEFAULT_NOUS_SCOPE,
+        "scope": scope or DEFAULT_JARVIS_MANAGED_SCOPE,
         "obtained_at": obtained_at,
         "expires_at": expires_at,
         "agent_key": agent_key,
@@ -4809,10 +4809,10 @@ def refresh_nous_oauth_pure(
 
     with httpx.Client(timeout=timeout, headers={"Accept": "application/json"}, verify=verify) as client:
         min_agent_key_ttl = max(60, int(min_key_ttl_seconds))
-        legacy_session_keys = _nous_legacy_session_keys_forced()
+        legacy_session_keys = _jarvis_managed_legacy_session_keys_forced()
         current_invoke_jwt_usable = (
             not legacy_session_keys
-            and _nous_invoke_jwt_is_usable(
+            and _jarvis_managed_invoke_jwt_is_usable(
                 state.get("access_token"),
                 scope=state.get("scope"),
                 expires_at=state.get("expires_at"),
@@ -4837,7 +4837,7 @@ def refresh_nous_oauth_pure(
             state["refresh_token"] = refreshed.get("refresh_token") or state["refresh_token"]
             state["token_type"] = refreshed.get("token_type") or state.get("token_type") or "Bearer"
             state["scope"] = refreshed.get("scope") or state.get("scope")
-            refreshed_url = _validate_nous_inference_url_from_network(refreshed.get("inference_base_url"))
+            refreshed_url = _validate_jarvis_managed_inference_url_from_network(refreshed.get("inference_base_url"))
             if refreshed_url:
                 state["inference_base_url"] = refreshed_url
             state["obtained_at"] = now.isoformat()
@@ -4848,15 +4848,15 @@ def refresh_nous_oauth_pure(
             if on_state_update is not None:
                 on_state_update(dict(state), "post_refresh_access_token")
 
-        selected_auth_path, fallback_reason = _choose_nous_inference_auth_path(
+        selected_auth_path, fallback_reason = _choose_jarvis_managed_inference_auth_path(
             state,
             min_key_ttl_seconds=min_agent_key_ttl,
             inference_auth_mode=inference_auth_mode,
         )
-        if selected_auth_path == NOUS_AUTH_PATH_INVOKE_JWT:
-            _select_nous_invoke_jwt(state)
-        elif selected_auth_path == NOUS_AUTH_PATH_LEGACY_SESSION_KEY_MINT:
-            _log_nous_legacy_session_key_selected(
+        if selected_auth_path == JARVIS_MANAGED_AUTH_PATH_INVOKE_JWT:
+            _select_jarvis_managed_invoke_jwt(state)
+        elif selected_auth_path == JARVIS_MANAGED_AUTH_PATH_LEGACY_SESSION_KEY_MINT:
+            _log_jarvis_managed_legacy_session_key_selected(
                 fallback_reason or "legacy_session_key_required",
                 access_token=state.get("access_token"),
             )
@@ -4873,32 +4873,32 @@ def refresh_nous_oauth_pure(
             state["agent_key_expires_in"] = mint_payload.get("expires_in")
             state["agent_key_reused"] = bool(mint_payload.get("reused", False))
             state["agent_key_obtained_at"] = now.isoformat()
-            minted_url = _validate_nous_inference_url_from_network(mint_payload.get("inference_base_url"))
+            minted_url = _validate_jarvis_managed_inference_url_from_network(mint_payload.get("inference_base_url"))
             if minted_url:
                 state["inference_base_url"] = minted_url
 
     return state
 
 
-def refresh_nous_oauth_from_state(
+def refresh_jarvis_managed_oauth_from_state(
     state: Dict[str, Any],
     *,
     min_key_ttl_seconds: int = DEFAULT_AGENT_KEY_MIN_TTL_SECONDS,
     timeout_seconds: float = 15.0,
     force_refresh: bool = False,
-    inference_auth_mode: str = NOUS_INFERENCE_AUTH_MODE_AUTO,
+    inference_auth_mode: str = JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO,
     on_state_update: Optional[Callable[[Dict[str, Any], str], None]] = None,
 ) -> Dict[str, Any]:
-    """Refresh Nous OAuth from a state dict. Thin wrapper around refresh_nous_oauth_pure."""
+    """Refresh JARVIS Managed OAuth from a state dict. Thin wrapper around refresh_jarvis_managed_oauth_pure."""
     tls = state.get("tls") or {}
-    return refresh_nous_oauth_pure(
+    return refresh_jarvis_managed_oauth_pure(
         state.get("access_token", ""),
         state.get("refresh_token", ""),
         state.get("client_id", "jarvis-cli"),
-        state.get("portal_base_url", DEFAULT_NOUS_PORTAL_URL),
-        state.get("inference_base_url", DEFAULT_NOUS_INFERENCE_URL),
+        state.get("portal_base_url", DEFAULT_JARVIS_MANAGED_PORTAL_URL),
+        state.get("inference_base_url", DEFAULT_JARVIS_MANAGED_INFERENCE_URL),
         token_type=state.get("token_type", "Bearer"),
-        scope=state.get("scope", DEFAULT_NOUS_SCOPE),
+        scope=state.get("scope", DEFAULT_JARVIS_MANAGED_SCOPE),
         obtained_at=state.get("obtained_at"),
         expires_at=state.get("expires_at"),
         agent_key=state.get("agent_key"),
@@ -4913,35 +4913,35 @@ def refresh_nous_oauth_from_state(
     )
 
 
-def persist_nous_credentials(
+def persist_jarvis_managed_credentials(
     creds: Dict[str, Any],
     *,
     label: Optional[str] = None,
 ):
-    """Persist minted Nous OAuth credentials as the singleton provider state
+    """Persist minted JARVIS Managed OAuth credentials as the singleton provider state
     and ensure the credential pool is in sync.
 
-    Nous credentials are read at runtime from two independent locations:
+    JARVIS Managed credentials are read at runtime from two independent locations:
 
-    - ``providers.nous``: singleton state read by
-      ``resolve_nous_runtime_credentials()`` during 401 recovery and by
+    - ``providers.jarvis_managed``: singleton state read by
+      ``resolve_jarvis_managed_runtime_credentials()`` during 401 recovery and by
       ``_seed_from_singletons()`` during pool load.
-    - ``credential_pool.nous``: used by the runtime ``pool.select()`` path.
+    - ``credential_pool.jarvis_managed``: used by the runtime ``pool.select()`` path.
 
-    Historically ``jarvis auth add nous`` wrote a ``manual:device_code`` pool
-    entry only, skipping ``providers.nous``.  When the 24h agent_key TTL
+    Historically ``jarvis auth add jarvis_managed`` wrote a ``manual:device_code`` pool
+    entry only, skipping ``providers.jarvis_managed``.  When the 24h agent_key TTL
     expired, the recovery path read the empty singleton state and raised
     ``AuthError`` silently (``logger.debug`` at INFO level).
 
-    This helper writes ``providers.nous`` then calls ``load_pool("nous")`` so
+    This helper writes ``providers.jarvis_managed`` then calls ``load_pool("jarvis_managed")`` so
     ``_seed_from_singletons`` materialises the canonical ``device_code`` pool
     entry from the singleton.  Re-running login upserts the same entry in
     place; the pool never accumulates duplicate device_code rows.
 
     ``label`` is an optional user-chosen display name (from
-    ``jarvis auth add nous --label <name>``).  It gets embedded in the
+    ``jarvis auth add jarvis_managed --label <name>``).  It gets embedded in the
     singleton state so that ``_seed_from_singletons`` uses it as the pool
-    entry's label on every subsequent ``load_pool("nous")`` instead of the
+    entry's label on every subsequent ``load_pool("jarvis_managed")`` instead of the
     auto-derived token fingerprint.  When ``None``, the auto-derived label
     via ``label_from_token`` is used (unchanged default behaviour).
 
@@ -4956,42 +4956,42 @@ def persist_nous_credentials(
 
     with _auth_store_lock():
         auth_store = _load_auth_store()
-        _save_provider_state(auth_store, "nous", state)
+        _save_provider_state(auth_store, "jarvis_managed", state)
         _save_auth_store(auth_store)
 
     # Mirror to the shared store so a new profile can one-tap import
-    # these credentials via `jarvis auth add nous --type oauth`. Best-
+    # these credentials via `jarvis auth add jarvis_managed --type oauth`. Best-
     # effort: any I/O failure is logged and swallowed (the per-profile
     # auth.json is still the source of truth).
-    _write_shared_nous_state(state)
+    _write_shared_jarvis_managed_state(state)
 
-    pool = load_pool("nous")
+    pool = load_pool("jarvis_managed")
     return next(
-        (e for e in pool.entries() if e.source == NOUS_DEVICE_CODE_SOURCE),
+        (e for e in pool.entries() if e.source == JARVIS_MANAGED_DEVICE_CODE_SOURCE),
         None,
     )
 
 
-def _sync_nous_pool_from_auth_store() -> None:
-    """Best-effort pool reseed after providers.nous changes; never fail login."""
+def _sync_jarvis_managed_pool_from_auth_store() -> None:
+    """Best-effort pool reseed after providers.jarvis_managed changes; never fail login."""
     try:
         from agent.credential_pool import load_pool
 
-        load_pool("nous")
+        load_pool("jarvis_managed")
     except Exception as exc:
-        logger.debug("Failed to sync Nous credential pool from auth store: %s", exc)
+        logger.debug("Failed to sync JARVIS Managed credential pool from auth store: %s", exc)
 
 
-def resolve_nous_runtime_credentials(
+def resolve_jarvis_managed_runtime_credentials(
     *,
     min_key_ttl_seconds: int = DEFAULT_AGENT_KEY_MIN_TTL_SECONDS,
     timeout_seconds: float = 15.0,
     insecure: Optional[bool] = None,
     ca_bundle: Optional[str] = None,
-    inference_auth_mode: str = NOUS_INFERENCE_AUTH_MODE_AUTO,
+    inference_auth_mode: str = JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO,
 ) -> Dict[str, Any]:
     """
-    Resolve Nous inference credentials for runtime use.
+    Resolve JARVIS Managed inference credentials for runtime use.
 
     Ensures access_token is valid (refreshes if needed) and a short-lived
     inference key is present with minimum TTL (mints/reuses as needed).
@@ -5000,17 +5000,17 @@ def resolve_nous_runtime_credentials(
     Returns dict with: provider, base_url, api_key, key_id, expires_at,
     expires_in, source ("invoke_jwt", "cache", or "portal"), and auth_path.
     """
-    inference_auth_mode = _normalize_nous_inference_auth_mode(inference_auth_mode)
+    inference_auth_mode = _normalize_jarvis_managed_inference_auth_mode(inference_auth_mode)
     min_key_ttl_seconds = max(60, int(min_key_ttl_seconds))
     sequence_id = uuid.uuid4().hex[:12]
 
     with _auth_store_lock():
         auth_store = _load_auth_store()
-        state = _load_provider_state(auth_store, "nous")
+        state = _load_provider_state(auth_store, "jarvis_managed")
 
         if not state:
             raise AuthError("Jarvis is not logged into JARVIS Managed.",
-                            provider="nous", relogin_required=True)
+                            provider="jarvis_managed", relogin_required=True)
 
         persisted_state = dict(state)
         state_persisted = False
@@ -5018,43 +5018,43 @@ def resolve_nous_runtime_credentials(
         portal_base_url = (
             _optional_base_url(state.get("portal_base_url"))
             or os.getenv("JARVIS_PORTAL_BASE_URL")
-            or os.getenv("NOUS_PORTAL_BASE_URL")
-            or DEFAULT_NOUS_PORTAL_URL
+            or os.getenv("JARVIS_MANAGED_PORTAL_BASE_URL")
+            or DEFAULT_JARVIS_MANAGED_PORTAL_URL
         ).rstrip("/")
         inference_base_url = (
             _optional_base_url(state.get("inference_base_url"))
-            or os.getenv("NOUS_INFERENCE_BASE_URL")
-            or DEFAULT_NOUS_INFERENCE_URL
+            or os.getenv("JARVIS_MANAGED_INFERENCE_BASE_URL")
+            or DEFAULT_JARVIS_MANAGED_INFERENCE_URL
         ).rstrip("/")
-        client_id = str(state.get("client_id") or DEFAULT_NOUS_CLIENT_ID)
+        client_id = str(state.get("client_id") or DEFAULT_JARVIS_MANAGED_CLIENT_ID)
 
         def _persist_state(reason: str) -> None:
             nonlocal persisted_state, state_persisted
             # Skip writes where only derived TTL countdowns changed; this keeps
-            # the mtime-keyed Nous auth-status cache warm during read paths.
+            # the mtime-keyed JARVIS Managed auth-status cache warm during read paths.
             if (
-                _nous_effective_provider_state(state)
-                == _nous_effective_provider_state(persisted_state)
+                _jarvis_managed_effective_provider_state(state)
+                == _jarvis_managed_effective_provider_state(persisted_state)
             ):
                 _oauth_trace(
-                    "nous_state_persist_skipped",
+                    "jarvis_managed_state_persist_skipped",
                     sequence_id=sequence_id,
                     reason=reason,
                 )
                 return
             try:
-                _save_provider_state(auth_store, "nous", state)
+                _save_provider_state(auth_store, "jarvis_managed", state)
                 _save_auth_store(auth_store)
             except Exception as exc:
                 _oauth_trace(
-                    "nous_state_persist_failed",
+                    "jarvis_managed_state_persist_failed",
                     sequence_id=sequence_id,
                     reason=reason,
                     error_type=type(exc).__name__,
                 )
                 raise
             _oauth_trace(
-                "nous_state_persisted",
+                "jarvis_managed_state_persisted",
                 sequence_id=sequence_id,
                 reason=reason,
                 refresh_token_fp=_token_fingerprint(state.get("refresh_token")),
@@ -5065,13 +5065,13 @@ def resolve_nous_runtime_credentials(
             # Mirror post-refresh state to the shared store so sibling
             # profiles don't hold stale refresh_tokens after rotation.
             # Best-effort — any failure is logged and swallowed inside
-            # _write_shared_nous_state.
-            _write_shared_nous_state(state)
+            # _write_shared_jarvis_managed_state.
+            _write_shared_jarvis_managed_state(state)
 
         verify = _resolve_verify(insecure=insecure, ca_bundle=ca_bundle, auth_state=state)
         timeout = httpx.Timeout(timeout_seconds if timeout_seconds else 15.0)
         _oauth_trace(
-            "nous_runtime_credentials_start",
+            "jarvis_managed_runtime_credentials_start",
             sequence_id=sequence_id,
             inference_auth_mode=inference_auth_mode,
             min_key_ttl_seconds=min_key_ttl_seconds,
@@ -5084,14 +5084,14 @@ def resolve_nous_runtime_credentials(
 
             if not isinstance(access_token, str) or not access_token:
                 raise AuthError("No access token found for JARVIS Managed login.",
-                                provider="nous", relogin_required=True)
+                                provider="jarvis_managed", relogin_required=True)
 
             # Step 1: refresh access token if expiring. If the access token
             # is already a valid invoke JWT, trust its own exp claim even when
             # older auth.json metadata has a stale/missing expires_at.
             current_invoke_jwt_usable = (
-                not _nous_legacy_session_keys_forced()
-                and _nous_invoke_jwt_is_usable(
+                not _jarvis_managed_legacy_session_keys_forced()
+                and _jarvis_managed_invoke_jwt_is_usable(
                     access_token,
                     scope=state.get("scope"),
                     expires_at=state.get("expires_at"),
@@ -5101,15 +5101,15 @@ def resolve_nous_runtime_credentials(
                 _is_expiring(state.get("expires_at"), ACCESS_TOKEN_REFRESH_SKEW_SECONDS)
                 and not current_invoke_jwt_usable
             ):
-                with _nous_shared_store_lock(timeout_seconds=max(timeout_seconds + 5.0, AUTH_LOCK_TIMEOUT_SECONDS)):
-                    if _merge_shared_nous_oauth_state(state):
+                with _jarvis_managed_shared_store_lock(timeout_seconds=max(timeout_seconds + 5.0, AUTH_LOCK_TIMEOUT_SECONDS)):
+                    if _merge_shared_jarvis_managed_oauth_state(state):
                         access_token = state.get("access_token")
                         refresh_token = state.get("refresh_token")
                         _persist_state("post_shared_merge_access_expiring")
 
                     if (
                         _is_expiring(state.get("expires_at"), ACCESS_TOKEN_REFRESH_SKEW_SECONDS)
-                        and not _nous_invoke_jwt_is_usable(
+                        and not _jarvis_managed_invoke_jwt_is_usable(
                             access_token,
                             scope=state.get("scope"),
                             expires_at=state.get("expires_at"),
@@ -5117,7 +5117,7 @@ def resolve_nous_runtime_credentials(
                     ):
                         if not isinstance(refresh_token, str) or not refresh_token:
                             raise AuthError("Session expired and no refresh token is available.",
-                                            provider="nous", relogin_required=True)
+                                            provider="jarvis_managed", relogin_required=True)
 
                         _oauth_trace(
                             "refresh_start",
@@ -5131,13 +5131,13 @@ def resolve_nous_runtime_credentials(
                                 client_id=client_id, refresh_token=refresh_token,
                             )
                         except AuthError as exc:
-                            if _is_terminal_nous_refresh_error(exc):
-                                _quarantine_nous_oauth_state(
+                            if _is_terminal_jarvis_managed_refresh_error(exc):
+                                _quarantine_jarvis_managed_oauth_state(
                                     state,
                                     exc,
                                     reason="runtime_access_refresh_failure",
                                 )
-                                _quarantine_nous_pool_entries(
+                                _quarantine_jarvis_managed_pool_entries(
                                     auth_store,
                                     exc,
                                     reason="runtime_access_refresh_failure",
@@ -5151,7 +5151,7 @@ def resolve_nous_runtime_credentials(
                         state["refresh_token"] = refreshed.get("refresh_token") or refresh_token
                         state["token_type"] = refreshed.get("token_type") or state.get("token_type") or "Bearer"
                         state["scope"] = refreshed.get("scope") or state.get("scope")
-                        refreshed_url = _validate_nous_inference_url_from_network(refreshed.get("inference_base_url"))
+                        refreshed_url = _validate_jarvis_managed_inference_url_from_network(refreshed.get("inference_base_url"))
                         if refreshed_url:
                             inference_base_url = refreshed_url
                         state["obtained_at"] = now.isoformat()
@@ -5176,25 +5176,25 @@ def resolve_nous_runtime_credentials(
             # the opaque session key.
             used_cached_key = False
             mint_payload: Optional[Dict[str, Any]] = None
-            selected_auth_path, fallback_reason = _choose_nous_inference_auth_path(
+            selected_auth_path, fallback_reason = _choose_jarvis_managed_inference_auth_path(
                 state,
                 access_token=access_token,
                 min_key_ttl_seconds=min_key_ttl_seconds,
                 inference_auth_mode=inference_auth_mode,
             )
 
-            if selected_auth_path == NOUS_AUTH_PATH_INVOKE_JWT:
-                _select_nous_invoke_jwt(
+            if selected_auth_path == JARVIS_MANAGED_AUTH_PATH_INVOKE_JWT:
+                _select_jarvis_managed_invoke_jwt(
                     state,
                     access_token=access_token,
                     sequence_id=sequence_id,
                 )
-            elif selected_auth_path == NOUS_AUTH_PATH_LEGACY_SESSION_KEY_CACHE:
+            elif selected_auth_path == JARVIS_MANAGED_AUTH_PATH_LEGACY_SESSION_KEY_CACHE:
                 used_cached_key = True
-                logger.info("Nous inference auth: using cached agent_key")
+                logger.info("JARVIS Managed inference auth: using cached agent_key")
                 _oauth_trace("agent_key_reuse", sequence_id=sequence_id)
             else:
-                _log_nous_legacy_session_key_selected(
+                _log_jarvis_managed_legacy_session_key_selected(
                     fallback_reason or "legacy_session_key_required",
                     access_token=access_token,
                     sequence_id=sequence_id,
@@ -5222,8 +5222,8 @@ def resolve_nous_runtime_credentials(
                         and isinstance(latest_refresh_token, str)
                         and latest_refresh_token
                     ):
-                        with _nous_shared_store_lock(timeout_seconds=max(timeout_seconds + 5.0, AUTH_LOCK_TIMEOUT_SECONDS)):
-                            if _merge_shared_nous_oauth_state(state):
+                        with _jarvis_managed_shared_store_lock(timeout_seconds=max(timeout_seconds + 5.0, AUTH_LOCK_TIMEOUT_SECONDS)):
+                            if _merge_shared_jarvis_managed_oauth_state(state):
                                 access_token = state.get("access_token")
                                 latest_refresh_token = state.get("refresh_token")
                                 _persist_state("post_shared_merge_mint_retry")
@@ -5240,13 +5240,13 @@ def resolve_nous_runtime_credentials(
                                         client_id=client_id, refresh_token=latest_refresh_token,
                                     )
                                 except AuthError as exc:
-                                    if _is_terminal_nous_refresh_error(exc):
-                                        _quarantine_nous_oauth_state(
+                                    if _is_terminal_jarvis_managed_refresh_error(exc):
+                                        _quarantine_jarvis_managed_oauth_state(
                                             state,
                                             exc,
                                             reason="runtime_mint_retry_refresh_failure",
                                         )
-                                        _quarantine_nous_pool_entries(
+                                        _quarantine_jarvis_managed_pool_entries(
                                             auth_store,
                                             exc,
                                             reason="runtime_mint_retry_refresh_failure",
@@ -5259,7 +5259,7 @@ def resolve_nous_runtime_credentials(
                                 state["refresh_token"] = refreshed.get("refresh_token") or latest_refresh_token
                                 state["token_type"] = refreshed.get("token_type") or state.get("token_type") or "Bearer"
                                 state["scope"] = refreshed.get("scope") or state.get("scope")
-                                refreshed_url = _validate_nous_inference_url_from_network(refreshed.get("inference_base_url"))
+                                refreshed_url = _validate_jarvis_managed_inference_url_from_network(refreshed.get("inference_base_url"))
                                 if refreshed_url:
                                     inference_base_url = refreshed_url
                                 state["obtained_at"] = now.isoformat()
@@ -5280,20 +5280,20 @@ def resolve_nous_runtime_credentials(
                                 _persist_state("post_refresh_mint_retry")
 
                         retry_inference_auth_mode = (
-                            NOUS_INFERENCE_AUTH_MODE_LEGACY
-                            if inference_auth_mode == NOUS_INFERENCE_AUTH_MODE_LEGACY
-                            else NOUS_INFERENCE_AUTH_MODE_FRESH
+                            JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY
+                            if inference_auth_mode == JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY
+                            else JARVIS_MANAGED_INFERENCE_AUTH_MODE_FRESH
                         )
-                        retry_auth_path, _ = _choose_nous_inference_auth_path(
+                        retry_auth_path, _ = _choose_jarvis_managed_inference_auth_path(
                             state,
                             access_token=access_token,
                             min_key_ttl_seconds=min_key_ttl_seconds,
                             inference_auth_mode=retry_inference_auth_mode,
                         )
-                        if retry_auth_path == NOUS_AUTH_PATH_INVOKE_JWT:
+                        if retry_auth_path == JARVIS_MANAGED_AUTH_PATH_INVOKE_JWT:
                             mint_payload = None
-                            selected_auth_path = NOUS_AUTH_PATH_INVOKE_JWT
-                            _select_nous_invoke_jwt(
+                            selected_auth_path = JARVIS_MANAGED_AUTH_PATH_INVOKE_JWT
+                            _select_jarvis_managed_invoke_jwt(
                                 state,
                                 access_token=access_token,
                                 sequence_id=sequence_id,
@@ -5314,7 +5314,7 @@ def resolve_nous_runtime_credentials(
                 state["agent_key_expires_in"] = mint_payload.get("expires_in")
                 state["agent_key_reused"] = bool(mint_payload.get("reused", False))
                 state["agent_key_obtained_at"] = now.isoformat()
-                minted_url = _validate_nous_inference_url_from_network(mint_payload.get("inference_base_url"))
+                minted_url = _validate_jarvis_managed_inference_url_from_network(mint_payload.get("inference_base_url"))
                 if minted_url:
                     inference_base_url = minted_url
                 _oauth_trace(
@@ -5332,15 +5332,15 @@ def resolve_nous_runtime_credentials(
                 "ca_bundle": verify if isinstance(verify, str) else None,
             }
 
-        _persist_state("resolve_nous_runtime_credentials_final")
+        _persist_state("resolve_jarvis_managed_runtime_credentials_final")
 
     if state_persisted:
-        _sync_nous_pool_from_auth_store()
+        _sync_jarvis_managed_pool_from_auth_store()
 
     api_key = state.get("agent_key")
     if not isinstance(api_key, str) or not api_key:
-        raise AuthError("Failed to resolve a Nous inference API key",
-                        provider="nous", code="server_error")
+        raise AuthError("Failed to resolve a JARVIS Managed inference API key",
+                        provider="jarvis_managed", code="server_error")
 
     expires_at = state.get("agent_key_expires_at")
     expires_epoch = _parse_iso_timestamp(expires_at)
@@ -5351,15 +5351,15 @@ def resolve_nous_runtime_credentials(
     )
 
     return {
-        "provider": "nous",
+        "provider": "jarvis_managed",
         "base_url": inference_base_url,
         "api_key": api_key,
         "key_id": state.get("agent_key_id"),
         "expires_at": expires_at,
         "expires_in": expires_in,
         "source": (
-            NOUS_AUTH_PATH_INVOKE_JWT
-            if selected_auth_path == NOUS_AUTH_PATH_INVOKE_JWT
+            JARVIS_MANAGED_AUTH_PATH_INVOKE_JWT
+            if selected_auth_path == JARVIS_MANAGED_AUTH_PATH_INVOKE_JWT
             else ("cache" if used_cached_key else "portal")
         ),
         "auth_path": selected_auth_path,
@@ -5370,7 +5370,7 @@ def resolve_nous_runtime_credentials(
 # Status helpers
 # =============================================================================
 
-def _empty_nous_auth_status() -> Dict[str, Any]:
+def _empty_jarvis_managed_auth_status() -> Dict[str, Any]:
     return {
         "logged_in": False,
         "portal_base_url": None,
@@ -5381,23 +5381,23 @@ def _empty_nous_auth_status() -> Dict[str, Any]:
     }
 
 
-def _snapshot_nous_pool_status() -> Dict[str, Any]:
+def _snapshot_jarvis_managed_pool_status() -> Dict[str, Any]:
     """Best-effort status from the credential pool.
 
     This is a fallback only. The auth-store provider state is the runtime source
-    of truth because it is what ``resolve_nous_runtime_credentials()`` refreshes
+    of truth because it is what ``resolve_jarvis_managed_runtime_credentials()`` refreshes
     and mints against.
     """
     try:
         from agent.credential_pool import load_pool
 
-        pool = load_pool("nous")
+        pool = load_pool("jarvis_managed")
         if not pool or not pool.has_credentials():
-            return _empty_nous_auth_status()
+            return _empty_jarvis_managed_auth_status()
 
         entries = list(pool.entries())
         if not entries:
-            return _empty_nous_auth_status()
+            return _empty_jarvis_managed_auth_status()
 
         def _entry_sort_key(entry: Any) -> tuple[float, float, int]:
             agent_exp = _parse_iso_timestamp(getattr(entry, "agent_key_expires_at", None)) or 0.0
@@ -5411,7 +5411,7 @@ def _snapshot_nous_pool_status() -> Dict[str, Any]:
             or getattr(entry, "runtime_api_key", "")
         )
         if not access_token:
-            return _empty_nous_auth_status()
+            return _empty_jarvis_managed_auth_status()
 
         return {
             "logged_in": True,
@@ -5426,19 +5426,19 @@ def _snapshot_nous_pool_status() -> Dict[str, Any]:
             "source": f"pool:{getattr(entry, 'label', 'unknown')}",
         }
     except Exception:
-        return _empty_nous_auth_status()
+        return _empty_jarvis_managed_auth_status()
 
 
-# ── Process-level memo for get_nous_auth_status() ──
-# get_nous_auth_status() validates state by calling resolve_nous_runtime_credentials(),
-# which does a synchronous OAuth refresh POST to portal.nousresearch.com. That can take
+# ── Process-level memo for get_jarvis_managed_auth_status() ──
+# get_jarvis_managed_auth_status() validates state by calling resolve_jarvis_managed_runtime_credentials(),
+# which does a synchronous OAuth refresh POST to portal.jarvis.local. That can take
 # ~350ms even on the failure path, and read-only UI surfaces (`jarvis tools`, status panels,
 # subscription-feature checks) call it many times per render — `jarvis tools` → "All Platforms"
 # was firing the refresh ~31× during one menu paint, racking up >13s of HTTP and burning
 # single-use refresh tokens. Cache the snapshot for a few seconds, keyed on the auth.json
 # mtime so that `jarvis auth login/logout/add/remove` invalidate naturally on the next call.
-_NOUS_AUTH_STATUS_CACHE_TTL = 15.0  # seconds
-_nous_auth_status_cache: Optional[Tuple[float, Optional[float], Dict[str, Any]]] = None
+_JARVIS_MANAGED_AUTH_STATUS_CACHE_TTL = 15.0  # seconds
+_jarvis_managed_auth_status_cache: Optional[Tuple[float, Optional[float], Dict[str, Any]]] = None
 
 
 def _auth_file_mtime() -> Optional[float]:
@@ -5450,20 +5450,20 @@ def _auth_file_mtime() -> Optional[float]:
         return None
 
 
-def invalidate_nous_auth_status_cache() -> None:
-    """Clear the get_nous_auth_status() process-level memo.
+def invalidate_jarvis_managed_auth_status_cache() -> None:
+    """Clear the get_jarvis_managed_auth_status() process-level memo.
 
-    Call this from any code path that mutates Nous auth state without going
-    through resolve_nous_runtime_credentials() (e.g. tests). Login/logout
+    Call this from any code path that mutates JARVIS Managed auth state without going
+    through resolve_jarvis_managed_runtime_credentials() (e.g. tests). Login/logout
     flows touch auth.json, so the mtime check below invalidates them
     automatically — explicit invalidation is the belt-and-braces option.
     """
-    global _nous_auth_status_cache
-    _nous_auth_status_cache = None
+    global _jarvis_managed_auth_status_cache
+    _jarvis_managed_auth_status_cache = None
 
 
-def get_nous_auth_status() -> Dict[str, Any]:
-    """Status snapshot for Nous auth.
+def get_jarvis_managed_auth_status() -> Dict[str, Any]:
+    """Status snapshot for JARVIS Managed auth.
 
     Prefer the auth-store provider state, because that is the live source of
     truth for refresh + mint operations. When provider state exists, validate it
@@ -5475,28 +5475,28 @@ def get_nous_auth_status() -> Dict[str, Any]:
     so menu/status surfaces that ask repeatedly don't trigger one refresh POST
     per call. Login/logout flows write to auth.json and therefore invalidate
     the cache automatically; tests can also call
-    ``invalidate_nous_auth_status_cache()`` explicitly.
+    ``invalidate_jarvis_managed_auth_status_cache()`` explicitly.
     """
-    global _nous_auth_status_cache
+    global _jarvis_managed_auth_status_cache
     now = time.monotonic()
     mtime = _auth_file_mtime()
-    cached = _nous_auth_status_cache
+    cached = _jarvis_managed_auth_status_cache
     if cached is not None:
         cached_at, cached_mtime, cached_status = cached
         if (
             cached_mtime == mtime
-            and (now - cached_at) < _NOUS_AUTH_STATUS_CACHE_TTL
+            and (now - cached_at) < _JARVIS_MANAGED_AUTH_STATUS_CACHE_TTL
         ):
             return dict(cached_status)
 
-    status = _compute_nous_auth_status()
-    _nous_auth_status_cache = (now, mtime, dict(status))
+    status = _compute_jarvis_managed_auth_status()
+    _jarvis_managed_auth_status_cache = (now, mtime, dict(status))
     return status
 
 
-def _compute_nous_auth_status() -> Dict[str, Any]:
-    """Uncached implementation of get_nous_auth_status(). See that function."""
-    state = get_provider_auth_state("nous")
+def _compute_jarvis_managed_auth_status() -> Dict[str, Any]:
+    """Uncached implementation of get_jarvis_managed_auth_status(). See that function."""
+    state = get_provider_auth_state("jarvis_managed")
     if state:
         base_status = {
             "logged_in": bool(state.get("access_token")),
@@ -5509,8 +5509,8 @@ def _compute_nous_auth_status() -> Dict[str, Any]:
             "source": "auth_store",
         }
         try:
-            creds = resolve_nous_runtime_credentials(min_key_ttl_seconds=60)
-            refreshed_state = get_provider_auth_state("nous") or state
+            creds = resolve_jarvis_managed_runtime_credentials(min_key_ttl_seconds=60)
+            refreshed_state = get_provider_auth_state("jarvis_managed") or state
             base_status.update(
                 {
                     "logged_in": True,
@@ -5537,7 +5537,7 @@ def _compute_nous_auth_status() -> Dict[str, Any]:
             })
             return base_status
 
-    return _snapshot_nous_pool_status()
+    return _snapshot_jarvis_managed_pool_status()
 
 
 def get_codex_auth_status() -> Dict[str, Any]:
@@ -5699,8 +5699,8 @@ def get_auth_status(provider_id: Optional[str] = None) -> Dict[str, Any]:
         return {"logged_in": False}
     if target == "spotify":
         return get_spotify_auth_status()
-    if target == "nous":
-        return get_nous_auth_status()
+    if target == "jarvis_managed":
+        return get_jarvis_managed_auth_status()
     if target == "openai-codex":
         return get_codex_auth_status()
     if target == "xai-oauth":
@@ -6004,7 +6004,7 @@ def _logout_default_provider_from_config() -> Optional[str]:
     "No provider is currently logged in" and never reset model.provider.
     """
     provider = _get_config_provider()
-    if provider in {"nous", "openai-codex", "xai-oauth"}:
+    if provider in {"jarvis_managed", "openai-codex", "xai-oauth"}:
         return provider
     return None
 
@@ -6129,7 +6129,7 @@ def _prompt_model_selection(
         # simple_term_menu pads title lines to terminal width (causes wrapping),
         # so we keep the title minimal and use stdout for the static block.
         # clear_screen=False means our printed output stays visible above.
-        _upgrade_url = (portal_url or DEFAULT_NOUS_PORTAL_URL).rstrip("/")
+        _upgrade_url = (portal_url or DEFAULT_JARVIS_MANAGED_PORTAL_URL).rstrip("/")
         if _unavailable:
             print(menu_title)
             print()
@@ -6177,7 +6177,7 @@ def _prompt_model_selection(
     print(f"  {n + 2:>{num_width}}. Skip (keep current)")
 
     if _unavailable:
-        _upgrade_url = (portal_url or DEFAULT_NOUS_PORTAL_URL).rstrip("/")
+        _upgrade_url = (portal_url or DEFAULT_JARVIS_MANAGED_PORTAL_URL).rstrip("/")
         print()
         print(f"  {_DIM}── Unavailable models (requires paid tier — upgrade at {_upgrade_url}) ──{_RESET}")
         for mid in _unavailable:
@@ -7110,7 +7110,7 @@ def _minimax_oauth_quarantine_on_terminal_refresh(state: Dict[str, Any], exc: Au
     """Wipe dead tokens from auth.json after a terminal refresh failure.
 
     Shared by both the eager-resolve path and the lazy per-request token
-    provider. Mirrors the Nous / xAI-OAuth / Codex-OAuth quarantine pattern
+    provider. Mirrors the JARVIS Managed / xAI-OAuth / Codex-OAuth quarantine pattern
     so subsequent calls fail fast without a network retry.
     """
     if not (exc.relogin_required and state.get("refresh_token")):
@@ -7251,7 +7251,7 @@ def _login_minimax_oauth(args, pconfig: ProviderConfig) -> None:
         raise SystemExit(1)
 
 
-def _nous_device_code_login(
+def _jarvis_managed_device_code_login(
     *,
     portal_base_url: Optional[str] = None,
     inference_base_url: Optional[str] = None,
@@ -7263,21 +7263,21 @@ def _nous_device_code_login(
     ca_bundle: Optional[str] = None,
     min_key_ttl_seconds: int = 5 * 60,
 ) -> Dict[str, Any]:
-    """Run the Nous device-code flow and return full OAuth state without persisting."""
-    pconfig = PROVIDER_REGISTRY["nous"]
+    """Run the JARVIS Managed device-code flow and return full OAuth state without persisting."""
+    pconfig = PROVIDER_REGISTRY["jarvis_managed"]
     portal_base_url = (
         portal_base_url
         or os.getenv("JARVIS_PORTAL_BASE_URL")
-        or os.getenv("NOUS_PORTAL_BASE_URL")
+        or os.getenv("JARVIS_MANAGED_PORTAL_BASE_URL")
         or pconfig.portal_base_url
     ).rstrip("/")
     requested_inference_url = (
         inference_base_url
-        or os.getenv("NOUS_INFERENCE_BASE_URL")
+        or os.getenv("JARVIS_MANAGED_INFERENCE_BASE_URL")
         or pconfig.inference_base_url
     ).rstrip("/")
     client_id = client_id or pconfig.client_id
-    scope, explicit_scope = _nous_device_scope_with_env_override(
+    scope, explicit_scope = _jarvis_managed_device_scope_with_env_override(
         scope,
         default_scope=pconfig.scope,
     )
@@ -7295,7 +7295,7 @@ def _nous_device_code_login(
         print(f"TLS verification: custom CA bundle ({ca_bundle})")
 
     with httpx.Client(timeout=timeout, headers={"Accept": "application/json"}, verify=verify) as client:
-        device_data, scope = _request_nous_device_code_with_scope_fallback(
+        device_data, scope = _request_jarvis_managed_device_code_with_scope_fallback(
             client=client,
             portal_base_url=portal_base_url,
             client_id=client_id,
@@ -7365,17 +7365,17 @@ def _nous_device_code_login(
         "agent_key_obtained_at": None,
     }
     try:
-        return refresh_nous_oauth_from_state(
+        return refresh_jarvis_managed_oauth_from_state(
             auth_state,
             min_key_ttl_seconds=min_key_ttl_seconds,
             timeout_seconds=timeout_seconds,
             force_refresh=False,
-            inference_auth_mode=NOUS_INFERENCE_AUTH_MODE_FRESH,
+            inference_auth_mode=JARVIS_MANAGED_INFERENCE_AUTH_MODE_FRESH,
         )
     except AuthError as exc:
         if exc.code == "subscription_required":
             portal_url = auth_state.get(
-                "portal_base_url", DEFAULT_NOUS_PORTAL_URL
+                "portal_base_url", DEFAULT_JARVIS_MANAGED_PORTAL_URL
             ).rstrip("/")
             print()
             print("Your JARVIS Managed account does not have an active subscription.")
@@ -7386,7 +7386,7 @@ def _nous_device_code_login(
         raise
 
 
-def _login_nous(args, pconfig: ProviderConfig) -> None:
+def _login_jarvis_managed(args, pconfig: ProviderConfig) -> None:
     """JARVIS Managed device authorization flow."""
     timeout_seconds = getattr(args, "timeout", None) or 15.0
     insecure = bool(getattr(args, "insecure", False))
@@ -7400,26 +7400,26 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
         auth_state = None
 
         # Codex-style auto-import: before launching a fresh device-code
-        # flow, check the shared store for an existing Nous credential
+        # flow, check the shared store for an existing JARVIS Managed credential
         # from any other profile. If present, offer to rehydrate it.
-        shared = _read_shared_nous_state()
+        shared = _read_shared_jarvis_managed_state()
         if shared:
             try:
-                shared_path = _nous_shared_store_path()
+                shared_path = _jarvis_managed_shared_store_path()
             except RuntimeError:
                 shared_path = None
             print()
             if shared_path:
-                print(f"Found existing Nous OAuth credentials at {shared_path}")
+                print(f"Found existing JARVIS Managed OAuth credentials at {shared_path}")
             else:
-                print("Found existing shared Nous OAuth credentials")
+                print("Found existing shared JARVIS Managed OAuth credentials")
             try:
                 do_import = input("Import these credentials? [Y/n]: ").strip().lower()
             except (EOFError, KeyboardInterrupt):
                 do_import = "y"
             if do_import in {"", "y", "yes"}:
-                print("Rehydrating Nous session from shared credentials...")
-                auth_state = _try_import_shared_nous_state(
+                print("Rehydrating JARVIS Managed session from shared credentials...")
+                auth_state = _try_import_shared_jarvis_managed_state(
                     timeout_seconds=timeout_seconds,
                     min_key_ttl_seconds=5 * 60,
                 )
@@ -7427,7 +7427,7 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
                     print("Could not refresh shared credentials — falling back to device-code login.")
 
         if auth_state is None:
-            auth_state = _nous_device_code_login(
+            auth_state = _jarvis_managed_device_code_login(
                 portal_base_url=getattr(args, "portal_url", None),
                 inference_base_url=getattr(args, "inference_url", None),
                 client_id=getattr(args, "client_id", None) or pconfig.client_id,
@@ -7442,7 +7442,7 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
         inference_base_url = auth_state["inference_base_url"]
 
         # Snapshot the prior active_provider BEFORE _save_provider_state
-        # overwrites it to "nous".  If the user picks "Skip (keep current)"
+        # overwrites it to "jarvis_managed".  If the user picks "Skip (keep current)"
         # during model selection below, we restore this so the user's previous
         # provider (e.g. openrouter) is preserved.
         with _auth_store_lock():
@@ -7451,21 +7451,21 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
 
         with _auth_store_lock():
             auth_store = _load_auth_store()
-            _save_provider_state(auth_store, "nous", auth_state)
+            _save_provider_state(auth_store, "jarvis_managed", auth_state)
             saved_to = _save_auth_store(auth_store)
 
         # Mirror to the shared store so other profiles can one-tap import
         # these credentials. Best-effort: any I/O failure is logged and
         # swallowed inside the helper.
-        _write_shared_nous_state(auth_state)
-        _sync_nous_pool_from_auth_store()
+        _write_shared_jarvis_managed_state(auth_state)
+        _sync_jarvis_managed_pool_from_auth_store()
 
         print()
         print("Login successful!")
         print(f"  Auth state: {saved_to}")
 
         # Resolve model BEFORE writing provider to config.yaml so we never
-        # leave the config in a half-updated state (provider=nous but model
+        # leave the config in a half-updated state (provider=jarvis_managed but model
         # still set to the previous provider's model, e.g. opus from
         # OpenRouter).  The auth.json active_provider was already set above.
         selected_model = None
@@ -7474,23 +7474,23 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
             if not isinstance(runtime_key, str) or not runtime_key:
                 raise AuthError(
                     "No runtime API key available to fetch models",
-                    provider="nous",
+                    provider="jarvis_managed",
                     code="invalid_token",
                 )
 
             from jarvis_cli.models import (
-                get_curated_nous_model_ids, get_pricing_for_provider,
-                check_nous_free_tier, partition_nous_models_by_tier,
+                get_curated_jarvis_managed_model_ids, get_pricing_for_provider,
+                check_jarvis_managed_free_tier, partition_jarvis_managed_models_by_tier,
                 union_with_portal_free_recommendations,
                 union_with_portal_paid_recommendations,
             )
-            model_ids = get_curated_nous_model_ids()
+            model_ids = get_curated_jarvis_managed_model_ids()
 
             print()
             unavailable_models: list = []
             if model_ids:
-                pricing = get_pricing_for_provider("nous")
-                free_tier = check_nous_free_tier()
+                pricing = get_pricing_for_provider("jarvis_managed")
+                free_tier = check_jarvis_managed_free_tier()
                 _portal_for_recs = auth_state.get("portal_base_url", "")
                 if free_tier:
                     # The Portal's freeRecommendedModels endpoint is the
@@ -7501,7 +7501,7 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
                     model_ids, pricing = union_with_portal_free_recommendations(
                         model_ids, pricing, _portal_for_recs,
                     )
-                    model_ids, unavailable_models = partition_nous_models_by_tier(
+                    model_ids, unavailable_models = partition_jarvis_managed_models_by_tier(
                         model_ids, pricing, free_tier=True,
                     )
                 else:
@@ -7521,7 +7521,7 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
                     portal_url=_portal,
                 )
             elif unavailable_models:
-                _url = (_portal or DEFAULT_NOUS_PORTAL_URL).rstrip("/")
+                _url = (_portal or DEFAULT_JARVIS_MANAGED_PORTAL_URL).rstrip("/")
                 print("No free models currently available.")
                 print(f"Upgrade at {_url} to access paid models.")
             else:
@@ -7535,11 +7535,11 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
         # If no model was selected (user picked "Skip (keep current)",
         # model list fetch failed, or no curated models were available),
         # preserve the user's previous provider — don't silently switch
-        # them to Nous with a mismatched model.  The Nous OAuth tokens
+        # them to JARVIS Managed with a mismatched model.  The JARVIS Managed OAuth tokens
         # stay saved for future use.
         if not selected_model:
             # Restore the prior active_provider that _save_provider_state
-            # overwrote to "nous".  config.yaml model.provider is left
+            # overwrote to "jarvis_managed".  config.yaml model.provider is left
             # untouched, so the user's previous provider is fully preserved.
             with _auth_store_lock():
                 auth_store = _load_auth_store()
@@ -7549,17 +7549,17 @@ def _login_nous(args, pconfig: ProviderConfig) -> None:
                     auth_store.pop("active_provider", None)
                 _save_auth_store(auth_store)
             print()
-            print("No provider change. Nous credentials saved for future use.")
+            print("No provider change. JARVIS Managed credentials saved for future use.")
             print("  Run `jarvis model` again to switch to JARVIS Managed.")
             return
 
         config_path = _update_config_for_provider(
-            "nous", inference_base_url, default_model=selected_model,
+            "jarvis_managed", inference_base_url, default_model=selected_model,
         )
         if selected_model:
             _save_model_choice(selected_model)
             print(f"Default model set to: {selected_model}")
-        print(f"  Config updated: {config_path} (model.provider=nous)")
+        print(f"  Config updated: {config_path} (model.provider=jarvis_managed)")
 
     except KeyboardInterrupt:
         print("\nLogin cancelled.")

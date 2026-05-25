@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from jarvis_cli.profiles import _get_default_hermes_home
+from jarvis_cli.profiles import _get_default_jarvis_home
 
 import pytest
 
@@ -341,19 +341,19 @@ class TestResolveSessionName:
 
 
 class TestResolveConfigPath:
-    def test_prefers_hermes_home_when_exists(self, tmp_path):
-        hermes_home = tmp_path / "jarvis"
-        hermes_home.mkdir()
-        local_cfg = hermes_home / "honcho.json"
+    def test_prefers_jarvis_home_when_exists(self, tmp_path):
+        jarvis_home = tmp_path / "jarvis"
+        jarvis_home.mkdir()
+        local_cfg = jarvis_home / "honcho.json"
         local_cfg.write_text('{"apiKey": "local"}')
 
-        with patch.dict(os.environ, {"JARVIS_HOME": str(hermes_home)}):
+        with patch.dict(os.environ, {"JARVIS_HOME": str(jarvis_home)}):
             result = resolve_config_path()
         assert result == local_cfg
 
     def test_falls_back_to_default_profile_when_no_local(self, tmp_path, monkeypatch):
         # Profile mode: JARVIS_HOME points at ~/.jarvis/profiles/<name>, so
-        # _get_default_hermes_home() must resolve back to ~/.jarvis — that's
+        # _get_default_jarvis_home() must resolve back to ~/.jarvis — that's
         # the bug the HOME-anchored helper fixes (vs. blindly using Path.home()).
         fake_home = tmp_path / "fakehome"
         fake_home.mkdir()
@@ -368,10 +368,10 @@ class TestResolveConfigPath:
 
         result = resolve_config_path()
 
-        assert _get_default_hermes_home() == default_home
+        assert _get_default_jarvis_home() == default_home
         assert result == default_cfg
 
-    def test_falls_back_to_global_without_hermes_home_env(self, tmp_path):
+    def test_falls_back_to_global_without_jarvis_home_env(self, tmp_path):
         fake_home = tmp_path / "fakehome"
         fake_home.mkdir()
 
@@ -384,10 +384,10 @@ class TestResolveConfigPath:
     def test_global_fallback_uses_home_at_call_time(self, tmp_path):
         fake_home = tmp_path / "fakehome"
         fake_home.mkdir()
-        hermes_home = tmp_path / "jarvis"
-        hermes_home.mkdir()
+        jarvis_home = tmp_path / "jarvis"
+        jarvis_home.mkdir()
 
-        with patch.dict(os.environ, {"JARVIS_HOME": str(hermes_home)}), \
+        with patch.dict(os.environ, {"JARVIS_HOME": str(jarvis_home)}), \
              patch.object(Path, "home", return_value=fake_home):
             assert resolve_global_config_path() == fake_home / ".honcho" / "config.json"
             assert resolve_config_path() == fake_home / ".honcho" / "config.json"
@@ -415,15 +415,15 @@ class TestResolveConfigPath:
         assert config.workspace_id == "default-ws"
 
     def test_from_global_config_uses_local_path(self, tmp_path):
-        hermes_home = tmp_path / "jarvis"
-        hermes_home.mkdir()
-        local_cfg = hermes_home / "honcho.json"
+        jarvis_home = tmp_path / "jarvis"
+        jarvis_home.mkdir()
+        local_cfg = jarvis_home / "honcho.json"
         local_cfg.write_text(json.dumps({
             "apiKey": "***",
             "workspace": "local-ws",
         }))
 
-        with patch.dict(os.environ, {"JARVIS_HOME": str(hermes_home)}), \
+        with patch.dict(os.environ, {"JARVIS_HOME": str(jarvis_home)}), \
              patch.object(Path, "home", return_value=tmp_path):
             config = HonchoClientConfig.from_global_config()
         assert config.api_key == "***"
@@ -431,7 +431,7 @@ class TestResolveConfigPath:
 
 
 class TestResolveActiveHost:
-    def test_default_returns_hermes(self):
+    def test_default_returns_jarvis(self):
         with patch.dict(os.environ, {}, clear=True):
             os.environ.pop("JARVIS_HONCHO_HOST", None)
             os.environ.pop("JARVIS_HOME", None)
@@ -447,13 +447,13 @@ class TestResolveActiveHost:
             with patch("jarvis_cli.profiles.get_active_profile_name", return_value="coder"):
                 assert resolve_active_host() == "jarvis.coder"
 
-    def test_default_profile_returns_hermes(self):
+    def test_default_profile_returns_jarvis(self):
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("JARVIS_HONCHO_HOST", None)
             with patch("jarvis_cli.profiles.get_active_profile_name", return_value="default"):
                 assert resolve_active_host() == "jarvis"
 
-    def test_custom_profile_returns_hermes(self):
+    def test_custom_profile_returns_jarvis(self):
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("JARVIS_HONCHO_HOST", None)
             with patch("jarvis_cli.profiles.get_active_profile_name", return_value="custom"):
@@ -615,7 +615,7 @@ class TestGetHonchoClient:
         not importlib.util.find_spec("honcho"),
         reason="honcho SDK not installed"
     )
-    def test_hermes_config_timeout_override_used_when_config_timeout_missing(self):
+    def test_jarvis_config_timeout_override_used_when_config_timeout_missing(self):
         fake_honcho = MagicMock(name="Honcho")
         cfg = HonchoClientConfig(
             api_key="test-key",
@@ -657,7 +657,7 @@ class TestGetHonchoClient:
         not importlib.util.find_spec("honcho"),
         reason="honcho SDK not installed"
     )
-    def test_hermes_request_timeout_alias_used(self):
+    def test_jarvis_request_timeout_alias_used(self):
         fake_honcho = MagicMock(name="Honcho")
         cfg = HonchoClientConfig(
             api_key="test-key",

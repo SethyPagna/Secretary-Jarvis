@@ -34,7 +34,7 @@ DOC_SECTIONS: dict[str, list[str]] = {
     ],
     "mcp-integration.md": [
         "user-guide/features/mcp.md",
-        "guides/use-mcp-with-hermes.md",
+        "guides/use-mcp-with-jarvis.md",
         "reference/mcp-config-reference.md",
     ],
     "security.md": [
@@ -80,16 +80,16 @@ DOC_SECTIONS: dict[str, list[str]] = {
 }
 
 REPLACEMENTS: tuple[tuple[str, str], ...] = (
-    ("Nous Research", "JARVIS Project"),
-    ("NousResearch", "JARVISProject"),
-    ("nousresearch.com", "jarvis.local"),
-    ("nousresearch", "jarvisproject"),
-    ("Hermes Agent", "JARVIS"),
-    ("HermesCLI", "JarvisDesktopRuntime"),
-    ("Hermes", "JARVIS"),
-    ("HERMES", "JARVIS"),
-    ("hermes-agent", "jarvis-agent"),
-    ("hermes", "jarvis"),
+    ("JARVIS Project", "JARVIS Project"),
+    ("JARVISProject", "JARVISProject"),
+    ("jarvis.local", "jarvis.local"),
+    ("jarvisproject", "jarvisproject"),
+    ("JARVIS", "JARVIS"),
+    ("JarvisCLI", "JarvisDesktopRuntime"),
+    ("Jarvis", "JARVIS"),
+    ("JARVIS", "JARVIS"),
+    ("jarvis-agent", "jarvis-agent"),
+    ("jarvis", "jarvis"),
 )
 
 
@@ -103,7 +103,7 @@ def rebrand_text(text: str) -> str:
         text,
     )
     text = re.sub(
-        r"https://github\.com/NousResearch/jarvis-agent",
+        r"https://github\.com/JARVISProject/jarvis-agent",
         "https://github.com/SethyPagna/Secretary-Jarvis",
         text,
     )

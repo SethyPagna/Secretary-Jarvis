@@ -5083,7 +5083,7 @@ def _rotate_worker_log(
         pass
 
 
-def _module_hermes_argv() -> list[str]:
+def _module_jarvis_argv() -> list[str]:
     """Return the interpreter-bound Jarvis CLI invocation."""
     # ``jarvis_cli.main`` is the console-script target declared in
     # pyproject.toml, NOT a top-level ``jarvis`` package — there is no
@@ -5091,7 +5091,7 @@ def _module_hermes_argv() -> list[str]:
     return [sys.executable, "-m", "jarvis_cli.main"]
 
 
-def _absolute_hermes_path(path: str) -> str:
+def _absolute_jarvis_path(path: str) -> str:
     """Return an absolute filesystem path for a resolved Jarvis shim."""
     expanded = os.path.expanduser(path)
     return expanded if os.path.isabs(expanded) else os.path.abspath(expanded)
@@ -5145,7 +5145,7 @@ def _safe_which_no_cwd(command: str) -> Optional[str]:
     return None
 
 
-def _hermes_path_argv(path: str) -> list[str]:
+def _jarvis_path_argv(path: str) -> list[str]:
     """Return argv for a resolved Jarvis executable path.
 
     Windows batch shims (`.cmd` / `.bat`) are not safe as argv[0] for
@@ -5154,11 +5154,11 @@ def _hermes_path_argv(path: str) -> list[str]:
     executable is only a shell shim.
     """
     if _IS_WINDOWS and _is_windows_batch_shim(path):
-        return _module_hermes_argv()
-    return [_absolute_hermes_path(path)]
+        return _module_jarvis_argv()
+    return [_absolute_jarvis_path(path)]
 
 
-def _resolve_hermes_argv() -> list[str]:
+def _resolve_jarvis_argv() -> list[str]:
     """Resolve the ``jarvis`` invocation as argv parts for ``Popen``.
 
     Tries in order:
@@ -5178,7 +5178,7 @@ def _resolve_hermes_argv() -> list[str]:
        launchd jobs, detached processes, etc.). Goes through the running
        interpreter so the result is independent of ``$PATH``.
 
-    Mirrors ``gateway.run._resolve_hermes_bin`` for the same reason. Kept
+    Mirrors ``gateway.run._resolve_jarvis_bin`` for the same reason. Kept
     local (not imported from gateway) because ``jarvis_cli`` sits below
     ``gateway`` in the dependency order.
     """
@@ -5187,19 +5187,19 @@ def _resolve_hermes_argv() -> list[str]:
     env_bin = os.environ.get("JARVIS_BIN", "").strip()
     if env_bin:
         if _looks_like_path(env_bin):
-            return _hermes_path_argv(env_bin)
+            return _jarvis_path_argv(env_bin)
         resolved_env_bin = _safe_which_no_cwd(env_bin)
         if resolved_env_bin:
-            return _hermes_path_argv(resolved_env_bin)
-        return _module_hermes_argv()
+            return _jarvis_path_argv(resolved_env_bin)
+        return _module_jarvis_argv()
 
-    hermes_bin = _safe_which_no_cwd("jarvis") if _IS_WINDOWS else shutil.which("jarvis")
-    if hermes_bin:
-        return _hermes_path_argv(hermes_bin)
-    return _module_hermes_argv()
+    jarvis_bin = _safe_which_no_cwd("jarvis") if _IS_WINDOWS else shutil.which("jarvis")
+    if jarvis_bin:
+        return _jarvis_path_argv(jarvis_bin)
+    return _module_jarvis_argv()
 
 
-def _kanban_worker_skill_available(hermes_home: Optional[str]) -> bool:
+def _kanban_worker_skill_available(jarvis_home: Optional[str]) -> bool:
     """True if the bundled ``kanban-worker`` skill resolves for the home the
     spawned worker will run under.
 
@@ -5217,7 +5217,7 @@ def _kanban_worker_skill_available(hermes_home: Optional[str]) -> bool:
 
     # An unset JARVIS_HOME means the worker falls back to the default root
     # home (``~/.jarvis``), which ships the bundled skill.
-    base = _Path(hermes_home) if hermes_home else (_Path.home() / ".jarvis")
+    base = _Path(jarvis_home) if jarvis_home else (_Path.home() / ".jarvis")
     skills_root = base / "skills"
     if not skills_root.is_dir():
         return False
@@ -5353,7 +5353,7 @@ def _default_spawn(
     env["JARVIS_PROFILE"] = profile_arg
 
     cmd = [
-        *_resolve_hermes_argv(),
+        *_resolve_jarvis_argv(),
         "-p", profile_arg,
         # Worker subprocesses switch to a profile-scoped JARVIS_HOME above,
         # so they see that profile's shell-hook allowlist instead of the

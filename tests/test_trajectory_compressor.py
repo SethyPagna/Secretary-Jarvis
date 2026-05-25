@@ -17,7 +17,7 @@ from trajectory_compressor import (
 )
 
 
-def test_import_loads_env_from_hermes_home(tmp_path, monkeypatch):
+def test_import_loads_env_from_jarvis_home(tmp_path, monkeypatch):
     home = tmp_path / ".jarvis"
     home.mkdir()
     (home / ".env").write_text("OPENROUTER_API_KEY=from-jarvis-home\n", encoding="utf-8")

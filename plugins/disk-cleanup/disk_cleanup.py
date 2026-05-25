@@ -68,9 +68,9 @@ def is_safe_path(path: Path) -> bool:
 
     Rejects Windows mounts (``/mnt/c`` etc.) and any system directory.
     """
-    hermes_home = get_jarvis_home()
+    jarvis_home = get_jarvis_home()
     try:
-        path.resolve().relative_to(hermes_home)
+        path.resolve().relative_to(jarvis_home)
         return True
     except (ValueError, OSError):
         pass
@@ -294,7 +294,7 @@ def quick() -> Dict[str, Any]:
     # Remove empty dirs under JARVIS_HOME (but leave JARVIS_HOME itself and
     # a short list of well-known top-level state dirs alone — a fresh install
     # has these empty, and deleting them would surprise the user).
-    hermes_home = get_jarvis_home()
+    jarvis_home = get_jarvis_home()
     _PROTECTED_TOP_LEVEL = {
         "logs", "memories", "sessions", "cron", "cronjobs",
         "cache", "skills", "plugins", "disk-cleanup", "optional-skills",
@@ -302,11 +302,11 @@ def quick() -> Dict[str, Any]:
     }
     empty_removed = 0
     try:
-        for dirpath in sorted(hermes_home.rglob("*"), reverse=True):
-            if not dirpath.is_dir() or dirpath == hermes_home:
+        for dirpath in sorted(jarvis_home.rglob("*"), reverse=True):
+            if not dirpath.is_dir() or dirpath == jarvis_home:
                 continue
             try:
-                rel_parts = dirpath.relative_to(hermes_home).parts
+                rel_parts = dirpath.relative_to(jarvis_home).parts
             except ValueError:
                 continue
             # Skip the well-known top-level state dirs themselves.
@@ -470,9 +470,9 @@ def guess_category(path: Path) -> Optional[str]:
         return None
 
     # Skip the state dir itself, logs, memory files, sessions, config.
-    hermes_home = get_jarvis_home()
+    jarvis_home = get_jarvis_home()
     try:
-        rel = path.resolve().relative_to(hermes_home)
+        rel = path.resolve().relative_to(jarvis_home)
         top = rel.parts[0] if rel.parts else ""
         if top in {
             "disk-cleanup", "logs", "memories", "sessions", "config.yaml",

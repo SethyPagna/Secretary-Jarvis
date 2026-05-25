@@ -49,7 +49,7 @@ Both `provider` and `model` are **required**. If either is missing, the fallback
 |----------|-------|-------------|
 | AI Gateway | `ai-gateway` | `AI_GATEWAY_API_KEY` |
 | OpenRouter | `openrouter` | `OPENROUTER_API_KEY` |
-| Nous Portal | `nous` | `jarvis auth` (OAuth) |
+| JARVIS Managed | `jarvis_managed` | `jarvis auth` (OAuth) |
 | OpenAI Codex | `openai-codex` | `jarvis model` (ChatGPT OAuth) |
 | GitHub Copilot | `copilot` | `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `GITHUB_TOKEN` |
 | GitHub Copilot ACP | `copilot-acp` | External process (editor integration) |
@@ -134,15 +134,15 @@ fallback_model:
   model: anthropic/claude-sonnet-4
 ```
 
-**Nous Portal as fallback for OpenRouter:**
+**JARVIS Managed as fallback for OpenRouter:**
 ```yaml
 model:
   provider: openrouter
   default: anthropic/claude-opus-4
 
 fallback_model:
-  provider: nous
-  model: nous-jarvis-3
+  provider: jarvis_managed
+  model: jarvis_managed-jarvis-3
 ```
 
 **Local model as fallback for cloud:**
@@ -201,14 +201,14 @@ When a task's provider is set to `"auto"` (the default), Jarvis tries providers 
 **For text tasks (compression, web extract, etc.):**
 
 ```text
-OpenRouter → Nous Portal → Custom endpoint → Codex OAuth →
+OpenRouter → JARVIS Managed → Custom endpoint → Codex OAuth →
 API-key providers (z.ai, Kimi, MiniMax, Xiaomi MiMo, Hugging Face, Anthropic) → give up
 ```
 
 **For vision tasks:**
 
 ```text
-Main provider (if vision-capable) → OpenRouter → Nous Portal →
+Main provider (if vision-capable) → OpenRouter → JARVIS Managed →
 Codex OAuth → Anthropic → Custom endpoint → give up
 ```
 
@@ -221,7 +221,7 @@ Each task can be configured independently in `config.yaml`:
 ```yaml
 auxiliary:
   vision:
-    provider: "auto"              # auto | openrouter | nous | codex | main | anthropic
+    provider: "auto"              # auto | openrouter | jarvis_managed | codex | main | anthropic
     model: ""                     # e.g. "openai/gpt-4o"
     base_url: ""                  # direct endpoint (takes precedence over provider)
     api_key: ""                   # API key for base_url
@@ -272,7 +272,7 @@ These options apply to `auxiliary:`, `compression:`, and `fallback_model:` confi
 |----------|-------------|-------------|
 | `"auto"` | Try providers in order until one works (default) | At least one provider configured |
 | `"openrouter"` | Force OpenRouter | `OPENROUTER_API_KEY` |
-| `"nous"` | Force Nous Portal | `jarvis auth` |
+| `"jarvis_managed"` | Force JARVIS Managed | `jarvis auth` |
 | `"codex"` | Force Codex OAuth | `jarvis model` → Codex |
 | `"main"` | Use whatever provider the main agent uses (auxiliary tasks only) | Active main provider configured |
 | `"anthropic"` | Force Anthropic native | `ANTHROPIC_API_KEY` or Claude Code credentials |
@@ -318,7 +318,7 @@ auxiliary:
     fallback_chain:
       - provider: openrouter
         model: google/gemini-3-flash-preview
-      - provider: nous
+      - provider: jarvis_managed
         model: anthropic/claude-sonnet-4
 
   compression:
@@ -349,7 +349,7 @@ Context compression uses the `auxiliary.compression` config block to control whi
 ```yaml
 auxiliary:
   compression:
-    provider: "auto"                              # auto | openrouter | nous | main
+    provider: "auto"                              # auto | openrouter | jarvis_managed | main
     model: "google/gemini-3-flash-preview"
 ```
 

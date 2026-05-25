@@ -16,11 +16,11 @@ from jarvis_cli.auth import AuthError, resolve_provider
 from jarvis_cli.colors import Colors, color
 from jarvis_cli.config import get_env_path, get_env_value, get_jarvis_home, load_config
 from jarvis_cli.models import provider_label
-from jarvis_cli.nous_subscription import get_nous_subscription_features
+from jarvis_cli.jarvis_managed_subscription import get_jarvis_managed_subscription_features
 from jarvis_cli.runtime_provider import resolve_requested_provider
 from jarvis_cli.vercel_auth import describe_vercel_auth
 from jarvis_constants import OPENROUTER_MODELS_URL
-from tools.tool_backend_helpers import managed_nous_tools_enabled
+from tools.tool_backend_helpers import managed_jarvis_managed_tools_enabled
 
 def check_mark(ok: bool) -> str:
     if ok:
@@ -179,42 +179,42 @@ def show_status(args):
 
     try:
         from jarvis_cli.auth import (
-            get_nous_auth_status,
+            get_jarvis_managed_auth_status,
             get_codex_auth_status,
             get_qwen_auth_status,
             get_minimax_oauth_auth_status,
         )
-        nous_status = get_nous_auth_status()
+        jarvis_managed_status = get_jarvis_managed_auth_status()
         codex_status = get_codex_auth_status()
         qwen_status = get_qwen_auth_status()
         minimax_status = get_minimax_oauth_auth_status()
     except Exception:
-        nous_status = {}
+        jarvis_managed_status = {}
         codex_status = {}
         qwen_status = {}
         minimax_status = {}
 
-    nous_logged_in = bool(nous_status.get("logged_in"))
-    nous_error = nous_status.get("error")
-    nous_label = "logged in" if nous_logged_in else "not logged in (run: jarvis auth add nous --type oauth)"
+    jarvis_managed_logged_in = bool(jarvis_managed_status.get("logged_in"))
+    jarvis_managed_error = jarvis_managed_status.get("error")
+    jarvis_managed_label = "logged in" if jarvis_managed_logged_in else "not logged in (run: jarvis auth add jarvis_managed --type oauth)"
     print(
-        f"  {'JARVIS Managed':<12}  {check_mark(nous_logged_in)} "
-        f"{nous_label}"
+        f"  {'JARVIS Managed':<12}  {check_mark(jarvis_managed_logged_in)} "
+        f"{jarvis_managed_label}"
     )
-    portal_url = nous_status.get("portal_base_url") or "(unknown)"
-    access_exp = _format_iso_timestamp(nous_status.get("access_expires_at"))
-    key_exp = _format_iso_timestamp(nous_status.get("agent_key_expires_at"))
-    refresh_label = "yes" if nous_status.get("has_refresh_token") else "no"
-    if nous_logged_in or portal_url != "(unknown)" or nous_error:
+    portal_url = jarvis_managed_status.get("portal_base_url") or "(unknown)"
+    access_exp = _format_iso_timestamp(jarvis_managed_status.get("access_expires_at"))
+    key_exp = _format_iso_timestamp(jarvis_managed_status.get("agent_key_expires_at"))
+    refresh_label = "yes" if jarvis_managed_status.get("has_refresh_token") else "no"
+    if jarvis_managed_logged_in or portal_url != "(unknown)" or jarvis_managed_error:
         print(f"    Portal URL: {portal_url}")
-    if nous_logged_in or nous_status.get("access_expires_at"):
+    if jarvis_managed_logged_in or jarvis_managed_status.get("access_expires_at"):
         print(f"    Access exp: {access_exp}")
-    if nous_logged_in or nous_status.get("agent_key_expires_at"):
+    if jarvis_managed_logged_in or jarvis_managed_status.get("agent_key_expires_at"):
         print(f"    Key exp:    {key_exp}")
-    if nous_logged_in or nous_status.get("has_refresh_token"):
+    if jarvis_managed_logged_in or jarvis_managed_status.get("has_refresh_token"):
         print(f"    Refresh:    {refresh_label}")
-    if nous_error and not nous_logged_in:
-        print(f"    Error:      {nous_error}")
+    if jarvis_managed_error and not jarvis_managed_logged_in:
+        print(f"    Error:      {jarvis_managed_error}")
 
     codex_logged_in = bool(codex_status.get("logged_in"))
     print(
@@ -283,35 +283,35 @@ def show_status(args):
     # =========================================================================
     # JARVIS Managed Features
     # =========================================================================
-    if managed_nous_tools_enabled():
-        features = get_nous_subscription_features(config)
+    if managed_jarvis_managed_tools_enabled():
+        features = get_jarvis_managed_subscription_features(config)
         print()
         print(color("◆ JARVIS Tool Gateway", Colors.CYAN, Colors.BOLD))
-        if not features.nous_auth_present:
+        if not features.jarvis_managed_auth_present:
             print("  JARVIS Managed   ✗ not logged in")
         else:
             print("  JARVIS Managed   ✓ managed tools available")
         for feature in features.items():
-            if feature.managed_by_nous:
+            if feature.managed_by_jarvis_managed:
                 state = "active via JARVIS Managed subscription"
             elif feature.active:
                 current = feature.current_provider or "configured provider"
                 state = f"active via {current}"
-            elif feature.included_by_default and features.nous_auth_present:
+            elif feature.included_by_default and features.jarvis_managed_auth_present:
                 state = "included by subscription, not currently selected"
-            elif feature.key == "modal" and features.nous_auth_present:
+            elif feature.key == "modal" and features.jarvis_managed_auth_present:
                 state = "available via subscription (optional)"
             else:
                 state = "not configured"
-            print(f"  {feature.label:<15} {check_mark(feature.available or feature.active or feature.managed_by_nous)} {state}")
-    elif nous_logged_in:
+            print(f"  {feature.label:<15} {check_mark(feature.available or feature.active or feature.managed_by_jarvis_managed)} {state}")
+    elif jarvis_managed_logged_in:
         # Logged into the managed provider but on the free tier — show upgrade nudge
         print()
         print(color("◆ JARVIS Tool Gateway", Colors.CYAN, Colors.BOLD))
         print("  Your free-tier JARVIS Managed account does not include Tool Gateway access.")
         print("  Upgrade your subscription to unlock managed web, image, TTS, and browser tools.")
         try:
-            portal_url = nous_status.get("portal_base_url", "").rstrip("/")
+            portal_url = jarvis_managed_status.get("portal_base_url", "").rstrip("/")
             if portal_url:
                 print(f"  Upgrade: {portal_url}")
         except Exception:

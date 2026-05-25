@@ -3,7 +3,7 @@
   "updated_at": "2026-05-11T16:41:16Z",
   "metadata": {
     "source": "jarvis-agent repo",
-    "docs": "https://jarvis-agent.nousresearch.com/docs/reference/model-catalog"
+    "docs": "https://jarvis-agent.jarvis.local/docs/reference/model-catalog"
   },
   "providers": {
     "openrouter": {
@@ -138,10 +138,10 @@
         }
       ]
     },
-    "nous": {
+    "jarvis_managed": {
       "metadata": {
-        "display_name": "Nous Portal",
-        "note": "Free-tier gating is determined live via Portal pricing (partition_nous_models_by_tier), not this manifest."
+        "display_name": "JARVIS Managed",
+        "note": "Free-tier gating is determined live via Portal pricing (partition_jarvis_managed_models_by_tier), not this manifest."
       },
       "models": [
         {

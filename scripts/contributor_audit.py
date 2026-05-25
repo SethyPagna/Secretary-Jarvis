@@ -52,7 +52,7 @@ IGNORED_EMAILS = {
     "noreply@anthropic.com",
     "noreply@github.com",
     "cursoragent@cursor.com",
-    "jarvis@nousresearch.com",
+    "jarvis@jarvis.local",
     "jarvis-audit@example.com",
     "jarvis@habibilabs.dev",
 }
@@ -96,7 +96,7 @@ def gh_pr_list():
         result = subprocess.run(
             [
                 "gh", "pr", "list",
-                "--repo", "NousResearch/jarvis-agent",
+                "--repo", "JARVISProject/jarvis-agent",
                 "--state", "merged",
                 "--json", "number,title,body,author,mergedAt",
                 "--limit", "300",

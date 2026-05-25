@@ -702,7 +702,7 @@ def _read_systemd_unit_environment(system: bool = False) -> dict[str, str]:
     return parsed
 
 
-def _sync_hermes_home_from_systemd_unit(system: bool) -> None:
+def _sync_jarvis_home_from_systemd_unit(system: bool) -> None:
     """When acting on a system-scope unit, adopt its ``JARVIS_HOME``.
 
     Under ``sudo``, ``JARVIS_HOME`` is stripped and ``HOME=/root``, so
@@ -1285,20 +1285,20 @@ def _profile_suffix() -> str:
     return hashlib.sha256(str(home).encode()).hexdigest()[:8]
 
 
-def _profile_arg(hermes_home: str | None = None) -> str:
+def _profile_arg(jarvis_home: str | None = None) -> str:
     """Return ``--profile <name>`` only when JARVIS_HOME is a named profile.
 
     For ``~/.jarvis/profiles/<name>``, returns ``"--profile <name>"``.
     For the default profile or hash-based custom paths, returns the empty string.
 
     Args:
-        hermes_home: Optional explicit JARVIS_HOME path. Defaults to the current
+        jarvis_home: Optional explicit JARVIS_HOME path. Defaults to the current
             ``get_jarvis_home()`` value. Should be passed when generating a
             service definition for a different user (e.g. system service).
     """
     import re
     from jarvis_constants import get_default_jarvis_root
-    home = Path(hermes_home or str(get_jarvis_home())).resolve()
+    home = Path(jarvis_home or str(get_jarvis_home())).resolve()
     default = get_default_jarvis_root().resolve()
     if home == default:
         return ""
@@ -1603,7 +1603,7 @@ def _legacy_unit_search_paths() -> list[tuple[bool, Path]]:
     ]
 
 
-def _find_legacy_hermes_units() -> list[tuple[str, Path, bool]]:
+def _find_legacy_jarvis_units() -> list[tuple[str, Path, bool]]:
     """Return ``[(unit_name, unit_path, is_system)]`` for legacy Jarvis gateway units.
 
     Detects unit files installed by older Jarvis versions that used a
@@ -1641,9 +1641,9 @@ def _find_legacy_hermes_units() -> list[tuple[str, Path, bool]]:
     return results
 
 
-def has_legacy_hermes_units() -> bool:
+def has_legacy_jarvis_units() -> bool:
     """Return True when any legacy Jarvis gateway unit files exist."""
-    return bool(_find_legacy_hermes_units())
+    return bool(_find_legacy_jarvis_units())
 
 
 def print_legacy_unit_warning() -> None:
@@ -1652,7 +1652,7 @@ def print_legacy_unit_warning() -> None:
     Idempotent: prints nothing when no legacy units are detected. Safe to
     call from any status/install/setup path.
     """
-    legacy = _find_legacy_hermes_units()
+    legacy = _find_legacy_jarvis_units()
     if not legacy:
         return
     print_warning("Legacy Jarvis gateway unit(s) detected from an older install:")
@@ -1665,13 +1665,13 @@ def print_legacy_unit_warning() -> None:
     print_info("    jarvis gateway migrate-legacy")
 
 
-def remove_legacy_hermes_units(
+def remove_legacy_jarvis_units(
     interactive: bool = True,
     dry_run: bool = False,
 ) -> tuple[int, list[Path]]:
     """Stop, disable, and remove legacy Jarvis gateway unit files.
 
-    Iterates over whatever ``_find_legacy_hermes_units()`` returns — which is
+    Iterates over whatever ``_find_legacy_jarvis_units()`` returns — which is
     an explicit allowlist of legacy names (not a glob). Profile units and
     unrelated third-party services are never touched.
 
@@ -1685,7 +1685,7 @@ def remove_legacy_hermes_units(
         ``(removed_count, remaining_paths)`` — remaining includes units we
         couldn't remove (typically system-scope when not running as root).
     """
-    legacy = _find_legacy_hermes_units()
+    legacy = _find_legacy_jarvis_units()
     if not legacy:
         print("No legacy Jarvis gateway units found.")
         return 0, []
@@ -2079,7 +2079,7 @@ def _remap_path_for_user(path: str, target_home_dir: str) -> str:
         return str(p)
 
 
-def _hermes_home_for_target_user(target_home_dir: str) -> str:
+def _jarvis_home_for_target_user(target_home_dir: str) -> str:
     """Remap the current JARVIS_HOME to the equivalent under a target user's home.
 
     When installing a system service via sudo, get_jarvis_home() resolves to
@@ -2088,21 +2088,21 @@ def _hermes_home_for_target_user(target_home_dir: str) -> str:
       /root/.jarvis/profiles/coder     → /home/alice/.jarvis/profiles/coder
       /opt/custom-jarvis               → /opt/custom-jarvis  (kept as-is)
     """
-    current_hermes = get_jarvis_home().resolve()
+    current_jarvis = get_jarvis_home().resolve()
     current_default = (Path.home() / ".jarvis").resolve()
     target_default = Path(target_home_dir) / ".jarvis"
 
     # Default ~/.jarvis → remap to target user's default
-    if current_hermes == current_default:
+    if current_jarvis == current_default:
         return str(target_default)
 
     # Profile or subdir of ~/.jarvis → preserve the relative structure
     try:
-        relative = current_hermes.relative_to(current_default)
+        relative = current_jarvis.relative_to(current_default)
         return str(target_default / relative)
     except ValueError:
         # Completely custom path (not under ~/.jarvis) — keep as-is
-        return str(current_hermes)
+        return str(current_jarvis)
 
 
 def _build_service_path_dirs(project_root: Path | None = None) -> list[str]:
@@ -2128,13 +2128,13 @@ def _build_service_path_dirs(project_root: Path | None = None) -> list[str]:
     if _is_dir(node_bin):
         candidates.append(str(node_bin))
 
-    hermes_home = get_jarvis_home()
-    hermes_node = hermes_home / "node" / "bin"
-    if _is_dir(hermes_node):
-        candidates.append(str(hermes_node))
-    hermes_nm = hermes_home / "node_modules" / ".bin"
-    if _is_dir(hermes_nm):
-        candidates.append(str(hermes_nm))
+    jarvis_home = get_jarvis_home()
+    jarvis_node = jarvis_home / "node" / "bin"
+    if _is_dir(jarvis_node):
+        candidates.append(str(jarvis_node))
+    jarvis_nm = jarvis_home / "node_modules" / ".bin"
+    if _is_dir(jarvis_nm):
+        candidates.append(str(jarvis_nm))
 
     return candidates
 
@@ -2164,8 +2164,8 @@ def generate_systemd_unit(system: bool = False, run_as_user: str | None = None) 
 
     if system:
         username, group_name, home_dir = _system_service_identity(run_as_user)
-        hermes_home = _hermes_home_for_target_user(home_dir)
-        profile_arg = _profile_arg(hermes_home)
+        jarvis_home = _jarvis_home_for_target_user(home_dir)
+        profile_arg = _profile_arg(jarvis_home)
         # Remap all paths that may resolve under the calling user's home
         # (e.g. /root/) to the target user's home so the service can
         # actually access them.
@@ -2194,7 +2194,7 @@ Environment="USER={username}"
 Environment="LOGNAME={username}"
 Environment="PATH={sane_path}"
 Environment="VIRTUAL_ENV={venv_dir}"
-Environment="JARVIS_HOME={hermes_home}"
+Environment="JARVIS_HOME={jarvis_home}"
 Restart=always
 RestartSec=5
 RestartMaxDelaySec=300
@@ -2211,8 +2211,8 @@ StandardError=journal
 WantedBy=multi-user.target
 """
 
-    hermes_home = str(get_jarvis_home().resolve())
-    profile_arg = _profile_arg(hermes_home)
+    jarvis_home = str(get_jarvis_home().resolve())
+    profile_arg = _profile_arg(jarvis_home)
     path_entries.extend(_build_user_local_paths(Path.home(), path_entries))
     path_entries.extend(_build_wsl_interop_paths(path_entries))
     path_entries.extend(common_bin_paths)
@@ -2229,7 +2229,7 @@ ExecStart={python_path} -m jarvis_cli.main{f" {profile_arg}" if profile_arg else
 WorkingDirectory={working_dir}
 Environment="PATH={sane_path}"
 Environment="VIRTUAL_ENV={venv_dir}"
-Environment="JARVIS_HOME={hermes_home}"
+Environment="JARVIS_HOME={jarvis_home}"
 Restart=always
 RestartSec=5
 RestartMaxDelaySec=300
@@ -2263,7 +2263,7 @@ def _normalize_launchd_plist_for_comparison(text: str) -> str:
     normalized = _normalize_service_definition(text)
     return re.sub(
         r'(<key>PATH</key>\s*<string>)(.*?)(</string>)',
-        r'\1__HERMES_PATH__\3',
+        r'\1__JARVIS_PATH__\3',
         normalized,
         flags=re.S,
     )
@@ -2294,7 +2294,7 @@ def refresh_systemd_unit_if_needed(system: bool = False) -> bool:
     # The user-scope unit path resolves under ``Path.home()``, which is NOT
     # sandboxed by the test conftest (only JARVIS_HOME is). If a test
     # exercises ``run_gateway()`` with a pytest-tmp JARVIS_HOME, the freshly
-    # generated unit bakes that ``/tmp/pytest-of-.../hermes_test`` path into
+    # generated unit bakes that ``/tmp/pytest-of-.../jarvis_test`` path into
     # ``Environment="JARVIS_HOME=..."``. Writing that to the developer's
     # real user systemd unit file silently breaks their gateway on the next
     # reboot (systemd loads the polluted env, the gateway looks at an empty
@@ -2306,8 +2306,8 @@ def refresh_systemd_unit_if_needed(system: bool = False) -> bool:
     # still works.
     if not system and (
         "/pytest-of-" in new_unit
-        or "/hermes_test\"" in new_unit
-        or "/hermes_test/" in new_unit
+        or "/jarvis_test\"" in new_unit
+        or "/jarvis_test/" in new_unit
     ):
         return False
 
@@ -2451,12 +2451,12 @@ def systemd_install(
     # flap-fight for the Telegram bot token on every gateway startup.
     # Only removes units matching _LEGACY_SERVICE_NAMES + our ExecStart
     # signature — profile units are never touched.
-    if has_legacy_hermes_units():
+    if has_legacy_jarvis_units():
         print()
         print_legacy_unit_warning()
         print()
         if prompt_yes_no("Remove the legacy unit(s) before installing?", True):
-            remove_legacy_hermes_units(interactive=False)
+            remove_legacy_jarvis_units(interactive=False)
             print()
 
     unit_path = get_systemd_unit_path(system=system)
@@ -2550,7 +2550,7 @@ def systemd_stop(system: bool = False):
     if system:
         _require_root_for_system_service("stop")
     _require_service_installed("stop", system=system)
-    _sync_hermes_home_from_systemd_unit(system=system)
+    _sync_jarvis_home_from_systemd_unit(system=system)
     try:
         from gateway.status import get_running_pid, write_planned_stop_marker
         pid = get_running_pid(cleanup_stale=False)
@@ -2579,7 +2579,7 @@ def systemd_restart(system: bool = False):
         _preflight_user_systemd()
     _require_service_installed("restart", system=system)
     refresh_systemd_unit_if_needed(system=system)
-    _sync_hermes_home_from_systemd_unit(system=system)
+    _sync_jarvis_home_from_systemd_unit(system=system)
     from gateway.status import get_running_pid
 
     pid = get_running_pid() or _systemd_main_pid(system=system)
@@ -2675,13 +2675,13 @@ def systemd_status(deep: bool = False, system: bool = False, full: bool = False)
         print(f"  Run: {'sudo ' if system else ''}jarvis gateway install{scope_flag}")
         return
 
-    _sync_hermes_home_from_systemd_unit(system=system)
+    _sync_jarvis_home_from_systemd_unit(system=system)
 
     if has_conflicting_systemd_units():
         print_systemd_scope_conflict_warning()
         print()
 
-    if has_legacy_hermes_units():
+    if has_legacy_jarvis_units():
         print_legacy_unit_warning()
         print()
 
@@ -2783,11 +2783,11 @@ def _launchd_domain() -> str:
 def generate_launchd_plist() -> str:
     python_path = get_python_path()
     working_dir = str(PROJECT_ROOT)
-    hermes_home = str(get_jarvis_home().resolve())
+    jarvis_home = str(get_jarvis_home().resolve())
     log_dir = get_jarvis_home() / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     label = get_launchd_label()
-    profile_arg = _profile_arg(hermes_home)
+    profile_arg = _profile_arg(jarvis_home)
     # Build a sane PATH for the launchd plist.  launchd provides only a
     # minimal default (/usr/bin:/bin:/usr/sbin:/sbin) which misses Homebrew,
     # nvm, cargo, etc.  We prepend venv/bin and node_modules/.bin (matching
@@ -2845,7 +2845,7 @@ def generate_launchd_plist() -> str:
         <key>VIRTUAL_ENV</key>
         <string>{venv_dir}</string>
         <key>JARVIS_HOME</key>
-        <string>{hermes_home}</string>
+        <string>{jarvis_home}</string>
     </dict>
     
     <key>RunAtLoad</key>
@@ -4808,7 +4808,7 @@ def gateway_setup():
         print_systemd_scope_conflict_warning()
         print()
 
-    if supports_systemd_services() and has_legacy_hermes_units():
+    if supports_systemd_services() and has_legacy_jarvis_units():
         print_legacy_unit_warning()
         print()
 
@@ -5446,4 +5446,4 @@ def _gateway_command_inner(args):
         if not supports_systemd_services() and not is_macos():
             print("Legacy unit migration only applies to systemd-based Linux hosts.")
             return
-        remove_legacy_hermes_units(interactive=not yes, dry_run=dry_run)
+        remove_legacy_jarvis_units(interactive=not yes, dry_run=dry_run)

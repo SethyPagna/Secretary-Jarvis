@@ -48,7 +48,7 @@ def _get_registered() -> Dict[str, str]:
 _config_files: List[Dict[str, str]] | None = None
 
 
-def _resolve_hermes_home() -> Path:
+def _resolve_jarvis_home() -> Path:
     from jarvis_constants import get_jarvis_home
     return get_jarvis_home()
 
@@ -67,7 +67,7 @@ def register_credential_file(
     skill cannot declare ``required_credential_files: ['../../.ssh/id_rsa']``
     and exfiltrate sensitive host files into a container sandbox.
     """
-    hermes_home = _resolve_hermes_home()
+    jarvis_home = _resolve_jarvis_home()
 
     # Reject absolute paths — they bypass the JARVIS_HOME sandbox entirely.
     if os.path.isabs(relative_path):
@@ -77,13 +77,13 @@ def register_credential_file(
         )
         return False
 
-    host_path = hermes_home / relative_path
+    host_path = jarvis_home / relative_path
 
     # Resolve symlinks and normalise ``..`` before the containment check so
     # that traversal like ``../. ssh/id_rsa`` cannot escape JARVIS_HOME.
     from tools.path_security import validate_within_dir
 
-    containment_error = validate_within_dir(host_path, hermes_home)
+    containment_error = validate_within_dir(host_path, jarvis_home)
     if containment_error:
         logger.warning(
             "credential_files: rejected path traversal %r (%s)",
@@ -137,7 +137,7 @@ def _load_config_files() -> List[Dict[str, str]]:
     result: List[Dict[str, str]] = []
     try:
         from jarvis_cli.config import read_raw_config
-        hermes_home = _resolve_hermes_home()
+        jarvis_home = _resolve_jarvis_home()
         cfg = read_raw_config()
         cred_files = cfg_get(cfg, "terminal", "credential_files")
         if isinstance(cred_files, list):
@@ -151,8 +151,8 @@ def _load_config_files() -> List[Dict[str, str]]:
                             "credential_files: rejected absolute config path %r", rel,
                         )
                         continue
-                    host_path = hermes_home / rel
-                    containment_error = validate_within_dir(host_path, hermes_home)
+                    host_path = jarvis_home / rel
+                    containment_error = validate_within_dir(host_path, jarvis_home)
                     if containment_error:
                         logger.warning(
                             "credential_files: rejected config path traversal %r (%s)",
@@ -219,8 +219,8 @@ def get_skills_directory_mount(
     at ``<container_base>/external_skills/<index>``.
     """
     mounts = []
-    hermes_home = _resolve_hermes_home()
-    skills_dir = hermes_home / "skills"
+    jarvis_home = _resolve_jarvis_home()
+    skills_dir = jarvis_home / "skills"
     if skills_dir.is_dir():
         host_path = _safe_skills_path(skills_dir)
         mounts.append({
@@ -302,8 +302,8 @@ def iter_skills_files(
     """
     result: List[Dict[str, str]] = []
 
-    hermes_home = _resolve_hermes_home()
-    skills_dir = hermes_home / "skills"
+    jarvis_home = _resolve_jarvis_home()
+    skills_dir = jarvis_home / "skills"
     if skills_dir.is_dir():
         container_root = f"{container_base.rstrip('/')}/skills"
         for item in skills_dir.rglob("*"):

@@ -8,13 +8,13 @@ token. See :class:`UpstreamAdapter` for the contract.
 from typing import Dict, Type
 
 from jarvis_cli.proxy.adapters.base import UpstreamAdapter
-from jarvis_cli.proxy.adapters.nous_portal import NousPortalAdapter
+from jarvis_cli.proxy.adapters.jarvis_managed_portal import JarvisManagedPortalAdapter
 from jarvis_cli.proxy.adapters.xai import XAIGrokAdapter
 
 # Registry of available adapter classes keyed by provider name as used on
 # the ``jarvis proxy start --provider <name>`` CLI flag.
 ADAPTERS: Dict[str, Type[UpstreamAdapter]] = {
-    "nous": NousPortalAdapter,
+    "jarvis_managed": JarvisManagedPortalAdapter,
     "xai": XAIGrokAdapter,
 }
 

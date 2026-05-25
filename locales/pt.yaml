@@ -292,7 +292,7 @@ gateway:
   update:
     platform_not_messaging:  "✗ /update só está disponível em plataformas de mensagens. Executa `jarvis update` a partir do terminal."
     not_git_repo:            "✗ Não é um repositório git — não é possível atualizar."
-    hermes_cmd_not_found:    "✗ Não foi possível localizar o comando `jarvis`. O Jarvis está em execução, mas o comando de atualização não conseguiu encontrar o executável no PATH nem através do interpretador Python atual. Tenta executar `jarvis update` manualmente no teu terminal."
+    jarvis_cmd_not_found:    "✗ Não foi possível localizar o comando `jarvis`. O Jarvis está em execução, mas o comando de atualização não conseguiu encontrar o executável no PATH nem através do interpretador Python atual. Tenta executar `jarvis update` manualmente no teu terminal."
     start_failed:            "✗ Falha ao iniciar a atualização: {error}"
     starting:                "⚕ A iniciar a atualização do Jarvis… Vou transmitir o progresso aqui."
 

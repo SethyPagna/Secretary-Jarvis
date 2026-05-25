@@ -34,7 +34,7 @@ class TestWriteDenyExactPaths:
         path = os.path.join(str(Path.home()), ".netrc")
         assert _is_write_denied(path) is True
 
-    def test_hermes_env(self):
+    def test_jarvis_env(self):
         # ``.env`` under the active JARVIS_HOME (profile-aware, not just
         # ``~/.jarvis``) must be write-denied. The hermetic test conftest
         # points JARVIS_HOME at a tempdir — resolve via get_jarvis_home()
@@ -43,7 +43,7 @@ class TestWriteDenyExactPaths:
         path = str(get_jarvis_home() / ".env")
         assert _is_write_denied(path) is True
 
-    def test_hermes_root_env_when_running_under_profile(self, tmp_path, monkeypatch):
+    def test_jarvis_root_env_when_running_under_profile(self, tmp_path, monkeypatch):
         """Top-level ``<root>/.env`` stays write-denied even when running under
         a profile (#15981).
 
@@ -53,7 +53,7 @@ class TestWriteDenyExactPaths:
         could be silently overwritten by ``write_file`` while a profile was
         active.
         """
-        root = tmp_path / "hermes_root"
+        root = tmp_path / "jarvis_root"
         profile_home = root / "profiles" / "coder"
         profile_home.mkdir(parents=True)
         global_env = root / ".env"
@@ -124,6 +124,6 @@ class TestWriteAllowed:
     def test_project_file(self):
         assert _is_write_denied("/home/user/project/main.py") is False
 
-    def test_hermes_config_not_env(self):
+    def test_jarvis_config_not_env(self):
         path = os.path.join(str(Path.home()), ".jarvis", "config.yaml")
         assert _is_write_denied(path) is False

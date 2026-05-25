@@ -53,7 +53,7 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 ```text
 jarvis-agent/
 ├── run_agent.py              # AIAgent — core conversation loop (large file)
-├── cli.py                    # HermesCLI — interactive terminal UI (large file)
+├── cli.py                    # JarvisCLI — interactive terminal UI (large file)
 ├── model_tools.py            # Tool discovery, schema collection, dispatch
 ├── toolsets.py               # Tool groupings and platform presets
 ├── jarvis_state.py           # SQLite session/state database with FTS5
@@ -138,7 +138,7 @@ jarvis-agent/
 ### CLI Session
 
 ```text
-User input → HermesCLI.process_input()
+User input → JarvisCLI.process_input()
   → AIAgent.run_conversation()
     → prompt_builder.build_system_prompt()
     → runtime_provider.resolve_runtime_provider()

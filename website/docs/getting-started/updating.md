@@ -140,7 +140,7 @@ You no longer need to wrap `jarvis update` in `screen` or `tmux` to survive a te
 jarvis version
 ```
 
-Compare against the latest release at the [GitHub releases page](https://github.com/NousResearch/jarvis-agent/releases).
+Compare against the latest release at the [GitHub releases page](https://github.com/JARVISProject/jarvis-agent/releases).
 
 ### Updating from Messaging Platforms
 

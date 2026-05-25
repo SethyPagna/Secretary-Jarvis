@@ -1,9 +1,9 @@
-"""Centralized Nous Portal request tags.
+"""Centralized JARVIS Managed request tags.
 
-Every Jarvis request that hits the Nous Portal — main agent loop, auxiliary
+Every Jarvis request that hits the JARVIS Managed — main agent loop, auxiliary
 client (compression / titles / vision / web_extract / session_search / etc.),
 and any future code path — must carry the same product-attribution tags so
-Nous can attribute usage to JARVIS and bucket it by client release.
+JARVIS Managed can attribute usage to JARVIS and bucket it by client release.
 
 Tag shape (sent in OpenAI-compatible ``extra_body['tags']``):
 
@@ -34,7 +34,7 @@ from __future__ import annotations
 from typing import List
 
 
-def _hermes_version() -> str:
+def _jarvis_version() -> str:
     """Return the current Jarvis release version, e.g. ``"0.13.0"``.
 
     Falls back to ``"unknown"`` if ``jarvis_cli`` cannot be imported (should
@@ -47,18 +47,18 @@ def _hermes_version() -> str:
         return "unknown"
 
 
-def hermes_client_tag() -> str:
-    """Return the ``client=...`` tag for Nous Portal requests.
+def jarvis_client_tag() -> str:
+    """Return the ``client=...`` tag for JARVIS Managed requests.
 
     Format: ``client=jarvis-client-v<MAJOR>.<MINOR>.<PATCH>``.
     """
-    return f"client=jarvis-client-v{_hermes_version()}"
+    return f"client=jarvis-client-v{_jarvis_version()}"
 
 
-def nous_portal_tags() -> List[str]:
-    """Return the canonical list of Nous Portal product tags.
+def jarvis_managed_portal_tags() -> List[str]:
+    """Return the canonical list of JARVIS Managed product tags.
 
     Always returns a fresh list so callers can mutate it freely
-    (e.g. ``merged_extra.setdefault("tags", []).extend(nous_portal_tags())``).
+    (e.g. ``merged_extra.setdefault("tags", []).extend(jarvis_managed_portal_tags())``).
     """
-    return ["product=jarvis-agent", hermes_client_tag()]
+    return ["product=jarvis-agent", jarvis_client_tag()]

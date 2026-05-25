@@ -32,9 +32,9 @@ def test_agent_json_matches_official_registry_required_fields():
     assert re.fullmatch(r"[a-z][a-z0-9-]*", data["id"])
     assert data["name"] == "JARVIS"
     assert data["description"]
-    assert data["repository"] == "https://github.com/NousResearch/jarvis-agent"
-    assert data["website"].startswith("https://jarvis-agent.nousresearch.com/")
-    assert data["authors"] == ["Nous Research"]
+    assert data["repository"] == "https://github.com/JARVISProject/jarvis-agent"
+    assert data["website"].startswith("https://jarvis-agent.jarvis.local/")
+    assert data["authors"] == ["JARVIS Project"]
     assert data["license"] == "MIT"
     assert set(data["distribution"]) <= ALLOWED_DISTRIBUTIONS
 

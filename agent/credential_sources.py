@@ -4,8 +4,8 @@ Jarvis seeds its credential pool from many places:
 
     env:<VAR>     — os.environ / ~/.jarvis/.env
     claude_code   — ~/.claude/.credentials.json
-    hermes_pkce   — ~/.jarvis/.anthropic_oauth.json
-    device_code   — auth.json providers.<provider> (nous, openai-codex, ...)
+    jarvis_pkce   — ~/.jarvis/.anthropic_oauth.json
+    device_code   — auth.json providers.<provider> (jarvis_managed, openai-codex, ...)
     qwen-cli      — ~/.qwen/oauth_creds.json
     gh_cli        — gh auth token
     config:<name> — custom_providers config entry
@@ -21,7 +21,7 @@ unify here is **removal**:
 Before this module, every source had an ad-hoc removal branch in
 ``auth_remove_command``, and several sources had no branch at all — so
 ``auth remove`` silently reverted on the next ``load_pool()`` call for
-qwen-cli, nous device_code (partial), hermes_pkce, copilot gh_cli, and
+qwen-cli, jarvis_managed device_code (partial), jarvis_pkce, copilot gh_cli, and
 custom-config sources.
 
 Now every source registers a ``RemovalStep`` that does exactly three things
@@ -80,7 +80,7 @@ class RemovalStep:
     """How to remove one specific credential source cleanly.
 
     Attributes:
-        provider: Provider pool key (``"xai"``, ``"anthropic"``, ``"nous"``, ...).
+        provider: Provider pool key (``"xai"``, ``"anthropic"``, ``"jarvis_managed"``, ...).
             Special value ``"*"`` means "matches any provider" — used for
             sources like ``manual`` that aren't provider-specific.
         source_id: Source identifier as it appears in
@@ -204,7 +204,7 @@ def _remove_claude_code(provider: str, removed) -> RemovalResult:
     ])
 
 
-def _remove_hermes_pkce(provider: str, removed) -> RemovalResult:
+def _remove_jarvis_pkce(provider: str, removed) -> RemovalResult:
     """~/.jarvis/.anthropic_oauth.json is ours — delete it outright."""
     from jarvis_constants import get_jarvis_home
 
@@ -237,13 +237,13 @@ def _clear_auth_store_provider(provider: str) -> bool:
     return False
 
 
-def _remove_nous_device_code(provider: str, removed) -> RemovalResult:
-    """Nous OAuth lives in auth.json providers.nous — clear it and suppress.
+def _remove_jarvis_managed_device_code(provider: str, removed) -> RemovalResult:
+    """JARVIS Managed OAuth lives in auth.json providers.jarvis_managed — clear it and suppress.
 
     We suppress in addition to clearing because nothing else stops the
-    user's next `jarvis login` run from writing providers.nous again
+    user's next `jarvis login` run from writing providers.jarvis_managed again
     before they decide to.  Suppression forces them to go through
-    `jarvis auth add nous` to re-engage, which is the documented re-add
+    `jarvis auth add jarvis_managed` to re-engage, which is the documented re-add
     path and clears the suppression atomically.
     """
     result = RemovalResult()
@@ -255,7 +255,7 @@ def _remove_nous_device_code(provider: str, removed) -> RemovalResult:
 def _remove_minimax_oauth(provider: str, removed) -> RemovalResult:
     """MiniMax OAuth lives in auth.json providers.minimax-oauth — clear it.
 
-    Same pattern as Nous: single-source OAuth state with refresh tokens.
+    Same pattern as JARVIS Managed: single-source OAuth state with refresh tokens.
     Suppression of the `oauth` source ensures the pool reseed path
     (_seed_from_singletons) doesn't instantly undo the removal.
     """
@@ -407,14 +407,14 @@ def _register_all_sources() -> None:
         description="~/.claude/.credentials.json",
     ))
     register(RemovalStep(
-        provider="anthropic", source_id="hermes_pkce",
-        remove_fn=_remove_hermes_pkce,
+        provider="anthropic", source_id="jarvis_pkce",
+        remove_fn=_remove_jarvis_pkce,
         description="~/.jarvis/.anthropic_oauth.json",
     ))
     register(RemovalStep(
-        provider="nous", source_id="device_code",
-        remove_fn=_remove_nous_device_code,
-        description="auth.json providers.nous",
+        provider="jarvis_managed", source_id="device_code",
+        remove_fn=_remove_jarvis_managed_device_code,
+        description="auth.json providers.jarvis_managed",
     ))
     register(RemovalStep(
         provider="openai-codex", source_id="device_code",

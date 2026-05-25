@@ -86,10 +86,10 @@ def _find_git_root(start: Path) -> Optional[Path]:
     return None
 
 
-_HERMES_MD_NAMES = (".jarvis.md", "JARVIS.md")
+_JARVIS_MD_NAMES = (".jarvis.md", "JARVIS.md")
 
 
-def _find_hermes_md(cwd: Path) -> Optional[Path]:
+def _find_jarvis_md(cwd: Path) -> Optional[Path]:
     """Discover the nearest ``.jarvis.md`` or ``JARVIS.md``.
 
     Search order: *cwd* first, then each parent directory up to (and
@@ -100,7 +100,7 @@ def _find_hermes_md(cwd: Path) -> Optional[Path]:
     current = cwd.resolve()
 
     for directory in [current, *current.parents]:
-        for name in _HERMES_MD_NAMES:
+        for name in _JARVIS_MD_NAMES:
             candidate = directory / name
             if candidate.is_file():
                 return candidate
@@ -132,7 +132,7 @@ def _strip_yaml_frontmatter(content: str) -> str:
 # =========================================================================
 
 DEFAULT_AGENT_IDENTITY = (
-    "You are JARVIS, an intelligent AI assistant created by Nous Research. "
+    "You are JARVIS, an intelligent AI assistant created by JARVIS Project. "
     "You are helpful, knowledgeable, and direct. You assist users with a wide "
     "range of tasks including answering questions, writing and editing code, "
     "analyzing information, creative work, and executing actions via your tools. "
@@ -144,7 +144,7 @@ DEFAULT_AGENT_IDENTITY = (
 JARVIS_AGENT_HELP_GUIDANCE = (
     "If the user asks about configuring, setting up, or using JARVIS "
     "itself, load the `jarvis-agent` skill with skill_view(name='jarvis-agent') "
-    "before answering. Docs: https://jarvis-agent.nousresearch.com/docs"
+    "before answering. Docs: https://jarvis-agent.jarvis.local/docs"
 )
 
 MEMORY_GUIDANCE = (
@@ -1228,16 +1228,16 @@ def build_skills_system_prompt(
     return result
 
 
-def build_nous_subscription_prompt(valid_tool_names: "set[str] | None" = None) -> str:
-    """Build a compact Nous subscription capability block for the system prompt."""
+def build_jarvis_managed_subscription_prompt(valid_tool_names: "set[str] | None" = None) -> str:
+    """Build a compact JARVIS Managed subscription capability block for the system prompt."""
     try:
-        from jarvis_cli.nous_subscription import get_nous_subscription_features
-        from tools.tool_backend_helpers import managed_nous_tools_enabled
+        from jarvis_cli.jarvis_managed_subscription import get_jarvis_managed_subscription_features
+        from tools.tool_backend_helpers import managed_jarvis_managed_tools_enabled
     except Exception as exc:
-        logger.debug("Failed to import Nous subscription helper: %s", exc)
+        logger.debug("Failed to import JARVIS Managed subscription helper: %s", exc)
         return ""
 
-    if not managed_nous_tools_enabled():
+    if not managed_jarvis_managed_tools_enabled():
         return ""
 
     valid_names = set(valid_tool_names or set())
@@ -1263,30 +1263,30 @@ def build_nous_subscription_prompt(valid_tool_names: "set[str] | None" = None) -
     if valid_names and not (valid_names & relevant_tool_names):
         return ""
 
-    features = get_nous_subscription_features()
+    features = get_jarvis_managed_subscription_features()
 
     def _status_line(feature) -> str:
-        if feature.managed_by_nous:
-            return f"- {feature.label}: active via Nous subscription"
+        if feature.managed_by_jarvis_managed:
+            return f"- {feature.label}: active via JARVIS Managed subscription"
         if feature.active:
             current = feature.current_provider or "configured provider"
             return f"- {feature.label}: currently using {current}"
-        if feature.included_by_default and features.nous_auth_present:
-            return f"- {feature.label}: included with Nous subscription, not currently selected"
-        if feature.key == "modal" and features.nous_auth_present:
-            return f"- {feature.label}: optional via Nous subscription"
+        if feature.included_by_default and features.jarvis_managed_auth_present:
+            return f"- {feature.label}: included with JARVIS Managed subscription, not currently selected"
+        if feature.key == "modal" and features.jarvis_managed_auth_present:
+            return f"- {feature.label}: optional via JARVIS Managed subscription"
         return f"- {feature.label}: not currently available"
 
     lines = [
-        "# Nous Subscription",
-        "Nous subscription includes managed web tools (Firecrawl), image generation (FAL), OpenAI TTS, and browser automation (Browser Use) by default. Modal execution is optional.",
+        "# JARVIS Managed",
+        "JARVIS Managed subscription includes managed web tools (Firecrawl), image generation (FAL), OpenAI TTS, and browser automation (Browser Use) by default. Modal execution is optional.",
         "Current capability status:",
     ]
     lines.extend(_status_line(feature) for feature in features.items())
     lines.extend(
         [
-            "When a Nous-managed feature is active, do not ask the user for Firecrawl, FAL, OpenAI TTS, or Browser-Use API keys.",
-            "If the user is not subscribed and asks for a capability that Nous subscription would unlock or simplify, suggest Nous subscription as one option alongside direct setup or local alternatives.",
+            "When a JARVIS Managed-managed feature is active, do not ask the user for Firecrawl, FAL, OpenAI TTS, or Browser-Use API keys.",
+            "If the user is not subscribed and asks for a capability that JARVIS Managed subscription would unlock or simplify, suggest JARVIS Managed subscription as one option alongside direct setup or local alternatives.",
             "Do not mention subscription unless the user asks about it or it directly solves the current missing capability.",
             "Useful commands: jarvis setup, jarvis setup tools, jarvis setup terminal, jarvis status.",
         ]
@@ -1318,8 +1318,8 @@ def load_soul_md() -> Optional[str]:
     ``skip_soul=True`` so SOUL.md isn't injected twice.
     """
     try:
-        from jarvis_cli.config import ensure_hermes_home
-        ensure_hermes_home()
+        from jarvis_cli.config import ensure_jarvis_home
+        ensure_jarvis_home()
     except Exception as e:
         logger.debug("Could not ensure JARVIS_HOME before loading SOUL.md: %s", e)
 
@@ -1338,26 +1338,26 @@ def load_soul_md() -> Optional[str]:
         return None
 
 
-def _load_hermes_md(cwd_path: Path) -> str:
+def _load_jarvis_md(cwd_path: Path) -> str:
     """.jarvis.md / JARVIS.md — walk to git root."""
-    hermes_md_path = _find_hermes_md(cwd_path)
-    if not hermes_md_path:
+    jarvis_md_path = _find_jarvis_md(cwd_path)
+    if not jarvis_md_path:
         return ""
     try:
-        content = hermes_md_path.read_text(encoding="utf-8").strip()
+        content = jarvis_md_path.read_text(encoding="utf-8").strip()
         if not content:
             return ""
         content = _strip_yaml_frontmatter(content)
-        rel = hermes_md_path.name
+        rel = jarvis_md_path.name
         try:
-            rel = str(hermes_md_path.relative_to(cwd_path))
+            rel = str(jarvis_md_path.relative_to(cwd_path))
         except ValueError:
             pass
         content = _scan_context_content(content, rel)
         result = f"## {rel}\n\n{content}"
         return _truncate_content(result, ".jarvis.md")
     except Exception as e:
-        logger.debug("Could not read %s: %s", hermes_md_path, e)
+        logger.debug("Could not read %s: %s", jarvis_md_path, e)
         return ""
 
 
@@ -1446,7 +1446,7 @@ def build_context_files_prompt(cwd: Optional[str] = None, skip_soul: bool = Fals
 
     # Priority-based project context: first match wins
     project_context = (
-        _load_hermes_md(cwd_path)
+        _load_jarvis_md(cwd_path)
         or _load_agents_md(cwd_path)
         or _load_claude_md(cwd_path)
         or _load_cursorrules(cwd_path)

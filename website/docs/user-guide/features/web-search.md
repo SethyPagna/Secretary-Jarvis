@@ -31,8 +31,8 @@ Brave Search, DDGS, and xAI are **search-only** — pair any of them with Firecr
 
 **Per-capability split:** you can use different providers for search and extract independently — for example SearXNG (free) for search and Firecrawl for extract. See [Per-capability configuration](#per-capability-configuration) below.
 
-:::tip Nous Subscribers
-If you have a paid [Nous Portal](https://portal.nousresearch.com) subscription, web search and extract are available through the **[Tool Gateway](tool-gateway.md)** via managed Firecrawl — no API key needed. Run `jarvis tools` to enable it.
+:::tip JARVIS Managed Users
+If you have a paid [JARVIS Managed](https://portal.jarvis.local) subscription, web search and extract are available through the **[Tool Gateway](tool-gateway.md)** via managed Firecrawl — no API key needed. Run `jarvis tools` to enable it.
 :::
 
 ---

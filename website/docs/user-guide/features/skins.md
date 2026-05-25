@@ -216,7 +216,7 @@ tool_prefix: "▏"
 
 [Jarvis Mod](https://github.com/cocktailpeanut/jarvis-mod) is a community-built web UI for creating and managing skins visually. Instead of writing YAML by hand, you get a point-and-click editor with live preview.
 
-![Jarvis Mod skin editor](https://raw.githubusercontent.com/cocktailpeanut/jarvis-mod/master/nous.png)
+![Jarvis Mod skin editor](https://raw.githubusercontent.com/cocktailpeanut/jarvis-mod/master/jarvis_managed.png)
 
 **What it does:**
 

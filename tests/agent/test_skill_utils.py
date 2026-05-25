@@ -9,7 +9,7 @@ from agent.skill_utils import (
 )
 
 
-def test_metadata_as_dict_with_hermes():
+def test_metadata_as_dict_with_jarvis():
     """Normal case: metadata is a dict containing jarvis keys."""
     frontmatter = {
         "metadata": {

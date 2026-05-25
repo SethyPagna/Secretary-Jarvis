@@ -72,7 +72,7 @@ from tools.environments.singularity import _get_scratch_dir
 from tools.tool_backend_helpers import (
     coerce_modal_mode,
     has_direct_modal_credentials,
-    managed_nous_tools_enabled,
+    managed_jarvis_managed_tools_enabled,
     resolve_modal_backend_state,
 )
 
@@ -976,7 +976,7 @@ def _resolve_container_task_id(task_id: Optional[str]) -> str:
     ``"default"`` here so subagents share the parent's long-lived container
     (one bash, one /workspace, one set of installed packages).
 
-    Exception: RL / benchmark environments (TerminalBench2, HermesSweEnv, ...)
+    Exception: RL / benchmark environments (TerminalBench2, JarvisSweEnv, ...)
     call ``register_task_env_overrides(task_id, {...})`` to request a
     per-task Docker/Modal image. When an override is registered for a
     task_id, we honour it by returning the task_id unchanged -- those
@@ -1186,7 +1186,7 @@ def _create_environment(env_type: str, image: str, cwd: str, timeout: int,
             if modal_state["managed_mode_blocked"]:
                 raise ValueError(
                     "Modal backend is configured for managed mode, but "
-                    "a paid Nous subscription is required for the Tool Gateway and no direct "
+                    "a paid JARVIS Managed subscription is required for the Tool Gateway and no direct "
                     "Modal credentials/config were found. Log in with `jarvis model` or "
                     "choose TERMINAL_MODAL_MODE=direct/auto."
                 )
@@ -1199,7 +1199,7 @@ def _create_environment(env_type: str, image: str, cwd: str, timeout: int,
                     "Modal backend is configured for direct mode, but no direct Modal credentials/config were found."
                 )
             message = "Modal backend selected but no direct Modal credentials/config was found."
-            if managed_nous_tools_enabled():
+            if managed_jarvis_managed_tools_enabled():
                 message = (
                     "Modal backend selected but no direct Modal credentials/config or managed tool gateway was found."
                 )
@@ -2193,7 +2193,7 @@ def check_terminal_requirements() -> bool:
                 if modal_state["managed_mode_blocked"]:
                     logger.error(
                         "Modal backend selected with TERMINAL_MODAL_MODE=managed, but "
-                        "a paid Nous subscription is required for the Tool Gateway and no direct "
+                        "a paid JARVIS Managed subscription is required for the Tool Gateway and no direct "
                         "Modal credentials/config were found. Log in with `jarvis model` "
                         "or choose TERMINAL_MODAL_MODE=direct/auto."
                     )
@@ -2206,7 +2206,7 @@ def check_terminal_requirements() -> bool:
                     )
                     return False
                 elif modal_state["mode"] == "direct":
-                    if managed_nous_tools_enabled():
+                    if managed_jarvis_managed_tools_enabled():
                         logger.error(
                             "Modal backend selected with TERMINAL_MODAL_MODE=direct, but no direct "
                             "Modal credentials/config were found. Configure Modal or choose "
@@ -2220,7 +2220,7 @@ def check_terminal_requirements() -> bool:
                         )
                     return False
                 else:
-                    if managed_nous_tools_enabled():
+                    if managed_jarvis_managed_tools_enabled():
                         logger.error(
                             "Modal backend selected but no direct Modal credentials/config or managed "
                             "tool gateway was found. Configure Modal, set up the managed gateway, "

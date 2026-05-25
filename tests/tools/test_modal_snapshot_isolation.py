@@ -29,7 +29,7 @@ def _reset_modules(prefixes: tuple[str, ...]):
 
 @pytest.fixture(autouse=True)
 def _restore_tool_modules():
-    original_hermes_home = os.environ.get("JARVIS_HOME")
+    original_jarvis_home = os.environ.get("JARVIS_HOME")
     original_modules = {
         name: module
         for name, module in sys.modules.items()
@@ -43,10 +43,10 @@ def _restore_tool_modules():
     try:
         yield
     finally:
-        if original_hermes_home is None:
+        if original_jarvis_home is None:
             os.environ.pop("JARVIS_HOME", None)
         else:
-            os.environ["JARVIS_HOME"] = original_hermes_home
+            os.environ["JARVIS_HOME"] = original_jarvis_home
         _reset_modules(("tools", "jarvis_cli", "modal"))
         sys.modules.update(original_modules)
 
@@ -62,10 +62,10 @@ def _install_modal_test_modules(
     jarvis_cli = types.ModuleType("jarvis_cli")
     jarvis_cli.__path__ = []  # type: ignore[attr-defined]
     sys.modules["jarvis_cli"] = jarvis_cli
-    hermes_home = tmp_path / "jarvis-home"
-    os.environ["JARVIS_HOME"] = str(hermes_home)
+    jarvis_home = tmp_path / "jarvis-home"
+    os.environ["JARVIS_HOME"] = str(jarvis_home)
     sys.modules["jarvis_cli.config"] = types.SimpleNamespace(
-        get_jarvis_home=lambda: hermes_home,
+        get_jarvis_home=lambda: jarvis_home,
     )
 
     tools_package = types.ModuleType("tools")
@@ -190,7 +190,7 @@ def _install_modal_test_modules(
     )
 
     return {
-        "snapshot_store": hermes_home / "modal_snapshots.json",
+        "snapshot_store": jarvis_home / "modal_snapshots.json",
         "create_calls": create_calls,
         "from_id_calls": from_id_calls,
         "registry_calls": registry_calls,

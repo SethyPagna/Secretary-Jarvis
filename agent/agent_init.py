@@ -516,7 +516,7 @@ def init_agent(
     # both live under ~/.jarvis/logs/.  Idempotent, so gateway mode
     # (which creates a new AIAgent per message) won't duplicate handlers.
     from jarvis_logging import setup_logging, setup_verbose_logging
-    setup_logging(hermes_home=_ra()._hermes_home)
+    setup_logging(jarvis_home=_ra()._jarvis_home)
 
     if agent.verbose_logging:
         setup_verbose_logging()
@@ -988,8 +988,8 @@ def init_agent(
         pass  # CLI/test mode — ContextVar not needed
 
     # Session logs go into ~/.jarvis/sessions/ alongside gateway sessions
-    hermes_home = get_jarvis_home()
-    agent.logs_dir = hermes_home / "sessions"
+    jarvis_home = get_jarvis_home()
+    agent.logs_dir = jarvis_home / "sessions"
     agent.logs_dir.mkdir(parents=True, exist_ok=True)
     # Per-session JSON snapshot writer (~/.jarvis/sessions/session_{sid}.json)
     # is opt-in via sessions.write_json_snapshots (default False).  state.db
@@ -1099,7 +1099,7 @@ def init_agent(
                     _init_kwargs = {
                         "session_id": agent.session_id,
                         "platform": platform or "cli",
-                        "hermes_home": str(get_jarvis_home()),
+                        "jarvis_home": str(get_jarvis_home()),
                         "agent_context": "primary",
                     }
                     # Thread session title for memory provider scoping
@@ -1149,7 +1149,7 @@ def init_agent(
     # same tools via ctx.register_tool(), which lands in agent.tools
     # through _ra().get_tool_definitions()).  Duplicate function names cause
     # 400 errors on providers that enforce unique names (e.g. Xiaomi
-    # MiMo via Nous Portal).
+    # MiMo via JARVIS Managed).
     #
     # Respect the platform's enabled_toolsets configuration (#5544):
     #   enabled_toolsets is None        → no filter, inject (backward compat)
@@ -1508,7 +1508,7 @@ def init_agent(
         try:
             agent.context_compressor.on_session_start(
                 agent.session_id,
-                hermes_home=str(get_jarvis_home()),
+                jarvis_home=str(get_jarvis_home()),
                 platform=agent.platform or "cli",
                 model=agent.model,
                 context_length=getattr(agent.context_compressor, "context_length", 0),

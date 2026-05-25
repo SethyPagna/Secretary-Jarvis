@@ -1,4 +1,4 @@
-"""Tests for HermesCLI initialization -- catches configuration bugs
+"""Tests for JarvisCLI initialization -- catches configuration bugs
 that only manifest at runtime (not in mocked unit tests)."""
 
 import os
@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 def _make_cli(env_overrides=None, config_overrides=None, **kwargs):
-    """Create a HermesCLI instance with minimal mocking."""
+    """Create a JarvisCLI instance with minimal mocking."""
     import importlib
 
     _clean_config = {
@@ -51,7 +51,7 @@ def _make_cli(env_overrides=None, config_overrides=None, **kwargs):
         _cli_mod = importlib.reload(_cli_mod)
         with patch.object(_cli_mod, "get_tool_definitions", return_value=[]), \
              patch.dict(_cli_mod.__dict__, {"CLI_CONFIG": _clean_config}):
-            return _cli_mod.HermesCLI(**kwargs)
+            return _cli_mod.JarvisCLI(**kwargs)
 
 
 class TestMaxTurnsResolution:
@@ -410,11 +410,11 @@ class TestRootLevelProviderOverride:
         """model.provider takes priority — root-level provider is only a fallback."""
         import yaml
 
-        hermes_home = tmp_path / ".jarvis"
-        hermes_home.mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / ".jarvis"
+        jarvis_home.mkdir()
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
 
-        config_path = hermes_home / "config.yaml"
+        config_path = jarvis_home / "config.yaml"
         config_path.write_text(yaml.safe_dump({
             "provider": "opencode-go",  # stale root-level key
             "model": {
@@ -424,7 +424,7 @@ class TestRootLevelProviderOverride:
         }))
 
         import cli
-        monkeypatch.setattr(cli, "_hermes_home", hermes_home)
+        monkeypatch.setattr(cli, "_jarvis_home", jarvis_home)
         cfg = cli.load_cli_config()
 
         assert cfg["model"]["provider"] == "openrouter"
@@ -433,11 +433,11 @@ class TestRootLevelProviderOverride:
         """Even when model.provider is the default 'auto', root-level provider is ignored."""
         import yaml
 
-        hermes_home = tmp_path / ".jarvis"
-        hermes_home.mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / ".jarvis"
+        jarvis_home.mkdir()
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
 
-        config_path = hermes_home / "config.yaml"
+        config_path = jarvis_home / "config.yaml"
         config_path.write_text(yaml.safe_dump({
             "provider": "opencode-go",  # stale root key
             "model": {
@@ -447,7 +447,7 @@ class TestRootLevelProviderOverride:
         }))
 
         import cli
-        monkeypatch.setattr(cli, "_hermes_home", hermes_home)
+        monkeypatch.setattr(cli, "_jarvis_home", jarvis_home)
         cfg = cli.load_cli_config()
 
         # Root-level "opencode-go" must NOT leak through
@@ -457,12 +457,12 @@ class TestRootLevelProviderOverride:
         """Classic CLI must expose terminal.vercel_runtime to terminal_tool.py."""
         import yaml
 
-        hermes_home = tmp_path / ".jarvis"
-        hermes_home.mkdir()
-        monkeypatch.setenv("JARVIS_HOME", str(hermes_home))
+        jarvis_home = tmp_path / ".jarvis"
+        jarvis_home.mkdir()
+        monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
         monkeypatch.delenv("TERMINAL_VERCEL_RUNTIME", raising=False)
 
-        config_path = hermes_home / "config.yaml"
+        config_path = jarvis_home / "config.yaml"
         config_path.write_text(yaml.safe_dump({
             "terminal": {
                 "backend": "vercel_sandbox",
@@ -471,7 +471,7 @@ class TestRootLevelProviderOverride:
         }))
 
         import cli
-        monkeypatch.setattr(cli, "_hermes_home", hermes_home)
+        monkeypatch.setattr(cli, "_jarvis_home", jarvis_home)
         cfg = cli.load_cli_config()
 
         assert cfg["terminal"]["vercel_runtime"] == "python3.13"

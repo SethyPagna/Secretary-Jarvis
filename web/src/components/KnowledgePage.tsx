@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useState } from "react";
 import { Copy, Info, MoreHorizontal, Search, X } from "lucide-react";
-import { Badge } from "@nous-research/ui/ui/components/badge";
-import { Button } from "@nous-research/ui/ui/components/button";
+import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
+import { Button } from "@jarvis_managed-research/ui/ui/components/button";
 import { Input } from "@/components/ui/input";
 import { Typography } from "@/components/NouiTypography";
 import { usePageHeader } from "@/contexts/usePageHeader";

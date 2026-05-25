@@ -179,7 +179,7 @@ def check_env_vars():
         from jarvis_cli.env_loader import load_jarvis_dotenv
 
         load_jarvis_dotenv(
-            hermes_home=ENV_FILE.parent,
+            jarvis_home=ENV_FILE.parent,
             project_env=PROJECT_ROOT / ".env",
         )
     except ImportError:

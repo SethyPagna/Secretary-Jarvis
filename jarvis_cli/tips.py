@@ -260,7 +260,7 @@ TIPS = [
     "Custom providers: save named endpoints in config.yaml under custom_providers.",
     "JARVIS_EPHEMERAL_SYSTEM_PROMPT injects a system prompt that's never persisted to history.",
     "credential_pool_strategies supports fill_first, round_robin, least_used, and random rotation.",
-    "jarvis login supports OAuth-based auth for Nous and OpenAI Codex providers.",
+    "jarvis login supports OAuth-based auth for JARVIS Managed and OpenAI Codex providers.",
     "The API server supports both Chat Completions and Responses API with server-side state.",
     "tool_preview_length: 0 in config shows full file paths in the spinner's activity feed.",
     "jarvis status --deep runs deeper diagnostic checks across all components.",
@@ -332,7 +332,7 @@ TIPS = [
     "JARVIS_DEV=1 bypasses container mode detection for local development.",
     "Each MCP server gets its own toolset (mcp-servername) that can be toggled independently via jarvis tools.",
     "MCP ${ENV_VAR} placeholders in config are resolved at server spawn — including vars from ~/.jarvis/.env.",
-    "Skills from trusted repos (NousResearch) get a 'trusted' security level; community skills get extra scanning.",
+    "Skills from trusted repos (JARVISProject) get a 'trusted' security level; community skills get extra scanning.",
     "The skills quarantine at ~/.jarvis/skills/.hub/quarantine/ holds skills pending security review.",
 
     # --- Advanced Slash Commands ---

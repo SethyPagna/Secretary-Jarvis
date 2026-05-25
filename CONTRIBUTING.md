@@ -45,7 +45,7 @@ Bundled skills (in `skills/`) ship with every Jarvis install. They should be **b
 
 If your skill is official and useful but not universally needed (e.g., a paid service integration, a heavyweight dependency), put it in **`optional-skills/`** — it ships with the repo but isn't activated by default. Users can discover it via `jarvis skills browse` (labeled "official") and install it with `jarvis skills install` (no third-party warning, builtin trust).
 
-If your skill is specialized, community-contributed, or niche, it's better suited for a **Skills Hub** — upload it to a skills registry and share it in the [Nous Research Discord](https://discord.gg/NousResearch). Users can install it with `jarvis skills install`.
+If your skill is specialized, community-contributed, or niche, it's better suited for a **Skills Hub** — upload it to a skills registry and share it in the [JARVIS Project Discord](https://discord.gg/JARVISProject). Users can install it with `jarvis skills install`.
 
 ---
 
@@ -55,7 +55,7 @@ If your skill is specialized, community-contributed, or niche, it's better suite
 
 Standalone memory plugins:
 
-- Implement the same `MemoryProvider` ABC (`agent/memory_provider.py`) — `sync_turn`, `prefetch`, `shutdown`, and optionally `post_setup(hermes_home, config)` for setup-wizard integration
+- Implement the same `MemoryProvider` ABC (`agent/memory_provider.py`) — `sync_turn`, `prefetch`, `shutdown`, and optionally `post_setup(jarvis_home, config)` for setup-wizard integration
 - Use the same discovery system — `discover_memory_providers()` picks them up from user/project plugin directories and pip entry points
 - Integrate with `jarvis memory setup` via `post_setup()` — no need to touch core code
 - Can register their own CLI subcommands via `register_cli(subparser)` in a `cli.py` file
@@ -81,7 +81,7 @@ This isn't a quality bar — it's a coupling-and-maintenance decision. Memory pr
 ### Clone and install
 
 ```bash
-git clone --recurse-submodules https://github.com/NousResearch/jarvis-agent.git
+git clone --recurse-submodules https://github.com/JARVISProject/jarvis-agent.git
 cd jarvis-agent
 
 # Create venv with Python 3.11
@@ -136,7 +136,7 @@ pytest tests/ -v
 ```
 jarvis-agent/
 ├── run_agent.py              # AIAgent class — core conversation loop, tool dispatch, session persistence
-├── cli.py                    # HermesCLI class — interactive TUI, prompt_toolkit integration
+├── cli.py                    # JarvisCLI class — interactive TUI, prompt_toolkit integration
 ├── model_tools.py            # Tool orchestration (thin layer over tools/registry.py)
 ├── toolsets.py               # Tool groupings and presets (jarvis-cli, jarvis-telegram, etc.)
 ├── jarvis_state.py           # SQLite session database with FTS5 full-text search, session titles
@@ -154,7 +154,7 @@ jarvis-agent/
 │   ├── main.py                   # Entry point, argument parsing, command dispatch
 │   ├── config.py                 # Config management, migration, env var definitions
 │   ├── setup.py                  # Interactive setup wizard
-│   ├── auth.py                   # Provider resolution, OAuth, Nous Portal
+│   ├── auth.py                   # Provider resolution, OAuth, JARVIS Managed
 │   ├── models.py                 # OpenRouter model selection lists
 │   ├── banner.py                 # Welcome banner, ASCII art
 │   ├── commands.py               # Central slash command registry (CommandDef), autocomplete, gateway helpers
@@ -194,7 +194,7 @@ jarvis-agent/
 ├── skills/                   # Bundled skills (copied to ~/.jarvis/skills/ on install)
 ├── optional-skills/          # Official optional skills (discoverable via hub, not activated by default)
 ├── tests/                    # Test suite
-├── website/                  # Documentation site (jarvis-agent.nousresearch.com)
+├── website/                  # Documentation site (jarvis-agent.jarvis.local)
 │
 ├── cli-config.yaml.example   # Example configuration (copied to ~/.jarvis/config.yaml)
 └── AGENTS.md                 # Development guide for AI coding assistants
@@ -206,7 +206,7 @@ jarvis-agent/
 |------|---------|
 | `~/.jarvis/config.yaml` | Settings (model, terminal, toolsets, compression, etc.) |
 | `~/.jarvis/.env` | API keys and secrets |
-| `~/.jarvis/auth.json` | OAuth credentials (Nous Portal) |
+| `~/.jarvis/auth.json` | OAuth credentials (JARVIS Managed) |
 | `~/.jarvis/skills/` | All active skills (bundled + hub-installed + agent-created) |
 | `~/.jarvis/memories/` | Persistent memory (MEMORY.md, USER.md) |
 | `~/.jarvis/state.db` | SQLite session database |
@@ -241,7 +241,7 @@ User message → AIAgent._run_agent_loop()
 - **Toolset grouping**: Tools are grouped into toolsets (`web`, `terminal`, `file`, `browser`, etc.) that can be enabled/disabled per platform.
 - **Session persistence**: All conversations are stored in SQLite (`jarvis_state.py`) with full-text search and unique session titles. Per-session JSON snapshots in `~/.jarvis/sessions/` were superseded by the SQLite store and are off by default; opt back in with `sessions.write_json_snapshots: true` if you have external tooling that consumes the JSON files directly.
 - **Ephemeral injection**: System prompts and prefill messages are injected at API call time, never persisted to the database or logs.
-- **Provider abstraction**: The agent works with any OpenAI-compatible API. Provider resolution happens at init time (Nous Portal OAuth, OpenRouter API key, or custom endpoint).
+- **Provider abstraction**: The agent works with any OpenAI-compatible API. Provider resolution happens at init time (JARVIS Managed OAuth, OpenRouter API key, or custom endpoint).
 - **Provider routing**: When using OpenRouter, `provider_routing` in config.yaml controls provider selection (sort by throughput/latency/price, allow/ignore specific providers, data retention policies). These are injected as `extra_body.provider` in API requests.
 
 ---
@@ -311,7 +311,7 @@ imported by `discover_builtin_tools()` in `tools/registry.py` when `model_tools`
 loads. There is **no** manual import list in `model_tools.py` to maintain.
 
 You must still add the tool name to the appropriate list in `toolsets.py`
-(for example `_HERMES_CORE_TOOLS` or a dedicated toolset); otherwise the tool
+(for example `_JARVIS_CORE_TOOLS` or a dedicated toolset); otherwise the tool
 registers but is never exposed to the agent. If you introduce a new toolset,
 add it in `toolsets.py` and wire it into the relevant platform presets.
 
@@ -901,7 +901,7 @@ test(tools): add unit tests for file_operations
 
 ## Reporting Issues
 
-- Use [GitHub Issues](https://github.com/NousResearch/jarvis-agent/issues)
+- Use [GitHub Issues](https://github.com/JARVISProject/jarvis-agent/issues)
 - Include: OS, Python version, Jarvis version (`jarvis version`), full error traceback
 - Include steps to reproduce
 - Check existing issues before creating duplicates
@@ -911,7 +911,7 @@ test(tools): add unit tests for file_operations
 
 ## Community
 
-- **Discord**: [discord.gg/NousResearch](https://discord.gg/NousResearch) — for questions, showcasing projects, and sharing skills
+- **Discord**: [discord.gg/JARVISProject](https://discord.gg/JARVISProject) — for questions, showcasing projects, and sharing skills
 - **GitHub Discussions**: For design proposals and architecture discussions
 - **Skills Hub**: Upload specialized skills to a registry and share them with the community
 

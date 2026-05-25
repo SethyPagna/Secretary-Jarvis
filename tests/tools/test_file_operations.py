@@ -70,11 +70,11 @@ class TestIsWriteDenied:
             "mcp-tokens/subdir/token2.json",
         ],
     )
-    def test_hermes_control_files_and_mcp_tokens_denied(self, path):
+    def test_jarvis_control_files_and_mcp_tokens_denied(self, path):
         """Jarvis control files and mcp-tokens entries must be write-denied."""
         from jarvis_constants import get_jarvis_home
-        hermes_home = get_jarvis_home()
-        full_path = str(hermes_home / path)
+        jarvis_home = get_jarvis_home()
+        full_path = str(jarvis_home / path)
         assert _is_write_denied(full_path) is True
 
     @pytest.mark.parametrize(
@@ -85,11 +85,11 @@ class TestIsWriteDenied:
             "mcp-tokens/../config.yaml",
         ],
     )
-    def test_hermes_control_files_traversal_denied(self, path):
+    def test_jarvis_control_files_traversal_denied(self, path):
         """Path traversal attempts to control files must be blocked by realpath."""
         from jarvis_constants import get_jarvis_home
-        hermes_home = get_jarvis_home()
-        full_path = str(hermes_home / path)
+        jarvis_home = get_jarvis_home()
+        full_path = str(jarvis_home / path)
         assert _is_write_denied(full_path) is True
 
     @pytest.mark.parametrize(
@@ -354,10 +354,10 @@ class TestShellFileOpsHelpers:
 
     def test_read_file_strips_leaked_terminal_fence_markers(self, mock_env):
         leaked = (
-            "'\x07__HERMES_FENCE_a9f7b3__\x1b]0;cat "
+            "'\x07__JARVIS_FENCE_a9f7b3__\x1b]0;cat "
             "'/tmp/test/a.py' 2> /dev/null\x07\n"
             "print('ok')\n"
-            "__HERMES_FENCE_a9f7b3__\x07'\n"
+            "__JARVIS_FENCE_a9f7b3__\x07'\n"
         )
 
         def side_effect(command, **kwargs):
@@ -383,9 +383,9 @@ class TestShellFileOpsHelpers:
 
     def test_read_file_raw_strips_leaked_terminal_fence_markers(self, mock_env):
         leaked = (
-            "__HERMES_FENCE_a9f7b3__\x07'\n"
+            "__JARVIS_FENCE_a9f7b3__\x07'\n"
             "alpha\n"
-            "\x1b]0;cat '/tmp/test/a.txt'\x07__HERMES_FENCE_a9f7b3__\n"
+            "\x1b]0;cat '/tmp/test/a.txt'\x07__JARVIS_FENCE_a9f7b3__\n"
         )
 
         def side_effect(command, **kwargs):

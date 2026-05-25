@@ -54,7 +54,7 @@ def get_jarvis_home() -> Path:
     callers that import this at load time.  Subprocess spawners are
     expected to propagate ``JARVIS_HOME`` explicitly (see the systemd
     template in ``jarvis_cli/gateway.py`` and the kanban dispatcher in
-    ``jarvis_cli/kanban_db.py``).  See https://github.com/NousResearch/jarvis-agent/issues/18594.
+    ``jarvis_cli/kanban_db.py``).  See https://github.com/JARVISProject/jarvis-agent/issues/18594.
     """
     override = get_jarvis_home_override()
     if override:
@@ -243,7 +243,7 @@ def secure_parent_dir(path: Path) -> None:
     prevent catastrophic host bricking when ``JARVIS_HOME`` or other path
     env vars resolve to an unexpected location.
 
-    See https://github.com/NousResearch/jarvis-agent/issues/25821.
+    See https://github.com/JARVISProject/jarvis-agent/issues/25821.
     """
     parent = path.parent.resolve()
     # Refuse root and its direct children (/usr, /home, /var, /tmp, …).
@@ -272,10 +272,10 @@ def get_subprocess_home() -> str | None:
     Activation is directory-based: if the ``home/`` subdirectory doesn't
     exist, returns ``None`` and behavior is unchanged.
     """
-    hermes_home = get_jarvis_home_override() or os.getenv("JARVIS_HOME")
-    if not hermes_home:
+    jarvis_home = get_jarvis_home_override() or os.getenv("JARVIS_HOME")
+    if not jarvis_home:
         return None
-    profile_home = os.path.join(hermes_home, "home")
+    profile_home = os.path.join(jarvis_home, "home")
     if os.path.isdir(profile_home):
         return profile_home
     return None
@@ -412,7 +412,7 @@ def apply_ipv4_preference(force: bool = False) -> None:
     import socket
 
     # Guard against double-patching
-    if getattr(socket.getaddrinfo, "_hermes_ipv4_patched", False):
+    if getattr(socket.getaddrinfo, "_jarvis_ipv4_patched", False):
         return
 
     _original_getaddrinfo = socket.getaddrinfo
@@ -428,7 +428,7 @@ def apply_ipv4_preference(force: bool = False) -> None:
                 return _original_getaddrinfo(host, port, family, type, proto, flags)
         return _original_getaddrinfo(host, port, family, type, proto, flags)
 
-    _ipv4_getaddrinfo._hermes_ipv4_patched = True  # type: ignore[attr-defined]
+    _ipv4_getaddrinfo._jarvis_ipv4_patched = True  # type: ignore[attr-defined]
     socket.getaddrinfo = _ipv4_getaddrinfo  # type: ignore[assignment]
 
 

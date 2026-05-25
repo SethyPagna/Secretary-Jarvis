@@ -15,19 +15,19 @@ Jarvis isn't just a CLI tool. You can import `AIAgent` directly and use it progr
 Install Jarvis directly from the repository:
 
 ```bash
-pip install git+https://github.com/NousResearch/jarvis-agent.git
+pip install git+https://github.com/JARVISProject/jarvis-agent.git
 ```
 
 Or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv pip install git+https://github.com/NousResearch/jarvis-agent.git
+uv pip install git+https://github.com/JARVISProject/jarvis-agent.git
 ```
 
 You can also pin it in your `requirements.txt`:
 
 ```text
-jarvis-agent @ git+https://github.com/NousResearch/jarvis-agent.git
+jarvis-agent @ git+https://github.com/JARVISProject/jarvis-agent.git
 ```
 
 :::tip

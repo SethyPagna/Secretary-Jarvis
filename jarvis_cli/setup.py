@@ -22,8 +22,8 @@ import copy
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from jarvis_cli.nous_subscription import get_nous_subscription_features
-from tools.tool_backend_helpers import managed_nous_tools_enabled
+from jarvis_cli.jarvis_managed_subscription import get_jarvis_managed_subscription_features
+from tools.tool_backend_helpers import managed_jarvis_managed_tools_enabled
 from utils import base_url_hostname
 from jarvis_constants import get_optional_skills_dir
 
@@ -142,7 +142,7 @@ from jarvis_cli.config import (
     save_env_value,
     remove_env_value,
     get_env_value,
-    ensure_hermes_home,
+    ensure_jarvis_home,
 )
 # display_jarvis_home imported lazily at call sites (stale-module safety during jarvis update)
 
@@ -356,14 +356,14 @@ def _prompt_api_key(var: dict):
         print_warning("  Skipped (configure later with 'jarvis setup')")
 
 
-def _print_setup_summary(config: dict, hermes_home):
+def _print_setup_summary(config: dict, jarvis_home):
     """Print the setup completion summary."""
     # Tool availability summary
     print()
     print_header("Tool Availability Summary")
 
     tool_status = []
-    subscription_features = get_nous_subscription_features(config)
+    subscription_features = get_jarvis_managed_subscription_features(config)
 
     # Vision — use the same runtime resolver as the actual vision tools
     try:
@@ -385,7 +385,7 @@ def _print_setup_summary(config: dict, hermes_home):
         tool_status.append(("Mixture of Agents", False, "OPENROUTER_API_KEY"))
 
     # Web tools (Exa, Parallel, Firecrawl, or Tavily)
-    if subscription_features.web.managed_by_nous:
+    if subscription_features.web.managed_by_jarvis_managed:
         tool_status.append(("Web Search & Extract (JARVIS Managed)", True, None))
     elif subscription_features.web.available:
         label = "Web Search & Extract"
@@ -397,7 +397,7 @@ def _print_setup_summary(config: dict, hermes_home):
 
     # Browser tools (local Chromium, Camofox, Browserbase, Browser Use, or Firecrawl)
     browser_provider = subscription_features.browser.current_provider
-    if subscription_features.browser.managed_by_nous:
+    if subscription_features.browser.managed_by_jarvis_managed:
         tool_status.append(("Browser Automation (JARVIS Managed Browser Use)", True, None))
     elif subscription_features.browser.available:
         label = "Browser Automation"
@@ -425,7 +425,7 @@ def _print_setup_summary(config: dict, hermes_home):
 
     # Image generation — FAL (direct or managed), or any plugin-registered
     # provider (OpenAI, etc.)
-    if subscription_features.image_gen.managed_by_nous:
+    if subscription_features.image_gen.managed_by_jarvis_managed:
         tool_status.append(("Image Generation (JARVIS Managed)", True, None))
     elif subscription_features.image_gen.available:
         tool_status.append(("Image Generation", True, None))
@@ -476,7 +476,7 @@ def _print_setup_summary(config: dict, hermes_home):
 
     # TTS — show configured provider
     tts_provider = cfg_get(config, "tts", "provider", default="edge")
-    if subscription_features.tts.managed_by_nous:
+    if subscription_features.tts.managed_by_jarvis_managed:
         tool_status.append(("Text-to-Speech (OpenAI via JARVIS Managed)", True, None))
     elif tts_provider == "elevenlabs" and get_env_value("ELEVENLABS_API_KEY"):
         tool_status.append(("Text-to-Speech (ElevenLabs)", True, None))
@@ -512,14 +512,14 @@ def _print_setup_summary(config: dict, hermes_home):
     else:
         tool_status.append(("Text-to-Speech (Edge TTS)", True, None))
 
-    if subscription_features.modal.managed_by_nous:
+    if subscription_features.modal.managed_by_jarvis_managed:
         tool_status.append(("Modal Execution (JARVIS Managed)", True, None))
     elif cfg_get(config, "terminal", "backend") == "modal":
         if subscription_features.modal.direct_override:
             tool_status.append(("Modal Execution (direct Modal)", True, None))
         else:
             tool_status.append(("Modal Execution", False, "run 'jarvis setup terminal'"))
-    elif managed_nous_tools_enabled() and subscription_features.nous_auth_present:
+    elif managed_jarvis_managed_tools_enabled() and subscription_features.jarvis_managed_auth_present:
         tool_status.append(("Modal Execution (optional via JARVIS Managed)", True, None))
 
     # Home Assistant
@@ -602,7 +602,7 @@ def _print_setup_summary(config: dict, hermes_home):
     print(f"   {color('Settings:', Colors.YELLOW)}  {get_config_path()}")
     print(f"   {color('API Keys:', Colors.YELLOW)}  {get_env_path()}")
     print(
-        f"   {color('Data:', Colors.YELLOW)}      {hermes_home}/cron/, sessions/, logs/"
+        f"   {color('Data:', Colors.YELLOW)}      {jarvis_home}/cron/, sessions/, logs/"
     )
     print()
 
@@ -927,7 +927,7 @@ def setup_model_provider(config: dict, *, quick: bool = False):
 
     if _vision_needs_setup:
         _prov_names = {
-            "nous-api": "JARVIS Managed API key",
+            "jarvis_managed-api": "JARVIS Managed API key",
             "copilot": "GitHub Copilot",
             "copilot-acp": "GitHub Copilot ACP",
             "zai": "Z.AI / GLM",
@@ -998,10 +998,10 @@ def setup_model_provider(config: dict, *, quick: bool = False):
             print_info("Skipped — add later with 'jarvis setup' or configure AUXILIARY_VISION_* settings")
 
 
-    # Tool Gateway prompt is already shown by _model_flow_nous() above.
+    # Tool Gateway prompt is already shown by _model_flow_jarvis_managed() above.
     save_config(config)
 
-    if not quick and selected_provider != "nous":
+    if not quick and selected_provider != "jarvis_managed":
         _setup_tts_provider(config)
 
 
@@ -1146,7 +1146,7 @@ def _setup_tts_provider(config: dict):
     """Interactive TTS provider selection with install flow for NeuTTS."""
     tts_config = config.get("tts", {})
     current_provider = tts_config.get("provider", "edge")
-    subscription_features = get_nous_subscription_features(config)
+    subscription_features = get_jarvis_managed_subscription_features(config)
 
     provider_labels = {
         "edge": "Edge TTS",
@@ -1168,9 +1168,9 @@ def _setup_tts_provider(config: dict):
 
     choices = []
     providers = []
-    if managed_nous_tools_enabled() and subscription_features.nous_auth_present:
+    if managed_jarvis_managed_tools_enabled() and subscription_features.jarvis_managed_auth_present:
         choices.append("JARVIS Managed (managed OpenAI TTS through your subscription)")
-        providers.append("nous-openai")
+        providers.append("jarvis_managed-openai")
     choices.extend(
         [
             "Edge TTS (free, cloud-based, no setup needed)",
@@ -1193,8 +1193,8 @@ def _setup_tts_provider(config: dict):
         return
 
     selected = providers[idx]
-    selected_via_nous = selected == "nous-openai"
-    if selected == "nous-openai":
+    selected_via_jarvis_managed = selected == "jarvis_managed-openai"
+    if selected == "jarvis_managed-openai":
         selected = "openai"
         print_info("OpenAI TTS will use the JARVIS Managed gateway and your subscription.")
         if get_env_value("VOICE_TOOLS_OPENAI_KEY") or get_env_value("OPENAI_API_KEY"):
@@ -1237,7 +1237,7 @@ def _setup_tts_provider(config: dict):
                 print_warning("No API key provided. Falling back to Edge TTS.")
                 selected = "edge"
 
-    elif selected == "openai" and not selected_via_nous:
+    elif selected == "openai" and not selected_via_jarvis_managed:
         existing = get_env_value("VOICE_TOOLS_OPENAI_KEY") or get_env_value("OPENAI_API_KEY")
         if not existing:
             print()
@@ -1510,9 +1510,9 @@ def setup_terminal_backend(config: dict):
         from tools.tool_backend_helpers import normalize_modal_mode
 
         managed_modal_available = bool(
-            managed_nous_tools_enabled()
+            managed_jarvis_managed_tools_enabled()
             and
-            get_nous_subscription_features(config).nous_auth_present
+            get_jarvis_managed_subscription_features(config).jarvis_managed_auth_present
             and is_managed_tool_gateway_ready("modal")
         )
         modal_mode = normalize_modal_mode(cfg_get(config, "terminal", "modal_mode"))
@@ -2484,7 +2484,7 @@ def setup_gateway(config: dict):
             _is_service_running,
             supports_systemd_services,
             has_conflicting_systemd_units,
-            has_legacy_hermes_units,
+            has_legacy_jarvis_units,
             install_linux_gateway_from_setup,
             print_systemd_scope_conflict_warning,
             print_legacy_unit_warning,
@@ -2509,7 +2509,7 @@ def setup_gateway(config: dict):
             print_systemd_scope_conflict_warning()
             print()
 
-        if supports_systemd and has_legacy_hermes_units():
+        if supports_systemd and has_legacy_jarvis_units():
             print_legacy_unit_warning()
             print()
 
@@ -2801,12 +2801,12 @@ _OPENCLAW_SCRIPT = (
     / "migration"
     / "openclaw-migration"
     / "scripts"
-    / "openclaw_to_hermes.py"
+    / "openclaw_to_jarvis.py"
 )
 
 
 def _load_openclaw_migration_module():
-    """Load the openclaw_to_hermes migration script as a module.
+    """Load the openclaw_to_jarvis migration script as a module.
 
     Returns the loaded module, or None if the script can't be loaded.
     """
@@ -2814,7 +2814,7 @@ def _load_openclaw_migration_module():
         return None
 
     spec = importlib.util.spec_from_file_location(
-        "openclaw_to_hermes", _OPENCLAW_SCRIPT
+        "openclaw_to_jarvis", _OPENCLAW_SCRIPT
     )
     if spec is None or spec.loader is None:
         return None
@@ -2913,7 +2913,7 @@ def _print_migration_preview(report: dict):
         print()
 
 
-def _offer_openclaw_migration(hermes_home: Path) -> bool:
+def _offer_openclaw_migration(jarvis_home: Path) -> bool:
     """Detect ~/.openclaw and offer to migrate during first-time setup.
 
     Runs a dry-run first to show the user exactly what would be imported,
@@ -2961,7 +2961,7 @@ def _offer_openclaw_migration(hermes_home: Path) -> bool:
         selected = mod.resolve_selected_options(None, None, preset="full")
         dry_migrator = mod.Migrator(
             source_root=openclaw_dir.resolve(),
-            target_root=hermes_home.resolve(),
+            target_root=jarvis_home.resolve(),
             execute=False,  # dry-run — no files modified
             workspace_target=None,
             overwrite=True,  # show everything including conflicts
@@ -3006,7 +3006,7 @@ def _offer_openclaw_migration(hermes_home: Path) -> bool:
     try:
         migrator = mod.Migrator(
             source_root=openclaw_dir.resolve(),
-            target_root=hermes_home.resolve(),
+            target_root=jarvis_home.resolve(),
             execute=True,
             workspace_target=None,
             overwrite=False,  # preserve existing Jarvis config
@@ -3076,7 +3076,7 @@ def run_setup_wizard(args):
     if is_managed():
         managed_error("run setup wizard")
         return
-    ensure_hermes_home()
+    ensure_jarvis_home()
 
     reset_requested = bool(getattr(args, "reset", False))
     if reset_requested:
@@ -3087,7 +3087,7 @@ def run_setup_wizard(args):
     quick_requested = bool(getattr(args, "quick", False))
 
     config = load_config()
-    hermes_home = get_jarvis_home()
+    jarvis_home = get_jarvis_home()
 
     # Back up existing config before setup modifies it (#3522)
     config_path = get_config_path()
@@ -3198,7 +3198,7 @@ def run_setup_wizard(args):
         # missing items" flow (useful after a partial OpenClaw migration
         # or when a required API key got cleared).
         if quick_requested:
-            _run_quick_setup(config, hermes_home)
+            _run_quick_setup(config, jarvis_home)
             return
 
         print()
@@ -3223,7 +3223,7 @@ def run_setup_wizard(args):
             print()
 
         # Offer OpenClaw migration before configuration begins
-        migration_ran = _offer_openclaw_migration(hermes_home)
+        migration_ran = _offer_openclaw_migration(jarvis_home)
         if migration_ran:
             config = load_config()
 
@@ -3233,14 +3233,14 @@ def run_setup_wizard(args):
         ], 0)
 
         if setup_mode == 0:
-            _run_first_time_quick_setup(config, hermes_home, is_existing)
+            _run_first_time_quick_setup(config, jarvis_home, is_existing)
             return
 
     # ── Full Setup — run all sections ──
     print_header("Configuration Location")
     print_info(f"Config file:  {get_config_path()}")
     print_info(f"Secrets file: {get_env_path()}")
-    print_info(f"Data folder:  {hermes_home}")
+    print_info(f"Data folder:  {jarvis_home}")
     print_info(f"Install dir:  {PROJECT_ROOT}")
     print()
     print_info("You can edit these files directly or use 'jarvis config edit'")
@@ -3277,10 +3277,10 @@ def run_setup_wizard(args):
         print_info(f"Previous config backed up to: {_backup_path}")
         print_info("If setup changed a value you customized, restore it with:")
         print_info(f"  cp {_backup_path} {config_path}")
-    _print_setup_summary(config, hermes_home)
+    _print_setup_summary(config, jarvis_home)
 
 
-def _run_first_time_quick_setup(config: dict, hermes_home, is_existing: bool):
+def _run_first_time_quick_setup(config: dict, jarvis_home, is_existing: bool):
     """Streamlined first-time setup: provider, model, terminal & messaging.
 
     Applies sensible defaults for TTS (Edge), agent settings, and tools —
@@ -3320,10 +3320,10 @@ def _run_first_time_quick_setup(config: dict, hermes_home, is_existing: bool):
         print_info("  Connect Telegram/Discord:  jarvis setup gateway")
     print()
 
-    _print_setup_summary(config, hermes_home)
+    _print_setup_summary(config, jarvis_home)
 
 
-def _run_quick_setup(config: dict, hermes_home):
+def _run_quick_setup(config: dict, jarvis_home):
     """Quick setup — only configure items that are missing."""
     from jarvis_cli.config import (
         get_missing_env_vars,
@@ -3486,4 +3486,4 @@ def _run_quick_setup(config: dict, hermes_home):
         save_config(config)
 
     # Jump to summary
-    _print_setup_summary(config, hermes_home)
+    _print_setup_summary(config, jarvis_home)

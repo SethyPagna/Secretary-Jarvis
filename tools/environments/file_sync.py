@@ -213,7 +213,7 @@ class FileSyncManager:
     # Sync-back: pull remote changes to host on teardown
     # ------------------------------------------------------------------
 
-    def sync_back(self, hermes_home: Path | None = None) -> None:
+    def sync_back(self, jarvis_home: Path | None = None) -> None:
         """Pull remote changes back to the host filesystem.
 
         Downloads the remote ``.jarvis/`` directory as a tar archive,
@@ -233,7 +233,7 @@ class FileSyncManager:
             logger.debug("sync_back: no prior push state — skipping")
             return
 
-        lock_path = (hermes_home or get_jarvis_home()) / ".sync.lock"
+        lock_path = (jarvis_home or get_jarvis_home()) / ".sync.lock"
         lock_path.parent.mkdir(parents=True, exist_ok=True)
 
         last_exc: Exception | None = None

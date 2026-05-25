@@ -14,23 +14,23 @@ _DEFAULT_MODAL_MODE = "auto"
 _VALID_MODAL_MODES = {"auto", "direct", "managed"}
 
 
-def managed_nous_tools_enabled() -> bool:
-    """Return True when the user has an active paid Nous subscription.
+def managed_jarvis_managed_tools_enabled() -> bool:
+    """Return True when the user has an active paid JARVIS Managed subscription.
 
-    The Tool Gateway is available to any Nous subscriber who is NOT on
+    The Tool Gateway is available to any JARVIS Managed subscriber who is NOT on
     the free tier.  We intentionally catch all exceptions and return
     False — never block the agent startup path.
     """
     try:
-        from jarvis_cli.auth import get_nous_auth_status
+        from jarvis_cli.auth import get_jarvis_managed_auth_status
 
-        status = get_nous_auth_status()
+        status = get_jarvis_managed_auth_status()
         if not status.get("logged_in"):
             return False
 
-        from jarvis_cli.models import check_nous_free_tier
+        from jarvis_cli.models import check_jarvis_managed_free_tier
 
-        if check_nous_free_tier():
+        if check_jarvis_managed_free_tier():
             return False  # free-tier users don't get gateway access
         return True
     except Exception:
@@ -80,15 +80,15 @@ def resolve_modal_backend_state(
     requested_mode = coerce_modal_mode(modal_mode)
     normalized_mode = normalize_modal_mode(modal_mode)
     managed_mode_blocked = (
-        requested_mode == "managed" and not managed_nous_tools_enabled()
+        requested_mode == "managed" and not managed_jarvis_managed_tools_enabled()
     )
 
     if normalized_mode == "managed":
-        selected_backend = "managed" if managed_nous_tools_enabled() and managed_ready else None
+        selected_backend = "managed" if managed_jarvis_managed_tools_enabled() and managed_ready else None
     elif normalized_mode == "direct":
         selected_backend = "direct" if has_direct else None
     else:
-        selected_backend = "managed" if managed_nous_tools_enabled() and managed_ready else "direct" if has_direct else None
+        selected_backend = "managed" if managed_jarvis_managed_tools_enabled() and managed_ready else "direct" if has_direct else None
 
     return {
         "requested_mode": requested_mode,

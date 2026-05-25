@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 import jarvis_time
 
 
-def _reset_hermes_time_cache():
+def _reset_jarvis_time_cache():
     """Reset the jarvis_time module cache (replacement for removed reset_cache)."""
     jarvis_time._cached_tz = None
     jarvis_time._cached_tz_name = None
@@ -31,14 +31,14 @@ def _reset_hermes_time_cache():
 # jarvis_time.now() — core helper
 # =========================================================================
 
-class TestHermesTimeNow:
+class TestJarvisTimeNow:
     """Test the timezone-aware now() helper."""
 
     def setup_method(self):
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
     def teardown_method(self):
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
         os.environ.pop("JARVIS_TIMEZONE", None)
 
     def test_valid_timezone_applies(self):
@@ -93,12 +93,12 @@ class TestHermesTimeNow:
     def test_cache_invalidation(self):
         """Changing env var + reset_cache picks up new timezone."""
         os.environ["JARVIS_TIMEZONE"] = "UTC"
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
         r1 = jarvis_time.now()
         assert r1.utcoffset() == timedelta(0)
 
         os.environ["JARVIS_TIMEZONE"] = "Asia/Kolkata"
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
         r2 = jarvis_time.now()
         assert r2.utcoffset() == timedelta(hours=5, minutes=30)
 
@@ -107,10 +107,10 @@ class TestGetTimezone:
     """Test get_timezone()."""
 
     def setup_method(self):
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
     def teardown_method(self):
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
         os.environ.pop("JARVIS_TIMEZONE", None)
 
     def test_returns_zoneinfo_for_valid(self):
@@ -211,10 +211,10 @@ class TestCronTimezone:
     """Verify cron paths use timezone-aware now()."""
 
     def setup_method(self):
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
     def teardown_method(self):
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
         os.environ.pop("JARVIS_TIMEZONE", None)
 
     def test_parse_schedule_duration_uses_tz_aware_now(self):
@@ -243,7 +243,7 @@ class TestCronTimezone:
         monkeypatch.setattr(jobs_module, "OUTPUT_DIR", tmp_path / "cron" / "output")
 
         os.environ["JARVIS_TIMEZONE"] = "Asia/Kolkata"
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
         # Create a job with a NAIVE past timestamp (simulating pre-tz data)
         from cron.jobs import create_job, load_jobs, save_jobs, get_due_jobs
@@ -261,14 +261,14 @@ class TestCronTimezone:
     def test_ensure_aware_naive_preserves_absolute_time(self):
         """_ensure_aware must preserve the absolute instant for naive datetimes.
 
-        Regression: the old code used replace(tzinfo=hermes_tz) which shifted
+        Regression: the old code used replace(tzinfo=jarvis_tz) which shifted
         absolute time when system-local tz != Jarvis tz.  The fix interprets
         naive values as system-local wall time, then converts.
         """
         from cron.jobs import _ensure_aware
 
         os.environ["JARVIS_TIMEZONE"] = "Asia/Kolkata"
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
         # Create a naive datetime — will be interpreted as system-local time
         naive_dt = datetime(2026, 3, 11, 12, 0, 0)
@@ -287,12 +287,12 @@ class TestCronTimezone:
             f"Absolute time shifted: expected {expected_utc}, got {actual_utc}"
         )
 
-    def test_ensure_aware_normalizes_aware_to_hermes_tz(self):
+    def test_ensure_aware_normalizes_aware_to_jarvis_tz(self):
         """Already-aware datetimes should be normalized to Jarvis tz."""
         from cron.jobs import _ensure_aware
 
         os.environ["JARVIS_TIMEZONE"] = "Asia/Kolkata"
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
         # Create an aware datetime in UTC
         utc_dt = datetime(2026, 3, 11, 15, 0, 0, tzinfo=timezone.utc)
@@ -318,7 +318,7 @@ class TestCronTimezone:
         monkeypatch.setattr(jobs_module, "OUTPUT_DIR", tmp_path / "cron" / "output")
 
         os.environ["JARVIS_TIMEZONE"] = "UTC"
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
         from cron.jobs import create_job, load_jobs, save_jobs, get_due_jobs
 
@@ -346,10 +346,10 @@ class TestCronTimezone:
         monkeypatch.setattr(jobs_module, "OUTPUT_DIR", tmp_path / "cron" / "output")
 
         # Use a Jarvis timezone far behind UTC so that the numeric wall time
-        # of the naive timestamp exceeds _hermes_now's wall time — this would
+        # of the naive timestamp exceeds _jarvis_now's wall time — this would
         # have caused a false "not due" with the old replace(tzinfo=...) approach.
         os.environ["JARVIS_TIMEZONE"] = "Pacific/Midway"  # UTC-11
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
         from cron.jobs import create_job, load_jobs, save_jobs, get_due_jobs
         create_job(prompt="Cross-tz job", schedule="every 1h")
@@ -373,7 +373,7 @@ class TestCronTimezone:
         monkeypatch.setattr(jobs_module, "OUTPUT_DIR", tmp_path / "cron" / "output")
 
         os.environ["JARVIS_TIMEZONE"] = "US/Eastern"
-        _reset_hermes_time_cache()
+        _reset_jarvis_time_cache()
 
         from cron.jobs import create_job
         job = create_job(prompt="TZ test", schedule="every 2h")

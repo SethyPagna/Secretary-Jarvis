@@ -231,7 +231,7 @@ Claude Sonnet 4 is robust against all current techniques for clearly harmful con
 | GPT-4/4o (OpenAI) | OG GODMODE l33t + prefill | Responds to the classic divider format |
 | Gemini (Google) | Refusal inversion + rebel persona | Gemini's refusal can be semantically inverted |
 | Grok (xAI) | Unfiltered liberated + GODMODE divider | Already less filtered; light prompting works |
-| Jarvis (Nous) | No jailbreak needed | Already uncensored — use directly |
+| Jarvis (JARVIS Managed) | No jailbreak needed | Already uncensored — use directly |
 | DeepSeek | Parseltongue + multi-attempt | Input classifiers are keyword-based; obfuscation effective |
 | Llama (Meta) | Prefill + simple system prompt | Open models respond well to prefill engineering |
 | Qwen (Alibaba) | Parseltongue + refusal inversion | Similar to DeepSeek — keyword classifiers |
@@ -245,7 +245,7 @@ Claude Sonnet 4 is robust against all current techniques for clearly harmful con
 
 3. **ULTRAPLINIAN costs money** — Racing 55 models means 55 API calls. Use `fast` tier (10 models) for quick tests, `ultra` only when maximum coverage is needed.
 
-4. **Jarvis models don't need jailbreaking** — `nousresearch/jarvis-3-*` and `jarvis-4-*` are already uncensored. Use them directly.
+4. **Jarvis models don't need jailbreaking** — `jarvisproject/jarvis-3-*` and `jarvis-4-*` are already uncensored. Use them directly.
 
 5. **Always use `load_godmode.py` in execute_code** — The individual scripts (`parseltongue.py`, `godmode_race.py`, `auto_jailbreak.py`) have argparse CLI entry points. When loaded via `exec()` in execute_code, `__name__` is `'__main__'` and argparse fires, crashing the script. The loader handles this.
 

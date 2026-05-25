@@ -127,10 +127,10 @@ def _format_size(nbytes: int) -> str:
 
 def run_backup(args) -> None:
     """Create a zip backup of the Jarvis home directory."""
-    hermes_root = get_default_jarvis_root()
+    jarvis_root = get_default_jarvis_root()
 
-    if not hermes_root.is_dir():
-        print(f"Error: Jarvis home directory not found at {hermes_root}")
+    if not jarvis_root.is_dir():
+        print(f"Error: Jarvis home directory not found at {jarvis_root}")
         sys.exit(1)
 
     # Determine output path
@@ -156,9 +156,9 @@ def run_backup(args) -> None:
     files_to_add: list[tuple[Path, Path]] = []  # (absolute, relative)
     skipped_dirs = set()
 
-    for dirpath, dirnames, filenames in os.walk(hermes_root, followlinks=False):
+    for dirpath, dirnames, filenames in os.walk(jarvis_root, followlinks=False):
         dp = Path(dirpath)
-        rel_dir = dp.relative_to(hermes_root)
+        rel_dir = dp.relative_to(jarvis_root)
 
         # Prune excluded directories in-place so os.walk doesn't descend
         orig_dirnames = dirnames[:]
@@ -171,7 +171,7 @@ def run_backup(args) -> None:
 
         for fname in filenames:
             fpath = dp / fname
-            rel = fpath.relative_to(hermes_root)
+            rel = fpath.relative_to(jarvis_root)
 
             if _should_exclude(rel):
                 continue
@@ -316,7 +316,7 @@ def run_import(args) -> None:
         print(f"Error: Not a valid zip file: {zip_path}")
         sys.exit(1)
 
-    hermes_root = get_default_jarvis_root()
+    jarvis_root = get_default_jarvis_root()
 
     with zipfile.ZipFile(zip_path, "r") as zf:
         # Validate
@@ -336,8 +336,8 @@ def run_import(args) -> None:
             print(f"Detected archive prefix: {prefix!r} (will be stripped)")
 
         # Check for existing installation
-        has_config = (hermes_root / "config.yaml").exists()
-        has_env = (hermes_root / ".env").exists()
+        has_config = (jarvis_root / "config.yaml").exists()
+        has_env = (jarvis_root / ".env").exists()
 
         if (has_config or has_env) and not args.force:
             print()
@@ -355,7 +355,7 @@ def run_import(args) -> None:
 
         # Extract
         print(f"\nImporting {file_count} files ...")
-        hermes_root.mkdir(parents=True, exist_ok=True)
+        jarvis_root.mkdir(parents=True, exist_ok=True)
 
         errors = []
         restored = 0
@@ -371,11 +371,11 @@ def run_import(args) -> None:
             if not rel:
                 continue
 
-            target = hermes_root / rel
+            target = jarvis_root / rel
 
             # Security: reject absolute paths and traversals
             try:
-                target.resolve().relative_to(hermes_root.resolve())
+                target.resolve().relative_to(jarvis_root.resolve())
             except ValueError:
                 errors.append(f"  {rel}: path traversal blocked")
                 continue
@@ -408,7 +408,7 @@ def run_import(args) -> None:
                 print(f"  ... and {len(errors) - 10} more")
 
         # Post-import: restore profile wrapper scripts
-        profiles_dir = hermes_root / "profiles"
+        profiles_dir = jarvis_root / "profiles"
         restored_profiles = []
         if profiles_dir.is_dir():
             try:
@@ -450,7 +450,7 @@ def run_import(args) -> None:
 
         # Guidance
         print()
-        if not (hermes_root / "jarvis-agent").is_dir():
+        if not (jarvis_root / "jarvis-agent").is_dir():
             print("Note: The jarvis-agent codebase was not included in the backup.")
             print("  If this is a fresh install, run: jarvis update")
 
@@ -495,14 +495,14 @@ _QUICK_SNAPSHOTS_DIR = "state-snapshots"
 _QUICK_DEFAULT_KEEP = 20
 
 
-def _quick_snapshot_root(hermes_home: Optional[Path] = None) -> Path:
-    home = hermes_home or get_jarvis_home()
+def _quick_snapshot_root(jarvis_home: Optional[Path] = None) -> Path:
+    home = jarvis_home or get_jarvis_home()
     return home / _QUICK_SNAPSHOTS_DIR
 
 
 def create_quick_snapshot(
     label: Optional[str] = None,
-    hermes_home: Optional[Path] = None,
+    jarvis_home: Optional[Path] = None,
 ) -> Optional[str]:
     """Create a quick state snapshot of critical files.
 
@@ -512,7 +512,7 @@ def create_quick_snapshot(
     Returns:
         Snapshot ID (timestamp-based), or None if no files found.
     """
-    home = hermes_home or get_jarvis_home()
+    home = jarvis_home or get_jarvis_home()
     root = _quick_snapshot_root(home)
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
@@ -585,10 +585,10 @@ def create_quick_snapshot(
 
 def list_quick_snapshots(
     limit: int = 20,
-    hermes_home: Optional[Path] = None,
+    jarvis_home: Optional[Path] = None,
 ) -> List[Dict[str, Any]]:
     """List existing quick state snapshots, most recent first."""
-    root = _quick_snapshot_root(hermes_home)
+    root = _quick_snapshot_root(jarvis_home)
     if not root.exists():
         return []
 
@@ -611,14 +611,14 @@ def list_quick_snapshots(
 
 def restore_quick_snapshot(
     snapshot_id: str,
-    hermes_home: Optional[Path] = None,
+    jarvis_home: Optional[Path] = None,
 ) -> bool:
     """Restore state from a quick snapshot.
 
     Overwrites current state files with the snapshot's copies.
     Returns True if at least one file was restored.
     """
-    home = hermes_home or get_jarvis_home()
+    home = jarvis_home or get_jarvis_home()
     root = _quick_snapshot_root(home)
     snap_dir = root / snapshot_id
 
@@ -682,10 +682,10 @@ def _prune_quick_snapshots(root: Path, keep: int = _QUICK_DEFAULT_KEEP) -> int:
 
 def prune_quick_snapshots(
     keep: int = _QUICK_DEFAULT_KEEP,
-    hermes_home: Optional[Path] = None,
+    jarvis_home: Optional[Path] = None,
 ) -> int:
     """Manually prune quick snapshots. Returns count deleted."""
-    return _prune_quick_snapshots(_quick_snapshot_root(hermes_home), keep=keep)
+    return _prune_quick_snapshots(_quick_snapshot_root(jarvis_home), keep=keep)
 
 
 def run_quick_backup(args) -> None:
@@ -705,8 +705,8 @@ def run_quick_backup(args) -> None:
 # Shared full-zip backup helper
 # ---------------------------------------------------------------------------
 
-def _write_full_zip_backup(out_path: Path, hermes_root: Path) -> Optional[Path]:
-    """Write a full zip snapshot of ``hermes_root`` to ``out_path``.
+def _write_full_zip_backup(out_path: Path, jarvis_root: Path) -> Optional[Path]:
+    """Write a full zip snapshot of ``jarvis_root`` to ``out_path``.
 
     Uses the same exclusion rules and SQLite safe-copy as :func:`run_backup`.
     Returns the output path on success, None on failure (nothing to back up,
@@ -714,7 +714,7 @@ def _write_full_zip_backup(out_path: Path, hermes_root: Path) -> Optional[Path]:
     """
     files_to_add: list[tuple[Path, Path]] = []
     try:
-        for dirpath, dirnames, filenames in os.walk(hermes_root, followlinks=False):
+        for dirpath, dirnames, filenames in os.walk(jarvis_root, followlinks=False):
             dp = Path(dirpath)
             # Prune excluded directories in-place so os.walk doesn't descend
             dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIRS]
@@ -722,7 +722,7 @@ def _write_full_zip_backup(out_path: Path, hermes_root: Path) -> Optional[Path]:
             for fname in filenames:
                 fpath = dp / fname
                 try:
-                    rel = fpath.relative_to(hermes_root)
+                    rel = fpath.relative_to(jarvis_root)
                 except ValueError:
                     continue
 
@@ -782,8 +782,8 @@ _PRE_UPDATE_PREFIX = "pre-update-"
 _PRE_UPDATE_DEFAULT_KEEP = 5
 
 
-def _pre_update_backup_dir(hermes_home: Optional[Path] = None) -> Path:
-    home = hermes_home or get_jarvis_home()
+def _pre_update_backup_dir(jarvis_home: Optional[Path] = None) -> Path:
+    home = jarvis_home or get_jarvis_home()
     return home / _PRE_UPDATE_BACKUPS_DIR
 
 
@@ -825,7 +825,7 @@ def _prune_pre_update_backups(backup_dir: Path, keep: int) -> int:
 
 
 def create_pre_update_backup(
-    hermes_home: Optional[Path] = None,
+    jarvis_home: Optional[Path] = None,
     keep: int = _PRE_UPDATE_DEFAULT_KEEP,
 ) -> Optional[Path]:
     """Create a full zip backup of JARVIS_HOME under ``backups/``.
@@ -838,11 +838,11 @@ def create_pre_update_backup(
     found or the backup could not be created.  Never raises — the caller
     (``jarvis update``) should continue even if the backup fails.
     """
-    hermes_root = hermes_home or get_default_jarvis_root()
-    if not hermes_root.is_dir():
+    jarvis_root = jarvis_home or get_default_jarvis_root()
+    if not jarvis_root.is_dir():
         return None
 
-    backup_dir = _pre_update_backup_dir(hermes_root)
+    backup_dir = _pre_update_backup_dir(jarvis_root)
     try:
         backup_dir.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
@@ -852,7 +852,7 @@ def create_pre_update_backup(
     stamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     out_path = backup_dir / f"{_PRE_UPDATE_PREFIX}{stamp}.zip"
 
-    result = _write_full_zip_backup(out_path, hermes_root)
+    result = _write_full_zip_backup(out_path, jarvis_root)
     if result is None:
         return None
 
@@ -897,7 +897,7 @@ def _prune_pre_migration_backups(backup_dir: Path, keep: int) -> int:
 
 
 def create_pre_migration_backup(
-    hermes_home: Optional[Path] = None,
+    jarvis_home: Optional[Path] = None,
     keep: int = _PRE_MIGRATION_DEFAULT_KEEP,
 ) -> Optional[Path]:
     """Create a full zip backup of JARVIS_HOME under ``backups/`` before a
@@ -913,13 +913,13 @@ def create_pre_migration_backup(
     to back up (fresh install) or the write failed.  Never raises — the
     caller decides whether to abort or proceed.
     """
-    hermes_root = hermes_home or get_default_jarvis_root()
-    if not hermes_root.is_dir():
+    jarvis_root = jarvis_home or get_default_jarvis_root()
+    if not jarvis_root.is_dir():
         return None
 
     # Reuses the shared backups/ directory so `jarvis import` and the
     # update-backup listing pick up pre-migration archives too.
-    backup_dir = _pre_update_backup_dir(hermes_root)
+    backup_dir = _pre_update_backup_dir(jarvis_root)
     try:
         backup_dir.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
@@ -929,7 +929,7 @@ def create_pre_migration_backup(
     stamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     out_path = backup_dir / f"{_PRE_MIGRATION_PREFIX}{stamp}.zip"
 
-    result = _write_full_zip_backup(out_path, hermes_root)
+    result = _write_full_zip_backup(out_path, jarvis_root)
     if result is None:
         return None
 

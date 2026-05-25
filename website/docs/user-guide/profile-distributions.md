@@ -97,7 +97,7 @@ Create `~/.jarvis/profiles/research-bot/distribution.yaml`:
 name: research-bot
 version: 1.0.0
 description: "Autonomous research assistant with arXiv and web tools"
-hermes_requires: ">=0.12.0"
+jarvis_requires: ">=0.12.0"
 author: "Your Name"
 license: "MIT"
 
@@ -413,7 +413,7 @@ You built Jarvis-on-top — maybe a compliance-monitoring harness, a customer-su
 name: telemetry-harness
 version: 2.3.1
 description: "Compliance telemetry harness — monitors and reviews regulated workflows"
-hermes_requires: ">=0.13.0"
+jarvis_requires: ">=0.13.0"
 author: "Acme Compliance Inc."
 license: "Commercial"
 

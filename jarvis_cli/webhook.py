@@ -25,13 +25,13 @@ from jarvis_cli.config import cfg_get
 _SUBSCRIPTIONS_FILENAME = "webhook_subscriptions.json"
 
 
-def _hermes_home() -> Path:
+def _jarvis_home() -> Path:
     from jarvis_constants import get_jarvis_home
     return get_jarvis_home()
 
 
 def _subscriptions_path() -> Path:
-    return _hermes_home() / _SUBSCRIPTIONS_FILENAME
+    return _jarvis_home() / _SUBSCRIPTIONS_FILENAME
 
 
 def _load_subscriptions() -> Dict[str, dict]:

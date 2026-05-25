@@ -33,8 +33,8 @@ Key capabilities:
 
 ## Setup
 
-:::tip Nous Subscribers
-If you have a paid [Nous Portal](https://portal.nousresearch.com) subscription, you can use browser automation through the **[Tool Gateway](tool-gateway.md)** without any separate API keys. Run `jarvis model` or `jarvis tools` to enable it.
+:::tip JARVIS Managed Users
+If you have a paid [JARVIS Managed](https://portal.jarvis.local) subscription, you can use browser automation through the **[Tool Gateway](tool-gateway.md)** without any separate API keys. Run `jarvis model` or `jarvis tools` to enable it.
 :::
 
 ### Browserbase cloud mode
@@ -410,7 +410,7 @@ The `browser` toolset must be included in your config's `toolsets` list or enabl
 Navigate to a URL. Must be called before any other browser tool. Initializes the Browserbase session.
 
 ```
-Navigate to https://github.com/NousResearch
+Navigate to https://github.com/JARVISProject
 ```
 
 :::tip

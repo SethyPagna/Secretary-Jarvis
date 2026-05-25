@@ -12,15 +12,15 @@ const BACKEND = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:9119";
  * token, every protected `/api/*` call 401s.
  *
  * This plugin fetches the running dashboard's `index.html` on each dev page
- * load, scrapes the `window.__HERMES_SESSION_TOKEN__` assignment, and
+ * load, scrapes the `window.__JARVIS_SESSION_TOKEN__` assignment, and
  * re-injects it into the dev HTML. No-op in production builds.
  */
-function hermesDevToken(): Plugin {
-  const TOKEN_RE = /window\.__HERMES_SESSION_TOKEN__\s*=\s*"([^"]+)"/;
+function jarvisDevToken(): Plugin {
+  const TOKEN_RE = /window\.__JARVIS_SESSION_TOKEN__\s*=\s*"([^"]+)"/;
   const EMBEDDED_RE =
-    /window\.__HERMES_DASHBOARD_EMBEDDED_CHAT__\s*=\s*(true|false)/;
+    /window\.__JARVIS_DASHBOARD_EMBEDDED_CHAT__\s*=\s*(true|false)/;
   const LEGACY_TUI_RE =
-    /window\.__HERMES_DASHBOARD_TUI__\s*=\s*(true|false)/;
+    /window\.__JARVIS_DASHBOARD_TUI__\s*=\s*(true|false)/;
 
   return {
     name: "jarvis:dev-session-token",
@@ -49,8 +49,8 @@ function hermesDevToken(): Plugin {
             tag: "script",
             injectTo: "head",
             children:
-              `window.__HERMES_SESSION_TOKEN__="${match[1]}";` +
-              `window.__HERMES_DASHBOARD_EMBEDDED_CHAT__=${embeddedJs};`,
+              `window.__JARVIS_SESSION_TOKEN__="${match[1]}";` +
+              `window.__JARVIS_DASHBOARD_EMBEDDED_CHAT__=${embeddedJs};`,
           },
         ];
       } catch (err) {
@@ -66,12 +66,13 @@ function hermesDevToken(): Plugin {
 
 export default defineConfig({
   base: "./",
-  plugins: [react(), tailwindcss(), hermesDevToken()],
+  plugins: [react(), tailwindcss(), jarvisDevToken()],
   resolve: {
+    preserveSymlinks: true,
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    // When @nous-research/ui is symlinked via `file:../../design-language`,
+    // When @jarvis_managed-research/ui is symlinked via `file:../../design-language`,
     // Node's module resolution would pick up shared deps from
     // design-language/node_modules/*, giving us two copies + breaking
     // hooks (useRef-of-null), webgl contexts, etc. Force everything that

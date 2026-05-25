@@ -54,11 +54,11 @@ from agent.model_metadata import (
     parse_context_limit_from_error,
     save_context_length,
 )
-from agent.nous_rate_guard import (
-    clear_nous_rate_limit,
-    is_genuine_nous_rate_limit,
-    nous_rate_limit_remaining,
-    record_nous_rate_limit,
+from agent.jarvis_managed_rate_guard import (
+    clear_jarvis_managed_rate_limit,
+    is_genuine_jarvis_managed_rate_limit,
+    jarvis_managed_rate_limit_remaining,
+    record_jarvis_managed_rate_limit,
 )
 from agent.process_bootstrap import _install_safe_stdio
 from agent.prompt_caching import apply_anthropic_cache_control
@@ -985,7 +985,7 @@ def run_conversation(
         max_compression_attempts = 3
         codex_auth_retry_attempted=False
         anthropic_auth_retry_attempted=False
-        nous_auth_retry_attempted=False
+        jarvis_managed_auth_retry_attempted=False
         copilot_auth_retry_attempted=False
         thinking_sig_retry_attempted = False
         image_shrink_retry_attempted = False
@@ -1001,28 +1001,28 @@ def run_conversation(
         api_kwargs = None  # Guard against UnboundLocalError in except handler
 
         while retry_count < max_retries:
-            # ── Nous Portal rate limit guard ──────────────────────
-            # If another session already recorded that Nous is rate-
+            # ── JARVIS Managed rate limit guard ──────────────────────
+            # If another session already recorded that JARVIS Managed is rate-
             # limited, skip the API call entirely.  Each attempt
             # (including SDK-level retries) counts against RPH and
             # deepens the rate limit hole.
-            if agent.provider == "nous":
+            if agent.provider == "jarvis_managed":
                 try:
-                    from agent.nous_rate_guard import (
-                        nous_rate_limit_remaining,
-                        format_remaining as _fmt_nous_remaining,
+                    from agent.jarvis_managed_rate_guard import (
+                        jarvis_managed_rate_limit_remaining,
+                        format_remaining as _fmt_jarvis_managed_remaining,
                     )
-                    _nous_remaining = nous_rate_limit_remaining()
-                    if _nous_remaining is not None and _nous_remaining > 0:
-                        _nous_msg = (
-                            f"Nous Portal rate limit active — "
-                            f"resets in {_fmt_nous_remaining(_nous_remaining)}."
+                    _jarvis_managed_remaining = jarvis_managed_rate_limit_remaining()
+                    if _jarvis_managed_remaining is not None and _jarvis_managed_remaining > 0:
+                        _jarvis_managed_msg = (
+                            f"JARVIS Managed rate limit active — "
+                            f"resets in {_fmt_jarvis_managed_remaining(_jarvis_managed_remaining)}."
                         )
                         agent._vprint(
-                            f"{agent.log_prefix}⏳ {_nous_msg} Trying fallback...",
+                            f"{agent.log_prefix}⏳ {_jarvis_managed_msg} Trying fallback...",
                             force=True,
                         )
-                        agent._emit_status(f"⏳ {_nous_msg}")
+                        agent._emit_status(f"⏳ {_jarvis_managed_msg}")
                         if agent._try_activate_fallback():
                             retry_count = 0
                             compression_attempts = 0
@@ -1032,7 +1032,7 @@ def run_conversation(
                         agent._persist_session(messages, conversation_history)
                         return {
                             "final_response": (
-                                f"⏳ {_nous_msg}\n\n"
+                                f"⏳ {_jarvis_managed_msg}\n\n"
                                 "No fallback provider available. "
                                 "Try again after the reset, or add a "
                                 "fallback provider in config.yaml."
@@ -1041,7 +1041,7 @@ def run_conversation(
                             "api_calls": api_call_count,
                             "completed": False,
                             "failed": True,
-                            "error": _nous_msg,
+                            "error": _jarvis_managed_msg,
                         }
                 except ImportError:
                     pass
@@ -1724,13 +1724,13 @@ def run_conversation(
                         )
                 
                 has_retried_429 = False  # Reset on success
-                # Clear Nous rate limit state on successful request —
+                # Clear JARVIS Managed rate limit state on successful request —
                 # proves the limit has reset and other sessions can
-                # resume hitting Nous.
-                if agent.provider == "nous":
+                # resume hitting JARVIS Managed.
+                if agent.provider == "jarvis_managed":
                     try:
-                        from agent.nous_rate_guard import clear_nous_rate_limit
-                        clear_nous_rate_limit()
+                        from agent.jarvis_managed_rate_guard import clear_jarvis_managed_rate_limit
+                        clear_jarvis_managed_rate_limit()
                     except Exception:
                         pass
                 agent._touch_activity(f"API call #{api_call_count} completed")
@@ -2129,13 +2129,13 @@ def run_conversation(
                         continue
                 if (
                     agent.api_mode == "chat_completions"
-                    and agent.provider == "nous"
+                    and agent.provider == "jarvis_managed"
                     and status_code == 401
-                    and not nous_auth_retry_attempted
+                    and not jarvis_managed_auth_retry_attempted
                 ):
-                    nous_auth_retry_attempted = True
-                    if agent._try_refresh_nous_client_credentials(force=True):
-                        print(f"{agent.log_prefix}🔐 Nous agent key refreshed after 401. Retrying request...")
+                    jarvis_managed_auth_retry_attempted = True
+                    if agent._try_refresh_jarvis_managed_client_credentials(force=True):
+                        print(f"{agent.log_prefix}🔐 JARVIS Managed agent key refreshed after 401. Retrying request...")
                         continue
                     # Credential refresh didn't help — show diagnostic info.
                     # Most common causes: Portal OAuth expired/revoked,
@@ -2149,13 +2149,13 @@ def run_conversation(
                             _body_text = str(_body)[:200]
                     except Exception:
                         pass
-                    print(f"{agent.log_prefix}🔐 Nous 401 — Portal authentication failed.")
+                    print(f"{agent.log_prefix}🔐 JARVIS Managed 401 — Portal authentication failed.")
                     if _body_text:
                         print(f"{agent.log_prefix}   Response: {_body_text}")
                     print(f"{agent.log_prefix}   Most likely: Portal OAuth expired, account out of credits, or agent key revoked.")
                     print(f"{agent.log_prefix}   Troubleshooting:")
-                    print(f"{agent.log_prefix}     • Re-authenticate: jarvis login --provider nous")
-                    print(f"{agent.log_prefix}     • Check credits / billing: https://portal.nousresearch.com")
+                    print(f"{agent.log_prefix}     • Re-authenticate: jarvis login --provider jarvis_managed")
+                    print(f"{agent.log_prefix}     • Check credits / billing: https://portal.jarvis.local")
                     print(f"{agent.log_prefix}     • Verify stored credentials: {_dhh}/auth.json")
                     print(f"{agent.log_prefix}     • Switch providers temporarily: /model <model> --provider openrouter")
                 if (
@@ -2436,8 +2436,8 @@ def run_conversation(
                             primary_recovery_attempted = False
                             continue
 
-                # ── Nous Portal: record rate limit & skip retries ─────
-                # When Nous returns a 429 that is a genuine account-
+                # ── JARVIS Managed: record rate limit & skip retries ─────
+                # When JARVIS Managed returns a 429 that is a genuine account-
                 # level rate limit, record the reset time to a shared
                 # file so ALL sessions (cron, gateway, auxiliary) know
                 # not to pile on, then skip further retries -- each
@@ -2445,53 +2445,53 @@ def run_conversation(
                 # The retry loop's top-of-iteration guard will catch
                 # this on the next pass and try fallback or bail.
                 #
-                # IMPORTANT: Nous Portal multiplexes multiple upstream
+                # IMPORTANT: JARVIS Managed multiplexes multiple upstream
                 # providers (DeepSeek, Kimi, MiMo, Jarvis).  A 429 can
                 # also mean an UPSTREAM provider is out of capacity
                 # for one specific model -- transient, clears in
                 # seconds, nothing to do with the caller's quota.
                 # Tripping the cross-session breaker on that would
-                # block every Nous model for minutes.  We use
-                # ``is_genuine_nous_rate_limit`` to tell the two
+                # block every JARVIS Managed model for minutes.  We use
+                # ``is_genuine_jarvis_managed_rate_limit`` to tell the two
                 # apart via the 429's own x-ratelimit-* headers and
                 # the last-known-good state captured on the previous
                 # successful response.
                 if (
                     is_rate_limited
-                    and agent.provider == "nous"
+                    and agent.provider == "jarvis_managed"
                     and classified.reason == FailoverReason.rate_limit
                     and not recovered_with_pool
                 ):
-                    _genuine_nous_rate_limit = False
+                    _genuine_jarvis_managed_rate_limit = False
                     try:
-                        from agent.nous_rate_guard import (
-                            is_genuine_nous_rate_limit,
-                            record_nous_rate_limit,
+                        from agent.jarvis_managed_rate_guard import (
+                            is_genuine_jarvis_managed_rate_limit,
+                            record_jarvis_managed_rate_limit,
                         )
                         _err_resp = getattr(api_error, "response", None)
                         _err_hdrs = (
                             getattr(_err_resp, "headers", None)
                             if _err_resp else None
                         )
-                        _genuine_nous_rate_limit = is_genuine_nous_rate_limit(
+                        _genuine_jarvis_managed_rate_limit = is_genuine_jarvis_managed_rate_limit(
                             headers=_err_hdrs,
                             last_known_state=agent._rate_limit_state,
                         )
-                        if _genuine_nous_rate_limit:
-                            record_nous_rate_limit(
+                        if _genuine_jarvis_managed_rate_limit:
+                            record_jarvis_managed_rate_limit(
                                 headers=_err_hdrs,
                                 error_context=error_context,
                             )
                         else:
                             logging.info(
-                                "Nous 429 looks like upstream capacity "
+                                "JARVIS Managed 429 looks like upstream capacity "
                                 "(no exhausted bucket in headers or "
                                 "last-known state) -- not tripping "
                                 "cross-session breaker."
                             )
                     except Exception:
                         pass
-                    if _genuine_nous_rate_limit:
+                    if _genuine_jarvis_managed_rate_limit:
                         # Skip straight to max_retries -- the
                         # top-of-loop guard will handle fallback or
                         # bail cleanly.

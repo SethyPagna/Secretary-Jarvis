@@ -248,7 +248,7 @@ def recommended_update_command_for_method(method: str) -> str:
     if method == "homebrew":
         return "brew upgrade jarvis-agent"
     if method == "docker":
-        return "docker pull nousresearch/jarvis-agent:latest"
+        return "docker pull jarvisproject/jarvis-agent:latest"
     if method == "pip":
         import shutil
         uv = shutil.which("uv")
@@ -307,7 +307,7 @@ def managed_error(action: str = "modify configuration"):
 def get_container_exec_info() -> Optional[dict]:
     """Read container mode metadata from JARVIS_HOME/.container-mode.
 
-    Returns a dict with keys: backend, container_name, exec_user, hermes_bin
+    Returns a dict with keys: backend, container_name, exec_user, jarvis_bin
     or None if container mode is not active, we're already inside the
     container, or JARVIS_DEV=1 is set.
 
@@ -339,13 +339,13 @@ def get_container_exec_info() -> Optional[dict]:
     backend = info.get("backend", "docker")
     container_name = info.get("container_name", "jarvis-agent")
     exec_user = info.get("exec_user", "jarvis")
-    hermes_bin = info.get("hermes_bin", "/data/current-package/bin/jarvis")
+    jarvis_bin = info.get("jarvis_bin", "/data/current-package/bin/jarvis")
 
     return {
         "backend": backend,
         "container_name": container_name,
         "exec_user": exec_user,
-        "hermes_bin": hermes_bin,
+        "jarvis_bin": jarvis_bin,
     }
 
 
@@ -447,7 +447,7 @@ def _ensure_default_soul_md(home: Path) -> None:
     _secure_file(soul_path)
 
 
-def ensure_hermes_home():
+def ensure_jarvis_home():
     """Ensure ~/.jarvis directory structure exists with secure permissions.
 
     In managed mode (NixOS), dirs are created by the activation script with
@@ -458,7 +458,7 @@ def ensure_hermes_home():
     if is_managed():
         old_umask = os.umask(0o007)
         try:
-            _ensure_hermes_home_managed(home)
+            _ensure_jarvis_home_managed(home)
         finally:
             os.umask(old_umask)
     else:
@@ -474,7 +474,7 @@ def ensure_hermes_home():
         _ensure_default_soul_md(home)
 
 
-def _ensure_hermes_home_managed(home: Path):
+def _ensure_jarvis_home_managed(home: Path):
     """Managed-mode variant: verify dirs exist (activation creates them), seed SOUL.md."""
     if not home.is_dir():
         raise RuntimeError(
@@ -891,7 +891,7 @@ DEFAULT_CONFIG = {
     # openrouter.min_coding_score do NOT propagate to aux calls by design.
     "auxiliary": {
         "vision": {
-            "provider": "auto",    # auto | openrouter | nous | codex | custom
+            "provider": "auto",    # auto | openrouter | jarvis_managed | codex | custom
             "model": "",           # e.g. "google/gemini-2.5-flash", "gpt-4o"
             "base_url": "",        # direct OpenAI-compatible endpoint (takes precedence over provider)
             "api_key": "",         # API key for base_url (falls back to OPENAI_API_KEY)
@@ -1203,7 +1203,7 @@ DEFAULT_CONFIG = {
     # Subagent delegation — override the provider:model used by delegate_task
     # so child agents can run on a different (cheaper/faster) provider and model.
     # Uses the same runtime provider resolution as CLI/gateway startup, so all
-    # configured providers (OpenRouter, Nous, Z.ai, Kimi, etc.) are supported.
+    # configured providers (OpenRouter, JARVIS Managed, Z.ai, Kimi, etc.) are supported.
     "delegation": {
         "model": "",       # e.g. "google/gemini-3-flash-preview" (empty = inherit parent model)
         "provider": "",    # e.g. "openrouter" (empty = inherit parent provider + credentials)
@@ -1806,7 +1806,7 @@ REQUIRED_ENV_VARS = {}
 # Optional environment variables that enhance functionality
 OPTIONAL_ENV_VARS = {
     # ── Provider (handled in provider selection, not shown in checklists) ──
-    "NOUS_BASE_URL": {
+    "JARVIS_MANAGED_BASE_URL": {
         "description": "JARVIS Managed base URL override",
         "prompt": "JARVIS Managed base URL (leave empty for default)",
         "url": None,
@@ -2236,7 +2236,7 @@ OPTIONAL_ENV_VARS = {
         "advanced": True,
     },
     "FIRECRAWL_GATEWAY_URL": {
-        "description": "Exact Firecrawl tool-gateway origin override for Nous Subscribers only (optional)",
+        "description": "Exact Firecrawl tool-gateway origin override for JARVIS Managed Users only (optional)",
         "prompt": "Firecrawl gateway URL (leave empty to derive from domain)",
         "url": None,
         "password": False,
@@ -2244,7 +2244,7 @@ OPTIONAL_ENV_VARS = {
         "advanced": True,
     },
     "TOOL_GATEWAY_DOMAIN": {
-        "description": "Shared tool-gateway domain suffix for Nous Subscribers only, used to derive vendor hosts, e.g. nousresearch.com -> firecrawl-gateway.nousresearch.com",
+        "description": "Shared tool-gateway domain suffix for JARVIS Managed Users only, used to derive vendor hosts, e.g. jarvis.local -> firecrawl-gateway.jarvis.local",
         "prompt": "Tool-gateway domain suffix",
         "url": None,
         "password": False,
@@ -2252,7 +2252,7 @@ OPTIONAL_ENV_VARS = {
         "advanced": True,
     },
     "TOOL_GATEWAY_SCHEME": {
-        "description": "Shared tool-gateway URL scheme for Nous Subscribers only, used to derive vendor hosts (`https` by default, set `http` for local gateway testing)",
+        "description": "Shared tool-gateway URL scheme for JARVIS Managed Users only, used to derive vendor hosts (`https` by default, set `http` for local gateway testing)",
         "prompt": "Tool-gateway URL scheme",
         "url": None,
         "password": False,
@@ -2260,7 +2260,7 @@ OPTIONAL_ENV_VARS = {
         "advanced": True,
     },
     "TOOL_GATEWAY_USER_TOKEN": {
-        "description": "Explicit Nous Subscriber access token for tool-gateway requests (optional; otherwise read from the Jarvis auth store)",
+        "description": "Explicit JARVIS Managed Subscriber access token for tool-gateway requests (optional; otherwise read from the Jarvis auth store)",
         "prompt": "Tool-gateway user token",
         "url": None,
         "password": True,
@@ -3897,7 +3897,7 @@ def migrate_config(interactive: bool = True, quiet: bool = False) -> Dict[str, A
     #      base_url, api_key, timeout, extra_body) — canonical slot for
     #      routing the curator fork to a cheaper aux model.
     #   3. Creates `~/.jarvis/logs/curator/` if missing (belt-and-suspenders
-    #      on top of ensure_hermes_home() — old profiles that predate this
+    #      on top of ensure_jarvis_home() — old profiles that predate this
     #      migration still benefit).
     if current_ver < 23:
         try:
@@ -4295,7 +4295,7 @@ def cfg_get(cfg: Optional[Dict[str, Any]], *keys: str, default: Any = None) -> A
       3. ``cfg is None`` (callers sometimes pass ``load_config() or None``).
 
     Named ``cfg_get`` rather than ``cfg_path`` to avoid shadowing the
-    ubiquitous ``cfg_path = _hermes_home / "config.yaml"`` local variable
+    ubiquitous ``cfg_path = _jarvis_home / "config.yaml"`` local variable
     that appears in gateway/run.py, cron/scheduler.py, main.py, etc.
 
     Explicit ``None`` values are returned as-is (matches ``dict.get(key,
@@ -4408,7 +4408,7 @@ def load_config_readonly() -> Dict[str, Any]:
 
 def _load_config_impl(*, want_deepcopy: bool) -> Dict[str, Any]:
     with _CONFIG_LOCK:
-        ensure_hermes_home()
+        ensure_jarvis_home()
         config_path = get_config_path()
         path_key = str(config_path)
 
@@ -4492,7 +4492,7 @@ _FALLBACK_COMMENT = """
 # Supported providers:
 #   openrouter   (OPENROUTER_API_KEY)  — routes to any model
 #   openai-codex (OAuth — jarvis auth) — OpenAI Codex
-#   nous         (OAuth — jarvis auth) — JARVIS Managed
+#   jarvis_managed         (OAuth — jarvis auth) — JARVIS Managed
 #   zai          (ZAI_API_KEY)         — Z.AI / GLM
 #   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
 #   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
@@ -4524,7 +4524,7 @@ _COMMENTED_SECTIONS = """
 # Supported providers:
 #   openrouter   (OPENROUTER_API_KEY)  — routes to any model
 #   openai-codex (OAuth — jarvis auth) — OpenAI Codex
-#   nous         (OAuth — jarvis auth) — JARVIS Managed
+#   jarvis_managed         (OAuth — jarvis auth) — JARVIS Managed
 #   zai          (ZAI_API_KEY)         — Z.AI / GLM
 #   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
 #   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
@@ -4548,7 +4548,7 @@ def save_config(config: Dict[str, Any]):
             return
         from utils import atomic_yaml_write
 
-        ensure_hermes_home()
+        ensure_jarvis_home()
         config_path = get_config_path()
         current_normalized = _normalize_root_model_keys(_normalize_max_turns_config(config))
         normalized = current_normalized
@@ -4817,7 +4817,7 @@ def save_env_value(key: str, value: str):
     value = value.replace("\n", "").replace("\r", "")
     # API keys / tokens must be ASCII — strip non-ASCII with a warning.
     value = _check_non_ascii_credential(key, value)
-    ensure_hermes_home()
+    ensure_jarvis_home()
     env_path = get_env_path()
 
     # On Windows, open() defaults to the system locale (cp1252) which can
@@ -5276,7 +5276,7 @@ def set_config_value(key: str, value: str):
     _set_nested(user_config, key, value)
     
     # Write only user config back (not the full merged defaults)
-    ensure_hermes_home()
+    ensure_jarvis_home()
     from utils import atomic_yaml_write
     atomic_yaml_write(config_path, user_config, sort_keys=False)
     

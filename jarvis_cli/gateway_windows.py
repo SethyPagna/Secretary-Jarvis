@@ -48,7 +48,7 @@ _FALLBACK_PATTERNS = re.compile(
 )
 _ACCESS_DENIED_PATTERN = re.compile(r"(access is denied|acceso denegado)", re.IGNORECASE)
 
-_TASK_NAME_DEFAULT = "Hermes_Gateway"
+_TASK_NAME_DEFAULT = "Jarvis_Gateway"
 _TASK_DESCRIPTION = "JARVIS Gateway - Messaging Platform Integration"
 
 
@@ -230,8 +230,8 @@ def _launch_elevated_uninstall() -> bool:
 def get_task_name() -> str:
     """Scheduled Task name, scoped per profile.
 
-    Default profile: ``Hermes_Gateway``
-    Named profile X: ``Hermes_Gateway_<X>``
+    Default profile: ``Jarvis_Gateway``
+    Named profile X: ``Jarvis_Gateway_<X>``
     """
     _assert_windows()
     # Local import to avoid circular module initialization during jarvis_cli boot.
@@ -294,7 +294,7 @@ def get_startup_entry_path() -> Path:
 def _build_gateway_cmd_script(
     python_path: str,
     working_dir: str,
-    hermes_home: str,
+    jarvis_home: str,
     profile_arg: str,
 ) -> str:
     """Build the ``gateway.cmd`` wrapper content (CRLF-terminated).
@@ -311,7 +311,7 @@ def _build_gateway_cmd_script(
     """
     lines = ["@echo off", f"rem {_TASK_DESCRIPTION}"]
     lines.append(f"cd /d {_quote_cmd_script_arg(working_dir)}")
-    lines.append(f'set "JARVIS_HOME={hermes_home}"')
+    lines.append(f'set "JARVIS_HOME={jarvis_home}"')
     lines.append('set "PYTHONIOENCODING=utf-8"')
     lines.append('set "JARVIS_GATEWAY_DETACHED=1"')
     # VIRTUAL_ENV lets the gateway's own python detection find the venv
@@ -360,10 +360,10 @@ def _write_task_script() -> Path:
 
     python_path = get_python_path()
     working_dir = str(PROJECT_ROOT)
-    hermes_home = str(Path(get_jarvis_home()).resolve())
-    profile_arg = _profile_arg(hermes_home)
+    jarvis_home = str(Path(get_jarvis_home()).resolve())
+    profile_arg = _profile_arg(jarvis_home)
 
-    content = _build_gateway_cmd_script(python_path, working_dir, hermes_home, profile_arg)
+    content = _build_gateway_cmd_script(python_path, working_dir, jarvis_home, profile_arg)
     script_path = get_task_script_path()
     script_path.write_text(content, encoding="utf-8", newline="")
     return script_path
@@ -523,8 +523,8 @@ def _build_gateway_argv() -> tuple[list[str], str, dict[str, str]]:
 
     python_exe, venv_dir, extra_pythonpath = _resolve_detached_python(get_python_path())
     working_dir = str(PROJECT_ROOT)
-    hermes_home = str(Path(get_jarvis_home()).resolve())
-    profile_arg = _profile_arg(hermes_home)
+    jarvis_home = str(Path(get_jarvis_home()).resolve())
+    profile_arg = _profile_arg(jarvis_home)
 
     argv = [python_exe, "-m", "jarvis_cli.main"]
     if profile_arg:
@@ -532,7 +532,7 @@ def _build_gateway_argv() -> tuple[list[str], str, dict[str, str]]:
     argv.extend(["gateway", "run"])
 
     env_overlay = {
-        "JARVIS_HOME": hermes_home,
+        "JARVIS_HOME": jarvis_home,
         "PYTHONIOENCODING": "utf-8",
         "JARVIS_GATEWAY_DETACHED": "1",
         "VIRTUAL_ENV": str(venv_dir),
@@ -840,11 +840,11 @@ def _report_gateway_start(via: str) -> None:
 def _print_next_steps() -> None:
     from jarvis_cli.config import get_jarvis_home
 
-    hermes_home = Path(get_jarvis_home()).resolve()
+    jarvis_home = Path(get_jarvis_home()).resolve()
     print()
     print("Next steps:")
     print("  jarvis gateway status                      # Check status")
-    print(f"  type {hermes_home}\\logs\\gateway.log       # View logs")
+    print(f"  type {jarvis_home}\\logs\\gateway.log       # View logs")
 
 
 def uninstall() -> None:

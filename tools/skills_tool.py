@@ -1269,14 +1269,14 @@ def skill_view(
 
         # Read tags/related_skills with backward compat:
         # Check metadata.jarvis.* first (agentskills.io convention), fall back to top-level
-        hermes_meta = {}
+        jarvis_meta = {}
         metadata = frontmatter.get("metadata")
         if isinstance(metadata, dict):
-            hermes_meta = metadata.get("jarvis", {}) or {}
+            jarvis_meta = metadata.get("jarvis", {}) or {}
 
-        tags = _parse_tags(hermes_meta.get("tags") or frontmatter.get("tags", ""))
+        tags = _parse_tags(jarvis_meta.get("tags") or frontmatter.get("tags", ""))
         related_skills = _parse_tags(
-            hermes_meta.get("related_skills") or frontmatter.get("related_skills", "")
+            jarvis_meta.get("related_skills") or frontmatter.get("related_skills", "")
         )
 
         # Build linked files structure for clear discovery

@@ -90,9 +90,9 @@ from jarvis_cli.timeouts import (
     get_provider_stale_timeout,
 )
 
-_hermes_home = get_jarvis_home()
+_jarvis_home = get_jarvis_home()
 _project_env = Path(__file__).parent / '.env'
-_loaded_env_paths = load_jarvis_dotenv(hermes_home=_hermes_home, project_env=_project_env)
+_loaded_env_paths = load_jarvis_dotenv(jarvis_home=_jarvis_home, project_env=_project_env)
 if _loaded_env_paths:
     for _env_path in _loaded_env_paths:
         logger.info("Loaded environment variables from %s", _env_path)
@@ -129,7 +129,7 @@ from agent.prompt_builder import (
     MEMORY_GUIDANCE, SESSION_SEARCH_GUIDANCE, SKILLS_GUIDANCE,
     JARVIS_AGENT_HELP_GUIDANCE,
     KANBAN_GUIDANCE,
-    build_nous_subscription_prompt,
+    build_jarvis_managed_subscription_prompt,
 )
 from agent.model_metadata import (
     fetch_model_metadata,
@@ -229,10 +229,10 @@ _QWEN_CODE_VERSION = "0.14.1"
 
 def _routermint_headers() -> dict:
     """Return the User-Agent RouterMint needs to avoid Cloudflare 1010 blocks."""
-    from jarvis_cli import __version__ as _HERMES_VERSION
+    from jarvis_cli import __version__ as _JARVIS_VERSION
 
     return {
-        "User-Agent": f"JarvisAgent/{_HERMES_VERSION}",
+        "User-Agent": f"JarvisAgent/{_JARVIS_VERSION}",
     }
 
 
@@ -954,9 +954,9 @@ class AIAgent:
     ) -> bool:
         """Return True when this provider/model pair should use Responses API."""
         normalized_provider = (provider or "").strip().lower()
-        # Nous serves GPT-5.x models via its OpenAI-compatible chat
+        # JARVIS Managed serves GPT-5.x models via its OpenAI-compatible chat
         # completions endpoint; its /v1/responses endpoint returns 404.
-        if normalized_provider == "nous":
+        if normalized_provider == "jarvis_managed":
             return False
         if normalized_provider == "copilot":
             try:
@@ -2647,28 +2647,28 @@ class AIAgent:
 
         return True
 
-    def _try_refresh_nous_client_credentials(self, *, force: bool = True) -> bool:
-        if self.api_mode != "chat_completions" or self.provider != "nous":
+    def _try_refresh_jarvis_managed_client_credentials(self, *, force: bool = True) -> bool:
+        if self.api_mode != "chat_completions" or self.provider != "jarvis_managed":
             return False
 
         try:
             from jarvis_cli.auth import (
-                NOUS_INFERENCE_AUTH_MODE_AUTO,
-                NOUS_INFERENCE_AUTH_MODE_LEGACY,
-                resolve_nous_runtime_credentials,
+                JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO,
+                JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY,
+                resolve_jarvis_managed_runtime_credentials,
             )
 
-            creds = resolve_nous_runtime_credentials(
-                min_key_ttl_seconds=max(60, int(os.getenv("JARVIS_NOUS_MIN_KEY_TTL_SECONDS", "1800"))),
-                timeout_seconds=float(os.getenv("JARVIS_NOUS_TIMEOUT_SECONDS", "15")),
+            creds = resolve_jarvis_managed_runtime_credentials(
+                min_key_ttl_seconds=max(60, int(os.getenv("JARVIS_JARVIS_MANAGED_MIN_KEY_TTL_SECONDS", "1800"))),
+                timeout_seconds=float(os.getenv("JARVIS_JARVIS_MANAGED_TIMEOUT_SECONDS", "15")),
                 inference_auth_mode=(
-                    NOUS_INFERENCE_AUTH_MODE_LEGACY
+                    JARVIS_MANAGED_INFERENCE_AUTH_MODE_LEGACY
                     if force
-                    else NOUS_INFERENCE_AUTH_MODE_AUTO
+                    else JARVIS_MANAGED_INFERENCE_AUTH_MODE_AUTO
                 ),
             )
         except Exception as exc:
-            logger.debug("Nous credential refresh failed: %s", exc)
+            logger.debug("JARVIS Managed credential refresh failed: %s", exc)
             return False
 
         api_key = creds.get("api_key")
@@ -2682,10 +2682,10 @@ class AIAgent:
         self.base_url = base_url.strip().rstrip("/")
         self._client_kwargs["api_key"] = self.api_key
         self._client_kwargs["base_url"] = self.base_url
-        # Nous requests should not inherit OpenRouter-only attribution headers.
+        # JARVIS Managed requests should not inherit OpenRouter-only attribution headers.
         self._client_kwargs.pop("default_headers", None)
 
-        if not self._replace_primary_openai_client(reason="nous_credential_refresh"):
+        if not self._replace_primary_openai_client(reason="jarvis_managed_credential_refresh"):
             return False
 
         return True
@@ -3587,9 +3587,9 @@ class AIAgent:
 
         OpenRouter forwards unknown extra_body fields to upstream providers.
         Some providers/routes reject `reasoning` with 400s, so gate it to
-        known reasoning-capable model families and direct Nous Portal.
+        known reasoning-capable model families and direct JARVIS Managed.
         """
-        if base_url_host_matches(self._base_url_lower, "nousresearch.com"):
+        if base_url_host_matches(self._base_url_lower, "jarvis.local"):
             return True
         if base_url_host_matches(self._base_url_lower, "ai-gateway.vercel.sh"):
             return True

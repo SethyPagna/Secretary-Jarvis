@@ -571,7 +571,7 @@ Five touchpoints:
 
 ### 8. Toolsets
 
-1. **`toolsets.py`** — Add `"jarvis-newplat"` toolset definition with `_HERMES_CORE_TOOLS`
+1. **`toolsets.py`** — Add `"jarvis-newplat"` toolset definition with `_JARVIS_CORE_TOOLS`
 2. **`toolsets.py`** — Add `"jarvis-newplat"` to the `"jarvis-gateway"` includes list
 
 ### 9. Optional: Platform Hints

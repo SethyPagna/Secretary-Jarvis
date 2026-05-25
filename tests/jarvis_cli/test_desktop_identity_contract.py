@@ -24,14 +24,14 @@ VISIBLE_PRODUCT_FILES = [
 ]
 
 BANNED_LEGACY_BRAND_TEXT = [
-    "Nous Research",
-    "NousResearch",
-    "nousresearch",
-    "nousresearch.com",
-    "Hermes Agent",
+    "JARVIS Project",
+    "JARVISProject",
+    "jarvisproject",
+    "jarvis.local",
+    "JARVIS",
     "JarvisCLI",
-    "HermesClaw",
-    "hermes-agent",
+    "JarvisClaw",
+    "jarvis-agent",
 ]
 
 
@@ -45,7 +45,7 @@ class DesktopIdentityContractTests(unittest.TestCase):
                     self.assertNotIn(banned, text)
 
     def test_autonomous_agent_skill_is_rebranded_to_jarvis(self) -> None:
-        legacy_path = ROOT / "skills" / "autonomous-ai-agents" / "hermes-agent" / "SKILL.md"
+        legacy_path = ROOT / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md"
         current_path = ROOT / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md"
 
         self.assertFalse(legacy_path.exists())

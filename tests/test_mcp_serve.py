@@ -26,7 +26,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(autouse=True)
-def _isolate_hermes_home(tmp_path, monkeypatch):
+def _isolate_jarvis_home(tmp_path, monkeypatch):
     """Redirect JARVIS_HOME to a temp directory."""
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
     try:

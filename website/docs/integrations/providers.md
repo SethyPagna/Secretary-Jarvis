@@ -14,7 +14,7 @@ You need at least one way to connect to an LLM. Use `jarvis model` to switch pro
 
 | Provider | Setup |
 |----------|-------|
-| **Nous Portal** | `jarvis model` (OAuth, subscription-based) |
+| **JARVIS Managed** | `jarvis model` (OAuth, subscription-based) |
 | **OpenAI Codex** | `jarvis model` (ChatGPT OAuth, uses Codex models) |
 | **GitHub Copilot** | `jarvis model` (OAuth device code flow, `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `gh auth token`) |
 | **GitHub Copilot ACP** | `jarvis model` (spawns local `copilot --acp --stdio`) |
@@ -144,11 +144,11 @@ If a token refresh fails with a terminal error (HTTP 4xx, `invalid_grant`, revok
 :::
 
 :::warning
-Even when using Nous Portal, Codex, or a custom endpoint, some tools (vision, web summarization, MoA) use a separate "auxiliary" model. By default (`auxiliary.*.provider: "auto"`), Jarvis routes these tasks to your **main chat model** — the same model you picked in `jarvis model`. You can override each task individually to route it to a cheaper/faster model (e.g. Gemini Flash on OpenRouter) — see [Auxiliary Models](/docs/user-guide/configuration#auxiliary-models).
+Even when using JARVIS Managed, Codex, or a custom endpoint, some tools (vision, web summarization, MoA) use a separate "auxiliary" model. By default (`auxiliary.*.provider: "auto"`), Jarvis routes these tasks to your **main chat model** — the same model you picked in `jarvis model`. You can override each task individually to route it to a cheaper/faster model (e.g. Gemini Flash on OpenRouter) — see [Auxiliary Models](/docs/user-guide/configuration#auxiliary-models).
 :::
 
-:::tip Nous Tool Gateway
-Paid Nous Portal subscribers also get access to the **[Tool Gateway](/docs/user-guide/features/tool-gateway)** — web search, image generation, TTS, and browser automation routed through your subscription. No extra API keys needed. It's offered automatically during `jarvis model` setup, or enable it later with `jarvis tools`.
+:::tip JARVIS Tool Gateway
+Paid JARVIS Managed subscribers also get access to the **[Tool Gateway](/docs/user-guide/features/tool-gateway)** — web search, image generation, TTS, and browser automation routed through your subscription. No extra API keys needed. It's offered automatically during `jarvis model` setup, or enable it later with `jarvis tools`.
 :::
 
 ### Two Commands for Model Management
@@ -162,17 +162,17 @@ Jarvis has **two** model commands that serve different purposes:
 
 If you're trying to switch to a provider you haven't set up yet (e.g. you only have OpenRouter configured and want to use Anthropic), you need `jarvis model`, not `/model`. Exit your session first (`Ctrl+C` or `/quit`), run `jarvis model`, complete the provider setup, then start a new session.
 
-### Nous Portal
+### JARVIS Managed
 
-Subscription-based access to Jarvis-4 models (`Jarvis-4-70B`, `Jarvis-4.3-36B`, `Jarvis-4-405B`) via Nous Research's portal. Run `jarvis model`, pick **Nous Portal**, sign in through the browser — Jarvis stores a long-lived refresh token at `~/.jarvis/auth.json`.
+Subscription-based access to Jarvis-4 models (`Jarvis-4-70B`, `Jarvis-4.3-36B`, `Jarvis-4-405B`) via JARVIS Project's portal. Run `jarvis model`, pick **JARVIS Managed**, sign in through the browser — Jarvis stores a long-lived refresh token at `~/.jarvis/auth.json`.
 
 The refresh token is also shared across profiles via a shared token store, so logging in on one profile carries over to the others.
 
 #### Token handling
 
-Jarvis mints a short-lived JWT from your stored Nous refresh token on each inference call rather than reusing a long-lived API key. The token lifecycle is fully automatic — refresh, mint, retry on transient 401 — and you never see it.
+Jarvis mints a short-lived JWT from your stored JARVIS Managed refresh token on each inference call rather than reusing a long-lived API key. The token lifecycle is fully automatic — refresh, mint, retry on transient 401 — and you never see it.
 
-If the portal invalidates the refresh token (password change, manual revoke, session expiry), the invalid refresh token is quarantined locally so Jarvis stops replaying it and you don't see a stream of identical 401s. The next call surfaces a clear "re-authentication required" message. Run `jarvis auth add nous` to log in again; the quarantine clears on the next successful login.
+If the portal invalidates the refresh token (password change, manual revoke, session expiry), the invalid refresh token is quarantined locally so Jarvis stops replaying it and you don't see a stream of identical 401s. The next call surfaces a clear "re-authentication required" message. Run `jarvis auth add jarvis_managed` to log in again; the quarantine clears on the next successful login.
 
 ### Anthropic (Native)
 
@@ -1171,7 +1171,7 @@ Jarvis uses a multi-source resolution chain to detect the correct context window
 4. **Endpoint `/models`** — queries your server's API (local/custom endpoints)
 5. **Anthropic `/v1/models`** — queries Anthropic's API for `max_input_tokens` (API-key users only)
 6. **OpenRouter API** — live model metadata from OpenRouter
-7. **Nous Portal** — suffix-matches Nous model IDs against OpenRouter metadata
+7. **JARVIS Managed** — suffix-matches JARVIS Managed model IDs against OpenRouter metadata
 8. **[models.dev](https://models.dev)** — community-maintained registry with provider-specific context lengths for 3800+ models across 100+ providers
 9. **Fallback defaults** — broad model family patterns (128K default)
 
@@ -1373,7 +1373,7 @@ model:
 
 | Use Case | Recommended |
 |----------|-------------|
-| **Just want it to work** | OpenRouter (default) or Nous Portal |
+| **Just want it to work** | OpenRouter (default) or JARVIS Managed |
 | **Local models, easy setup** | Ollama |
 | **Production GPU serving** | vLLM or SGLang |
 | **Mac / no GPU** | Ollama or llama.cpp |
@@ -1486,7 +1486,7 @@ fallback_model:
 
 When activated, the fallback swaps the model and provider mid-session without losing your conversation. The chain is tried entry-by-entry; activation is one-shot per session.
 
-Supported providers: `openrouter`, `nous`, `openai-codex`, `copilot`, `copilot-acp`, `anthropic`, `gemini`, `google-gemini-cli`, `qwen-oauth`, `huggingface`, `zai`, `kimi-coding`, `kimi-coding-cn`, `minimax`, `minimax-cn`, `minimax-oauth`, `deepseek`, `nvidia`, `xai`, `xai-oauth`, `ollama-cloud`, `bedrock`, `ai-gateway`, `azure-foundry`, `opencode-zen`, `opencode-go`, `kilocode`, `xiaomi`, `arcee`, `gmi`, `stepfun`, `lmstudio`, `alibaba`, `alibaba-coding-plan`, `tencent-tokenhub`, `custom`.
+Supported providers: `openrouter`, `jarvis_managed`, `openai-codex`, `copilot`, `copilot-acp`, `anthropic`, `gemini`, `google-gemini-cli`, `qwen-oauth`, `huggingface`, `zai`, `kimi-coding`, `kimi-coding-cn`, `minimax`, `minimax-cn`, `minimax-oauth`, `deepseek`, `nvidia`, `xai`, `xai-oauth`, `ollama-cloud`, `bedrock`, `ai-gateway`, `azure-foundry`, `opencode-zen`, `opencode-go`, `kilocode`, `xiaomi`, `arcee`, `gmi`, `stepfun`, `lmstudio`, `alibaba`, `alibaba-coding-plan`, `tencent-tokenhub`, `custom`.
 
 :::tip
 Fallback is configured exclusively through `config.yaml` — or interactively via `jarvis fallback`. For full details on when it triggers, how the chain advances, and how it interacts with auxiliary tasks and delegation, see [Fallback Providers](/docs/user-guide/features/fallback-providers).
