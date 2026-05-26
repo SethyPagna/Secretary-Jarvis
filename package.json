@@ -62,10 +62,15 @@
     ],
     "win": {
       "target": [
-        "portable"
+        "portable",
+        "dir"
       ],
       "icon": "assets/icon.ico",
       "signAndEditExecutable": false
+    },
+    "portable": {
+      "useZip": true,
+      "unpackDirName": false
     },
     "mac": {
       "target": [

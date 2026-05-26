@@ -1,4 +1,5 @@
 param(
+    [string]$AppPath = "",
     [int]$BackendPort = 18768,
     [int]$DebugPort = 19223,
     [int]$TimeoutSec = 90,
@@ -8,10 +9,14 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$ElectronCmd = Join-Path $RepoRoot "node_modules/.bin/electron.cmd"
-if (-not (Test-Path $ElectronCmd)) {
-    throw "Electron command not found at $ElectronCmd. Run npm install first."
+$DefaultElectronCmd = Join-Path $RepoRoot "node_modules/.bin/electron.cmd"
+if (-not $AppPath) {
+    $AppPath = $DefaultElectronCmd
 }
+if (-not (Test-Path $AppPath)) {
+    throw "JARVIS app command not found at $AppPath."
+}
+$AppPath = [string](Resolve-Path $AppPath)
 
 if (-not $ScreenshotPath) {
     $ScreenshotPath = Join-Path ([IO.Path]::GetTempPath()) "jarvis-electron-renderer-smoke.png"
@@ -64,10 +69,14 @@ $PreviousBackendPort = $env:JARVIS_DESKTOP_BACKEND_PORT
 $PreviousNoRuntime = $env:JARVIS_LOCAL_RUNTIME_AUTOSTART
 $PreviousModelsDir = $env:JARVIS_MODELS_DIR
 $PreviousResourceRoot = $env:JARVIS_RESOURCE_ROOT
+$PreviousPortableDir = $env:PORTABLE_EXECUTABLE_DIR
+$PreviousPortableFile = $env:PORTABLE_EXECUTABLE_FILE
+$PreviousRemoteDebuggingPort = $env:JARVIS_REMOTE_DEBUGGING_PORT
 $Process = $null
 
 try {
     $env:JARVIS_DESKTOP_BACKEND_PORT = [string]$BackendPort
+    $env:JARVIS_REMOTE_DEBUGGING_PORT = [string]$DebugPort
     $env:JARVIS_LOCAL_RUNTIME_AUTOSTART = "0"
     $env:JARVIS_RESOURCE_ROOT = [string]$RepoRoot
     $modelsDir = Resolve-Path (Join-Path $RepoRoot "..\models") -ErrorAction SilentlyContinue
@@ -75,10 +84,24 @@ try {
         $env:JARVIS_MODELS_DIR = [string]$modelsDir
     }
 
+    $isDevElectron = ([IO.Path]::GetFullPath($AppPath) -ieq [IO.Path]::GetFullPath($DefaultElectronCmd))
+    $workingDirectory = if ($isDevElectron) {
+        [string]$RepoRoot
+    }
+    else {
+        Split-Path -Parent (Resolve-Path $AppPath)
+    }
+    $arguments = if ($isDevElectron) {
+        @(".", "--remote-debugging-port=$DebugPort")
+    }
+    else {
+        @("--remote-debugging-port=$DebugPort")
+    }
+
     $Process = Start-Process `
-        -FilePath $ElectronCmd `
-        -ArgumentList @(".", "--remote-debugging-port=$DebugPort") `
-        -WorkingDirectory $RepoRoot `
+        -FilePath $AppPath `
+        -ArgumentList $arguments `
+        -WorkingDirectory $workingDirectory `
         -WindowStyle Hidden `
         -PassThru
 
@@ -125,6 +148,9 @@ try {
             $BodyText -match "Terminal / Chat Input" -and
             $BodyText -match "How can I help" -and
             $BodyText -notmatch "\bOFFLINE\b" -and
+            $BodyText -notmatch "\bKANBAN\b" -and
+            $BodyText -notmatch "\bACHIEVEMENTS\b" -and
+            $BodyText -notmatch "\bPlugins\b" -and
             $StatusVersion -notmatch "^ERR:" -and
             $StatsCpu -notmatch "^ERR:"
         if (-not $Ready) {
@@ -143,6 +169,7 @@ try {
     [IO.File]::WriteAllBytes($ScreenshotPath, [Convert]::FromBase64String([string]$screenshot.result.data))
 
     Write-Host "JARVIS Electron renderer smoke passed."
+    Write-Host "App: $AppPath"
     Write-Host "Screenshot: $ScreenshotPath"
     Write-Host "Status: $StatusVersion"
     Write-Host "Stats CPU: $StatsCpu"
@@ -184,5 +211,26 @@ finally {
     }
     else {
         $env:JARVIS_RESOURCE_ROOT = $PreviousResourceRoot
+    }
+
+    if ($null -eq $PreviousPortableDir) {
+        Remove-Item Env:\PORTABLE_EXECUTABLE_DIR -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:PORTABLE_EXECUTABLE_DIR = $PreviousPortableDir
+    }
+
+    if ($null -eq $PreviousPortableFile) {
+        Remove-Item Env:\PORTABLE_EXECUTABLE_FILE -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:PORTABLE_EXECUTABLE_FILE = $PreviousPortableFile
+    }
+
+    if ($null -eq $PreviousRemoteDebuggingPort) {
+        Remove-Item Env:\JARVIS_REMOTE_DEBUGGING_PORT -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:JARVIS_REMOTE_DEBUGGING_PORT = $PreviousRemoteDebuggingPort
     }
 }

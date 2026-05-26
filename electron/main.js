@@ -13,6 +13,11 @@ const MINIMIZE_TO_TRAY = /^(1|true|yes)$/i.test(process.env.JARVIS_MINIMIZE_TO_T
 const LOCAL_RUNTIME_AUTOSTART = !/^(0|false|no)$/i.test(process.env.JARVIS_LOCAL_RUNTIME_AUTOSTART || '1')
 const LOCAL_RUNTIME_START_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_RUNTIME_START_TIMEOUT_MS || '60000', 10)
 const LOCAL_RUNTIME_STOP_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_RUNTIME_STOP_TIMEOUT_MS || '10000', 10)
+const REMOTE_DEBUGGING_PORT = process.env.JARVIS_REMOTE_DEBUGGING_PORT || ''
+
+if (/^\d+$/.test(REMOTE_DEBUGGING_PORT)) {
+  app.commandLine.appendSwitch('remote-debugging-port', REMOTE_DEBUGGING_PORT)
+}
 
 let mainWindow = null
 let backendProcess = null

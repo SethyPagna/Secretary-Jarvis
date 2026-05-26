@@ -3,6 +3,7 @@ param(
     [string]$Python = "",
     [switch]$SkipInstaller,
     [switch]$SkipSmoke,
+    [switch]$SkipRendererSmoke,
     [int]$SmokePort = 18765
 )
 
@@ -101,7 +102,6 @@ try {
         Invoke-Checked $npm.Source run desktop:pack
         Get-ChildItem -Path (Join-Path $RepoRoot "release") -Force -ErrorAction SilentlyContinue |
             Where-Object {
-                ($_.PSIsContainer -and $_.Name -eq "win-unpacked") -or
                 ((-not $_.PSIsContainer) -and (
                     $_.Name -like "JARVIS Setup*.exe" -or
                     $_.Name -like "JARVIS Setup*.blockmap" -or
@@ -109,6 +109,21 @@ try {
                 ))
             } |
             Remove-Item -Recurse -Force
+
+        if (-not $SkipRendererSmoke) {
+            $portableExe = Join-Path $RepoRoot "release/JARVIS 1.0.0.exe"
+            $unpackedExe = Join-Path $RepoRoot "release/win-unpacked/JARVIS.exe"
+            $rendererSmoke = Join-Path $PSScriptRoot "smoke-electron-renderer.ps1"
+            if (Test-Path $portableExe) {
+                & $rendererSmoke -AppPath $portableExe -BackendPort ($SmokePort + 1) -DebugPort ($SmokePort + 601) -TimeoutSec 180
+            }
+            elseif (Test-Path $unpackedExe) {
+                & $rendererSmoke -AppPath $unpackedExe -BackendPort ($SmokePort + 1) -DebugPort ($SmokePort + 601) -TimeoutSec 120
+            }
+            else {
+                throw "Electron pack did not create release/JARVIS 1.0.0.exe or release/win-unpacked/JARVIS.exe."
+            }
+        }
     }
 }
 finally {
