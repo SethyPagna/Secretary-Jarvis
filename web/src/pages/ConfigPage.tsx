@@ -38,6 +38,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import type { IntegrationStatusResponse } from "@/lib/api";
 import { getNestedValue, setNestedValue } from "@/lib/nested";
 import { useToast } from "@/hooks/useToast";
 import { Toast } from "@/components/Toast";
@@ -52,6 +53,7 @@ import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";
+import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -122,6 +124,7 @@ export default function ConfigPage() {
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [confirmReset, setConfirmReset] = useState(false);
   const [unifiedSettings, setUnifiedSettings] = useState<Record<string, any> | null>(null);
+  const [integrations, setIntegrations] = useState<IntegrationStatusResponse | null>(null);
   const { toast, showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useI18n();
@@ -186,6 +189,10 @@ export default function ConfigPage() {
     api
       .getSettings()
       .then((resp) => setUnifiedSettings(resp as unknown as Record<string, any>))
+      .catch(() => {});
+    api
+      .getIntegrationStatus(true)
+      .then(setIntegrations)
       .catch(() => {});
   }, []);
 
@@ -599,6 +606,16 @@ export default function ConfigPage() {
               }}
             />
           </div>
+
+          {integrations && (
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+              {["telegram", "huggingface", "mistral", "whatsapp"].map((key) => {
+                const item = integrations.services[key];
+                if (!item) return null;
+                return <IntegrationHealthCard key={key} item={item} />;
+              })}
+            </div>
+          )}
         </>
       )}
 
@@ -813,5 +830,49 @@ function SettingsGroupCard({
       </span>
       <Search className="h-4 w-4 shrink-0 text-white/32 transition group-hover:text-cyan-100/80" />
     </button>
+  );
+}
+
+function IntegrationHealthCard({
+  item,
+}: {
+  item: IntegrationStatusResponse["services"][string];
+}) {
+  const live = item.live;
+  const ok = live ? live.ok === true : item.configured;
+  const status = !item.configured
+    ? "Missing"
+    : live
+      ? live.ok
+        ? "Live"
+        : "Check failed"
+      : "Configured";
+  const detail = live?.error
+    ? live.error
+    : live?.status_code
+      ? `HTTP ${live.status_code}${live.latency_ms ? ` / ${Math.round(live.latency_ms)} ms` : ""}`
+      : item.source || "Configured";
+
+  return (
+    <div
+      className="rounded-md border border-white/10 bg-[#101827]/84 p-3 text-[#e0e0e0]"
+      title={`Source: ${item.source || "none"}. Key: ${item.redacted || "none"}. ${detail}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="truncate text-xs font-semibold uppercase tracking-[0.08em] text-cyan-100/78">
+          {item.label}
+        </div>
+        <span
+          className={cn(
+            "rounded-sm px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em]",
+            ok ? "bg-emerald-300/12 text-emerald-100" : "bg-amber-300/12 text-amber-100",
+          )}
+        >
+          {status}
+        </span>
+      </div>
+      <div className="mt-2 truncate font-mono text-xs text-white/78">{item.source || "not set"}</div>
+      <div className="mt-1 truncate text-xs text-slate-300/64">{detail}</div>
+    </div>
   );
 }

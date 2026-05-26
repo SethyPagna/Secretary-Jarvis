@@ -1419,10 +1419,142 @@ def _settings_payload() -> dict[str, Any]:
     }
 
 
+def _mask_secret(value: str) -> str:
+    if not value:
+        return ""
+    if len(value) <= 8:
+        return "***"
+    return f"{value[:3]}...{value[-4:]}"
+
+
+def _integration_secret(env: Mapping[str, str], aliases: list[str]) -> tuple[str, str]:
+    for key in aliases:
+        value = str(env.get(key) or os.getenv(key) or "").strip()
+        if value:
+            return key, value
+    return "", ""
+
+
+def _probe_json_url(url: str, *, token: str = "", auth_scheme: str = "Bearer", timeout: float = 8.0) -> dict[str, Any]:
+    import urllib.error
+    import urllib.request
+
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": "JARVIS-Desktop/0.14",
+    }
+    if token:
+        headers["Authorization"] = f"{auth_scheme} {token}"
+    request = urllib.request.Request(url, headers=headers, method="GET")
+    started = time.perf_counter()
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            body = response.read(4096).decode("utf-8", errors="replace")
+            return {
+                "ok": 200 <= response.status < 300,
+                "status_code": response.status,
+                "latency_ms": round((time.perf_counter() - started) * 1000, 2),
+                "sample": body[:240],
+            }
+    except urllib.error.HTTPError as exc:
+        body = exc.read(4096).decode("utf-8", errors="replace")
+        return {
+            "ok": False,
+            "status_code": exc.code,
+            "latency_ms": round((time.perf_counter() - started) * 1000, 2),
+            "error": body[:240] or str(exc),
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "status_code": None,
+            "latency_ms": round((time.perf_counter() - started) * 1000, 2),
+            "error": str(exc),
+        }
+
+
+def _integration_status_snapshot(live: bool = False) -> dict[str, Any]:
+    env = {**os.environ, **load_env()}
+    catalog = {
+        "telegram": {
+            "label": "Telegram",
+            "aliases": ["JARVIS_TELEGRAM_TOKEN", "TELEGRAM_BOT_TOKEN"],
+            "category": "messaging",
+            "probe": lambda token: _probe_json_url(
+                f"https://api.telegram.org/bot{token}/getMe",
+                timeout=8,
+            ),
+        },
+        "huggingface": {
+            "label": "Hugging Face",
+            "aliases": ["HF_TOKEN", "HUGGINGFACE_API_KEY", "HUGGING_FACE_HUB_TOKEN"],
+            "category": "provider",
+            "probe": lambda token: _probe_json_url(
+                "https://huggingface.co/api/whoami-v2",
+                token=token,
+                timeout=8,
+            ),
+        },
+        "mistral": {
+            "label": "Mistral AI",
+            "aliases": ["MISTRAL_API_KEY"],
+            "category": "provider",
+            "probe": lambda token: _probe_json_url(
+                "https://api.mistral.ai/v1/models",
+                token=token,
+                timeout=8,
+            ),
+        },
+        "whatsapp": {
+            "label": "WhatsApp",
+            "aliases": ["WHATSAPP_ENABLED", "JARVIS_WHATSAPP_PHONE", "WHATSAPP_HOME_CHANNEL"],
+            "category": "messaging",
+            "probe": None,
+        },
+    }
+    configured_optional = sorted(
+        key for key in OPTIONAL_ENV_VARS
+        if bool(str(env.get(key) or os.getenv(key) or "").strip())
+    )
+    services = {}
+    for name, spec in catalog.items():
+        source, secret = _integration_secret(env, list(spec["aliases"]))
+        item = {
+            "label": spec["label"],
+            "category": spec["category"],
+            "configured": bool(secret),
+            "source": source,
+            "redacted": _mask_secret(secret),
+            "aliases": spec["aliases"],
+            "live_checked": False,
+            "live": None,
+        }
+        if live and secret and spec.get("probe"):
+            item["live_checked"] = True
+            item["live"] = spec["probe"](secret)
+        elif live and not secret:
+            item["live_checked"] = True
+            item["live"] = {"ok": False, "error": "missing key"}
+        services[name] = item
+    return {
+        "ok": True,
+        "live": live,
+        "env_path": str(get_env_path()),
+        "configured_optional_keys": configured_optional,
+        "services": services,
+    }
+
+
 @app.get("/api/settings")
 async def get_settings():
     """Return the unified desktop settings tree."""
     return _settings_payload()
+
+
+@app.get("/api/integrations/status")
+async def get_integrations_status(live: bool = False):
+    """Return masked API-key/provider status, optionally with live network probes."""
+    return await asyncio.to_thread(_integration_status_snapshot, live)
 
 
 @app.post("/api/settings")

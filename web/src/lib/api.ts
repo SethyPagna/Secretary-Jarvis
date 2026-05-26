@@ -128,6 +128,10 @@ export const api = {
     fetchJSON<ModelsAnalyticsResponse>(`/api/analytics/models?days=${days}`),
   getConfig: () => fetchJSON<Record<string, unknown>>("/api/config"),
   getSettings: () => fetchJSON<UnifiedSettingsResponse>("/api/settings"),
+  getIntegrationStatus: (live = false) =>
+    fetchJSON<IntegrationStatusResponse>(
+      `/api/integrations/status${live ? "?live=true" : ""}`,
+    ),
   saveSettings: (settings: Record<string, unknown>) =>
     fetchJSON<{ ok: boolean; settings: UnifiedSettingsResponse }>("/api/settings", {
       method: "POST",
@@ -465,6 +469,32 @@ export interface RuntimeStatsResponse {
   delegate_souls?: string[];
   uptime_seconds: number;
   warnings: string[];
+}
+
+export interface IntegrationLiveProbe {
+  ok?: boolean;
+  status_code?: number | null;
+  latency_ms?: number | null;
+  error?: string;
+}
+
+export interface IntegrationServiceStatus {
+  label: string;
+  category: string;
+  configured: boolean;
+  source: string;
+  redacted: string;
+  aliases: string[];
+  live_checked: boolean;
+  live: IntegrationLiveProbe | null;
+}
+
+export interface IntegrationStatusResponse {
+  ok: boolean;
+  live: boolean;
+  env_path: string;
+  configured_optional_keys: string[];
+  services: Record<string, IntegrationServiceStatus>;
 }
 
 export interface RuntimeReadinessCheck {
