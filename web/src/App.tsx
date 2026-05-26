@@ -411,7 +411,10 @@ export default function App() {
   }, [showTokenAnalytics]);
 
   const sidebarNav = useMemo(
-    () => partitionSidebarNav(builtinNav, manifests),
+    () => {
+      const partitioned = partitionSidebarNav(builtinNav, manifests);
+      return { ...partitioned, pluginItems: [] };
+    },
     [builtinNav, manifests],
   );
   const sidebarGroups = useMemo(
@@ -552,36 +555,6 @@ export default function App() {
                 </div>
               ))}
 
-              {sidebarNav.pluginItems.length > 0 && (
-                <div
-                  aria-labelledby="jarvis-sidebar-plugin-nav-heading"
-                  className="flex flex-col border-t border-current/10 pb-2"
-                  role="group"
-                >
-                  <span
-                    className={cn(
-                      "px-5 pt-2.5 pb-1",
-                      sidebarCollapsed ? "lg:hidden" : "",
-                      "text-xs font-semibold tracking-[0.08em] text-slate-400",
-                    )}
-                    id="jarvis-sidebar-plugin-nav-heading"
-                  >
-                    {t.app.pluginNavSection}
-                  </span>
-
-                  <ul className="flex flex-col">
-                    {sidebarNav.pluginItems.map((item) => (
-                      <SidebarNavLink
-                        closeMobile={closeMobile}
-                        item={item}
-                        key={item.path}
-                        sidebarCollapsed={sidebarCollapsed}
-                        t={t}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              )}
             </nav>
 
             <SidebarSystemActions

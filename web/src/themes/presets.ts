@@ -40,7 +40,7 @@ const DEFAULT_LAYOUT: ThemeLayout = {
 
 export const defaultTheme: DashboardTheme = {
   name: "default",
-  label: "JARVIS Orbit",
+  label: "Orbit",
   description: "Classic dark teal — the canonical Jarvis look",
   palette: {
     background: { hex: "#080b10", alpha: 1 },
@@ -190,8 +190,8 @@ export const roseTheme: DashboardTheme = {
  */
 export const defaultLargeTheme: DashboardTheme = {
   name: "default-large",
-  label: "JARVIS Orbit (Large)",
-  description: "JARVIS Orbit with bigger fonts and roomier spacing",
+  label: "Orbit Large",
+  description: "Orbit with bigger fonts and roomier spacing",
   palette: defaultTheme.palette,
   typography: {
     ...DEFAULT_TYPOGRAPHY,

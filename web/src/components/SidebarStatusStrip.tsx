@@ -18,8 +18,6 @@ export function SidebarStatusStrip() {
   }
 
   const gw = gatewayLine(status, t);
-  const { activeSessionsLabel, gatewayStatusLabel } = t.app;
-
   return (
     <Link
       to="/sessions"
@@ -33,21 +31,29 @@ export function SidebarStatusStrip() {
         "focus-visible:ring-inset",
       )}
     >
-      <div className="flex flex-col gap-1 text-xs font-semibold leading-snug tracking-[0.04em]">
-        <p className="break-words">
-          <span className="text-text-tertiary">{gatewayStatusLabel}</span>{" "}
+      <div className="flex min-w-0 items-center gap-2 text-xs font-semibold leading-snug tracking-[0.04em]">
+        <span className={cn("h-2 w-2 shrink-0 rounded-full", gatewayDotTone(status))} />
+        <span className="min-w-0 truncate">
           <span className={cn("font-medium", gw.tone)}>{gw.label}</span>
-        </p>
-
-        <p className="break-words">
-          <span className="text-text-tertiary">{activeSessionsLabel}</span>{" "}
-          <span className="tabular-nums text-text-secondary">
-            {status.active_sessions}
-          </span>
-        </p>
+          <span className="text-text-tertiary"> / sessions </span>
+          <span className="tabular-nums text-text-secondary">{status.active_sessions}</span>
+        </span>
       </div>
     </Link>
   );
+}
+
+function gatewayDotTone(status: StatusResponse): string {
+  if (status.gateway_state === "running" || status.gateway_running) {
+    return "bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.65)]";
+  }
+  if (status.gateway_state === "starting") {
+    return "bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.5)]";
+  }
+  if (status.gateway_state === "startup_failed") {
+    return "bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.55)]";
+  }
+  return "bg-slate-500";
 }
 
 function gatewayLine(

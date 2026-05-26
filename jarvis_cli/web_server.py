@@ -4694,8 +4694,8 @@ def mount_spa(application: FastAPI):
 # Built-in dashboard themes - label + description only.  The actual color
 # definitions live in the frontend (web/src/themes/presets.ts).
 _BUILTIN_DASHBOARD_THEMES = [
-    {"name": "default",       "label": "JARVIS Orbit",         "description": "Dark orbit palette with sharper contrast"},
-    {"name": "default-large", "label": "JARVIS Orbit (Large)", "description": "JARVIS Orbit with bigger fonts and roomier spacing"},
+    {"name": "default",       "label": "Orbit",         "description": "Dark orbit palette with sharper contrast"},
+    {"name": "default-large", "label": "Orbit Large",   "description": "Orbit with bigger fonts and roomier spacing"},
     {"name": "midnight",      "label": "Midnight",            "description": "Deep blue-violet with cool accents"},
     {"name": "ember",     "label": "Ember",          "description": "Warm crimson and bronze"},
     {"name": "mono",      "label": "Mono",           "description": "Clean grayscale"},
