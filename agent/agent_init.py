@@ -1450,8 +1450,9 @@ def init_agent(
         )
     agent.compression_enabled = compression_enabled
 
-    # Reject models whose context window is below the minimum required
-    # for reliable tool-calling workflows (64K tokens).
+    # Reject models whose context window is below the configured minimum
+    # required for reliable tool-calling workflows. Desktop local models are
+    # allowed to continue with a warning so a packaged app can still answer.
     from agent.model_metadata import MINIMUM_CONTEXT_LENGTH
     _ctx = getattr(agent.context_compressor, "context_length", 0)
     if _ctx and _ctx < MINIMUM_CONTEXT_LENGTH:
@@ -1473,9 +1474,9 @@ def init_agent(
         else:
             raise ValueError(
                 f"Model {agent.model} has a context window of {_ctx:,} tokens, "
-                f"which is below the minimum {MINIMUM_CONTEXT_LENGTH:,} required "
-                f"by JARVIS.  Choose a model with at least "
-                f"{MINIMUM_CONTEXT_LENGTH // 1000}K context, or set "
+                f"which is below the configured minimum {MINIMUM_CONTEXT_LENGTH:,} required "
+                f"by JARVIS. Choose a model with at least "
+                f"{MINIMUM_CONTEXT_LENGTH:,} context tokens, or set "
                 f"model.context_length in config.yaml to override."
             )
 

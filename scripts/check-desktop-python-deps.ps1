@@ -14,6 +14,11 @@ try {
         $Python = $pythonCommand.Source
     }
 
+    $pythonVersion = & $Python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
+    if ([version]$pythonVersion -ge [version]"3.13") {
+        throw "JARVIS desktop requires Python 3.11 or 3.12 for Kokoro local TTS. Found Python $pythonVersion at $Python."
+    }
+
     $wheelhousePath = if ([IO.Path]::IsPathRooted($Wheelhouse)) {
         $Wheelhouse
     }

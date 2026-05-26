@@ -68,11 +68,20 @@ function resolveBackendLaunch() {
     }
   }
 
-  const pythonExecutable = process.env.JARVIS_PYTHON || process.env.PYTHON || 'python'
+  const configuredPython = process.env.JARVIS_PYTHON || process.env.PYTHON || ''
+  const py311 = configuredPython
+    ? null
+    : spawnSync('py', ['-3.11', '-c', 'import sys; print(sys.executable)'], {
+        encoding: 'utf8',
+        windowsHide: true
+      })
+  const pythonExecutable = configuredPython || (py311 && py311.status === 0 ? 'py' : 'python')
+  const pythonVersionArgs = configuredPython || !(py311 && py311.status === 0) ? [] : ['-3.11']
 
   return {
     command: pythonExecutable,
     args: [
+      ...pythonVersionArgs,
       '-m',
       'jarvis_cli.desktop_entry',
       '--host',
@@ -82,6 +91,7 @@ function resolveBackendLaunch() {
       '--no-open'
     ],
     preflightArgs: [
+      ...pythonVersionArgs,
       '-m',
       'jarvis_cli.desktop_entry',
       '--preflight',

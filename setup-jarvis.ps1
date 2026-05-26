@@ -54,14 +54,34 @@ function Invoke-PythonDependencyCheck {
     & (Join-Path $RepoRoot "scripts/check-desktop-python-deps.ps1") -Python $Python -Wheelhouse $Wheelhouse
 }
 
+function Resolve-JarvisPython {
+    $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+    if ($pyLauncher) {
+        $candidate = & $pyLauncher.Source -3.11 -c "import sys; print(sys.executable)" 2>$null
+        if ($LASTEXITCODE -eq 0 -and $candidate) {
+            return $candidate.Trim()
+        }
+        $candidate = & $pyLauncher.Source -3.12 -c "import sys; print(sys.executable)" 2>$null
+        if ($LASTEXITCODE -eq 0 -and $candidate) {
+            return $candidate.Trim()
+        }
+    }
+    $python = Get-Command python -ErrorAction Stop
+    return $python.Source
+}
+
 try {
     Write-Host "JARVIS setup"
     Write-Host "Repository: $RepoRoot"
     Write-Host ""
 
     if (-not $SkipPython) {
-        $python = Get-Command python -ErrorAction Stop
-        Invoke-PythonDependencyCheck -Python $python.Source
+        $python = Resolve-JarvisPython
+        $pythonVersion = & $python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
+        if ([version]$pythonVersion -ge [version]"3.13") {
+            throw "JARVIS Desktop needs Python 3.11 or 3.12 for the bundled Kokoro voice runtime. Found Python $pythonVersion at $python."
+        }
+        Invoke-PythonDependencyCheck -Python $python
     }
 
     if (-not $SkipNode) {

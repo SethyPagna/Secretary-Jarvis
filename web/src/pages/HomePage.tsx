@@ -896,8 +896,8 @@ function TeamSoulOrbit({
     <div className="pointer-events-none absolute inset-0 z-20">
       {souls.map((soul, index) => {
         const angle = -118 + index * (236 / Math.max(1, souls.length - 1));
-        const radiusX = 41;
-        const radiusY = 36;
+        const radiusX = 44;
+        const radiusY = 38;
         const x = 50 + Math.cos((angle * Math.PI) / 180) * radiusX;
         const y = 52 + Math.sin((angle * Math.PI) / 180) * radiusY;
         const isActive = soul.id === activeSoul;
@@ -911,7 +911,7 @@ function TeamSoulOrbit({
           >
             <span
               className={cn(
-                "grid h-10 w-10 place-items-center rounded-full border bg-[#0b1820]/80 shadow-[0_0_28px_rgba(0,212,255,0.18)] backdrop-blur",
+                "grid h-8 w-8 place-items-center rounded-full border bg-[#0b1820]/80 shadow-[0_0_24px_rgba(0,212,255,0.16)] backdrop-blur",
                 isActive
                   ? "border-cyan-100/70 text-cyan-50"
                   : soul.ready
@@ -919,7 +919,7 @@ function TeamSoulOrbit({
                     : "border-amber-200/30 text-amber-100/75",
               )}
             >
-              <span className="h-4 w-4 rounded-full bg-cyan-200 shadow-[0_0_18px_rgba(125,249,255,0.72)]" />
+              <span className="h-3 w-3 rounded-full bg-cyan-200 shadow-[0_0_16px_rgba(125,249,255,0.72)]" />
             </span>
             <span className="max-w-[5rem] truncate rounded-sm bg-black/36 px-1.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-cyan-50/72 backdrop-blur">
               {soul.name}

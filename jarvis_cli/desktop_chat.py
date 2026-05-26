@@ -113,6 +113,14 @@ def _record_desktop_tokens(
     atomic_replace(tmp_path, stats_path)
 
 
+def _estimated_tokens(text: str) -> int:
+    """Conservative visible-text token estimate when a local server omits usage."""
+    stripped = (text or "").strip()
+    if not stripped:
+        return 0
+    return max(1, int(len(stripped) / 4))
+
+
 def _is_loopback_openai_endpoint(base_url: str) -> bool:
     try:
         parsed = urllib.parse.urlparse(base_url)
@@ -180,6 +188,16 @@ def _desktop_local_runtime_from_config(
         model_name = str(provider.get("model") or target_model or "").strip()
         if not model_name:
             continue
+        if not _endpoint_has_models(base_url):
+            try:
+                from jarvis_cli.local_runtime import start_local_runtime
+
+                started = start_local_runtime(timeout_seconds=90.0)
+                started_endpoint = str(started.get("endpoint") or "").strip().rstrip("/")
+                if started.get("ok") and started_endpoint:
+                    base_url = started_endpoint
+            except Exception:
+                pass
         if not _endpoint_has_models(base_url):
             continue
         return (
@@ -288,6 +306,7 @@ def run_desktop_chat_turn(
         provider=runtime.get("provider"),
         api_mode=runtime.get("api_mode"),
         model=effective_model,
+        max_tokens=int(os.getenv("JARVIS_DESKTOP_MAX_TOKENS", "512") or "512"),
         enabled_toolsets=toolsets_list,
         quiet_mode=True,
         platform="desktop",
@@ -310,6 +329,10 @@ def run_desktop_chat_turn(
 
     input_tokens = int(getattr(agent, "session_input_tokens", 0) or 0)
     output_tokens = int(getattr(agent, "session_output_tokens", 0) or 0)
+    if input_tokens <= 0:
+        input_tokens = _estimated_tokens(clean_prompt)
+    if output_tokens <= 0:
+        output_tokens = _estimated_tokens(response)
     model_name = str(getattr(agent, "model", None) or effective_model or "")
     provider_name = str(runtime.get("provider") or effective_provider or "")
 

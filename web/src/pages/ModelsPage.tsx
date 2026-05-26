@@ -88,7 +88,13 @@ function localModelLabel(kind: string): string {
   return "Asset";
 }
 
-function LocalModelCard({ model }: { model: LocalModelInfo }) {
+function LocalModelCard({
+  model,
+  onLoad,
+}: {
+  model: LocalModelInfo;
+  onLoad?: (model: LocalModelInfo) => void;
+}) {
   return (
     <Card className="min-w-0 overflow-hidden border-current/10 bg-background-base/40">
       <CardContent className="min-w-0 p-4">
@@ -111,14 +117,41 @@ function LocalModelCard({ model }: { model: LocalModelInfo }) {
         <code className="mt-3 block truncate bg-background-base/35 px-2 py-1.5 font-mono text-[0.68rem] text-text-tertiary" title={model.path}>
           {model.path}
         </code>
+        {["llm", "stt", "tts"].includes(model.kind) && (
+          <button
+            type="button"
+            onClick={() => onLoad?.(model)}
+            className="mt-3 inline-flex h-8 w-full items-center justify-center rounded-md border border-cyan-200/18 bg-cyan-200/8 text-xs font-semibold uppercase tracking-[0.08em] text-cyan-50 transition hover:border-cyan-200/38 hover:bg-cyan-200/14"
+          >
+            Use model
+          </button>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function LocalModelsPanel({ local }: { local: LocalModelsResponse | null }) {
+function LocalModelsPanel({
+  local,
+  onReload,
+}: {
+  local: LocalModelsResponse | null;
+  onReload: () => void;
+}) {
   const models = local?.models ?? [];
   const preferred = models.filter((model) => ["llm", "stt", "tts"].includes(model.kind));
+  const [loadingModel, setLoadingModel] = useState<string | null>(null);
+
+  const loadModel = async (model: LocalModelInfo) => {
+    setLoadingModel(model.id);
+    try {
+      await api.loadLocalModel(model.id);
+      onReload();
+    } finally {
+      setLoadingModel(null);
+    }
+  };
+
   return (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
@@ -135,7 +168,11 @@ function LocalModelsPanel({ local }: { local: LocalModelsResponse | null }) {
         {preferred.length ? (
           <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {preferred.map((model) => (
-              <LocalModelCard key={model.path} model={model} />
+              <LocalModelCard
+                key={model.path}
+                model={model}
+                onLoad={loadingModel ? undefined : loadModel}
+              />
             ))}
           </div>
         ) : (
@@ -955,7 +992,7 @@ export default function ModelsPage() {
     <div className="flex min-w-0 max-w-full flex-col gap-6">
       <PluginSlot name="models:top" />
 
-      <LocalModelsPanel local={localModels} />
+      <LocalModelsPanel local={localModels} onReload={load} />
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         <ModelSettingsPanel

@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 import time
 import urllib.request
 from pathlib import Path
@@ -23,6 +24,46 @@ _LLM_PROCESS: subprocess.Popen | None = None
 _LLM_ENDPOINT = ""
 _ADOPTED_LLM_PID: int | None = None
 _LLM_JOB_HANDLE: int | None = None
+_LAST_ACTIVITY_AT = time.time()
+_IDLE_THREAD: threading.Thread | None = None
+_IDLE_LOCK = threading.Lock()
+
+
+def _minimal_idle_timeout_seconds() -> float:
+    if os.getenv("JARVIS_MINIMAL", "").lower() in {"1", "true", "yes"}:
+        return 60.0
+    try:
+        return float(os.getenv("JARVIS_LOCAL_RUNTIME_IDLE_SECONDS", "300") or "300")
+    except ValueError:
+        return 300.0
+
+
+def touch_local_runtime_activity() -> None:
+    global _LAST_ACTIVITY_AT
+    _LAST_ACTIVITY_AT = time.time()
+
+
+def _ensure_idle_unloader() -> None:
+    global _IDLE_THREAD
+    with _IDLE_LOCK:
+        if _IDLE_THREAD is not None and _IDLE_THREAD.is_alive():
+            return
+
+        def idle_loop() -> None:
+            while True:
+                time.sleep(5.0)
+                status = status_local_runtime()
+                if not status.get("running"):
+                    continue
+                if time.time() - _LAST_ACTIVITY_AT >= _minimal_idle_timeout_seconds():
+                    stop_local_runtime(timeout_seconds=8.0)
+
+        _IDLE_THREAD = threading.Thread(
+            target=idle_loop,
+            name="jarvis-local-runtime-idle-unloader",
+            daemon=True,
+        )
+        _IDLE_THREAD.start()
 
 
 def _creationflags() -> int:
@@ -182,10 +223,17 @@ def _llama_server_command(plan: dict[str, Any]) -> list[str]:
     if not model_path or not Path(model_path).is_file():
         raise RuntimeError("No GGUF model file was found for llama.cpp.")
     has_nvidia = shutil.which("nvidia-smi") is not None
-    ctx_size = str(os.getenv("JARVIS_LLAMA_CPP_CTX_SIZE") or "65536")
+    ctx_size = str(os.getenv("JARVIS_LLAMA_CPP_CTX_SIZE") or "8192")
     gpu_layers = "999" if has_nvidia else "0"
-    threads = str(max(2, min(os.cpu_count() or 4, 12)))
-    return [
+    try:
+        import psutil
+
+        physical_cores = psutil.cpu_count(logical=False) or psutil.cpu_count(logical=True)
+    except Exception:
+        physical_cores = os.cpu_count()
+    threads = str(max(2, int(physical_cores or 4)))
+    batch = str(os.getenv("JARVIS_LLAMA_CPP_BATCH_SIZE") or "256")
+    command = [
         executable,
         "--model",
         model_path,
@@ -199,7 +247,26 @@ def _llama_server_command(plan: dict[str, Any]) -> list[str]:
         gpu_layers,
         "--threads",
         threads,
+        "--batch-size",
+        batch,
     ]
+    if _llama_server_supports_flag(executable, "--flash-attn"):
+        command.append("--flash-attn")
+    return command
+
+
+def _llama_server_supports_flag(executable: str, flag: str) -> bool:
+    try:
+        completed = subprocess.run(
+            [executable, "--help"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+        )
+    except Exception:
+        return False
+    return flag in ((completed.stdout or "") + (completed.stderr or ""))
 
 
 def status_local_runtime() -> dict[str, Any]:
@@ -231,6 +298,8 @@ def start_local_runtime(timeout_seconds: float = 45.0) -> dict[str, Any]:
     endpoint = str(llm.get("endpoint") or "")
     model_path = str(llm.get("model_path") or "")
     _LLM_ENDPOINT = endpoint
+    touch_local_runtime_activity()
+    _ensure_idle_unloader()
 
     if _LLM_PROCESS is not None and _LLM_PROCESS.poll() is None:
         return {

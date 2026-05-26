@@ -6,6 +6,8 @@ Push-Location $RepoRoot
 try {
     $escapedRepo = [Regex]::Escape((Resolve-Path $RepoRoot).Path)
     $repoParent = Split-Path -Parent $RepoRoot
+    $escapedRelease = [Regex]::Escape((Join-Path $RepoRoot "release"))
+    $escapedUserData = [Regex]::Escape((Join-Path $env:APPDATA "JARVIS"))
     $modelRoots = @(
         (Join-Path $repoParent "models"),
         (Join-Path $HOME ".jarvis\\models")
@@ -22,10 +24,21 @@ try {
         $exePath = $_.ExecutablePath
         $isRepoProcess = (
             ($commandLine -and $commandLine -match $escapedRepo) -or
-            ($exePath -and $exePath -match $escapedRepo)
+            ($exePath -and $exePath -match $escapedRepo) -or
+            ($commandLine -and $commandLine -match $escapedRelease) -or
+            ($exePath -and $exePath -match $escapedRelease)
+        )
+        $isPackagedTempProcess = (
+            $_.Name -match "^(JARVIS|jarvis-backend)( 1\.0\.0)?\.exe$" -and
+            (
+                ($commandLine -and $commandLine -match $escapedUserData) -or
+                ($commandLine -and $commandLine -match "resources\\app\.asar|resources\\backend\\jarvis-backend") -or
+                ($exePath -and $exePath -match "\\AppData\\Local\\Temp\\[^\\]+\\JARVIS\.exe$") -or
+                ($exePath -and $exePath -match "\\AppData\\Local\\Temp\\[^\\]+\\resources\\backend\\jarvis-backend\.exe$")
+            )
         )
         $isJarvisRuntime = (
-            $_.Name -match "^(JARVIS|Jarvis|jarvis-backend|electron|node|python)\.exe$" -or
+            $_.Name -match "^(JARVIS|Jarvis|JARVIS 1\.0\.0|jarvis-backend|electron|node|python)\.exe$" -or
             ($commandLine -and $commandLine -match "jarvis_cli\.desktop_entry|jarvis-backend|electron\\main\.js")
         )
         $isJarvisModelHelper = (
@@ -34,7 +47,7 @@ try {
             (($modelRoots | Where-Object { $commandLine -match $_ }).Count -gt 0)
         )
 
-        return (($isRepoProcess -and $isJarvisRuntime) -or $isJarvisModelHelper)
+        return (($isRepoProcess -and $isJarvisRuntime) -or $isPackagedTempProcess -or $isJarvisModelHelper)
     }
 
     foreach ($process in $targets) {

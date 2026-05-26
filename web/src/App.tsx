@@ -105,8 +105,8 @@ const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/commands": CommandsPage,
   "/guides": GuidesPage,
   "/setup": SetupPage,
-  "/permissions": EnvPage,
-  "/platforms": PluginsPage,
+  "/permissions": ConfigPage,
+  "/platforms": ConfigPage,
   "/workflow": CronPage,
   "/settings": ConfigPage,
   "/logs": LogsPage,
@@ -156,8 +156,6 @@ const BUILTIN_NAV_REST: NavItem[] = [
   },
   { path: "/skills", label: "Skills", icon: Package, section: "Library" },
   { path: "/workflow", label: "Workflow", icon: Zap, section: "Operate" },
-  { path: "/permissions", label: "Perms", icon: Shield, section: "Admin" },
-  { path: "/platforms", label: "Platforms", icon: Globe, section: "Admin" },
   { path: "/settings", label: "Settings", icon: Settings, section: "Admin" },
   { path: "/docs", label: "Reference", icon: FileText, section: "Library" },
 ];
@@ -470,7 +468,7 @@ export default function App() {
         onToggleSidebar={toggleSidebar}
         sidebarCollapsed={sidebarCollapsed}
       />
-      <Backdrop />
+      {isHomeRoute ? <Backdrop /> : <div className="fixed inset-0 -z-10 bg-[#1a1a2e]" />}
       <PluginSlot name="backdrop" />
 
       {mobileOpen && (

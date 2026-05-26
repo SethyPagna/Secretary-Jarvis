@@ -148,7 +148,12 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         </div>
         <div>
           <div className="text-slate-300/58">Skills</div>
-          <div className="font-mono text-white">{stats?.active_skills ?? 0}</div>
+          <div
+            className="font-mono text-white"
+            title={`${stats?.active_skills ?? 0} active, ${stats?.listed_skills ?? 0} listed, ${stats?.total_skill_assets ?? 0} total skill assets`}
+          >
+            {stats?.active_skills ?? 0} / {stats?.listed_skills ?? 0}
+          </div>
         </div>
         <div>
           <div className="text-slate-300/58">Gateways</div>

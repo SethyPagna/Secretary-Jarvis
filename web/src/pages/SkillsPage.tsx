@@ -516,6 +516,23 @@ function SkillRow({
           >
             {skill.name}
           </span>
+          <Badge
+            tone={
+              !skill.enabled
+                ? "outline"
+                : skill.requires_setup
+                  ? "warning"
+                  : "success"
+            }
+            className="text-[0.62rem]"
+            title={
+              skill.missing_env?.length
+                ? `Missing: ${skill.missing_env.join(", ")}`
+                : skill.status ?? "ready"
+            }
+          >
+            {!skill.enabled ? "off" : skill.requires_setup ? "setup" : "ready"}
+          </Badge>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
           {skill.description || noDescriptionLabel}

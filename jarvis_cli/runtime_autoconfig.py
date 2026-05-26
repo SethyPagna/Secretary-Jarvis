@@ -149,10 +149,25 @@ def _gguf_score(path: Path) -> tuple[int, int, str]:
 
 
 def _best_gguf(roots: Iterable[Path]) -> Path | None:
+    selected = os.getenv("JARVIS_ACTIVE_GGUF_MODEL_PATH", "").strip()
+    if selected:
+        selected_path = Path(selected).expanduser()
+        if selected_path.is_file() and selected_path.suffix.lower() == ".gguf":
+            return selected_path
     files = _scan_files(roots, {".gguf"})
     if not files:
         return None
     return sorted(files, key=_gguf_score, reverse=True)[0]
+
+
+def _physical_core_count() -> int:
+    try:
+        import psutil
+
+        count = psutil.cpu_count(logical=False) or psutil.cpu_count(logical=True)
+    except Exception:
+        count = os.cpu_count()
+    return max(2, int(count or 4))
 
 
 def _vllm_score(path: Path) -> tuple[int, int, str]:
@@ -301,12 +316,14 @@ def _llm_plan(
         endpoint = f"http://127.0.0.1:{port}/v1"
         model = gguf.stem
         has_nvidia = executable_available("nvidia-smi")
-        ctx_size = int(os.getenv("JARVIS_LLAMA_CPP_CTX_SIZE") or "65536")
+        ctx_size = int(os.getenv("JARVIS_LLAMA_CPP_CTX_SIZE") or "8192")
         gpu_layers = 999 if has_nvidia else 0
-        threads = max(2, min(os.cpu_count() or 4, 12))
+        threads = _physical_core_count()
+        batch = int(os.getenv("JARVIS_LLAMA_CPP_BATCH_SIZE") or "256")
         start_command = (
             f"llama-server --model {_quote(gguf)} --host 127.0.0.1 --port {port} "
-            f"--ctx-size {ctx_size} --n-gpu-layers {gpu_layers} --threads {threads}"
+            f"--ctx-size {ctx_size} --n-gpu-layers {gpu_layers} --threads {threads} "
+            f"--batch-size {batch}"
         )
         config_patch = {
             "model": model,
@@ -327,7 +344,7 @@ def _llm_plan(
                 "dependency_ready": True,
                 "start_command": start_command,
                 "actions": [f"Start llama.cpp server: {start_command}"],
-                "optimization": "Default to llama.cpp with Q4_K_M GGUF for fast startup and low RAM/VRAM pressure.",
+                "optimization": "Default to llama.cpp with 8K context, physical-core threading, batch 256, and the selected GGUF for fast startup and low RAM/VRAM pressure.",
             },
             config_patch,
         )
@@ -478,7 +495,7 @@ def _stt_plan(
     whisper_cpp_ready = executable_available("whisper-cli") or executable_available("whisper")
     nvidia_ready = executable_available("nvidia-smi")
     assets = _find_whisper_assets(roots)
-    local_model = "large-v3" if nvidia_ready else "tiny.en"
+    local_model = "large-v3" if nvidia_ready else "base"
     local_device = "auto" if nvidia_ready else "cpu"
     local_compute = "float16" if nvidia_ready else "int8"
     local_language = "" if nvidia_ready else "en"
@@ -512,7 +529,7 @@ def _stt_plan(
         "selected_model": local_model,
         "assets": assets,
         "actions": actions,
-        "optimization": "Use faster-whisper large-v3 on NVIDIA/CUDA; otherwise use tiny.en on CPU int8 for instant local STT. Fallback order is faster-whisper -> whisper.cpp -> OpenAI Whisper API.",
+        "optimization": "Use faster-whisper large-v3 on NVIDIA/CUDA; otherwise use base on CPU int8 for fast local STT. Fallback order is faster-whisper -> whisper.cpp -> OpenAI Whisper API.",
     }
 
 

@@ -76,6 +76,12 @@ export const api = {
       method: "POST",
     }),
   getLocalModels: () => fetchJSON<LocalModelsResponse>("/api/models/local"),
+  listModels: () => fetchJSON<LocalModelsResponse>("/api/models/list"),
+  loadLocalModel: (model: string) =>
+    fetchJSON<ModelLoadResponse>(
+      `/api/models/load?model=${encodeURIComponent(model)}`,
+      { method: "POST" },
+    ),
   transcribeVoice: (audio: Blob) =>
     fetchJSON<VoiceTranscriptionResponse>("/api/voice/transcribe", {
       method: "POST",
@@ -121,6 +127,13 @@ export const api = {
   getModelsAnalytics: (days: number) =>
     fetchJSON<ModelsAnalyticsResponse>(`/api/analytics/models?days=${days}`),
   getConfig: () => fetchJSON<Record<string, unknown>>("/api/config"),
+  getSettings: () => fetchJSON<UnifiedSettingsResponse>("/api/settings"),
+  saveSettings: (settings: Record<string, unknown>) =>
+    fetchJSON<{ ok: boolean; settings: UnifiedSettingsResponse }>("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings }),
+    }),
   getDefaults: () => fetchJSON<Record<string, unknown>>("/api/config/defaults"),
   getSchema: () => fetchJSON<{ fields: Record<string, unknown>; category_order: string[] }>("/api/config/schema"),
   getModelInfo: () => fetchJSON<ModelInfoResponse>("/api/model/info"),
@@ -303,6 +316,14 @@ export const api = {
   // Gateway / update actions
   restartGateway: () =>
     fetchJSON<ActionResponse>("/api/gateway/restart", { method: "POST" }),
+  getWhatsAppStatus: () =>
+    fetchJSON<WhatsAppStatusResponse>("/api/messaging/whatsapp/status"),
+  sendWhatsAppMessage: (body: { to?: string; message?: string; mock?: boolean }) =>
+    fetchJSON<WhatsAppSendResponse>("/api/messaging/whatsapp/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
   updateJarvis: () =>
     fetchJSON<ActionResponse>("/api/jarvis/update", { method: "POST" }),
   getActionStatus: (name: string, lines = 200) =>
@@ -435,6 +456,8 @@ export interface RuntimeStatsResponse {
   tokens_output: number;
   tokens_total_lifetime: number;
   active_skills: number;
+  listed_skills?: number;
+  total_skill_assets?: number;
   gateway_connections: number;
   souls_online?: number;
   souls_total?: number;
@@ -737,6 +760,39 @@ export interface LocalModelsResponse {
   models: LocalModelInfo[];
 }
 
+export interface ModelLoadResponse {
+  ok: boolean;
+  selected: LocalModelInfo;
+  kind: string;
+}
+
+export interface UnifiedSettingsResponse {
+  system: Record<string, unknown>;
+  model: Record<string, unknown>;
+  voice: Record<string, unknown>;
+  messaging_services: Record<string, unknown>;
+  skills: { active?: number; listed?: number; total_assets?: number };
+  access: Record<string, unknown>;
+}
+
+export interface WhatsAppStatusResponse {
+  enabled: boolean;
+  paired: boolean;
+  bridge_ready: boolean;
+  status: string;
+  session_path: string;
+  bridge_dir: string;
+  qr_login_available: boolean;
+  start_command: string;
+}
+
+export interface WhatsAppSendResponse {
+  ok: boolean;
+  mock: boolean;
+  status: WhatsAppStatusResponse;
+  message: string;
+}
+
 export interface ModelsAnalyticsModelEntry {
   model: string;
   provider: string;
@@ -801,6 +857,10 @@ export interface SkillInfo {
   description: string;
   category: string;
   enabled: boolean;
+  configured?: boolean;
+  requires_setup?: boolean;
+  missing_env?: string[];
+  status?: "ready" | "setup_needed" | "disabled" | string;
 }
 
 export interface ToolsetInfo {

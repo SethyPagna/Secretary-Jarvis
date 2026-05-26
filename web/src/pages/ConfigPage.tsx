@@ -120,6 +120,7 @@ export default function ConfigPage() {
   const [configPath, setConfigPath] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [confirmReset, setConfirmReset] = useState(false);
+  const [unifiedSettings, setUnifiedSettings] = useState<Record<string, any> | null>(null);
   const { toast, showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useI18n();
@@ -180,6 +181,10 @@ export default function ConfigPage() {
     api
       .getStatus()
       .then((resp) => setConfigPath(resp.config_path))
+      .catch(() => {});
+    api
+      .getSettings()
+      .then((resp) => setUnifiedSettings(resp as unknown as Record<string, any>))
       .catch(() => {});
   }, []);
 
@@ -504,6 +509,33 @@ export default function ConfigPage() {
         </div>
       </div>
 
+      {unifiedSettings && (
+        <div className="grid gap-3 md:grid-cols-3">
+          <SettingsSummaryCard
+            icon={Brain}
+            title="Model"
+            value={
+              typeof unifiedSettings.model?.model === "string"
+                ? unifiedSettings.model.model || "local auto"
+                : unifiedSettings.model?.model?.default || "local auto"
+            }
+            detail="llama.cpp first, vLLM second, Ollama last"
+          />
+          <SettingsSummaryCard
+            icon={Mic}
+            title="Voice"
+            value={`${unifiedSettings.voice?.tts?.provider ?? "kokoro"} / ${unifiedSettings.voice?.stt?.local?.model ?? "base"}`}
+            detail="local TTS/STT with cloud only when API keys are configured"
+          />
+          <SettingsSummaryCard
+            icon={MessageCircle}
+            title="Messaging"
+            value={`WhatsApp ${unifiedSettings.messaging_services?.whatsapp?.status ?? "disabled"}`}
+            detail="Telegram, Discord, and WhatsApp live under Settings"
+          />
+        </div>
+      )}
+
       {yamlMode ? (
         <Card>
           <CardHeader className="py-3 px-4">
@@ -655,6 +687,31 @@ export default function ConfigPage() {
         destructive
         confirmLabel={t.config.resetDefaults}
       />
+    </div>
+  );
+}
+
+function SettingsSummaryCard({
+  detail,
+  icon: Icon,
+  title,
+  value,
+}: {
+  detail: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  value: string;
+}) {
+  return (
+    <div
+      className="rounded-md border border-white/10 bg-[#1a1a2e] p-3 text-[#e0e0e0] shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
+      title={detail}
+    >
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-cyan-100/75">
+        <Icon className="h-4 w-4" />
+        {title}
+      </div>
+      <div className="mt-2 truncate font-mono text-sm text-white">{value}</div>
     </div>
   );
 }

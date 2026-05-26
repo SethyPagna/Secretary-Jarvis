@@ -15,8 +15,40 @@ $StdoutLog = Join-Path ([IO.Path]::GetTempPath()) "jarvis-backend-smoke-$LogId.o
 $StderrLog = Join-Path ([IO.Path]::GetTempPath()) "jarvis-backend-smoke-$LogId.err.log"
 
 if (-not $BackendCommand) {
-    $python = Get-Command python -ErrorAction Stop
-    $BackendCommand = $python.Source
+    $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+    if ($pyLauncher) {
+        $candidate = & $pyLauncher.Source -3.11 -c "import sys; print(sys.executable)" 2>$null
+        if ($LASTEXITCODE -eq 0 -and $candidate) {
+            $BackendCommand = $pyLauncher.Source
+            $BackendArgs = @(
+                "-3.11",
+                "-m",
+                "jarvis_cli.desktop_entry",
+                "--host",
+                $BindHost,
+                "--port",
+                [string]$Port,
+                "--no-open"
+            )
+            $PreflightArgs = @(
+                "-3.11",
+                "-m",
+                "jarvis_cli.desktop_entry",
+                "--preflight",
+                "--host",
+                $BindHost,
+                "--port",
+                [string]$Port
+            )
+        }
+    }
+    if (-not $BackendCommand) {
+        $python = Get-Command python -ErrorAction Stop
+        $BackendCommand = $python.Source
+    }
+}
+
+if (-not $BackendArgs) {
     $BackendArgs = @(
         "-m",
         "jarvis_cli.desktop_entry",
@@ -36,7 +68,7 @@ if (-not $BackendCommand) {
         [string]$Port
     )
 }
-else {
+if (-not $PreflightArgs) {
     $PreflightArgs = @(
         "--preflight",
         "--host",

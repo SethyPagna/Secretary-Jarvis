@@ -256,6 +256,13 @@ async def host_header_middleware(request: Request, call_next):
 async def auth_middleware(request: Request, call_next):
     """Require the session token on all /api/ routes except the public list."""
     path = request.url.path
+    if path.startswith("/api/"):
+        try:
+            from jarvis_cli.local_runtime import touch_local_runtime_activity
+
+            touch_local_runtime_activity()
+        except Exception:
+            pass
     if path.startswith("/api/") and path not in _PUBLIC_API_PATHS:
         if (
             path == "/api/shutdown"
@@ -508,6 +515,16 @@ class DesktopChatRequest(BaseModel):
     provider: str = ""
 
 
+class SettingsUpdate(BaseModel):
+    settings: dict
+
+
+class WhatsAppSendRequest(BaseModel):
+    to: str = ""
+    message: str = ""
+    mock: bool = False
+
+
 _GATEWAY_HEALTH_URL = os.getenv("GATEWAY_HEALTH_URL")
 try:
     _GATEWAY_HEALTH_TIMEOUT = float(os.getenv("GATEWAY_HEALTH_TIMEOUT", "3"))
@@ -704,11 +721,27 @@ async def post_voice_transcribe(request: Request):
     from jarvis_cli.desktop_voice import transcribe_desktop_audio
 
     audio_bytes = await request.body()
-    return transcribe_desktop_audio(
+    content_type = request.headers.get("content-type")
+    _log.info(
+        "desktop STT request: bytes=%d content_type=%s",
+        len(audio_bytes),
+        content_type or "",
+    )
+    result = transcribe_desktop_audio(
         audio_bytes,
-        request.headers.get("content-type"),
+        content_type,
         get_jarvis_home() / "voice-input",
     )
+    if result.get("success"):
+        _log.info(
+            "desktop STT success: provider=%s latency_ms=%s chars=%d",
+            result.get("provider") or result.get("engine"),
+            result.get("latency_ms"),
+            len(str(result.get("transcript") or "")),
+        )
+    else:
+        _log.warning("desktop STT failed: %s", result.get("error") or result)
+    return result
 
 
 @app.post("/api/voice/synthesize")
@@ -731,8 +764,8 @@ async def post_desktop_chat(body: DesktopChatRequest):
         run_desktop_chat_turn,
         body.prompt,
         jarvis_home=get_jarvis_home(),
-        model=body.model or None,
-        provider=body.provider or None,
+        model=body.model or getattr(app.state, "active_desktop_model", "") or None,
+        provider=body.provider or getattr(app.state, "active_desktop_provider", "") or None,
     )
     return {"ok": True, **result.as_dict()}
 
@@ -761,8 +794,8 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
                     body.prompt,
                     jarvis_home=get_jarvis_home(),
                     on_delta=on_delta,
-                    model=body.model or None,
-                    provider=body.provider or None,
+                    model=body.model or getattr(app.state, "active_desktop_model", "") or None,
+                    provider=body.provider or getattr(app.state, "active_desktop_provider", "") or None,
                 )
                 events.put(("done", result.as_dict()))
             except Exception as exc:
@@ -777,7 +810,11 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
             if event in {"done", "error"}:
                 break
 
-    return StreamingResponse(stream_events(), media_type="text/event-stream")
+    return StreamingResponse(
+        stream_events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/api/runtime/autoconfig")
@@ -832,9 +869,9 @@ async def post_runtime_local_stop():
     return stop_local_runtime()
 
 
-def _active_skill_count() -> int:
+def _skill_asset_count() -> int:
     now = time.time()
-    cached = _SKILL_COUNT_CACHE.get("value")
+    cached = _SKILL_COUNT_CACHE.get("asset_value")
     if isinstance(cached, int) and now < float(_SKILL_COUNT_CACHE.get("expires_at") or 0):
         return cached
 
@@ -864,20 +901,146 @@ def _active_skill_count() -> int:
                 total += 1
         except OSError:
             continue
-    _SKILL_COUNT_CACHE["value"] = total
+    _SKILL_COUNT_CACHE["asset_value"] = total
     _SKILL_COUNT_CACHE["expires_at"] = now + 30.0
     return total
 
 
+def _bundled_skill_catalog(*, include_disabled: bool = True) -> list[dict[str, Any]]:
+    """Return skills shipped with the desktop app and optional skill packs.
+
+    The historical CLI scanner only looked at ``~/.jarvis/skills`` and config
+    external dirs. The desktop app ships built-in skill packs inside the app
+    tree, so the dashboard needs those surfaced even before the user copies
+    anything into their home directory.
+    """
+    from agent.skill_utils import iter_skill_index_files, parse_frontmatter, skill_matches_platform
+    from jarvis_cli.skills_config import get_disabled_skills
+
+    config = load_config()
+    disabled = get_disabled_skills(config)
+    repo_root = Path(__file__).resolve().parents[1]
+    roots = [repo_root / "skills", repo_root / "optional-skills"]
+    resource_root = Path(os.environ.get("JARVIS_RESOURCE_ROOT", "")).expanduser()
+    if str(resource_root) not in {"", "."}:
+        roots.extend([resource_root / "skills", resource_root / "optional-skills"])
+
+    catalog: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for root in roots:
+        if not root.exists():
+            continue
+        for skill_md in iter_skill_index_files(root, "SKILL.md"):
+            try:
+                content = skill_md.read_text(encoding="utf-8")[:4000]
+                frontmatter, body = parse_frontmatter(content)
+                if not skill_matches_platform(frontmatter):
+                    continue
+                rel = skill_md.parent.relative_to(root)
+                parts = rel.parts
+                name = str(frontmatter.get("name") or skill_md.parent.name).strip()
+                if not name:
+                    name = skill_md.parent.name
+                if name in seen:
+                    continue
+                enabled = name not in disabled
+                if not include_disabled and not enabled:
+                    continue
+                description = str(frontmatter.get("description") or "").strip()
+                if not description:
+                    for line in body.strip().splitlines():
+                        line = line.strip()
+                        if line and not line.startswith("#"):
+                            description = line
+                            break
+                if len(description) > 240:
+                    description = description[:237] + "..."
+                seen.add(name)
+                catalog.append({
+                    "name": name,
+                    "description": description,
+                    "category": parts[0] if len(parts) > 1 else "general",
+                    "source": "built-in" if root.name == "skills" else "optional",
+                    "path": str(skill_md),
+                    "enabled": enabled,
+                })
+            except Exception:
+                _log.debug("Skipping bundled skill %s", skill_md, exc_info=True)
+                continue
+    return sorted(catalog, key=lambda item: (str(item.get("category") or ""), str(item.get("name") or "")))
+
+
+def _desktop_skill_catalog(*, include_disabled: bool = True) -> list[dict[str, Any]]:
+    """Merge configured skills with bundled desktop skills."""
+    from tools.skills_tool import _find_all_skills
+    from jarvis_cli.skills_config import get_disabled_skills
+
+    config = load_config()
+    disabled = get_disabled_skills(config)
+    merged: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    try:
+        for item in _find_all_skills(skip_disabled=include_disabled):
+            name = str(item.get("name") or "").strip()
+            if not name or name in seen:
+                continue
+            enabled = name not in disabled
+            if not include_disabled and not enabled:
+                continue
+            enriched = dict(item)
+            enriched.setdefault("source", "user")
+            enriched["enabled"] = enabled
+            merged.append(enriched)
+            seen.add(name)
+    except Exception:
+        _log.debug("Configured skill scan failed", exc_info=True)
+
+    for item in _bundled_skill_catalog(include_disabled=include_disabled):
+        name = str(item.get("name") or "").strip()
+        if not name or name in seen:
+            continue
+        merged.append(dict(item))
+        seen.add(name)
+
+    return sorted(merged, key=lambda item: (str(item.get("category") or ""), str(item.get("name") or "")))
+
+
+def _skill_count_snapshot() -> dict[str, Any]:
+    now = time.time()
+    cached = _SKILL_COUNT_CACHE.get("snapshot")
+    if isinstance(cached, dict) and now < float(_SKILL_COUNT_CACHE.get("snapshot_expires_at") or 0):
+        return dict(cached)
+    try:
+        all_skills = _desktop_skill_catalog(include_disabled=True)
+        listed_total = len(all_skills)
+        active = sum(1 for item in all_skills if bool(item.get("enabled", True)))
+    except Exception:
+        listed_total = 0
+        active = 0
+    snapshot = {
+        "active": active,
+        "listed": listed_total,
+        "total_assets": _skill_asset_count(),
+    }
+    _SKILL_COUNT_CACHE["snapshot"] = dict(snapshot)
+    _SKILL_COUNT_CACHE["snapshot_expires_at"] = now + 30.0
+    return snapshot
+
+
 def _runtime_stats_snapshot() -> dict:
     from jarvis_cli.runtime_stats import collect_runtime_stats
+    skills = _skill_count_snapshot()
 
-    return collect_runtime_stats(
+    stats = collect_runtime_stats(
         get_jarvis_home(),
         gateway_status=read_runtime_status() or {},
-        active_skills=_active_skill_count(),
+        active_skills=int(skills.get("active") or 0),
         started_at=_PROCESS_STARTED_AT,
     )
+    stats["listed_skills"] = int(skills.get("listed") or 0)
+    stats["total_skill_assets"] = int(skills.get("total_assets") or 0)
+    return stats
 
 
 @app.get("/api/stats")
@@ -1016,6 +1179,50 @@ async def update_jarvis():
     }
 
 
+def _whatsapp_status_payload() -> dict[str, Any]:
+    session_path = get_jarvis_home() / "whatsapp" / "session" / "creds.json"
+    bridge_dir = PROJECT_ROOT / "scripts" / "whatsapp-bridge"
+    env = {**os.environ, **load_env()}
+    enabled = str(env.get("WHATSAPP_ENABLED", "")).lower() in {"1", "true", "yes"}
+    paired = session_path.exists()
+    bridge_ready = (bridge_dir / "package.json").exists()
+    return {
+        "enabled": enabled,
+        "paired": paired,
+        "bridge_ready": bridge_ready,
+        "status": "ready" if enabled and paired and bridge_ready else "setup_needed" if enabled else "disabled",
+        "session_path": str(session_path),
+        "bridge_dir": str(bridge_dir),
+        "qr_login_available": bridge_ready,
+        "start_command": "node scripts/whatsapp-bridge/bridge.js",
+    }
+
+
+@app.get("/api/messaging/whatsapp/status")
+async def get_whatsapp_status():
+    return _whatsapp_status_payload()
+
+
+@app.post("/api/messaging/whatsapp/send")
+async def post_whatsapp_send(body: WhatsAppSendRequest):
+    status = _whatsapp_status_payload()
+    if body.mock or not status.get("paired"):
+        return {
+            "ok": bool(body.mock),
+            "mock": True,
+            "status": status,
+            "message": "WhatsApp send mocked; pair via QR before sending live messages.",
+        }
+    if not body.to or not body.message:
+        raise HTTPException(status_code=400, detail="Both 'to' and 'message' are required")
+    return {
+        "ok": False,
+        "mock": False,
+        "status": status,
+        "message": "Live WhatsApp bridge send is not active in this backend process.",
+    }
+
+
 @app.get("/api/actions/{name}/status")
 async def get_action_status(name: str, lines: int = 200):
     """Tail an action log and report whether the process is still running."""
@@ -1147,6 +1354,115 @@ async def get_defaults():
 @app.get("/api/config/schema")
 async def get_schema():
     return {"fields": CONFIG_SCHEMA, "category_order": _CATEGORY_ORDER}
+
+
+def _messaging_service_state(config: Mapping[str, Any], env: Mapping[str, str], name: str) -> dict[str, Any]:
+    section = config.get(name, {}) if isinstance(config.get(name), Mapping) else {}
+    env_prefix = name.upper()
+    token_keys = {
+        "telegram": ["JARVIS_TELEGRAM_TOKEN", "TELEGRAM_BOT_TOKEN"],
+        "discord": ["JARVIS_DISCORD_TOKEN", "DISCORD_BOT_TOKEN"],
+        "whatsapp": ["WHATSAPP_ENABLED", "JARVIS_WHATSAPP_PHONE", "WHATSAPP_HOME_CHANNEL"],
+    }.get(name, [])
+    configured = any(bool(env.get(key) or os.getenv(key)) for key in token_keys)
+    enabled = bool(section.get("enabled")) or str(env.get(f"{env_prefix}_ENABLED") or os.getenv(f"{env_prefix}_ENABLED") or "").lower() in {"1", "true", "yes"}
+    return {
+        "enabled": enabled,
+        "configured": configured,
+        "status": "ready" if enabled and configured else "setup_needed" if enabled else "disabled",
+        "missing_env": [key for key in token_keys if key.endswith("_TOKEN") and not (env.get(key) or os.getenv(key))],
+        "config": dict(section),
+    }
+
+
+def _settings_payload() -> dict[str, Any]:
+    config = load_config()
+    env = load_env()
+    skills = _skill_count_snapshot()
+    return {
+        "system": {
+            "jarvis_home": str(get_jarvis_home()),
+            "config_path": str(get_config_path()),
+            "env_path": str(get_env_path()),
+            "install_method": config.get("install_method", ""),
+            "updates": config.get("updates", {}),
+        },
+        "model": {
+            "model": config.get("model", ""),
+            "providers": config.get("providers", {}),
+            "fallback_providers": config.get("fallback_providers", []),
+            "performance": {
+                "n_ctx": int(os.getenv("JARVIS_LLAMA_CPP_CTX_SIZE") or "8192"),
+                "n_batch": int(os.getenv("JARVIS_LLAMA_CPP_BATCH_SIZE") or "256"),
+                "max_tokens": int(os.getenv("JARVIS_DESKTOP_MAX_TOKENS", "512") or "512"),
+            },
+        },
+        "voice": {
+            "tts": config.get("tts", {}),
+            "stt": config.get("stt", {}),
+            "fallback_chain": {
+                "tts": ["kokoro", "omnivoice", "system"],
+                "stt": ["faster-whisper", "whisper.cpp", "openai-whisper-api"],
+            },
+        },
+        "messaging_services": {
+            "telegram": _messaging_service_state(config, env, "telegram"),
+            "discord": _messaging_service_state(config, env, "discord"),
+            "whatsapp": _messaging_service_state(config, env, "whatsapp"),
+        },
+        "skills": skills,
+        "access": {
+            "permissions": config.get("permissions", {}),
+            "toolsets": config.get("toolsets", []),
+            "disabled_toolsets": cfg_get(config, "agent", "disabled_toolsets", default=[]),
+        },
+    }
+
+
+@app.get("/api/settings")
+async def get_settings():
+    """Return the unified desktop settings tree."""
+    return _settings_payload()
+
+
+@app.post("/api/settings")
+async def post_settings(body: SettingsUpdate):
+    """Merge supported unified settings groups into config.yaml."""
+    current = load_config()
+    incoming = body.settings if isinstance(body.settings, dict) else {}
+    for key in ("model", "voice", "access"):
+        value = incoming.get(key)
+        if not isinstance(value, dict):
+            continue
+        if key == "model":
+            if "model" in value:
+                current["model"] = value["model"]
+            if isinstance(value.get("providers"), dict):
+                current["providers"] = value["providers"]
+            if isinstance(value.get("fallback_providers"), list):
+                current["fallback_providers"] = value["fallback_providers"]
+        elif key == "voice":
+            if isinstance(value.get("tts"), dict):
+                current["tts"] = value["tts"]
+            if isinstance(value.get("stt"), dict):
+                current["stt"] = value["stt"]
+        elif key == "access":
+            if isinstance(value.get("permissions"), dict):
+                current["permissions"] = value["permissions"]
+            if isinstance(value.get("toolsets"), list):
+                current["toolsets"] = value["toolsets"]
+    services = incoming.get("messaging_services")
+    if isinstance(services, dict):
+        for name in ("telegram", "discord", "whatsapp"):
+            item = services.get(name)
+            if isinstance(item, dict):
+                current[name] = dict(current.get(name) or {})
+                if isinstance(current[name], dict) and "enabled" in item:
+                    current[name]["enabled"] = bool(item["enabled"])
+                    if name == "whatsapp":
+                        save_env_value("WHATSAPP_ENABLED", "true" if item["enabled"] else "false")
+    save_config(current)
+    return {"ok": True, "settings": _settings_payload()}
 
 
 _EMPTY_MODEL_INFO: dict = {
@@ -1301,38 +1617,150 @@ def _sum_file_sizes(files: List[Path]) -> int:
     return total
 
 
-@app.get("/api/models/local")
-def list_local_models():
-    """Return downloaded local model assets visible to the desktop app."""
+def _local_model_payload() -> Dict[str, Any]:
+    """Return local model assets, including GGUF files directly in model roots."""
     models: List[Dict[str, Any]] = []
     seen: set[str] = set()
     roots = [root for root in _candidate_model_roots() if root.exists()]
 
+    def add_model(entry: Path, files: List[Path], model_id: str | None = None) -> None:
+        if not files:
+            return
+        try:
+            key = str((files[0] if entry.is_file() else entry).resolve()).lower()
+        except OSError:
+            key = str(entry).lower()
+        if key in seen:
+            return
+        seen.add(key)
+        kind = _model_kind(entry.name, files)
+        primary = next((p for p in files if p.suffix.lower() == ".gguf"), files[0])
+        models.append({
+            "id": model_id or entry.name,
+            "name": (model_id or entry.name).replace("__", " / "),
+            "kind": kind,
+            "path": str(entry),
+            "primary_file": str(primary),
+            "file_count": len(files),
+            "size_bytes": _sum_file_sizes(files),
+            "ready": True,
+        })
+
     for root in roots:
+        for gguf in sorted(root.glob("*.gguf"), key=lambda p: p.name.lower()):
+            add_model(gguf, [gguf], gguf.stem)
         for entry in sorted(root.iterdir(), key=lambda p: p.name.lower()):
             if not entry.is_dir():
                 continue
-            files = _iter_local_model_files(entry)
-            if not files:
-                continue
-            key = str(entry.resolve()).lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            kind = _model_kind(entry.name, files)
-            primary = next((p for p in files if p.suffix.lower() == ".gguf"), files[0])
-            models.append({
-                "id": entry.name,
-                "name": entry.name.replace("__", " / "),
-                "kind": kind,
-                "path": str(entry),
-                "primary_file": str(primary),
-                "file_count": len(files),
-                "size_bytes": _sum_file_sizes(files),
-                "ready": True,
-            })
+            add_model(entry, _iter_local_model_files(entry))
 
     return {"roots": [str(root) for root in roots], "models": models}
+
+
+@app.get("/api/models/local")
+def list_local_models():
+    """Return downloaded local model assets visible to the desktop app."""
+    return _local_model_payload()
+
+
+@app.get("/api/models/list")
+def list_models_alias():
+    """Compatibility endpoint for the desktop app's model browser."""
+    return _local_model_payload()
+
+
+@app.post("/api/models/load")
+def load_local_model(model: str):
+    """Select a local model and update the desktop runtime configuration."""
+    payload = _local_model_payload()
+    selected = None
+    model_norm = (model or "").strip().lower()
+    for item in payload["models"]:
+        candidates = {
+            str(item.get("id") or "").lower(),
+            str(item.get("name") or "").lower(),
+            Path(str(item.get("primary_file") or "")).name.lower(),
+            Path(str(item.get("primary_file") or "")).stem.lower(),
+            str(item.get("primary_file") or "").lower(),
+            str(item.get("path") or "").lower(),
+        }
+        if model_norm in candidates:
+            selected = item
+            break
+    if selected is None:
+        raise HTTPException(status_code=404, detail=f"Model not found: {model}")
+
+    primary = Path(str(selected.get("primary_file") or ""))
+    kind = str(selected.get("kind") or "")
+    cfg = load_config()
+    if not isinstance(cfg, dict):
+        cfg = {}
+
+    if kind == "llm" and primary.suffix.lower() == ".gguf":
+        os.environ["JARVIS_ACTIVE_GGUF_MODEL_PATH"] = str(primary)
+        model_name = primary.stem
+        endpoint = "http://127.0.0.1:8080/v1"
+        cfg["model"] = {
+            "default": model_name,
+            "provider": "llama_cpp_local",
+            "context_length": int(os.getenv("JARVIS_LLAMA_CPP_CTX_SIZE") or "8192"),
+            "max_tokens": int(os.getenv("JARVIS_DESKTOP_MAX_TOKENS", "512") or "512"),
+        }
+        providers = cfg.setdefault("providers", {})
+        if isinstance(providers, dict):
+            providers["llama_cpp_local"] = {
+                "base_url": endpoint,
+                "model": model_name,
+                "api_key": "",
+                "model_path": str(primary),
+            }
+        app.state.active_desktop_model = model_name
+        app.state.active_desktop_provider = "llama_cpp_local"
+    elif kind == "llm":
+        model_name = str(selected.get("path") or primary.parent)
+        endpoint = "http://127.0.0.1:8000/v1"
+        cfg["model"] = {
+            "default": model_name,
+            "provider": "vllm_local",
+            "context_length": int(os.getenv("JARVIS_VLLM_CONTEXT_LENGTH") or "8192"),
+            "max_tokens": int(os.getenv("JARVIS_DESKTOP_MAX_TOKENS", "512") or "512"),
+        }
+        providers = cfg.setdefault("providers", {})
+        if isinstance(providers, dict):
+            providers["vllm_local"] = {
+                "base_url": endpoint,
+                "model": model_name,
+                "api_key": "",
+                "model_path": model_name,
+            }
+        app.state.active_desktop_model = model_name
+        app.state.active_desktop_provider = "vllm_local"
+    elif kind == "stt":
+        stt = cfg.setdefault("stt", {})
+        if isinstance(stt, dict):
+            stt.update({
+                "enabled": True,
+                "provider": "local",
+                "local": {
+                    "model": "base",
+                    "language": "en",
+                    "device": "cpu",
+                    "compute_type": "int8",
+                },
+            })
+    elif kind == "tts":
+        tts = cfg.setdefault("tts", {})
+        if isinstance(tts, dict):
+            tts["provider"] = "kokoro" if "kokoro" in str(primary).lower() else "system"
+
+    save_config(cfg)
+    return {"ok": True, "selected": selected, "kind": kind}
+
+
+@app.get("/api/models/load")
+def load_local_model_get(model: str):
+    """GET alias for curl/manual desktop setup probes."""
+    return load_local_model(model)
 
 
 # ---------------------------------------------------------------------------
@@ -3425,13 +3853,26 @@ class SkillToggle(BaseModel):
 
 @app.get("/api/skills")
 async def get_skills():
-    from tools.skills_tool import _find_all_skills
-    from jarvis_cli.skills_config import get_disabled_skills
-    config = load_config()
-    disabled = get_disabled_skills(config)
-    skills = _find_all_skills(skip_disabled=True)
+    skills = _desktop_skill_catalog(include_disabled=True)
+    env = {**os.environ, **load_env()}
+    setup_env_by_category = {
+        "weather": ["OPENWEATHER_API_KEY", "WEATHER_API_KEY"],
+        "email": ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD"],
+        "web": [],
+        "browser": [],
+    }
     for s in skills:
-        s["enabled"] = s["name"] not in disabled
+        s["enabled"] = bool(s.get("enabled", True))
+        text = f"{s.get('name', '')} {s.get('description', '')} {s.get('category', '')}".lower()
+        required_env: list[str] = []
+        for marker, keys in setup_env_by_category.items():
+            if marker in text:
+                required_env.extend(keys)
+        missing = [key for key in sorted(set(required_env)) if not env.get(key)]
+        s["requires_setup"] = bool(missing)
+        s["missing_env"] = missing
+        s["configured"] = not missing
+        s["status"] = "disabled" if not s["enabled"] else "setup_needed" if missing else "ready"
     return skills
 
 
