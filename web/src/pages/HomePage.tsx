@@ -123,6 +123,9 @@ export default function HomePage() {
   const voiceOutputTimerRef = useRef<number | null>(null);
   const speechQueueRef = useRef<Promise<void>>(Promise.resolve());
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const audioMeterContextRef = useRef<AudioContext | null>(null);
+  const audioMeterFrameRef = useRef<number | null>(null);
+  const audioMeterSourceRef = useRef<AudioNode | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
   const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
@@ -149,9 +152,95 @@ export default function HomePage() {
   const [listening, setListening] = useState(false);
   const [voiceBusy, setVoiceBusy] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([
     { kind: "output", text: "JARVIS desktop backend linked." },
   ]);
+
+  const stopAudioMeter = useCallback(() => {
+    if (audioMeterFrameRef.current !== null) {
+      window.cancelAnimationFrame(audioMeterFrameRef.current);
+      audioMeterFrameRef.current = null;
+    }
+
+    try {
+      audioMeterSourceRef.current?.disconnect();
+    } catch {
+      // Source may already be disconnected by the browser.
+    }
+    audioMeterSourceRef.current = null;
+
+    const context = audioMeterContextRef.current;
+    audioMeterContextRef.current = null;
+    if (context && context.state !== "closed") {
+      void context.close().catch(() => undefined);
+    }
+
+    setAudioLevel(0);
+  }, []);
+
+  const monitorAnalyser = useCallback((analyser: AnalyserNode) => {
+    const samples = new Uint8Array(analyser.fftSize);
+
+    const tick = () => {
+      analyser.getByteTimeDomainData(samples);
+      let total = 0;
+      for (let index = 0; index < samples.length; index += 1) {
+        const centered = (samples[index] - 128) / 128;
+        total += centered * centered;
+      }
+      const rms = Math.sqrt(total / samples.length);
+      setAudioLevel(Math.min(1, rms * 4.5));
+      audioMeterFrameRef.current = window.requestAnimationFrame(tick);
+    };
+
+    tick();
+  }, []);
+
+  const startStreamAudioMeter = useCallback(
+    (stream: MediaStream) => {
+      stopAudioMeter();
+      const AudioContextConstructor =
+        window.AudioContext ??
+        (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!AudioContextConstructor) return;
+
+      const context = new AudioContextConstructor();
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.72;
+      const source = context.createMediaStreamSource(stream);
+      source.connect(analyser);
+      audioMeterContextRef.current = context;
+      audioMeterSourceRef.current = source;
+      monitorAnalyser(analyser);
+    },
+    [monitorAnalyser, stopAudioMeter],
+  );
+
+  const startPlaybackAudioMeter = useCallback(
+    (audio: HTMLAudioElement) => {
+      stopAudioMeter();
+      const AudioContextConstructor =
+        window.AudioContext ??
+        (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!AudioContextConstructor) return;
+
+      const context = new AudioContextConstructor();
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.78;
+      const source = context.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(context.destination);
+      audioMeterContextRef.current = context;
+      audioMeterSourceRef.current = source;
+      monitorAnalyser(analyser);
+    },
+    [monitorAnalyser, stopAudioMeter],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -219,8 +308,9 @@ export default function HomePage() {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
       }
+      stopAudioMeter();
     };
-  }, []);
+  }, [stopAudioMeter]);
 
   const orbState: OrbState = useMemo(() => {
     if (!status) return "offline";
@@ -354,16 +444,20 @@ export default function HomePage() {
         audio.onended = () => {
           if (objectUrl) URL.revokeObjectURL(objectUrl);
           if (audioPlayerRef.current === audio) audioPlayerRef.current = null;
+          stopAudioMeter();
           setSpeaking(false);
         };
         audio.onerror = () => {
           if (objectUrl) URL.revokeObjectURL(objectUrl);
           if (audioPlayerRef.current === audio) audioPlayerRef.current = null;
+          stopAudioMeter();
           setSpeaking(false);
         };
+        startPlaybackAudioMeter(audio);
         await audio.play();
       } catch (error) {
         if (objectUrl) URL.revokeObjectURL(objectUrl);
+        stopAudioMeter();
         setSpeaking(false);
         setTerminalEntries((entries) => [
           ...entries,
@@ -374,7 +468,7 @@ export default function HomePage() {
         ]);
       }
     },
-    [voiceOutput],
+    [startPlaybackAudioMeter, stopAudioMeter, voiceOutput],
   );
 
   const queueSynthesizedSpeech = useCallback(
@@ -536,7 +630,8 @@ export default function HomePage() {
   const stopVoiceStream = useCallback(() => {
     voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
     voiceStreamRef.current = null;
-  }, []);
+    stopAudioMeter();
+  }, [stopAudioMeter]);
 
   const stopVoiceRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
@@ -560,6 +655,7 @@ export default function HomePage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       voiceStreamRef.current = stream;
+      startStreamAudioMeter(stream);
       const preferredMime = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -601,7 +697,7 @@ export default function HomePage() {
         { kind: "output", text: "Microphone permission unavailable." },
       ]);
     }
-  }, [handleRecordedVoice, stopVoiceStream]);
+  }, [handleRecordedVoice, startStreamAudioMeter, stopVoiceStream]);
 
   useEffect(() => {
     if (!autoVoiceArmed || listening || voiceBusy) return;
@@ -704,7 +800,7 @@ export default function HomePage() {
           />
           <div className="relative grid min-h-[245px] w-full max-w-[620px] place-items-center overflow-visible">
             <TeamSoulOrbit souls={visibleSouls} activeSoul={stats?.active_soul ?? "jarvis"} />
-            <JarvisOrb state={orbState} className="z-10" />
+            <JarvisOrb audioLevel={audioLevel} state={orbState} className="z-10" />
           </div>
 
           <div className="mt-2 flex flex-col items-center gap-2 text-center">
@@ -818,10 +914,11 @@ export default function HomePage() {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2">
-          <div className="text-[0.7rem] uppercase tracking-[0.12em] text-slate-300/58">
-            Steering
-          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2">
+            <div className="text-[0.7rem] uppercase tracking-[0.12em] text-slate-300/58">
+              Steering
+            </div>
+            <AudioLevelMeter level={audioLevel} active={listening || speaking || voiceBusy} />
           <div className="flex items-center gap-2">
             <QuickAction
               label={listening ? "Stop listening" : "Voice input"}
@@ -925,6 +1022,41 @@ function TeamSoulOrbit({
               {soul.name}
             </span>
           </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AudioLevelMeter({
+  active,
+  level,
+}: {
+  active: boolean;
+  level: number;
+}) {
+  const normalized = Math.max(0.04, Math.min(1, level));
+
+  return (
+    <div
+      className={cn(
+        "hidden h-9 min-w-[150px] items-end gap-1 rounded-md border border-cyan-200/12 bg-cyan-200/5 px-2 py-1.5 sm:flex",
+        active ? "opacity-100" : "opacity-42",
+      )}
+      aria-label="Live voice level"
+      title="Live voice level"
+    >
+      {Array.from({ length: 18 }).map((_, index) => {
+        const phase = (index + 1) / 18;
+        const height = active
+          ? 18 * Math.max(0.16, Math.sin(phase * Math.PI) * normalized)
+          : 3 + (index % 3);
+        return (
+          <span
+            key={index}
+            className="w-1 rounded-full bg-cyan-100 shadow-[0_0_10px_rgba(125,249,255,0.42)]"
+            style={{ height }}
+          />
         );
       })}
     </div>

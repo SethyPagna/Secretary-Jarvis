@@ -12,6 +12,7 @@ type OrbState =
   | "offline";
 
 interface JarvisOrbProps {
+  audioLevel?: number;
   className?: string;
   state: OrbState;
 }
@@ -172,7 +173,7 @@ function NebulaVeil({ state }: JarvisOrbProps) {
   );
 }
 
-function OrbitRings({ state }: JarvisOrbProps) {
+function OrbitRings({ audioLevel = 0, state }: JarvisOrbProps) {
   const ringsRef = useRef<THREE.Group>(null);
   const palette = STATE_PALETTE[state];
 
@@ -180,8 +181,8 @@ function OrbitRings({ state }: JarvisOrbProps) {
     if (!ringsRef.current) return;
     const elapsed = clock.getElapsedTime();
     const speed = state === "thinking" || state === "executing" ? 0.9 : 0.34;
-    ringsRef.current.rotation.y = elapsed * speed * 0.28;
-    ringsRef.current.rotation.x = Math.sin(elapsed * 0.26) * 0.24;
+    ringsRef.current.rotation.y = elapsed * speed * (0.28 + audioLevel * 0.12);
+    ringsRef.current.rotation.x = Math.sin(elapsed * (0.26 + audioLevel * 0.8)) * (0.24 + audioLevel * 0.08);
   });
 
   return (
@@ -213,7 +214,7 @@ function OrbitRings({ state }: JarvisOrbProps) {
   );
 }
 
-function OrbMesh({ state }: JarvisOrbProps) {
+function OrbMesh({ audioLevel = 0, state }: JarvisOrbProps) {
   const groupRef = useRef<THREE.Group>(null);
   const coreRef = useRef<THREE.Mesh>(null);
   const shellRef = useRef<THREE.Mesh>(null);
@@ -235,8 +236,12 @@ function OrbMesh({ state }: JarvisOrbProps) {
   useFrame(({ clock }) => {
     const elapsed = clock.getElapsedTime();
     const speed = state === "thinking" || state === "executing" ? 0.9 : 0.25;
-    const speechPulse = state === "speaking" ? 10.5 : 2.4;
-    const pulse = 1 + Math.sin(elapsed * speechPulse) * (state === "offline" ? 0.01 : 0.045);
+    const speechPulse = state === "speaking" ? 10.5 : state === "listening" ? 7.5 : 2.4;
+    const audioPulse = audioLevel * (state === "listening" || state === "speaking" ? 0.16 : 0.06);
+    const pulse =
+      1 +
+      Math.sin(elapsed * speechPulse) * (state === "offline" ? 0.01 : 0.045 + audioPulse * 0.28) +
+      audioPulse;
 
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.005 + speed * 0.004;
@@ -253,8 +258,8 @@ function OrbMesh({ state }: JarvisOrbProps) {
     }
 
     if (particlesRef.current) {
-      particlesRef.current.rotation.y -= 0.004 + speed * 0.006;
-      particlesRef.current.rotation.z = elapsed * 0.035;
+      particlesRef.current.rotation.y -= 0.004 + speed * 0.006 + audioLevel * 0.012;
+      particlesRef.current.rotation.z = elapsed * (0.035 + audioLevel * 0.035);
     }
   });
 
@@ -282,12 +287,12 @@ function OrbMesh({ state }: JarvisOrbProps) {
           blending={THREE.AdditiveBlending}
         />
       </mesh>
-      <mesh scale={1.18}>
+      <mesh scale={1.18 + audioLevel * 0.16}>
         <sphereGeometry args={[1, 64, 64]} />
         <meshBasicMaterial
           color={palette.rim}
           transparent
-          opacity={state === "offline" ? 0.04 : 0.09}
+          opacity={state === "offline" ? 0.04 : 0.09 + audioLevel * 0.1}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
@@ -302,19 +307,20 @@ function OrbMesh({ state }: JarvisOrbProps) {
           depthWrite={false}
         />
       </points>
-      <OrbitRings state={state} />
+      <OrbitRings audioLevel={audioLevel} state={state} />
     </group>
   );
 }
 
-export function JarvisOrb({ className, state }: JarvisOrbProps) {
+export function JarvisOrb({ audioLevel = 0, className, state }: JarvisOrbProps) {
   const palette = STATE_PALETTE[state];
+  const normalizedAudioLevel = Math.max(0, Math.min(1, audioLevel));
 
   return (
     <div
       className={`relative aspect-square min-w-0 w-[clamp(150px,18vw,215px)] max-w-full overflow-visible ${className ?? ""}`}
       style={{
-        filter: `drop-shadow(0 0 42px ${palette.core}55) drop-shadow(0 0 90px ${palette.accent}26)`,
+        filter: `drop-shadow(0 0 ${42 + normalizedAudioLevel * 34}px ${palette.core}66) drop-shadow(0 0 ${90 + normalizedAudioLevel * 56}px ${palette.accent}30)`,
       }}
     >
       <Canvas
@@ -329,7 +335,7 @@ export function JarvisOrb({ className, state }: JarvisOrbProps) {
         <pointLight position={[0, 4, -2]} intensity={0.9} color={palette.secondary} />
         <StarField state={state} />
         <NebulaVeil state={state} />
-        <OrbMesh state={state} />
+        <OrbMesh audioLevel={normalizedAudioLevel} state={state} />
       </Canvas>
     </div>
   );

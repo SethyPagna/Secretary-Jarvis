@@ -19,7 +19,7 @@ export const commandSections: KnowledgeSection[] = [
   {
     id: "daily",
     label: "Daily Control",
-    summary: "Fast actions for the Home terminal and quick task bar.",
+    summary: "Fast actions for the unified Home terminal and voice bar.",
   },
   {
     id: "runtime",
@@ -47,10 +47,10 @@ export const commandItems: KnowledgeItem[] = [
   {
     id: "quick-task",
     section: "daily",
-    title: "Quick Task",
+    title: "Ask JARVIS",
     summary: "Run one natural-language request without leaving Home.",
     detail:
-      "Use the lightning action or type the request into the Home terminal. JARVIS should stream the same response to text and voice when voice output is on.",
+      "Type into the Home input or use the voice button. JARVIS streams the same response to text and voice when voice output is on.",
     badges: ["Home", "streaming"],
     command: "Summarize today's active sessions and tell me what needs attention.",
   },
@@ -110,9 +110,9 @@ export const commandItems: KnowledgeItem[] = [
     title: "Test STT",
     summary: "Speak into Home and watch transcription appear in input.",
     detail:
-      "The active Whisper model should transcribe into the same input stream the terminal uses. The orb should enter listening state and waveform data should be visible.",
+      "The active Whisper model transcribes into the same input stream the terminal uses. The orb enters listening state and the live voice meter should move with microphone audio.",
     badges: ["Whisper", "local"],
-    command: "Open Souls, test microphone, then dictate a Home prompt.",
+    command: "Use the Home voice button and dictate a prompt.",
   },
   {
     id: "tts-test",
@@ -326,9 +326,9 @@ export const setupItems: KnowledgeItem[] = [
     title: "Python Dependencies",
     summary: "Install from wheelhouse or a reachable mirror when PyPI blocks.",
     detail:
-      "FastAPI, Uvicorn, PyInstaller, psutil, websockets, and model adapters must import before packaging. Keep a mirror fallback documented for restricted networks.",
+      "Use Python 3.11 or 3.12 for packaging. FastAPI, Uvicorn, PyInstaller, psutil, websockets, and model adapters must import before packaging.",
     badges: ["FastAPI", "PyInstaller"],
-    command: "python -m pip install -e . pyinstaller",
+    command: "py -3.11 -m pip install --no-build-isolation -e \".[voice,pty]\" pyinstaller",
   },
   {
     id: "frontend-deps",
@@ -373,7 +373,7 @@ export const setupItems: KnowledgeItem[] = [
     title: "Single Visible App",
     summary: "Packaged app owns backend and helper lifecycle.",
     detail:
-      "The packaged build should present as JARVIS/Jarvis.exe while backend helpers run as owned children and terminate on quit.",
+      "The packaged build presents as JARVIS in normal app views while backend helpers remain owned children. Quit must terminate every owned child and leave no JARVIS process idle.",
     badges: ["packaging"],
   },
   {
@@ -394,7 +394,7 @@ export const setupItems: KnowledgeItem[] = [
     detail:
       "A release is not ready until packaged backend smoke, renderer build, installer generation, and clean port/process shutdown checks pass.",
     badges: ["release"],
-    command: "scripts/build-desktop.ps1 -SmokePort 18765",
+    command: "powershell -ExecutionPolicy Bypass -File scripts/build-desktop.ps1 -SmokePort 18765",
   },
 ];
 
