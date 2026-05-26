@@ -301,11 +301,12 @@ def _llm_plan(
         endpoint = f"http://127.0.0.1:{port}/v1"
         model = gguf.stem
         has_nvidia = executable_available("nvidia-smi")
-        ctx_size = 32768 if has_nvidia else 8192
+        ctx_size = int(os.getenv("JARVIS_LLAMA_CPP_CTX_SIZE") or "65536")
         gpu_layers = 999 if has_nvidia else 0
+        threads = max(2, min(os.cpu_count() or 4, 12))
         start_command = (
             f"llama-server --model {_quote(gguf)} --host 127.0.0.1 --port {port} "
-            f"--ctx-size {ctx_size} --n-gpu-layers {gpu_layers} --threads 8"
+            f"--ctx-size {ctx_size} --n-gpu-layers {gpu_layers} --threads {threads}"
         )
         config_patch = {
             "model": model,

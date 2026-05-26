@@ -8,6 +8,8 @@ import json
 import os
 import socket
 import sys
+import threading
+import time
 from collections.abc import Sequence
 from typing import Any, Callable
 
@@ -51,6 +53,56 @@ def _port_available(host: str, port: int) -> tuple[bool, str]:
         return True, ""
     except OSError as exc:
         return False, f"{type(exc).__name__}: {exc}"
+
+
+def _process_exists(pid: int) -> bool:
+    try:
+        import psutil
+
+        return psutil.pid_exists(pid)
+    except Exception:
+        if os.name == "nt":
+            try:
+                import ctypes
+
+                handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
+                if handle:
+                    ctypes.windll.kernel32.CloseHandle(handle)
+                    return True
+                return False
+            except Exception:
+                return True
+        try:
+            os.kill(pid, 0)
+            return True
+        except OSError:
+            return False
+
+
+def _start_parent_watchdog() -> None:
+    raw_pid = os.getenv("JARVIS_DESKTOP_PARENT_PID", "").strip()
+    if not raw_pid:
+        return
+    try:
+        parent_pid = int(raw_pid)
+    except ValueError:
+        return
+    if parent_pid <= 0:
+        return
+
+    def _watch() -> None:
+        while True:
+            time.sleep(2)
+            if not _process_exists(parent_pid):
+                try:
+                    from jarvis_cli.local_runtime import stop_local_runtime
+
+                    stop_local_runtime()
+                except Exception:
+                    pass
+                os._exit(0)
+
+    threading.Thread(target=_watch, name="jarvis-parent-watchdog", daemon=True).start()
 
 
 def run_preflight(
@@ -120,6 +172,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         raise SystemExit(0 if result["ok"] else 1)
 
     from jarvis_cli.web_server import start_server
+
+    _start_parent_watchdog()
 
     start_server(
         host=args.host,

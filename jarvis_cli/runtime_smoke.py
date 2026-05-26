@@ -5,9 +5,6 @@ from __future__ import annotations
 import json
 import os
 import importlib.util
-import shutil
-import subprocess
-import sys
 import tempfile
 import time
 import urllib.parse
@@ -333,54 +330,26 @@ def default_tts_probe(
     started = time.perf_counter()
     error = ""
     try:
-        if provider == "kokoro":
-            if importlib.util.find_spec("kokoro") is None and importlib.util.find_spec("kokoro_onnx") is None:
-                return {
-                    "ready": False,
-                    "engine": "kokoro",
-                    "error": "Kokoro runtime is not installed.",
-                    "latency_ms": _elapsed_ms(started),
-                }
-            error = "Kokoro live synthesis is installed but not yet wired in the smoke runner."
-        elif provider == "omnivoice":
-            if importlib.util.find_spec("omnivoice") is None and importlib.util.find_spec("omni_voice") is None:
-                return {
-                    "ready": False,
-                    "engine": "omnivoice",
-                    "error": "OmniVoice runtime is not installed.",
-                    "latency_ms": _elapsed_ms(started),
-                }
-            error = "OmniVoice live synthesis is installed but not yet wired in the smoke runner."
-        elif provider == "system":
-            if sys.platform == "win32":
-                safe_output_path = str(output_path).replace("'", "''")
-                safe_text = text.replace("'", "''")
-                command = [
-                    "powershell",
-                    "-NoProfile",
-                    "-Command",
-                    (
-                        "Add-Type -AssemblyName System.Speech; "
-                        "$s = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
-                        f"$s.SetOutputToWaveFile('{safe_output_path}'); "
-                        f"$s.Speak('{safe_text}'); "
-                        "$s.Dispose();"
-                    ),
-                ]
-            elif shutil.which("say"):
-                command = ["say", "-o", str(output_path), text]
-            elif shutil.which("espeak"):
-                command = ["espeak", "-w", str(output_path), text]
-            else:
-                command = []
-            if not command:
-                return {
-                    "ready": False,
-                    "engine": "system",
-                    "error": "No system TTS command is available.",
-                    "latency_ms": _elapsed_ms(started),
-                }
-            subprocess.run(command, check=True, capture_output=True, text=True, timeout=timeout)
+        if provider in {"kokoro", "omnivoice", "system", "edge", "system-tts", "windows", "sapi"}:
+            from jarvis_cli.desktop_voice import synthesize_desktop_speech
+
+            # Match the Home page path exactly: when the config says "system"
+            # but local Kokoro assets/runtime are available, desktop speech
+            # auto-promotes to Kokoro instead of downgrading the smoke result.
+            requested_provider = None if provider in {"", "system", "edge", "system-tts", "windows", "sapi"} else provider
+            payload = synthesize_desktop_speech(text, output_dir, provider=requested_provider)
+            audio_path = str(payload.get("file_path") or "")
+            return {
+                "ready": bool(payload.get("success")),
+                "engine": payload.get("engine") or provider,
+                "provider": payload.get("provider") or provider,
+                "fallback_from": payload.get("fallback_from", ""),
+                "fallback_reason": payload.get("fallback_reason", ""),
+                "latency_ms": payload.get("latency_ms") or _elapsed_ms(started),
+                "audio_path": audio_path,
+                "audio_bytes": payload.get("audio_bytes") or 0,
+                "error": payload.get("error", ""),
+            }
         elif provider == "docker":
             from jarvis_cli.desktop_voice import synthesize_desktop_speech
 

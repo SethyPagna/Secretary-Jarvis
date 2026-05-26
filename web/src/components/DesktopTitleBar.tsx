@@ -1,6 +1,7 @@
 import { Bell, Maximize2, Minus, PanelLeft, X } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface DesktopTitleBarProps {
@@ -41,8 +42,11 @@ export function DesktopTitleBar({
   useEffect(() => {
     let cancelled = false;
 
-    window.jarvisDesktop
-      ?.getBackendStatus()
+    const check = window.jarvisDesktop?.getBackendStatus
+      ? window.jarvisDesktop.getBackendStatus()
+      : api.getStatus().then((status) => ({ ok: Boolean(status.version) }));
+
+    check
       .then((status) => {
         if (!cancelled) setBackendStatus(status.ok ? "idle" : "offline");
       })

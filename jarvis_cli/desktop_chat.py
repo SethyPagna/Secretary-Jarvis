@@ -12,6 +12,8 @@ import json
 import logging
 import os
 import time
+import urllib.parse
+import urllib.request
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
@@ -111,6 +113,89 @@ def _record_desktop_tokens(
     atomic_replace(tmp_path, stats_path)
 
 
+def _is_loopback_openai_endpoint(base_url: str) -> bool:
+    try:
+        parsed = urllib.parse.urlparse(base_url)
+    except Exception:
+        return False
+    host = (parsed.hostname or "").lower()
+    return parsed.scheme in {"http", "https"} and host in {
+        "127.0.0.1",
+        "localhost",
+        "::1",
+        "0.0.0.0",
+    }
+
+
+def _endpoint_has_models(base_url: str) -> bool:
+    base = base_url.rstrip("/")
+    probe = f"{base}/models" if base.endswith("/v1") else f"{base}/v1/models"
+    try:
+        with urllib.request.urlopen(probe, timeout=1.5) as response:
+            return 200 <= response.status < 300
+    except Exception:
+        return False
+
+
+def _desktop_local_runtime_from_config(
+    cfg: Mapping[str, Any],
+    target_model: str,
+) -> tuple[dict[str, Any], str] | None:
+    """Resolve the desktop chat runtime from the Models-page provider map.
+
+    The inherited CLI runtime resolver only understands the legacy
+    ``model.provider`` shape. The desktop app stores local backends under
+    ``providers`` so the Models page can rank llama.cpp first, vLLM second,
+    and Ollama last. Home chat must use that same map.
+    """
+    providers = cfg.get("providers")
+    if not isinstance(providers, Mapping):
+        return None
+
+    def priority(name: str, provider: Mapping[str, Any]) -> tuple[int, str]:
+        combined = f"{name} {provider.get('base_url') or provider.get('url') or ''}".lower()
+        if "docker" in combined:
+            return (90, name)
+        if "llama" in combined or ":808" in combined:
+            return (0, name)
+        if "vllm" in combined or ":8000" in combined:
+            return (1, name)
+        if "ollama" in combined or ":11434" in combined:
+            return (2, name)
+        return (20, name)
+
+    candidates: list[tuple[str, Mapping[str, Any]]] = []
+    for name, value in providers.items():
+        if not isinstance(value, Mapping):
+            continue
+        base_url = str(value.get("base_url") or value.get("url") or "").strip().rstrip("/")
+        if not base_url or not _is_loopback_openai_endpoint(base_url):
+            continue
+        if "docker" in f"{name} {base_url}".lower():
+            continue
+        candidates.append((str(name), value))
+
+    for name, provider in sorted(candidates, key=lambda item: priority(item[0], item[1])):
+        base_url = str(provider.get("base_url") or provider.get("url") or "").strip().rstrip("/")
+        model_name = str(provider.get("model") or target_model or "").strip()
+        if not model_name:
+            continue
+        if not _endpoint_has_models(base_url):
+            continue
+        return (
+            {
+                "provider": "custom",
+                "requested_provider": name,
+                "api_mode": str(provider.get("api_mode") or "chat_completions"),
+                "base_url": base_url,
+                "api_key": str(provider.get("api_key") or "no-key-required"),
+                "source": f"desktop-providers:{name}",
+            },
+            model_name,
+        )
+    return None
+
+
 def run_desktop_chat_turn(
     prompt: str,
     *,
@@ -173,11 +258,19 @@ def run_desktop_chat_turn(
             if detected:
                 effective_provider, effective_model = detected
 
-    runtime = resolve_runtime_provider(
-        requested=effective_provider,
-        target_model=effective_model or None,
-        explicit_base_url=explicit_base_url_from_alias,
+    desktop_runtime = (
+        None
+        if effective_provider or explicit_base_url_from_alias
+        else _desktop_local_runtime_from_config(cfg, effective_model)
     )
+    if desktop_runtime is not None:
+        runtime, effective_model = desktop_runtime
+    else:
+        runtime = resolve_runtime_provider(
+            requested=effective_provider,
+            target_model=effective_model or None,
+            explicit_base_url=explicit_base_url_from_alias,
+        )
 
     toolsets_list = _normalize_toolsets(toolsets)
     if toolsets_list is None:

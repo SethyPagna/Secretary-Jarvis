@@ -46,8 +46,14 @@ def _default_cleanup_callbacks() -> list[CleanupCallback]:
         shutdown_cached_clients()
         return {"closed": True}
 
+    def _local_runtime_shutdown():
+        from jarvis_cli.local_runtime import stop_local_runtime
+
+        return stop_local_runtime()
+
     callbacks.extend(
         [
+            ("local-runtime", _local_runtime_shutdown),
             ("mcp-servers", _mcp_shutdown),
             ("lsp-service", _lsp_shutdown),
             ("auxiliary-clients", _auxiliary_shutdown),

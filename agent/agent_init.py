@@ -1455,13 +1455,29 @@ def init_agent(
     from agent.model_metadata import MINIMUM_CONTEXT_LENGTH
     _ctx = getattr(agent.context_compressor, "context_length", 0)
     if _ctx and _ctx < MINIMUM_CONTEXT_LENGTH:
-        raise ValueError(
-            f"Model {agent.model} has a context window of {_ctx:,} tokens, "
-            f"which is below the minimum {MINIMUM_CONTEXT_LENGTH:,} required "
-            f"by JARVIS.  Choose a model with at least "
-            f"{MINIMUM_CONTEXT_LENGTH // 1000}K context, or set "
-            f"model.context_length in config.yaml to override."
+        desktop_local_endpoint = (
+            getattr(agent, "platform", None) == "desktop"
+            and is_local_endpoint(getattr(agent, "base_url", "") or "")
         )
+        if desktop_local_endpoint:
+            logger.warning(
+                "Desktop local model %s reports %d context tokens, below the "
+                "%d JARVIS tool-calling target. Continuing so the packaged "
+                "desktop can answer with the locally selected model; raise "
+                "llama.cpp --ctx-size or set model.context_length for larger "
+                "workflows.",
+                agent.model,
+                _ctx,
+                MINIMUM_CONTEXT_LENGTH,
+            )
+        else:
+            raise ValueError(
+                f"Model {agent.model} has a context window of {_ctx:,} tokens, "
+                f"which is below the minimum {MINIMUM_CONTEXT_LENGTH:,} required "
+                f"by JARVIS.  Choose a model with at least "
+                f"{MINIMUM_CONTEXT_LENGTH // 1000}K context, or set "
+                f"model.context_length in config.yaml to override."
+            )
 
     # Inject context engine tool schemas (e.g. lcm_grep, lcm_describe, lcm_expand).
     # Skip names that are already present — the _ra().get_tool_definitions()

@@ -123,6 +123,7 @@ function backendEnv() {
   return {
     ...process.env,
     JARVIS_DESKTOP_EMBEDDED: '1',
+    JARVIS_DESKTOP_PARENT_PID: String(process.pid),
     JARVIS_DESKTOP_SHUTDOWN_TOKEN: BACKEND_SHUTDOWN_TOKEN,
     JARVIS_DISABLE_LAZY_INSTALLS: '1',
     JARVIS_RESOURCE_ROOT: resourceRoot,
