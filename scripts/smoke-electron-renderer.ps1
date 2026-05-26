@@ -1,5 +1,7 @@
 param(
     [string]$AppPath = "",
+    [string]$Route = "/",
+    [string[]]$RequiredText = @(),
     [int]$BackendPort = 18768,
     [int]$DebugPort = 19223,
     [int]$TimeoutSec = 90,
@@ -65,6 +67,12 @@ function Invoke-Cdp {
     }
 }
 
+function Get-DebugPageTarget {
+    param([int]$Port)
+    $targets = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/json/list" -TimeoutSec 2
+    return @($targets | Where-Object { $_.type -eq "page" -and $_.webSocketDebuggerUrl } | Select-Object -First 1)[0]
+}
+
 $PreviousBackendPort = $env:JARVIS_DESKTOP_BACKEND_PORT
 $PreviousNoRuntime = $env:JARVIS_LOCAL_RUNTIME_AUTOSTART
 $PreviousModelsDir = $env:JARVIS_MODELS_DIR
@@ -109,8 +117,7 @@ try {
     $Target = $null
     do {
         try {
-            $targets = Invoke-RestMethod -Uri "http://127.0.0.1:$DebugPort/json/list" -TimeoutSec 2
-            $Target = @($targets | Where-Object { $_.type -eq "page" -and $_.webSocketDebuggerUrl } | Select-Object -First 1)[0]
+            $Target = Get-DebugPageTarget -Port $DebugPort
         }
         catch {
             Start-Sleep -Milliseconds 500
@@ -121,36 +128,79 @@ try {
         throw "Electron renderer did not expose a debuggable page on port $DebugPort."
     }
 
+    if ($Route -and $Route -ne "/") {
+        if (-not $Route.StartsWith("/")) {
+            $Route = "/$Route"
+        }
+        $navigated = $false
+        for ($attempt = 0; $attempt -lt 10 -and -not $navigated; $attempt++) {
+            try {
+                $Target = Get-DebugPageTarget -Port $DebugPort
+                $escapedRoute = $Route.Replace("\", "\\").Replace("'", "\'")
+                Invoke-Cdp -WebSocketUrl $Target.webSocketDebuggerUrl -Method "Runtime.evaluate" -Params @{
+                    expression = "window.history.pushState({}, '', '$escapedRoute'); window.dispatchEvent(new PopStateEvent('popstate')); true"
+                    returnByValue = $true
+                } | Out-Null
+                $navigated = $true
+            }
+            catch {
+                Start-Sleep -Milliseconds 600
+            }
+        }
+        if (-not $navigated) {
+            throw "Electron renderer did not accept navigation to $Route."
+        }
+    }
+
     $Ready = $false
     $BodyText = ""
     $StatusVersion = ""
     $StatsCpu = ""
     do {
-        $eval = Invoke-Cdp -WebSocketUrl $Target.webSocketDebuggerUrl -Method "Runtime.evaluate" -Params @{
-            expression = "document.body ? document.body.innerText : ''"
-            returnByValue = $true
+        try {
+            $Target = Get-DebugPageTarget -Port $DebugPort
+            $eval = Invoke-Cdp -WebSocketUrl $Target.webSocketDebuggerUrl -Method "Runtime.evaluate" -Params @{
+                expression = "document.body ? document.body.innerText : ''"
+                returnByValue = $true
+            }
+            $BodyText = [string]$eval.result.result.value
+            $statusEval = Invoke-Cdp -WebSocketUrl $Target.webSocketDebuggerUrl -Method "Runtime.evaluate" -Params @{
+                expression = "fetch('/api/status').then(r => r.json()).then(j => j.version || j.status || 'ok').catch(e => 'ERR:' + e.message)"
+                returnByValue = $true
+                awaitPromise = $true
+            }
+            $statsEval = Invoke-Cdp -WebSocketUrl $Target.webSocketDebuggerUrl -Method "Runtime.evaluate" -Params @{
+                expression = "fetch('/api/stats').then(r => r.json()).then(j => String(j.cpu_percent ?? j.cpu?.percent ?? 'ok')).catch(e => 'ERR:' + e.message)"
+                returnByValue = $true
+                awaitPromise = $true
+            }
         }
-        $BodyText = [string]$eval.result.result.value
-        $statusEval = Invoke-Cdp -WebSocketUrl $Target.webSocketDebuggerUrl -Method "Runtime.evaluate" -Params @{
-            expression = "fetch('/api/status').then(r => r.json()).then(j => j.version || j.status || 'ok').catch(e => 'ERR:' + e.message)"
-            returnByValue = $true
-            awaitPromise = $true
-        }
-        $statsEval = Invoke-Cdp -WebSocketUrl $Target.webSocketDebuggerUrl -Method "Runtime.evaluate" -Params @{
-            expression = "fetch('/api/stats').then(r => r.json()).then(j => String(j.cpu_percent ?? j.cpu?.percent ?? 'ok')).catch(e => 'ERR:' + e.message)"
-            returnByValue = $true
-            awaitPromise = $true
+        catch {
+            Start-Sleep -Milliseconds 600
+            continue
         }
         $StatusVersion = [string]$statusEval.result.result.value
         $StatsCpu = [string]$statsEval.result.result.value
+        $requiredReady = $true
+        foreach ($text in $RequiredText) {
+            if ($BodyText.IndexOf($text, [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+                $requiredReady = $false
+                break
+            }
+        }
+        $homeReady =
+            $Route -ne "/" -or (
+                $BodyText -match "JARVIS" -and
+                $BodyText -match "Terminal / Chat Input" -and
+                $BodyText -match "How can I help" -and
+                $BodyText -notmatch "\bOFFLINE\b" -and
+                $BodyText -notmatch "\bKANBAN\b" -and
+                $BodyText -notmatch "\bACHIEVEMENTS\b" -and
+                $BodyText -notmatch "\bPlugins\b"
+            )
         $Ready =
-            $BodyText -match "JARVIS" -and
-            $BodyText -match "Terminal / Chat Input" -and
-            $BodyText -match "How can I help" -and
-            $BodyText -notmatch "\bOFFLINE\b" -and
-            $BodyText -notmatch "\bKANBAN\b" -and
-            $BodyText -notmatch "\bACHIEVEMENTS\b" -and
-            $BodyText -notmatch "\bPlugins\b" -and
+            $homeReady -and
+            $requiredReady -and
             $StatusVersion -notmatch "^ERR:" -and
             $StatsCpu -notmatch "^ERR:"
         if (-not $Ready) {

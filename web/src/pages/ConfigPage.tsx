@@ -35,6 +35,7 @@ import {
   Shield,
   FileOutput,
   RefreshCw,
+  Smartphone,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { getNestedValue, setNestedValue } from "@/lib/nested";
@@ -510,30 +511,95 @@ export default function ConfigPage() {
       </div>
 
       {unifiedSettings && (
-        <div className="grid gap-3 md:grid-cols-3">
-          <SettingsSummaryCard
-            icon={Brain}
-            title="Model"
-            value={
-              typeof unifiedSettings.model?.model === "string"
-                ? unifiedSettings.model.model || "local auto"
-                : unifiedSettings.model?.model?.default || "local auto"
-            }
-            detail="llama.cpp first, vLLM second, Ollama last"
-          />
-          <SettingsSummaryCard
-            icon={Mic}
-            title="Voice"
-            value={`${unifiedSettings.voice?.tts?.provider ?? "kokoro"} / ${unifiedSettings.voice?.stt?.local?.model ?? "base"}`}
-            detail="local TTS/STT with cloud only when API keys are configured"
-          />
-          <SettingsSummaryCard
-            icon={MessageCircle}
-            title="Messaging"
-            value={`WhatsApp ${unifiedSettings.messaging_services?.whatsapp?.status ?? "disabled"}`}
-            detail="Telegram, Discord, and WhatsApp live under Settings"
-          />
-        </div>
+        <>
+          <div className="grid gap-3 md:grid-cols-3">
+            <SettingsSummaryCard
+              icon={Brain}
+              title="Model"
+              value={
+                typeof unifiedSettings.model?.model === "string"
+                  ? unifiedSettings.model.model || "local auto"
+                  : unifiedSettings.model?.model?.default || "local auto"
+              }
+              detail="llama.cpp first, vLLM second, Ollama last"
+            />
+            <SettingsSummaryCard
+              icon={Mic}
+              title="Voice"
+              value={`${unifiedSettings.voice?.tts?.provider ?? "kokoro"} / ${unifiedSettings.voice?.stt?.local?.model ?? "base"}`}
+              detail="local TTS/STT with cloud only when API keys are configured"
+            />
+            <SettingsSummaryCard
+              icon={MessageCircle}
+              title="Messaging"
+              value={`WhatsApp ${unifiedSettings.messaging_services?.whatsapp?.status ?? "disabled"}`}
+              detail="Telegram, Discord, and WhatsApp live under Settings"
+            />
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <SettingsGroupCard
+              icon={Monitor}
+              title="System"
+              value="Packaged app, shutdown, updates"
+              detail="Startup, tray behavior, clean termination, update checks, and storage paths."
+              onOpen={() => {
+                setSearchQuery("startup shutdown update storage");
+                setYamlMode(false);
+              }}
+            />
+            <SettingsGroupCard
+              icon={Brain}
+              title="Model"
+              value="GGUF local first"
+              detail="Local model folder, backend order, context, tokens, and throughput settings."
+              onOpen={() => {
+                setSearchQuery("model llama vllm ollama context tokens");
+                setYamlMode(false);
+              }}
+            />
+            <SettingsGroupCard
+              icon={Volume2}
+              title="Voice"
+              value="Kokoro + Whisper"
+              detail="TTS, STT, mic, wake/listen behavior, and local voice assets."
+              onOpen={() => {
+                setSearchQuery("voice tts stt kokoro whisper microphone");
+                setYamlMode(false);
+              }}
+            />
+            <SettingsGroupCard
+              icon={Smartphone}
+              title="Messaging"
+              value={`Telegram ${unifiedSettings.messaging_services?.telegram?.status ?? "off"} / Discord ${unifiedSettings.messaging_services?.discord?.status ?? "off"} / WhatsApp ${unifiedSettings.messaging_services?.whatsapp?.status ?? "off"}`}
+              detail="Messaging services keep credentials scoped and show setup status for Telegram, Discord, and WhatsApp."
+              onOpen={() => {
+                setSearchQuery("telegram discord whatsapp messaging gateway");
+                setYamlMode(false);
+              }}
+            />
+            <SettingsGroupCard
+              icon={Package}
+              title="Skills"
+              value="Auto-use with setup badges"
+              detail="Skills are available by default; API-key skills can be enabled once credentials are present."
+              onOpen={() => {
+                setSearchQuery("skills tools api key");
+                setYamlMode(false);
+              }}
+            />
+            <SettingsGroupCard
+              icon={Shield}
+              title="Access"
+              value="Local scoped permissions"
+              detail="Files, browser, terminal, network, secrets, and approval memory."
+              onOpen={() => {
+                setSearchQuery("security permissions access browser terminal network");
+                setYamlMode(false);
+              }}
+            />
+          </div>
+        </>
       )}
 
       {yamlMode ? (
@@ -713,5 +779,39 @@ function SettingsSummaryCard({
       </div>
       <div className="mt-2 truncate font-mono text-sm text-white">{value}</div>
     </div>
+  );
+}
+
+function SettingsGroupCard({
+  detail,
+  icon: Icon,
+  onOpen,
+  title,
+  value,
+}: {
+  detail: string;
+  icon: React.ComponentType<{ className?: string }>;
+  onOpen: () => void;
+  title: string;
+  value: string;
+}) {
+  return (
+    <button
+      type="button"
+      className="group flex min-w-0 items-center gap-3 rounded-md border border-white/10 bg-[#1a1a2e]/82 p-3 text-left text-[#e0e0e0] transition hover:border-cyan-200/34 hover:bg-[#20203a]"
+      title={detail}
+      onClick={onOpen}
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-cyan-100/14 bg-cyan-100/6 text-cyan-100">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-xs font-semibold uppercase tracking-[0.08em] text-cyan-100/78">
+          {title}
+        </span>
+        <span className="mt-0.5 block truncate text-sm text-white/88">{value}</span>
+      </span>
+      <Search className="h-4 w-4 shrink-0 text-white/32 transition group-hover:text-cyan-100/80" />
+    </button>
   );
 }
