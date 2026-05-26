@@ -12,7 +12,7 @@
     "jarvis:stop": "powershell -ExecutionPolicy Bypass -File stop-jarvis.ps1",
     "desktop:dev": "electron .",
     "desktop:build": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop.ps1 -PyInstallerSpec packaging/jarvis-backend.spec",
-    "desktop:pack": "electron-builder"
+    "desktop:pack": "python scripts/stage_llamacpp_runtime.py && electron-builder"
   },
   "repository": {
     "type": "git",
@@ -58,6 +58,10 @@
       {
         "from": "optional-skills",
         "to": "optional-skills"
+      },
+      {
+        "from": "runtime/llama.cpp",
+        "to": "runtime/llama.cpp"
       }
     ],
     "win": {

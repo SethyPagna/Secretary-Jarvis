@@ -84,6 +84,16 @@ _log = logging.getLogger(__name__)
 app = FastAPI(title="JARVIS", version=__version__)
 _PROCESS_STARTED_AT = time.time()
 _SKILL_COUNT_CACHE: Dict[str, Any] = {"value": None, "expires_at": 0.0}
+_DESKTOP_STREAM_LOCK = threading.Lock()
+_DESKTOP_STREAM_COUNTER: Dict[str, Any] = {
+    "active": False,
+    "input": 0,
+    "output": 0,
+    "model": "",
+    "provider": "",
+    "started_at": 0.0,
+}
+_PLANNED_LLM_RUNTIME_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": {}}
 
 # ---------------------------------------------------------------------------
 # Session token for protecting sensitive endpoints (reveal).
@@ -585,6 +595,55 @@ def _probe_gateway_health() -> tuple[bool, dict | None]:
     return False, None
 
 
+def _desktop_gateway_runtime_status() -> dict[str, Any]:
+    """Return desktop-owned lightweight bridge status in gateway shape."""
+    try:
+        from jarvis_cli.telegram_desktop_bridge import telegram_bridge_status
+
+        telegram = telegram_bridge_status()
+    except Exception:
+        telegram = {}
+    platforms: dict[str, Any] = {}
+    if telegram.get("configured") or telegram.get("running"):
+        state = str(telegram.get("state") or ("running" if telegram.get("running") else "stopped"))
+        platforms["telegram"] = {
+            "state": state,
+            "status": state,
+            "connected": bool(telegram.get("connected")),
+            "running": bool(telegram.get("running")),
+            "username": telegram.get("username") or "",
+            "messages_handled": int(telegram.get("messages_handled") or 0),
+            "updates_seen": int(telegram.get("updates_seen") or 0),
+            "last_error": telegram.get("last_error") or "",
+        }
+    running = any(bool(value.get("running") or value.get("connected")) for value in platforms.values())
+    return {
+        "gateway_state": "running" if running else "stopped",
+        "platforms": platforms,
+        "connections": sum(1 for value in platforms.values() if bool(value.get("connected"))),
+    }
+
+
+def _merge_gateway_status(primary: Mapping[str, Any] | None, secondary: Mapping[str, Any] | None) -> dict[str, Any]:
+    merged = dict(primary or {})
+    secondary = dict(secondary or {})
+    primary_platforms = merged.get("platforms")
+    secondary_platforms = secondary.get("platforms")
+    platforms = dict(primary_platforms) if isinstance(primary_platforms, Mapping) else {}
+    if isinstance(secondary_platforms, Mapping):
+        platforms.update(secondary_platforms)
+    if platforms:
+        merged["platforms"] = platforms
+    if not merged.get("gateway_state") or merged.get("gateway_state") == "stopped":
+        merged["gateway_state"] = secondary.get("gateway_state") or merged.get("gateway_state")
+    if "connections" in secondary:
+        try:
+            merged["connections"] = int(merged.get("connections") or 0) + int(secondary.get("connections") or 0)
+        except (TypeError, ValueError):
+            pass
+    return merged
+
+
 @app.get("/api/status")
 async def get_status():
     current_ver, latest_ver = check_config_version()
@@ -655,6 +714,14 @@ async def get_status():
     if gateway_running and gateway_state is None and remote_health_body is not None:
         gateway_state = "running"
 
+    desktop_gateway = _desktop_gateway_runtime_status()
+    desktop_platforms = desktop_gateway.get("platforms")
+    if isinstance(desktop_platforms, Mapping) and desktop_platforms:
+        gateway_platforms.update(desktop_platforms)
+        if any(bool(value.get("running") or value.get("connected")) for value in desktop_platforms.values() if isinstance(value, Mapping)):
+            gateway_running = True
+            gateway_state = "running"
+
     active_sessions = 0
     try:
         from jarvis_state import SessionDB
@@ -689,6 +756,27 @@ async def get_status():
         "gateway_updated_at": gateway_updated_at,
         "active_sessions": active_sessions,
     }
+
+
+@app.get("/api/messaging/telegram/status")
+async def get_telegram_bridge_status():
+    from jarvis_cli.telegram_desktop_bridge import telegram_bridge_status
+
+    return telegram_bridge_status()
+
+
+@app.post("/api/messaging/telegram/start")
+async def post_telegram_bridge_start():
+    from jarvis_cli.telegram_desktop_bridge import start_telegram_bridge
+
+    return start_telegram_bridge(get_jarvis_home())
+
+
+@app.post("/api/messaging/telegram/stop")
+async def post_telegram_bridge_stop():
+    from jarvis_cli.telegram_desktop_bridge import stop_telegram_bridge
+
+    return stop_telegram_bridge()
 
 
 @app.get("/api/runtime/readiness")
@@ -781,11 +869,33 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
 
     from jarvis_cli.desktop_chat import run_desktop_chat_turn
 
+    def estimate_tokens(text: str) -> int:
+        stripped = (text or "").strip()
+        if not stripped:
+            return 0
+        return max(1, int(len(stripped) / 4))
+
     def stream_events():
         events: "queue.Queue[tuple[str, dict[str, Any]]]" = queue.Queue()
+        output_chars = 0
+        with _DESKTOP_STREAM_LOCK:
+            _DESKTOP_STREAM_COUNTER.update(
+                {
+                    "active": True,
+                    "input": estimate_tokens(body.prompt),
+                    "output": 0,
+                    "model": body.model or getattr(app.state, "active_desktop_model", "") or "",
+                    "provider": body.provider or getattr(app.state, "active_desktop_provider", "") or "",
+                    "started_at": time.time(),
+                }
+            )
 
         def on_delta(delta: str) -> None:
+            nonlocal output_chars
             if delta:
+                output_chars += len(delta)
+                with _DESKTOP_STREAM_LOCK:
+                    _DESKTOP_STREAM_COUNTER["output"] = estimate_tokens("x" * output_chars)
                 events.put(("delta", {"text": delta}))
 
         def worker() -> None:
@@ -797,6 +907,15 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
                     model=body.model or getattr(app.state, "active_desktop_model", "") or None,
                     provider=body.provider or getattr(app.state, "active_desktop_provider", "") or None,
                 )
+                with _DESKTOP_STREAM_LOCK:
+                    _DESKTOP_STREAM_COUNTER.update(
+                        {
+                            "input": int(result.input_tokens or 0),
+                            "output": int(result.output_tokens or 0),
+                            "model": result.model,
+                            "provider": result.provider,
+                        }
+                    )
                 events.put(("done", result.as_dict()))
             except Exception as exc:
                 events.put(("error", {"error": f"{type(exc).__name__}: {exc}"}))
@@ -808,6 +927,8 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
             event, payload = events.get()
             yield _sse_event(event, payload)
             if event in {"done", "error"}:
+                with _DESKTOP_STREAM_LOCK:
+                    _DESKTOP_STREAM_COUNTER["active"] = False
                 break
 
     return StreamingResponse(
@@ -858,7 +979,18 @@ async def post_runtime_local_start():
     """Start native local model helpers such as llama-server."""
     from jarvis_cli.local_runtime import start_local_runtime
 
-    return start_local_runtime()
+    try:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, lambda: start_local_runtime(timeout_seconds=150.0))
+    except Exception as exc:
+        _log.exception("Failed to start native local runtime")
+        return JSONResponse(
+            {
+                "ok": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            },
+            status_code=200,
+        )
 
 
 @app.post("/api/runtime/local/stop")
@@ -866,7 +998,18 @@ async def post_runtime_local_stop():
     """Stop native local model helpers owned by the desktop backend."""
     from jarvis_cli.local_runtime import stop_local_runtime
 
-    return stop_local_runtime()
+    try:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, stop_local_runtime)
+    except Exception as exc:
+        _log.exception("Failed to stop native local runtime")
+        return JSONResponse(
+            {
+                "ok": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            },
+            status_code=200,
+        )
 
 
 def _skill_asset_count() -> int:
@@ -1028,18 +1171,65 @@ def _skill_count_snapshot() -> dict[str, Any]:
     return snapshot
 
 
+def _planned_llm_runtime_snapshot() -> dict[str, Any]:
+    now = time.time()
+    cached = _PLANNED_LLM_RUNTIME_CACHE.get("value")
+    if isinstance(cached, dict) and now < float(_PLANNED_LLM_RUNTIME_CACHE.get("expires_at") or 0):
+        return dict(cached)
+    try:
+        from jarvis_cli.runtime_autoconfig import build_runtime_autoconfig_plan
+
+        plan = build_runtime_autoconfig_plan(load_config())
+        llm = plan.get("llm") if isinstance(plan.get("llm"), dict) else {}
+        value = {
+            "model": str(llm.get("model") or ""),
+            "backend": str(llm.get("backend") or ""),
+            "endpoint": str(llm.get("endpoint") or ""),
+        }
+    except Exception:
+        value = {}
+    _PLANNED_LLM_RUNTIME_CACHE["value"] = dict(value)
+    _PLANNED_LLM_RUNTIME_CACHE["expires_at"] = now + 15.0
+    return value
+
+
 def _runtime_stats_snapshot() -> dict:
     from jarvis_cli.runtime_stats import collect_runtime_stats
     skills = _skill_count_snapshot()
+    gateway_status = _merge_gateway_status(read_runtime_status() or {}, _desktop_gateway_runtime_status())
+    token_counter = None
+    with _DESKTOP_STREAM_LOCK:
+        if _DESKTOP_STREAM_COUNTER.get("active"):
+            token_counter = {
+                "input": int(_DESKTOP_STREAM_COUNTER.get("input") or 0),
+                "output": int(_DESKTOP_STREAM_COUNTER.get("output") or 0),
+            }
 
     stats = collect_runtime_stats(
         get_jarvis_home(),
-        gateway_status=read_runtime_status() or {},
+        token_counter=token_counter,
+        gateway_status=gateway_status,
         active_skills=int(skills.get("active") or 0),
         started_at=_PROCESS_STARTED_AT,
     )
     stats["listed_skills"] = int(skills.get("listed") or 0)
     stats["total_skill_assets"] = int(skills.get("total_assets") or 0)
+    try:
+        from jarvis_cli.local_runtime import status_local_runtime
+
+        local_runtime = status_local_runtime()
+    except Exception:
+        local_runtime = {}
+    planned_runtime = _planned_llm_runtime_snapshot()
+    with _DESKTOP_STREAM_LOCK:
+        stream_model = str(_DESKTOP_STREAM_COUNTER.get("model") or "")
+        stream_provider = str(_DESKTOP_STREAM_COUNTER.get("provider") or "")
+    stats["llm_runtime"] = {
+        "running": bool(local_runtime.get("running") or local_runtime.get("endpoint_ready")),
+        "model": stream_model or str(local_runtime.get("model") or planned_runtime.get("model") or ""),
+        "backend": stream_provider or str(local_runtime.get("backend") or planned_runtime.get("backend") or ""),
+        "endpoint": str(local_runtime.get("endpoint") or planned_runtime.get("endpoint") or ""),
+    }
     return stats
 
 
@@ -1073,6 +1263,12 @@ async def post_shutdown():
     """Persist backend state before Electron terminates the child process."""
     from jarvis_cli.shutdown import perform_graceful_shutdown
 
+    try:
+        from jarvis_cli.telegram_desktop_bridge import stop_telegram_bridge
+
+        stop_telegram_bridge(timeout=2.0)
+    except Exception:
+        _log.debug("Telegram desktop bridge shutdown skipped", exc_info=True)
     return perform_graceful_shutdown(get_jarvis_home())
 
 
@@ -1685,6 +1881,7 @@ def get_model_info():
 
 
 def _candidate_model_roots() -> List[Path]:
+    config = load_config()
     roots: List[Path] = []
     for raw in (
         os.environ.get("JARVIS_MODELS_DIR", ""),
@@ -1697,6 +1894,36 @@ def _candidate_model_roots() -> List[Path]:
         path = Path(raw).expanduser()
         if path not in roots:
             roots.append(path)
+    if isinstance(config, Mapping):
+        providers = config.get("providers")
+        if isinstance(providers, Mapping):
+            for provider in providers.values():
+                if not isinstance(provider, Mapping):
+                    continue
+                for key in ("model_path", "model_dir"):
+                    raw = str(provider.get(key) or "").strip()
+                    if not raw:
+                        continue
+                    path = Path(raw).expanduser()
+                    if path.is_file():
+                        path = path.parent
+                    if path.name.lower() in {"voices", "snapshots"} and path.parent != path:
+                        path = path.parent
+                    if path not in roots:
+                        roots.append(path)
+        for raw in (
+            cfg_get(config, "tts", "kokoro", "model_dir", default=""),
+            cfg_get(config, "stt", "local", "model_dir", default=""),
+        ):
+            if not raw:
+                continue
+            path = Path(str(raw)).expanduser()
+            if path.is_file():
+                path = path.parent
+            if path.name.lower() in {"hexgrad__kokoro-82m", "kokoro", "openai__whisper-large-v3-turbo"} and path.parent != path:
+                path = path.parent
+            if path not in roots:
+                roots.append(path)
     return roots
 
 
@@ -5623,6 +5850,17 @@ def start_server(
     # PTY child uses to publish events to the dashboard sidebar.
     app.state.bound_host = host
     app.state.bound_port = port
+
+    if (
+        os.environ.get("JARVIS_DESKTOP_EMBEDDED") == "1"
+        and os.environ.get("JARVIS_TELEGRAM_BRIDGE_AUTOSTART", "1") != "0"
+    ):
+        try:
+            from jarvis_cli.telegram_desktop_bridge import start_telegram_bridge
+
+            start_telegram_bridge(get_jarvis_home())
+        except Exception:
+            _log.warning("Telegram desktop bridge autostart failed", exc_info=True)
 
     if open_browser:
         import webbrowser

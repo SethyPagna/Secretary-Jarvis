@@ -45,6 +45,7 @@ jarvis_agent.egg-info/
 build/
 dist/
 release/
+runtime/llama.cpp/
 wandb/
 testlogs
 

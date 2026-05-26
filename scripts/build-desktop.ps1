@@ -98,6 +98,9 @@ try {
         Invoke-Checked $npm.Source install
     }
 
+    $stageLlama = Join-Path $PSScriptRoot "stage_llamacpp_runtime.py"
+    Invoke-Checked $Python $stageLlama
+
     if (-not $SkipInstaller) {
         Invoke-Checked $npm.Source run desktop:pack
         Get-ChildItem -Path (Join-Path $RepoRoot "release") -Force -ErrorAction SilentlyContinue |

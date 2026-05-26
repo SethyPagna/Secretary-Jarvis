@@ -465,11 +465,17 @@ export interface RuntimeStatsResponse {
   gateway_connections: number;
   souls_online?: number;
   souls_total?: number;
-  active_soul?: string;
-  delegate_souls?: string[];
-  uptime_seconds: number;
-  warnings: string[];
-}
+    active_soul?: string;
+    delegate_souls?: string[];
+    llm_runtime?: {
+      running?: boolean;
+      model?: string;
+      backend?: string;
+      endpoint?: string;
+    };
+    uptime_seconds: number;
+    warnings: string[];
+  }
 
 export interface IntegrationLiveProbe {
   ok?: boolean;

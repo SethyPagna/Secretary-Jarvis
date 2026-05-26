@@ -11,7 +11,7 @@ const BACKEND_SHUTDOWN_TIMEOUT_MS = 5000
 const BACKEND_SHUTDOWN_TOKEN = process.env.JARVIS_DESKTOP_SHUTDOWN_TOKEN || crypto.randomBytes(32).toString('hex')
 const MINIMIZE_TO_TRAY = /^(1|true|yes)$/i.test(process.env.JARVIS_MINIMIZE_TO_TRAY || '')
 const LOCAL_RUNTIME_AUTOSTART = !/^(0|false|no)$/i.test(process.env.JARVIS_LOCAL_RUNTIME_AUTOSTART || '1')
-const LOCAL_RUNTIME_START_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_RUNTIME_START_TIMEOUT_MS || '60000', 10)
+const LOCAL_RUNTIME_START_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_RUNTIME_START_TIMEOUT_MS || '180000', 10)
 const LOCAL_RUNTIME_STOP_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_RUNTIME_STOP_TIMEOUT_MS || '10000', 10)
 const REMOTE_DEBUGGING_PORT = process.env.JARVIS_REMOTE_DEBUGGING_PORT || ''
 
@@ -134,15 +134,22 @@ function backendEnv() {
     path.resolve(process.cwd(), '..', 'models')
   ].filter(Boolean)
   const defaultModelsDir = candidateModelsDirs.find((candidate) => fs.existsSync(candidate)) || candidateModelsDirs[0]
+  const bundledLlamaServer = path.join(resourceRoot, 'runtime', 'llama.cpp', process.platform === 'win32' ? 'llama-server.exe' : 'llama-server')
+  const llamaRuntimeDir = path.dirname(bundledLlamaServer)
+  const nextPath = fs.existsSync(bundledLlamaServer)
+    ? `${llamaRuntimeDir}${path.delimiter}${process.env.PATH || ''}`
+    : process.env.PATH
 
   return {
     ...process.env,
+    PATH: nextPath,
     JARVIS_DESKTOP_EMBEDDED: '1',
     JARVIS_DESKTOP_PARENT_PID: String(process.pid),
     JARVIS_DESKTOP_SHUTDOWN_TOKEN: BACKEND_SHUTDOWN_TOKEN,
     JARVIS_DISABLE_LAZY_INSTALLS: '1',
     JARVIS_RESOURCE_ROOT: resourceRoot,
-    JARVIS_MODELS_DIR: process.env.JARVIS_MODELS_DIR || defaultModelsDir
+    JARVIS_MODELS_DIR: process.env.JARVIS_MODELS_DIR || defaultModelsDir,
+    JARVIS_LLAMA_SERVER_PATH: process.env.JARVIS_LLAMA_SERVER_PATH || (fs.existsSync(bundledLlamaServer) ? bundledLlamaServer : '')
   }
 }
 

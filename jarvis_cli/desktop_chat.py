@@ -87,8 +87,14 @@ def _record_desktop_tokens(
     provider: str,
 ) -> None:
     """Persist current and lifetime desktop token counters for live stats."""
-    jarvis_home.mkdir(parents=True, exist_ok=True)
-    stats_path = jarvis_home / "stats.json"
+    try:
+        jarvis_home.mkdir(parents=True, exist_ok=True)
+        probe = jarvis_home / ".write-probe"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink(missing_ok=True)
+        stats_path = jarvis_home / "stats.json"
+    except Exception:
+        return
     payload = _read_json(stats_path)
     previous_lifetime = 0
     for key in ("tokens_total_lifetime", "tokens_lifetime_total", "tokens_total"):
@@ -196,6 +202,9 @@ def _desktop_local_runtime_from_config(
                 started_endpoint = str(started.get("endpoint") or "").strip().rstrip("/")
                 if started.get("ok") and started_endpoint:
                     base_url = started_endpoint
+                    plan_llm = (started.get("plan") or {}).get("llm")
+                    if isinstance(plan_llm, Mapping) and plan_llm.get("model"):
+                        model_name = str(plan_llm.get("model") or model_name)
             except Exception:
                 pass
         if not _endpoint_has_models(base_url):
@@ -210,6 +219,36 @@ def _desktop_local_runtime_from_config(
                 "source": f"desktop-providers:{name}",
             },
             model_name,
+        )
+    return None
+
+
+def _desktop_cloud_runtime_from_env() -> tuple[dict[str, Any], str] | None:
+    """Return a verified API-key fallback when local llama.cpp/vLLM is offline.
+
+    The desktop app should not dead-end just because the local GGUF server is
+    missing or still loading. Mistral is OpenAI-compatible and the Settings
+    diagnostics already verify the key with /v1/models, so it is the safest
+    fast fallback for this package when present.
+    """
+    try:
+        from jarvis_cli.config import load_env
+
+        env = {**os.environ, **load_env()}
+    except Exception:
+        env = dict(os.environ)
+    mistral_key = str(env.get("MISTRAL_API_KEY") or "").strip()
+    if mistral_key:
+        return (
+            {
+                "provider": "custom",
+                "requested_provider": "mistral_api",
+                "api_mode": "chat_completions",
+                "base_url": "https://api.mistral.ai/v1",
+                "api_key": mistral_key,
+                "source": "desktop-fallback:mistral",
+            },
+            str(env.get("MISTRAL_MODEL") or "mistral-small-latest"),
         )
     return None
 
@@ -284,11 +323,19 @@ def run_desktop_chat_turn(
     if desktop_runtime is not None:
         runtime, effective_model = desktop_runtime
     else:
-        runtime = resolve_runtime_provider(
-            requested=effective_provider,
-            target_model=effective_model or None,
-            explicit_base_url=explicit_base_url_from_alias,
+        cloud_runtime = (
+            None
+            if effective_provider or explicit_base_url_from_alias
+            else _desktop_cloud_runtime_from_env()
         )
+        if cloud_runtime is not None:
+            runtime, effective_model = cloud_runtime
+        else:
+            runtime = resolve_runtime_provider(
+                requested=effective_provider,
+                target_model=effective_model or None,
+                explicit_base_url=explicit_base_url_from_alias,
+            )
 
     toolsets_list = _normalize_toolsets(toolsets)
     if toolsets_list is None:

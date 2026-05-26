@@ -45,17 +45,52 @@ def _openai_endpoint_ready(port: int) -> bool:
         return False
 
 
-def _default_model_roots() -> list[Path]:
+def _roots_from_config(config: Mapping[str, Any]) -> list[Path]:
+    roots: list[Path] = []
+    providers = config.get("providers")
+    if isinstance(providers, Mapping):
+        for provider in providers.values():
+            if not isinstance(provider, Mapping):
+                continue
+            for key in ("model_path", "model_dir"):
+                raw = str(provider.get(key) or "").strip()
+                if not raw:
+                    continue
+                path = Path(raw).expanduser()
+                roots.append(path.parent if path.is_file() else path)
+    for section in (
+        ((config.get("tts") or {}).get("kokoro") if isinstance(config.get("tts"), Mapping) else {}) or {},
+        ((config.get("stt") or {}).get("local") if isinstance(config.get("stt"), Mapping) else {}) or {},
+    ):
+        if not isinstance(section, Mapping):
+            continue
+        raw = str(section.get("model_dir") or "").strip()
+        if raw:
+            path = Path(raw).expanduser()
+            roots.append(path.parent if path.is_file() else path)
+    return roots
+
+
+def _default_model_roots(config: Mapping[str, Any] | None = None) -> list[Path]:
     roots = []
     env_root = os.getenv("JARVIS_MODELS_DIR", "").strip()
     if env_root:
         roots.append(Path(env_root))
+    if config:
+        roots.extend(_roots_from_config(config))
     roots.extend([
         Path.home() / ".jarvis" / "models",
         Path.cwd() / "models",
         Path.cwd().parent / "models",
     ])
-    return roots
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for root in roots:
+        key = str(root.resolve()) if root.exists() else str(root)
+        if key not in seen:
+            seen.add(key)
+            unique.append(root)
+    return unique
 
 
 def _default_voice_roots() -> list[Path]:
@@ -544,7 +579,7 @@ def build_runtime_autoconfig_plan(
     endpoint_ready: EndpointChecker = _openai_endpoint_ready,
 ) -> dict[str, Any]:
     """Return a config patch and action plan for a fast working runtime."""
-    roots = list(_default_model_roots() if model_roots is None else model_roots)
+    roots = list(_default_model_roots(config) if model_roots is None else model_roots)
     config_patch: dict[str, Any] = {}
 
     llm, llm_patch = _llm_plan(

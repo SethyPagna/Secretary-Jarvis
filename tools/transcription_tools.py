@@ -282,6 +282,11 @@ def _find_local_whisper_transformers_dir(model_name: str) -> Optional[Path]:
     return None
 
 
+def _has_local_whisper_transformers(model_name: Optional[str] = None) -> bool:
+    """Return True when a downloaded Transformers Whisper folder is available."""
+    return _find_local_whisper_transformers_dir(_normalize_local_model(model_name or DEFAULT_LOCAL_MODEL)) is not None
+
+
 def _decode_audio_with_av(file_path: str):
     """Decode any PyAV-supported browser audio to mono 16 kHz float32."""
     import av
@@ -411,6 +416,9 @@ def _get_provider(stt_config: dict) -> str:
         if provider == "local":
             if _HAS_FASTER_WHISPER:
                 return "local"
+            local_cfg = stt_config.get("local", {})
+            if _has_local_whisper_transformers(local_cfg.get("model", DEFAULT_LOCAL_MODEL)):
+                return "local"
             if _has_local_command():
                 return "local_command"
             # Try lazy-install before giving up
@@ -480,6 +488,8 @@ def _get_provider(stt_config: dict) -> str:
     # PyPI (malicious 2.4.6 release on 2026-05-12).
 
     if _HAS_FASTER_WHISPER:
+        return "local"
+    if _has_local_whisper_transformers((stt_config.get("local") or {}).get("model", DEFAULT_LOCAL_MODEL)):
         return "local"
     if _has_local_command():
         return "local_command"
@@ -1085,17 +1095,18 @@ def transcribe_audio(file_path: str, model: Optional[str] = None) -> Dict[str, A
         model_name = _normalize_local_model(
             model or local_cfg.get("model", DEFAULT_LOCAL_MODEL)
         )
-        downloaded_model_dir = _find_local_whisper_transformers_dir(model_name)
-        if downloaded_model_dir is not None:
-            downloaded_result = _transcribe_local_transformers(file_path, downloaded_model_dir)
-            if downloaded_result.get("success"):
-                return downloaded_result
-            logger.warning(
-                "Downloaded Whisper assets at %s were found but could not transcribe; "
-                "falling back to faster-whisper model '%s'.",
-                downloaded_model_dir,
-                model_name,
-            )
+        if not _HAS_FASTER_WHISPER:
+            downloaded_model_dir = _find_local_whisper_transformers_dir(model_name)
+            if downloaded_model_dir is not None:
+                downloaded_result = _transcribe_local_transformers(file_path, downloaded_model_dir)
+                if downloaded_result.get("success"):
+                    return downloaded_result
+                logger.warning(
+                    "Downloaded Whisper assets at %s were found but could not transcribe; "
+                    "falling back to faster-whisper model '%s'.",
+                    downloaded_model_dir,
+                    model_name,
+                )
         return _transcribe_local(file_path, model_name)
 
     if provider == "local_command":

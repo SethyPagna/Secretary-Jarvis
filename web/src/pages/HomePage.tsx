@@ -132,6 +132,9 @@ export default function HomePage() {
   const audioMeterContextRef = useRef<AudioContext | null>(null);
   const audioMeterFrameRef = useRef<number | null>(null);
   const audioMeterSourceRef = useRef<AudioNode | null>(null);
+  const voiceHadSpeechRef = useRef(false);
+  const voiceSilenceStartedAtRef = useRef<number | null>(null);
+  const voiceRecordingStartedAtRef = useRef<number | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
   const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
@@ -647,6 +650,8 @@ export default function HomePage() {
     }
     stopVoiceStream();
     setListening(false);
+    voiceSilenceStartedAtRef.current = null;
+    voiceRecordingStartedAtRef.current = null;
   }, [stopVoiceStream]);
 
   const startVoiceRecording = useCallback(async () => {
@@ -661,6 +666,9 @@ export default function HomePage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       voiceStreamRef.current = stream;
+      voiceHadSpeechRef.current = false;
+      voiceSilenceStartedAtRef.current = null;
+      voiceRecordingStartedAtRef.current = Date.now();
       startStreamAudioMeter(stream);
       const preferredMime = [
         "audio/webm;codecs=opus",
@@ -685,6 +693,8 @@ export default function HomePage() {
         voiceChunksRef.current = [];
         stopVoiceStream();
         setListening(false);
+        voiceSilenceStartedAtRef.current = null;
+        voiceRecordingStartedAtRef.current = null;
         void handleRecordedVoice(recordedAudio);
       };
 
@@ -698,6 +708,8 @@ export default function HomePage() {
     } catch {
       stopVoiceStream();
       setListening(false);
+      voiceSilenceStartedAtRef.current = null;
+      voiceRecordingStartedAtRef.current = null;
       setTerminalEntries((entries) => [
         ...entries,
         { kind: "output", text: "Microphone permission unavailable." },
@@ -707,7 +719,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!autoVoiceArmed || listening || voiceBusy) return;
-    if (!readiness?.production_ready) return;
+    if (!readiness?.stt?.ready) return;
     if (!navigator.permissions?.query) return;
 
     let cancelled = false;
@@ -725,10 +737,42 @@ export default function HomePage() {
   }, [
     autoVoiceArmed,
     listening,
-    readiness?.production_ready,
+    readiness?.stt?.ready,
     startVoiceRecording,
     voiceBusy,
   ]);
+
+  useEffect(() => {
+    if (!listening) return;
+    const now = Date.now();
+    if (voiceRecordingStartedAtRef.current === null) {
+      voiceRecordingStartedAtRef.current = now;
+    }
+
+    const speechThreshold = 0.06;
+    const silenceMs = 1200;
+    const maxNoSpeechMs = 10000;
+
+    if (audioLevel >= speechThreshold) {
+      voiceHadSpeechRef.current = true;
+      voiceSilenceStartedAtRef.current = null;
+      return;
+    }
+
+    if (voiceHadSpeechRef.current) {
+      if (voiceSilenceStartedAtRef.current === null) {
+        voiceSilenceStartedAtRef.current = now;
+      }
+      if (now - voiceSilenceStartedAtRef.current >= silenceMs) {
+        stopVoiceRecording();
+      }
+      return;
+    }
+
+    if (now - voiceRecordingStartedAtRef.current >= maxNoSpeechMs) {
+      stopVoiceRecording();
+    }
+  }, [audioLevel, listening, stopVoiceRecording]);
 
   const toggleMic = async () => {
     if (listening) {
@@ -876,12 +920,13 @@ export default function HomePage() {
           </div>
           <button
             type="button"
-            className="inline-flex h-8 items-center gap-2 rounded-md border border-cyan-200/12 px-3 text-[0.74rem] uppercase tracking-[0.1em] text-cyan-50/78 transition hover:border-cyan-200/28 hover:bg-cyan-200/8"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-cyan-200/12 text-cyan-50/78 transition hover:border-cyan-200/28 hover:bg-cyan-200/8"
             onClick={() => void runSmoke()}
             disabled={smokeRunning}
+            title="Run live runtime smoke test"
+            aria-label="Run live runtime smoke test"
           >
-            <Play className="h-3.5 w-3.5" />
-            Run
+            <Activity className="h-3.5 w-3.5" />
           </button>
         </div>
 

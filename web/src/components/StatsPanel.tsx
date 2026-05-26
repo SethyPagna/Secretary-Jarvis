@@ -73,6 +73,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
   const llm = readiness?.llm;
   const tts = readiness?.tts;
   const stt = readiness?.stt;
+  const llmRuntime = stats?.llm_runtime;
   const hardware = stats?.hardware_status ?? {};
   const warnings = stats?.warnings?.length ? stats.warnings.join(" ") : "Live hardware sample";
   const live = Boolean(stats?.timestamp);
@@ -180,7 +181,15 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
       </div>
 
       <div className="space-y-2 border-t border-white/10 pt-3 text-[0.8rem]">
-        <RuntimeLine label="LLM" value={llm?.model ?? llm?.backend ?? llm?.provider} />
+        <RuntimeLine
+          label="LLM"
+          value={llmRuntime?.model || llm?.model || llm?.backend || llm?.provider}
+          detail={
+            llmRuntime?.endpoint
+              ? `${llmRuntime.backend || "local"} ${llmRuntime.running ? "running" : "configured"} at ${llmRuntime.endpoint}`
+              : undefined
+          }
+        />
         <RuntimeLine label="TTS" value={tts?.engine ?? tts?.model} />
         <RuntimeLine
           label="STT"
@@ -192,14 +201,16 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
 }
 
 function RuntimeLine({
+  detail,
   label,
   value,
 }: {
+  detail?: string;
   label: string;
   value: unknown;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex items-center justify-between gap-3" title={detail}>
       <span className="text-slate-300/58">{label}</span>
       <span className="truncate text-right font-mono text-white/90">
         {cleanRuntimeLabel(value)}

@@ -25,6 +25,7 @@ Session context:
 
 import logging
 import os
+import tempfile
 import threading
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -197,7 +198,14 @@ def setup_logging(
     global _logging_initialized
     home = jarvis_home or get_jarvis_home()
     log_dir = home / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        probe = log_dir / ".write-probe"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink(missing_ok=True)
+    except Exception:
+        log_dir = Path(tempfile.gettempdir()) / "jarvis-agent" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
 
     # Read config defaults (best-effort — config may not be loaded yet).
     cfg_level, cfg_max_size, cfg_backup = _read_logging_config()

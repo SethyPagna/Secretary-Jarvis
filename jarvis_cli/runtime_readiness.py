@@ -126,17 +126,52 @@ def _infer_backend(provider_name: str, provider: Mapping[str, Any], env: Mapping
     return "unconfigured"
 
 
-def _default_model_roots() -> list[Path]:
+def _roots_from_config(config: Mapping[str, Any]) -> list[Path]:
+    roots: list[Path] = []
+    providers = config.get("providers")
+    if isinstance(providers, Mapping):
+        for provider in providers.values():
+            if not isinstance(provider, Mapping):
+                continue
+            for key in ("model_path", "model_dir"):
+                raw = str(provider.get(key) or "").strip()
+                if not raw:
+                    continue
+                path = Path(raw).expanduser()
+                roots.append(path.parent if path.is_file() else path)
+    tts = config.get("tts")
+    if isinstance(tts, Mapping):
+        kokoro = tts.get("kokoro")
+        if isinstance(kokoro, Mapping) and kokoro.get("model_dir"):
+            roots.append(Path(str(kokoro.get("model_dir"))).expanduser())
+    stt = config.get("stt")
+    if isinstance(stt, Mapping):
+        local = stt.get("local")
+        if isinstance(local, Mapping) and local.get("model_dir"):
+            roots.append(Path(str(local.get("model_dir"))).expanduser())
+    return roots
+
+
+def _default_model_roots(config: Mapping[str, Any] | None = None) -> list[Path]:
     roots = []
     env_root = os.getenv("JARVIS_MODELS_DIR", "").strip()
     if env_root:
         roots.append(Path(env_root))
+    if config:
+        roots.extend(_roots_from_config(config))
     roots.extend([
         Path.home() / ".jarvis" / "models",
         Path.cwd() / "models",
         Path.cwd().parent / "models",
     ])
-    return roots
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for root in roots:
+        key = str(root.resolve()) if root.exists() else str(root)
+        if key not in seen:
+            seen.add(key)
+            unique.append(root)
+    return unique
 
 
 def _find_model_assets(model_name: str, roots: Iterable[Path]) -> list[str]:
@@ -155,6 +190,46 @@ def _find_model_assets(model_name: str, roots: Iterable[Path]) -> list[str]:
         except OSError:
             continue
     return assets[:20]
+
+
+def _gguf_score(path: Path) -> tuple[int, int, str]:
+    name = path.name.lower()
+    quant_score = 0
+    for score, token in (
+        (120, "q4_k_m"),
+        (110, "q5_k_m"),
+        (100, "q4"),
+        (90, "q5"),
+        (80, "q6"),
+        (70, "q8"),
+        (10, "f16"),
+    ):
+        if token in name:
+            quant_score = score
+            break
+
+    family_score = 0
+    for score, token in ((50, "qwen"), (40, "gemma"), (35, "llama"), (30, "mistral")):
+        if token in str(path).lower():
+            family_score = score
+            break
+    return (family_score + quant_score, -len(name), name)
+
+
+def _best_gguf(roots: Iterable[Path]) -> Path | None:
+    selected = os.getenv("JARVIS_ACTIVE_GGUF_MODEL_PATH", "").strip()
+    if selected:
+        selected_path = Path(selected).expanduser()
+        if selected_path.is_file() and selected_path.suffix.lower() == ".gguf":
+            return selected_path
+    files: list[Path] = []
+    for root in roots:
+        try:
+            if root.exists():
+                files.extend(path for path in root.rglob("*.gguf") if path.is_file())
+        except OSError:
+            continue
+    return sorted(files, key=_gguf_score, reverse=True)[0] if files else None
 
 
 def _find_whisper_assets(roots: Iterable[Path]) -> dict[str, Any]:
@@ -228,6 +303,12 @@ def _llm_status(
     issues: list[str] = []
     endpoint: Mapping[str, Any] = {"ok": False}
 
+    if backend == "llama.cpp":
+        best_gguf = _best_gguf(model_roots)
+        if best_gguf:
+            model = best_gguf.stem
+            assets = [str(best_gguf)]
+
     if not model:
         issues.append("No active LLM model is configured.")
     if backend == "unconfigured":
@@ -235,7 +316,8 @@ def _llm_status(
 
     if backend in LOCAL_BACKENDS and base_url:
         endpoint = endpoint_probe(base_url)
-        if not endpoint.get("ok"):
+        can_autostart_llamacpp = backend == "llama.cpp" and bool(assets) and shutil.which("llama-server")
+        if not endpoint.get("ok") and not can_autostart_llamacpp:
             issues.append(f"{backend} endpoint is not reachable: {endpoint.get('error', 'offline')}")
     elif backend in LOCAL_BACKENDS and not assets:
         issues.append("No local model asset was found for the active model.")
@@ -480,7 +562,7 @@ def build_runtime_readiness(
 ) -> dict[str, Any]:
     """Build a desktop/API friendly readiness payload for LLM, TTS, and STT."""
     env_map = dict(os.environ if env is None else env)
-    roots = list(_default_model_roots() if model_roots is None else model_roots)
+    roots = list(_default_model_roots(config) if model_roots is None else model_roots)
 
     llm = _llm_status(config, env_map, roots, endpoint_probe)
     tts = _tts_status(config, env_map, roots, package_available, executable_available)

@@ -990,7 +990,16 @@ def init_agent(
     # Session logs go into ~/.jarvis/sessions/ alongside gateway sessions
     jarvis_home = get_jarvis_home()
     agent.logs_dir = jarvis_home / "sessions"
-    agent.logs_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        agent.logs_dir.mkdir(parents=True, exist_ok=True)
+        _probe = agent.logs_dir / ".write-probe"
+        _probe.write_text("ok", encoding="utf-8")
+        _probe.unlink(missing_ok=True)
+    except Exception:
+        import tempfile
+
+        agent.logs_dir = Path(tempfile.gettempdir()) / "jarvis-agent" / "sessions"
+        agent.logs_dir.mkdir(parents=True, exist_ok=True)
     # Per-session JSON snapshot writer (~/.jarvis/sessions/session_{sid}.json)
     # is opt-in via sessions.write_json_snapshots (default False).  state.db
     # is canonical — the snapshot is only useful for external tooling that

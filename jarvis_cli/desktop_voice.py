@@ -15,8 +15,10 @@ import json
 import mimetypes
 import os
 import subprocess
+import tempfile
 import time
 import uuid
+import wave
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -38,6 +40,25 @@ _AUDIO_EXTENSIONS = {
 }
 _KOKORO_CACHE: dict[tuple[str, str, str], Any] = {}
 _KOKORO_SPACY_PREPARED = False
+
+
+def _writable_audio_dir(preferred: Path, purpose: str) -> Path:
+    """Return a writable audio directory, falling back when app data is locked."""
+    candidates = [
+        preferred,
+        Path(tempfile.gettempdir()) / "jarvis-agent" / purpose,
+    ]
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / f".write-probe-{uuid.uuid4().hex}"
+            probe.write_text("ok", encoding="utf-8")
+            probe.unlink(missing_ok=True)
+            return candidate
+        except Exception:
+            continue
+    # Let the original path raise a precise error at the actual write site.
+    return preferred
 
 
 def audio_extension_for(content_type: str | None) -> str:
@@ -78,7 +99,7 @@ def transcribe_desktop_audio(
             "bytes": 0,
         }
 
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = _writable_audio_dir(output_dir, "voice-input")
     audio_path = output_dir / f"desktop-input-{uuid.uuid4().hex}{audio_extension_for(content_type)}"
     audio_path.write_bytes(audio_bytes)
 
@@ -289,7 +310,28 @@ def _synthesize_kokoro_voice(text: str, output_path: Path) -> dict[str, Any]:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     audio = chunks[0] if len(chunks) == 1 else np.concatenate(chunks)
-    sf.write(str(output_path), audio, 24000)
+    try:
+        sf.write(str(output_path), audio, 24000)
+    except Exception as exc:
+        try:
+            pcm = (np.clip(audio, -1.0, 1.0) * 32767).astype("<i2")
+            with wave.open(str(output_path), "wb") as wav_file:
+                wav_file.setnchannels(1)
+                wav_file.setsampwidth(2)
+                wav_file.setframerate(24000)
+                wav_file.writeframes(pcm.tobytes())
+        except Exception as wave_exc:
+            return {
+                "success": False,
+                "provider": "kokoro",
+                "engine": "kokoro-local",
+                "error": (
+                    "Kokoro generated audio but WAV write failed: "
+                    f"{type(exc).__name__}: {exc}; stdlib wave fallback failed: "
+                    f"{type(wave_exc).__name__}: {wave_exc}"
+                ),
+                **assets,
+            }
     return {
         "success": output_path.exists() and output_path.stat().st_size > 0,
         "provider": "kokoro",
@@ -403,12 +445,28 @@ def synthesize_desktop_speech(
         }
 
     if synthesizer is None and effective_provider == "kokoro":
-        output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir = _writable_audio_dir(output_dir, "voice-output")
         output_path = output_dir / f"desktop-output-{uuid.uuid4().hex}.wav"
         started = time.perf_counter()
-        result = _synthesize_kokoro_voice(spoken_text, output_path)
+        try:
+            result = _synthesize_kokoro_voice(spoken_text, output_path)
+        except Exception as exc:
+            result = {
+                "success": False,
+                "provider": "kokoro",
+                "engine": "kokoro-local",
+                "error": f"Kokoro synthesis crashed: {type(exc).__name__}: {exc}",
+            }
         if not result.get("success") and os.name == "nt":
-            fallback = _synthesize_windows_system_voice(spoken_text, output_path)
+            try:
+                fallback = _synthesize_windows_system_voice(spoken_text, output_path)
+            except Exception as exc:
+                fallback = {
+                    "success": False,
+                    "provider": "system",
+                    "engine": "windows-sapi",
+                    "error": f"Windows SAPI fallback crashed: {type(exc).__name__}: {exc}",
+                }
             result = {
                 **fallback,
                 "provider": "system",
@@ -447,7 +505,7 @@ def synthesize_desktop_speech(
             "omnivoice",
         }
     ):
-        output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir = _writable_audio_dir(output_dir, "voice-output")
         output_path = output_dir / f"desktop-output-{uuid.uuid4().hex}.wav"
         started = time.perf_counter()
         result = _synthesize_windows_system_voice(spoken_text, output_path)
@@ -470,7 +528,7 @@ def synthesize_desktop_speech(
             "latency_ms": latency_ms,
         }
 
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = _writable_audio_dir(output_dir, "voice-output")
     output_path = output_dir / f"desktop-output-{uuid.uuid4().hex}.mp3"
 
     started = time.perf_counter()
