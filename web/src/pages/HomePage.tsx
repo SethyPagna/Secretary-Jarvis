@@ -96,7 +96,13 @@ function compactStatus(
 ): string {
   if (!status) return "offline";
   if (readiness?.production_ready) return "ready";
-  if (subsystemReady(readiness?.llm)) return "model ready";
+  if (
+    subsystemReady(readiness?.llm) ||
+    subsystemReady(readiness?.tts) ||
+    subsystemReady(readiness?.stt)
+  ) {
+    return "ready";
+  }
   return "checking";
 }
 

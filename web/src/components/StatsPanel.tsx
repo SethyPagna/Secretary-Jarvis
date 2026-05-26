@@ -75,6 +75,11 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
   const stt = readiness?.stt;
   const hardware = stats?.hardware_status ?? {};
   const warnings = stats?.warnings?.length ? stats.warnings.join(" ") : "Live hardware sample";
+  const live = Boolean(stats?.timestamp);
+  const blockingIssues = readiness?.["blocking_issues"];
+  const badgeTitle = blockingIssues
+    ? JSON.stringify(blockingIssues)
+    : warnings;
 
   return (
     <aside className="flex min-h-0 min-w-0 w-full max-w-full flex-col gap-3 rounded-md border border-white/12 bg-[#10151d]/90 p-4 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
@@ -86,12 +91,13 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
           <span
             className={cn(
               "rounded-sm px-2 py-1 text-[0.68rem] uppercase tracking-[0.1em]",
-              readiness?.production_ready
+              live
                 ? "bg-emerald-300/12 text-emerald-200"
                 : "bg-amber-300/12 text-amber-200",
             )}
+            title={badgeTitle}
           >
-            {readiness?.production_ready ? "Ready" : "Checking"}
+            {live ? "Live" : "Waiting"}
           </span>
         </div>
       </div>
