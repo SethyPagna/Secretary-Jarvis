@@ -181,9 +181,11 @@ try {
         }
         $StatusVersion = [string]$statusEval.result.result.value
         $StatsCpu = [string]$statsEval.result.result.value
+        $NormalizedBodyText = (($BodyText -replace '\s+', ' ').Trim())
         $requiredReady = $true
         foreach ($text in $RequiredText) {
-            if ($BodyText.IndexOf($text, [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+            $normalizedRequired = (([string]$text -replace '\s+', ' ').Trim())
+            if ($NormalizedBodyText.IndexOf($normalizedRequired, [StringComparison]::OrdinalIgnoreCase) -lt 0) {
                 $requiredReady = $false
                 break
             }
