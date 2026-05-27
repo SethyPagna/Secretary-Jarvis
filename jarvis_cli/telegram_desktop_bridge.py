@@ -96,10 +96,24 @@ def _set_status(**updates: Any) -> None:
 
 def telegram_bridge_status() -> dict[str, Any]:
     env = _merged_env()
+    token = _token(env)
+    with _status_lock:
+        needs_probe = bool(token) and bool(_status.get("running")) and not bool(_status.get("connected"))
+    if needs_probe:
+        try:
+            me = _api(token, "getMe", timeout=4.0)
+            if me.get("ok"):
+                username = str((me.get("result") or {}).get("username") or "")
+                _set_status(connected=True, state="running", username=username, last_error="")
+            else:
+                _set_status(connected=False, state="error", last_error=str(me.get("description") or "getMe failed"))
+        except Exception as exc:
+            _set_status(connected=False, state="error", last_error=f"Telegram getMe failed: {exc}")
     with _status_lock:
         payload = dict(_status)
-    payload["configured"] = bool(_token(env))
+    payload["configured"] = bool(token)
     payload["allowed_users_configured"] = bool(_allowed_users(env))
+    payload["error"] = payload.get("last_error") or ""
     return payload
 
 
