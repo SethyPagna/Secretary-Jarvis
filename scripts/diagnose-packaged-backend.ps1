@@ -39,6 +39,7 @@ function Invoke-Json {
 $backend = Resolve-Path -LiteralPath $BackendPath
 $oldResourceRoot = $env:JARVIS_RESOURCE_ROOT
 $oldLlamaServerPath = $env:JARVIS_LLAMA_SERVER_PATH
+$oldModelsDir = $env:JARVIS_MODELS_DIR
 $oldUpperPath = [Environment]::GetEnvironmentVariable("PATH", "Process")
 $oldMixedPath = [Environment]::GetEnvironmentVariable("Path", "Process")
 $resourceCandidates = @(
@@ -49,6 +50,15 @@ $resourceRoot = $resourceCandidates | Where-Object { Test-Path (Join-Path $_ "ru
 if ($resourceRoot) {
     $env:JARVIS_RESOURCE_ROOT = $resourceRoot
     $env:JARVIS_LLAMA_SERVER_PATH = Join-Path $resourceRoot "runtime\llama.cpp\llama-server.exe"
+}
+$modelCandidates = @(
+    (Join-Path (Resolve-Path "..").Path "models"),
+    (Join-Path (Resolve-Path ".").Path "models"),
+    (Join-Path (Resolve-Path ".").Path "..\models")
+)
+$modelsDir = $modelCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($modelsDir) {
+    $env:JARVIS_MODELS_DIR = $modelsDir
 }
 if ($oldUpperPath -and $oldMixedPath) {
     [Environment]::SetEnvironmentVariable("PATH", $null, "Process")
@@ -188,6 +198,7 @@ finally {
     }
     $env:JARVIS_RESOURCE_ROOT = $oldResourceRoot
     $env:JARVIS_LLAMA_SERVER_PATH = $oldLlamaServerPath
+    $env:JARVIS_MODELS_DIR = $oldModelsDir
     if ($oldUpperPath) {
         [Environment]::SetEnvironmentVariable("PATH", $oldUpperPath, "Process")
     }
