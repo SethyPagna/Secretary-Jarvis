@@ -37,9 +37,9 @@ function StatRow({
 
   return (
     <div className="space-y-1" title={detail}>
-      <div className="flex items-center justify-between gap-3 text-[0.75rem] uppercase tracking-[0.08em] text-slate-200/72">
-        <span>{label}</span>
-        <span className="font-mono text-white">{value}</span>
+      <div className="flex min-w-0 items-center justify-between gap-3 text-[0.75rem] uppercase tracking-[0.08em] text-slate-200/72">
+        <span className="min-w-0 truncate">{label}</span>
+        <span className="min-w-0 max-w-[70%] truncate text-right font-mono text-white">{value}</span>
       </div>
       <div
         className={cn(
@@ -210,9 +210,9 @@ function RuntimeLine({
   value: unknown;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3" title={detail}>
-      <span className="text-slate-300/58">{label}</span>
-      <span className="truncate text-right font-mono text-white/90">
+    <div className="flex min-w-0 items-center justify-between gap-3" title={detail}>
+      <span className="shrink-0 text-slate-300/58">{label}</span>
+      <span className="min-w-0 max-w-[72%] truncate text-right font-mono text-white/90">
         {cleanRuntimeLabel(value)}
       </span>
     </div>
