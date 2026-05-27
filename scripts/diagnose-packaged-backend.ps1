@@ -183,6 +183,9 @@ try {
                 throw
             }
             Write-Host "stt.success=$($stt.success) provider=$($stt.provider) latency_ms=$($stt.latency_ms) transcript=$($stt.transcript)"
+            if (-not $stt.success) {
+                Write-Host "stt.error=$($stt.error)"
+            }
         }
     }
 }

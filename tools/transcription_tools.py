@@ -582,6 +582,11 @@ def _looks_like_cuda_lib_error(exc: BaseException) -> bool:
     return any(marker in msg for marker in _CUDA_LIB_ERROR_MARKERS)
 
 
+def _looks_like_vad_asset_error(exc: BaseException) -> bool:
+    msg = str(exc).lower()
+    return "silero_vad" in msg or ("vad" in msg and ("no_suchfile" in msg or "file doesn't exist" in msg))
+
+
 def _local_runtime_settings() -> tuple[str, str]:
     local_cfg = _load_stt_config().get("local", {})
     device = str(local_cfg.get("device") or "auto").strip() or "auto"
@@ -680,7 +685,13 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
             transcribe_kwargs["language"] = _forced_lang
 
         try:
-            segments, info = _local_model.transcribe(file_path, **transcribe_kwargs)
+            try:
+                segments, info = _local_model.transcribe(file_path, **transcribe_kwargs)
+            except Exception as exc:
+                if not transcribe_kwargs.get("vad_filter") or not _looks_like_vad_asset_error(exc):
+                    raise
+                retry_kwargs = {**transcribe_kwargs, "vad_filter": False}
+                segments, info = _local_model.transcribe(file_path, **retry_kwargs)
             transcript = " ".join(segment.text.strip() for segment in segments).strip()
             if not transcript and transcribe_kwargs.get("vad_filter"):
                 retry_kwargs = {**transcribe_kwargs, "vad_filter": False}
@@ -706,7 +717,13 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
             _local_model = WhisperModel(model_name, device="cpu", compute_type="int8")
             _local_model_name = model_name
             _local_model_runtime = ("cpu", "int8")
-            segments, info = _local_model.transcribe(file_path, **transcribe_kwargs)
+            try:
+                segments, info = _local_model.transcribe(file_path, **transcribe_kwargs)
+            except Exception as exc:
+                if not transcribe_kwargs.get("vad_filter") or not _looks_like_vad_asset_error(exc):
+                    raise
+                retry_kwargs = {**transcribe_kwargs, "vad_filter": False}
+                segments, info = _local_model.transcribe(file_path, **retry_kwargs)
             transcript = " ".join(segment.text.strip() for segment in segments).strip()
             if not transcript and transcribe_kwargs.get("vad_filter"):
                 retry_kwargs = {**transcribe_kwargs, "vad_filter": False}
