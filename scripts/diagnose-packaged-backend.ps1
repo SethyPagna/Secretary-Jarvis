@@ -37,6 +37,9 @@ function Invoke-Json {
 }
 
 $backend = Resolve-Path -LiteralPath $BackendPath
+$backendRoot = Split-Path -Parent $backend.Path
+$fasterWhisperVadAsset = Join-Path $backendRoot "_internal\faster_whisper\assets\silero_vad_v6.onnx"
+Write-Host "bundle.stt_vad_asset=$(Test-Path -LiteralPath $fasterWhisperVadAsset)"
 $oldResourceRoot = $env:JARVIS_RESOURCE_ROOT
 $oldLlamaServerPath = $env:JARVIS_LLAMA_SERVER_PATH
 $oldModelsDir = $env:JARVIS_MODELS_DIR
