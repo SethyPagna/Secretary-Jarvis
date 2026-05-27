@@ -535,6 +535,10 @@ export default function HomePage() {
     async (prompt: string, source: "typed" | "voice") => {
       const cleanPrompt = prompt.trim();
       if (!cleanPrompt) return;
+      const agentPrompt =
+        source === "voice"
+          ? `Spoken user message: ${cleanPrompt}\n\nRespond naturally, briefly, and directly. Do not echo disfluent transcription artifacts.`
+          : cleanPrompt;
       setVoiceBusy(true);
       setTerminalLive(false);
       voiceOutputBufferRef.current = "";
@@ -546,7 +550,7 @@ export default function HomePage() {
       ]);
 
       try {
-        await api.streamDesktopChat(cleanPrompt, {
+        await api.streamDesktopChat(agentPrompt, {
           onDelta: (text) => {
             appendTerminalOutput(text);
             queueVoiceDelta(text);
@@ -718,7 +722,7 @@ export default function HomePage() {
   }, [handleRecordedVoice, startStreamAudioMeter, stopVoiceStream]);
 
   useEffect(() => {
-    if (!autoVoiceArmed || listening || voiceBusy) return;
+    if (!autoVoiceArmed || listening || voiceBusy || speaking) return;
     if (!readiness?.stt?.ready) return;
     if (!navigator.permissions?.query) return;
 
@@ -738,6 +742,7 @@ export default function HomePage() {
     autoVoiceArmed,
     listening,
     readiness?.stt?.ready,
+    speaking,
     startVoiceRecording,
     voiceBusy,
   ]);
@@ -750,8 +755,8 @@ export default function HomePage() {
     }
 
     const speechThreshold = 0.06;
-    const silenceMs = 1200;
-    const maxNoSpeechMs = 10000;
+    const silenceMs = 650;
+    const maxNoSpeechMs = 7000;
 
     if (audioLevel >= speechThreshold) {
       voiceHadSpeechRef.current = true;
@@ -839,8 +844,8 @@ export default function HomePage() {
           }}
         />
       </div>
-      <section className="grid min-h-0 min-w-0 w-full max-w-full flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_330px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="relative flex min-h-[310px] min-w-0 w-full max-w-full flex-col items-center justify-center overflow-visible px-4 py-3 sm:px-5">
+      <section className="grid min-h-0 min-w-0 w-full max-w-full flex-1 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] 2xl:grid-cols-[minmax(0,1fr)_330px]">
+        <div className="relative flex min-h-0 min-w-0 w-full max-w-full flex-col items-center justify-center overflow-hidden px-4 py-3 sm:px-5">
           <div
             className="pointer-events-none absolute inset-x-[8%] top-[8%] h-px opacity-60"
             style={{
@@ -848,7 +853,7 @@ export default function HomePage() {
                 "linear-gradient(90deg, transparent, rgba(0,212,255,0.44), rgba(184,108,255,0.4), transparent)",
             }}
           />
-          <div className="relative grid min-h-[245px] w-full max-w-[620px] place-items-center overflow-visible">
+          <div className="relative grid min-h-[210px] w-full max-w-[620px] place-items-center overflow-visible">
             <TeamSoulOrbit souls={visibleSouls} activeSoul={stats?.active_soul ?? "jarvis"} />
             <JarvisOrb audioLevel={audioLevel} state={orbState} className="z-10" />
           </div>
@@ -904,7 +909,7 @@ export default function HomePage() {
         ) : (
           <button
             type="button"
-            className="flex min-h-[160px] min-w-0 w-full max-w-full items-center justify-center rounded-md border border-cyan-200/12 bg-[#0c141b]/50 p-4 text-sm uppercase tracking-[0.12em] text-cyan-50/62 transition hover:border-cyan-200/28 hover:text-cyan-50"
+            className="flex h-full min-h-[160px] min-w-0 w-full max-w-full items-center justify-center rounded-md border border-cyan-200/12 bg-[#0c141b]/50 p-4 text-sm uppercase tracking-[0.12em] text-cyan-50/62 transition hover:border-cyan-200/28 hover:text-cyan-50"
             onClick={() => setStatsVisible(true)}
           >
             Stats hidden
@@ -912,7 +917,7 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="grid min-h-[180px] min-w-0 w-full max-w-full gap-3 rounded-md border border-white/12 bg-[#0d1219]/94 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.25)]">
+      <section className="grid min-h-[180px] min-w-0 w-full max-w-full shrink-0 gap-3 rounded-md border border-white/12 bg-[#0d1219]/94 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.25)]">
         <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
           <div className="flex items-center gap-2 text-[0.82rem] uppercase tracking-[0.08em] text-slate-200/76">
             <Activity className="h-4 w-4 text-cyan-200" />

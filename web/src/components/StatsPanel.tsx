@@ -83,8 +83,8 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
     : warnings;
 
   return (
-    <aside className="flex min-h-0 min-w-0 w-full max-w-full flex-col gap-3 rounded-md border border-white/12 bg-[#10151d]/90 p-4 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-      <div>
+    <aside className="flex h-full min-h-0 min-w-0 w-full max-w-full flex-col gap-2 overflow-hidden rounded-md border border-white/12 bg-[#10151d]/90 p-3 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+      <div className="shrink-0">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-white">
             Stats
@@ -103,7 +103,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         </div>
       </div>
 
-      <div className="grid gap-2.5">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         <StatRow
           label="CPU"
           value={formatValue(stats?.cpu_percent, "%")}
@@ -144,7 +144,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t border-white/10 pt-3 text-[0.78rem] text-slate-200/78">
+      <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-white/10 pt-2 text-[0.72rem] text-slate-200/78">
         <div>
           <div className="text-slate-300/58">Input tokens</div>
           <div className="font-mono text-white">{stats?.tokens_input ?? 0}</div>
@@ -180,7 +180,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         </div>
       </div>
 
-      <div className="space-y-2 border-t border-white/10 pt-3 text-[0.8rem]">
+      <div className="shrink-0 space-y-1.5 border-t border-white/10 pt-2 text-[0.74rem]">
         <RuntimeLine
           label="LLM"
           value={llmRuntime?.model || llm?.model || llm?.backend || llm?.provider}
