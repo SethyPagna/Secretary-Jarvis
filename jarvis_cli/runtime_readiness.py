@@ -31,7 +31,30 @@ def _package_available(name: str) -> bool:
 
 
 def _executable_available(name: str) -> bool:
+    if name == "llama-server" and _bundled_llama_server_exists():
+        return True
     return shutil.which(name) is not None
+
+
+def _bundled_llama_server_exists() -> bool:
+    resource_root = os.getenv("JARVIS_RESOURCE_ROOT", "").strip()
+    candidates: list[Path] = []
+    if resource_root:
+        root = Path(resource_root)
+        candidates.extend(
+            [
+                root / "runtime" / "llama.cpp" / "llama-server.exe",
+                root / "llama.cpp" / "llama-server.exe",
+            ]
+        )
+    repo_root = Path(__file__).resolve().parent.parent
+    candidates.extend(
+        [
+            repo_root / "runtime" / "llama.cpp" / "llama-server.exe",
+            repo_root / "vendor" / "llama.cpp" / "llama-server.exe",
+        ]
+    )
+    return any(candidate.is_file() for candidate in candidates)
 
 
 def _probe_endpoint(url: str) -> Mapping[str, Any]:
@@ -316,7 +339,7 @@ def _llm_status(
 
     if backend in LOCAL_BACKENDS and base_url:
         endpoint = endpoint_probe(base_url)
-        can_autostart_llamacpp = backend == "llama.cpp" and bool(assets) and shutil.which("llama-server")
+        can_autostart_llamacpp = backend == "llama.cpp" and bool(assets) and _executable_available("llama-server")
         if not endpoint.get("ok") and not can_autostart_llamacpp:
             issues.append(f"{backend} endpoint is not reachable: {endpoint.get('error', 'offline')}")
     elif backend in LOCAL_BACKENDS and not assets:
