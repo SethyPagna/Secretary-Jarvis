@@ -610,7 +610,7 @@ AUTHOR_MAP = {
     "agent@wildcat.local": "ericnicolaides",
     "georgex8001@gmail.com": "georgex8001",
     "stefan@dimagents.ai": "dimitrovi",
-    "jarvis@noushq.ai": "benbarclay",
+    "jarvis@jarvis.local": "benbarclay",
     "chinmingcock@gmail.com": "ChimingLiu",
     "allard.quek@singtel.com": "AllardQuek",
     "openclaw@sparklab.ai": "openclaw",
@@ -1076,7 +1076,7 @@ AUTHOR_MAP = {
     "chenlinfeng@ruije.com.cn": "noOne-list",  # PR #19050
     "briansu@Mac-mini.attlocal.net": "likejudy",  # PR #19052
     "leosma@gmail.com": "leon7609",  # PR #19069
-    "nouseman666@gmail.com": "nouseman666",  # PR #19088
+    "legacy-user-19088@example.invalid": "legacy-user-19088",  # PR #19088
     "ginwu05@gmail.com": "GinWU05",  # PR #19093
     "shashwatgokhe2@gmail.com": "shashwatgokhe",  # PR #19196
     "stevenchou.ai@gmail.com": "stevenchouai",  # PR #19221
