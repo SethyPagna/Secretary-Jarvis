@@ -17,6 +17,7 @@ for package_name in (
     "csvw",
     "en_core_web_sm",
     "espeakng_loader",
+    "faster_whisper",
     "kokoro",
     "language_tags",
     "misaki",
