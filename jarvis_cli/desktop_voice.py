@@ -16,6 +16,7 @@ import mimetypes
 import os
 import subprocess
 import tempfile
+import threading
 import time
 import uuid
 import wave
@@ -40,6 +41,8 @@ _AUDIO_EXTENSIONS = {
 }
 _KOKORO_CACHE: dict[tuple[str, str, str], Any] = {}
 _KOKORO_SPACY_PREPARED = False
+_VOICE_WARMUP_STARTED = False
+_VOICE_WARMUP_LOCK = threading.Lock()
 
 
 def _writable_audio_dir(preferred: Path, purpose: str) -> Path:
@@ -570,3 +573,56 @@ def synthesize_desktop_speech(
         "mime_type": mime_type,
         "latency_ms": latency_ms,
     }
+
+
+def warm_desktop_voice_models(output_dir: Path | None = None) -> dict[str, Any]:
+    """Warm local TTS/STT models without playing audio in the renderer."""
+    base_dir = output_dir or (Path(tempfile.gettempdir()) / "jarvis-agent" / "voice-warmup")
+    base_dir = _writable_audio_dir(base_dir, "voice-warmup")
+    started = time.perf_counter()
+    payload: dict[str, Any] = {"success": False, "tts": {}, "stt": {}, "latency_ms": 0}
+    try:
+        tts = synthesize_desktop_speech("Jarvis voice ready.", base_dir, provider="kokoro")
+        payload["tts"] = {
+            "success": bool(tts.get("success")),
+            "engine": tts.get("engine"),
+            "provider": tts.get("provider"),
+            "latency_ms": tts.get("latency_ms"),
+            "error": tts.get("error") or tts.get("fallback_reason") or "",
+        }
+        if tts.get("success") and tts.get("audio_base64"):
+            audio_bytes = base64.b64decode(str(tts["audio_base64"]))
+            stt = transcribe_desktop_audio(audio_bytes, str(tts.get("mime_type") or "audio/wav"), base_dir)
+            payload["stt"] = {
+                "success": bool(stt.get("success")),
+                "provider": stt.get("provider"),
+                "latency_ms": stt.get("latency_ms"),
+                "transcript": stt.get("transcript") or "",
+                "error": stt.get("error") or "",
+            }
+        payload["success"] = bool((payload["tts"] or {}).get("success")) and bool((payload["stt"] or {}).get("success"))
+    except Exception as exc:
+        payload["error"] = f"{type(exc).__name__}: {exc}"
+    payload["latency_ms"] = int((time.perf_counter() - started) * 1000)
+    return payload
+
+
+def start_desktop_voice_warmup(output_dir: Path | None = None) -> None:
+    """Start one daemon warmup thread for packaged desktop voice models."""
+    global _VOICE_WARMUP_STARTED
+    if os.getenv("JARVIS_VOICE_WARMUP", "1").lower() in {"0", "false", "no"}:
+        return
+    with _VOICE_WARMUP_LOCK:
+        if _VOICE_WARMUP_STARTED:
+            return
+        _VOICE_WARMUP_STARTED = True
+
+    def run() -> None:
+        try:
+            # Let FastAPI bind first so the UI appears immediately.
+            time.sleep(float(os.getenv("JARVIS_VOICE_WARMUP_DELAY_SECONDS", "2") or "2"))
+            warm_desktop_voice_models(output_dir)
+        except Exception:
+            pass
+
+    threading.Thread(target=run, name="jarvis-voice-warmup", daemon=True).start()

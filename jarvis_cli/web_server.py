@@ -5862,6 +5862,14 @@ def start_server(
         except Exception:
             _log.warning("Telegram desktop bridge autostart failed", exc_info=True)
 
+    if os.environ.get("JARVIS_DESKTOP_EMBEDDED") == "1":
+        try:
+            from jarvis_cli.desktop_voice import start_desktop_voice_warmup
+
+            start_desktop_voice_warmup(get_jarvis_home() / "voice-warmup")
+        except Exception:
+            _log.warning("Desktop voice warmup skipped", exc_info=True)
+
     if open_browser:
         import webbrowser
 

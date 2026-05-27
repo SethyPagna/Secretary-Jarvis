@@ -506,8 +506,8 @@ export default function HomePage() {
       const buffered = voiceOutputBufferRef.current;
       if (
         force ||
-        buffered.length > 220 ||
-        /[.!?]\s$/.test(buffered) ||
+        buffered.length > 140 ||
+        /[.!?]["')\]]?\s$/.test(buffered) ||
         /\n\n$/.test(buffered)
       ) {
         flushVoiceOutputBuffer();

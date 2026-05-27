@@ -591,6 +591,21 @@ def _local_runtime_settings() -> tuple[str, str]:
     return device, compute_type
 
 
+def _local_decode_settings() -> dict[str, Any]:
+    local_cfg = _load_stt_config().get("local", {})
+    try:
+        beam_size = int(os.getenv("JARVIS_LOCAL_STT_BEAM_SIZE") or local_cfg.get("beam_size") or 1)
+    except (TypeError, ValueError):
+        beam_size = 1
+    beam_size = max(1, min(5, beam_size))
+    vad_filter = is_truthy_value(local_cfg.get("vad_filter", True), default=True)
+    return {
+        "beam_size": beam_size,
+        "vad_filter": vad_filter,
+        "condition_on_previous_text": False,
+    }
+
+
 def _load_local_whisper_model(
     model_name: str,
     *,
@@ -660,7 +675,7 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
             or os.getenv(LOCAL_STT_LANGUAGE_ENV)
             or None
         )
-        transcribe_kwargs = {"beam_size": 5}
+        transcribe_kwargs = _local_decode_settings()
         if _forced_lang:
             transcribe_kwargs["language"] = _forced_lang
 
