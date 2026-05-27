@@ -197,7 +197,7 @@ def _windows_gpu_stats() -> dict[str, Any]:
             check=False,
             capture_output=True,
             text=True,
-            timeout=1.0,
+            timeout=3.0,
         )
         if completed.returncode == 0 and completed.stdout.strip():
             payload = json.loads(completed.stdout.strip().splitlines()[-1])
@@ -239,7 +239,7 @@ def _windows_gpu_stats() -> dict[str, Any]:
             check=False,
             capture_output=True,
             text=True,
-            timeout=0.8,
+            timeout=2.5,
         )
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
         return {}
