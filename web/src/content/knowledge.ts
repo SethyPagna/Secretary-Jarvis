@@ -384,7 +384,7 @@ export const setupItems: KnowledgeItem[] = [
     detail:
       "JARVIS no longer starts Docker from the desktop app. The packaged backend reads JARVIS_MODELS_DIR, defaults to the sibling models folder, and keeps external model paths editable in the Models page.",
     badges: ["local", "models"],
-    command: ".\\run-jarvis.ps1 -ModelsDir ..\\models",
+    command: ".\\run-jarvis.cmd -ModelsDir ..\\models",
   },
   {
     id: "smoke-tests",

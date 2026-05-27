@@ -235,7 +235,7 @@ finally {
         }
     }
 
-    & (Join-Path $RepoRoot "stop-jarvis.ps1") | Out-Null
+    & (Join-Path $RepoRoot "run\desktop\stop-jarvis.ps1") | Out-Null
 
     if ($null -eq $PreviousBackendPort) {
         Remove-Item Env:\JARVIS_DESKTOP_BACKEND_PORT -ErrorAction SilentlyContinue

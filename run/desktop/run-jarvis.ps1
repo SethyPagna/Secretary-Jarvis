@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 Push-Location $RepoRoot
 
 try {
