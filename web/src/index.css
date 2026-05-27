@@ -44,7 +44,7 @@
 
 /* ------------------------------------------------------------------ */
 /* JARVIS — desktop design system with the LENS_0 teal lens applied   */
-/* statically. Mirrors nousnet-web/(jarvis-agent)/layout.tsx so the    */
+/* statically. Mirrors the packaged JARVIS desktop layout so the       */
 /* canonical Jarvis palette is the default — teal canvas + cream      */
 /* accent — without relying on leva/gsap at runtime.                  */
 /* ------------------------------------------------------------------ */
