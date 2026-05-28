@@ -64,9 +64,7 @@ function cleanRuntimeLabel(value: unknown): string {
     .replace(/^openai__/, "")
     .replace(/^hexgrad__/, "")
     .replace(/__/g, " / ")
-    .replace(/whisper-large-v3-turbo/i, "whisper v3 turbo")
-    .replace("docker-local-voice", "kokoro")
-    .replace("docker-faster-whisper", "faster-whisper");
+    .replace(/whisper-large-v3-turbo/i, "whisper v3 turbo");
 }
 
 export function StatsPanel({ readiness, stats }: StatsPanelProps) {

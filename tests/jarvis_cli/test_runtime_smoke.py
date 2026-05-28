@@ -166,6 +166,29 @@ class RuntimeSmokeTests(unittest.TestCase):
             ["llm", "tts", "stt"],
         )
 
+    def test_default_smoke_refuses_removed_docker_voice_runtime(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            audio = Path(temp_dir) / "sample.wav"
+            audio.write_bytes(b"wav")
+
+            tts = runtime_smoke.default_tts_probe(
+                {"tts": {"provider": "docker"}},
+                env={},
+                text="ready",
+                output_dir=Path(temp_dir),
+            )
+            stt = runtime_smoke.default_stt_probe(
+                {"stt": {"provider": "docker"}},
+                env={},
+                sample_audio=audio,
+            )
+
+        self.assertFalse(tts["ready"])
+        self.assertIn("Docker TTS runtime has been removed", tts["error"])
+        self.assertFalse(stt["ready"])
+        self.assertEqual(stt["engine"], "removed-docker-stt")
+        self.assertIn("Docker STT runtime has been removed", stt["error"])
+
 
 if __name__ == "__main__":
     unittest.main()

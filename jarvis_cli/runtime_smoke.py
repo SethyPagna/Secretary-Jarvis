@@ -351,16 +351,10 @@ def default_tts_probe(
                 "error": payload.get("error", ""),
             }
         elif provider == "docker":
-            from jarvis_cli.desktop_voice import synthesize_desktop_speech
-
-            payload = synthesize_desktop_speech(text, output_dir, provider="docker")
-            return {
-                "ready": bool(payload.get("success")),
-                "engine": "docker",
-                "latency_ms": payload.get("latency_ms") or _elapsed_ms(started),
-                "audio_bytes": payload.get("audio_bytes") or 0,
-                "error": payload.get("error", ""),
-            }
+            error = (
+                "Docker TTS runtime has been removed from JARVIS Desktop. "
+                "Use kokoro, omnivoice, or system for local smoke testing."
+            )
         else:
             error = (
                 f"TTS smoke test for provider '{provider}' is not implemented yet. "
@@ -415,22 +409,12 @@ def default_stt_probe(
 
     started = time.perf_counter()
     if provider == "docker":
-        from jarvis_cli.desktop_voice import transcribe_desktop_audio
-
-        with _temporary_environ(env):
-            payload = transcribe_desktop_audio(
-                sample_audio.read_bytes(),
-                "audio/wav",
-                sample_audio.parent,
-            )
-        transcript = str(payload.get("transcript") or "").strip()
         return {
-            "ready": bool(payload.get("success")) and bool(transcript),
-            "engine": "docker",
-            "latency_ms": payload.get("latency_ms") or _elapsed_ms(started),
-            "transcript": transcript,
+            "ready": False,
+            "engine": "removed-docker-stt",
+            "latency_ms": _elapsed_ms(started),
             "sample_audio": str(sample_audio),
-            "error": payload.get("error", ""),
+            "error": "Docker STT runtime has been removed from JARVIS Desktop.",
         }
 
     with _temporary_environ(env):
