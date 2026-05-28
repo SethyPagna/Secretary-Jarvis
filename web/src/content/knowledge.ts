@@ -286,7 +286,7 @@ export const guideItems: KnowledgeItem[] = [
     title: "Shutdown Hygiene",
     summary: "No owned child process stays idle after quit.",
     detail:
-      "Electron sends the shutdown request, waits for state save, then terminates backend, gateway, model helpers, and PTY children. Tray hide is a setting, not a leak.",
+      "Electron sends the shutdown request, waits for state save, then terminates backend, gateway, and model helpers. Tray hide is a setting, not a leak.",
     badges: ["processes"],
   },
 ];

@@ -13,10 +13,10 @@
 @source '../node_modules/@jarvis_managed-research/ui/dist';
 
 /* ------------------------------------------------------------------ */
-/* JetBrains Mono — bundled for the embedded TUI (/chat tab).          */
-/* Gives the terminal a proper monospace font even on systems where    */
-/* the user doesn't have one installed locally; xterm.js picks it up   */
-/* via ChatPage's `fontFamily` option.                                 */
+/* JetBrains Mono bundled for desktop terminal text.                    */
+/* Gives the desktop transcript a proper monospace font even when the  */
+/* user does not have one installed locally.                           */
+/* Used by the desktop transcript and terminal surfaces.                */
 /* Apache-2.0.                                                         */
 /* ------------------------------------------------------------------ */
 
