@@ -525,6 +525,10 @@ class DesktopChatRequest(BaseModel):
     provider: str = ""
 
 
+class TerminalCommandRequest(BaseModel):
+    command: str
+
+
 class SettingsUpdate(BaseModel):
     settings: dict
 
@@ -936,6 +940,16 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.post("/api/terminal/run")
+async def post_terminal_run(body: TerminalCommandRequest):
+    """Run one desktop terminal command without opening the legacy TUI bridge."""
+    command = (body.command or "").strip()
+    if not command:
+        raise HTTPException(status_code=400, detail="Command is required")
+    output = await _run_windows_terminal_command(command)
+    return {"ok": True, "command": command, "output": output}
 
 
 @app.get("/api/runtime/autoconfig")

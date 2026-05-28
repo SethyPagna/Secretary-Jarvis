@@ -30,16 +30,10 @@ import {
   type TeamSoulInfo,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import ChatPage from "@/pages/ChatPage";
 
 type TerminalEntry = {
   kind: "input" | "output";
   text: string;
-};
-
-type TerminalLaunch = {
-  command: string;
-  id: number;
 };
 
 function base64ToAudioBlob(base64: string, mimeType: string): Blob {
@@ -124,9 +118,7 @@ export default function HomePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const voiceChunksRef = useRef<Blob[]>([]);
   const voiceStreamRef = useRef<MediaStream | null>(null);
-  const awaitingVoiceResponseRef = useRef(false);
   const voiceOutputBufferRef = useRef("");
-  const voiceOutputTimerRef = useRef<number | null>(null);
   const speechQueueRef = useRef<Promise<void>>(Promise.resolve());
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const audioMeterContextRef = useRef<AudioContext | null>(null);
@@ -145,10 +137,6 @@ export default function HomePage() {
   const [autoVoiceArmed, setAutoVoiceArmed] = useState(true);
   const [smokeRunning, setSmokeRunning] = useState(false);
   const [terminalInput, setTerminalInput] = useState("");
-  const [terminalLive, setTerminalLive] = useState(false);
-  const [terminalLaunch, setTerminalLaunch] = useState<TerminalLaunch | null>(
-    null,
-  );
   const [toolsOpen, setToolsOpen] = useState(false);
   const [statsVisible, setStatsVisible] = useState(true);
   const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({
@@ -305,9 +293,6 @@ export default function HomePage() {
 
   useEffect(() => {
     return () => {
-      if (voiceOutputTimerRef.current !== null) {
-        window.clearTimeout(voiceOutputTimerRef.current);
-      }
       const recorder = mediaRecorderRef.current;
       if (recorder && recorder.state !== "inactive") {
         recorder.onstop = null;
@@ -332,14 +317,31 @@ export default function HomePage() {
     return "idle";
   }, [listening, smoke, smokeRunning, speaking, status, voiceBusy]);
 
-  const runLiveCommand = useCallback((command: string, message = "Running in live terminal.") => {
-    setTerminalLive(true);
-    setTerminalLaunch({ command, id: Date.now() });
+  const runTerminalCommand = useCallback(async (command: string) => {
     setTerminalEntries((entries) => [
       ...entries,
       { kind: "input", text: command },
-      { kind: "output", text: message },
+      { kind: "output", text: "Running command..." },
     ]);
+
+    try {
+      const result = await api.runTerminalCommand(command);
+      setTerminalEntries((entries) => [
+        ...entries.slice(0, -1),
+        {
+          kind: "output",
+          text: result.output?.trim() || "Command completed with no output.",
+        },
+      ]);
+    } catch (error) {
+      setTerminalEntries((entries) => [
+        ...entries.slice(0, -1),
+        {
+          kind: "output",
+          text: error instanceof Error ? error.message : String(error),
+        },
+      ]);
+    }
   }, []);
 
   const appendTerminalOutput = useCallback((text: string) => {
@@ -414,7 +416,7 @@ export default function HomePage() {
     }
 
     if (isExplicitShellCommand(command)) {
-      runLiveCommand(command.replace(/^[$>]\s*/, ""));
+      void runTerminalCommand(command.replace(/^[$>]\s*/, ""));
       return;
     }
 
@@ -540,9 +542,7 @@ export default function HomePage() {
           ? `Spoken user message: ${cleanPrompt}\n\nRespond naturally, briefly, and directly. Do not echo disfluent transcription artifacts.`
           : cleanPrompt;
       setVoiceBusy(true);
-      setTerminalLive(false);
       voiceOutputBufferRef.current = "";
-      awaitingVoiceResponseRef.current = voiceOutput;
       setTerminalEntries((entries) => [
         ...entries,
         { kind: "input", text: source === "voice" ? `voice: ${cleanPrompt}` : cleanPrompt },
@@ -558,7 +558,6 @@ export default function HomePage() {
           onDone: handleDesktopChatDone,
           onError: (message) => {
             appendTerminalOutput(`\n${message}`);
-            awaitingVoiceResponseRef.current = false;
           },
         });
       } catch (error) {
@@ -566,29 +565,11 @@ export default function HomePage() {
           `\n${error instanceof Error ? error.message : String(error)}`,
         );
       } finally {
-        awaitingVoiceResponseRef.current = false;
         queueVoiceDelta("", true);
         setVoiceBusy(false);
       }
     },
     [appendTerminalOutput, handleDesktopChatDone, queueVoiceDelta, voiceOutput],
-  );
-
-  const handleTerminalOutput = useCallback(
-    (chunk: string) => {
-      if (!awaitingVoiceResponseRef.current || !voiceOutput) return;
-      voiceOutputBufferRef.current += chunk;
-      if (voiceOutputTimerRef.current !== null) {
-        window.clearTimeout(voiceOutputTimerRef.current);
-      }
-      voiceOutputTimerRef.current = window.setTimeout(() => {
-        const bufferedOutput = voiceOutputBufferRef.current;
-        voiceOutputBufferRef.current = "";
-        awaitingVoiceResponseRef.current = false;
-        void playSynthesizedSpeech(bufferedOutput);
-      }, 1400);
-    },
-    [playSynthesizedSpeech, voiceOutput],
   );
 
   const handleRecordedVoice = useCallback(
@@ -625,7 +606,6 @@ export default function HomePage() {
         ]);
         await runDesktopAgentTurn(transcript, "voice");
       } catch (error) {
-        awaitingVoiceResponseRef.current = false;
         setTerminalEntries((entries) => [
           ...entries,
           {
@@ -935,39 +915,21 @@ export default function HomePage() {
           </button>
         </div>
 
-        <div
-          className={cn(
-            "min-h-0 overflow-hidden rounded-sm bg-black/28",
-            terminalLive
-              ? "h-[min(42vh,420px)] min-h-[280px]"
-              : "overflow-y-auto p-3 font-mono text-[0.9rem] leading-relaxed text-slate-100/88",
-          )}
-        >
-          {terminalLive ? (
-            <ChatPage
-              className="h-full"
-              initialInput={terminalLaunch?.command ?? null}
-              initialInputKey={terminalLaunch?.id ?? null}
-              isActive
-              onOutputData={handleTerminalOutput}
-              showPlugins={false}
-              showSidebar={false}
-            />
-          ) : (
-            terminalEntries.slice(-6).map((entry, index) => (
-              <div
-                key={`${entry.kind}-${index}-${entry.text}`}
-                className={cn(
-                  entry.kind === "input" ? "text-emerald-200" : "text-cyan-50/72",
-                )}
-              >
-                <span className="text-cyan-100/35">
-                  {entry.kind === "input" ? ">" : "jarvis"}
-                </span>{" "}
-                {entry.text}
-              </div>
-            ))
-          )}
+        <div className="min-h-0 overflow-y-auto rounded-sm bg-black/28 p-3 font-mono text-[0.9rem] leading-relaxed text-slate-100/88">
+          {terminalEntries.slice(-10).map((entry, index) => (
+            <div
+              key={`${entry.kind}-${index}-${entry.text}`}
+              className={cn(
+                "whitespace-pre-wrap break-words",
+                entry.kind === "input" ? "text-emerald-200" : "text-cyan-50/72",
+              )}
+            >
+              <span className="text-cyan-100/35">
+                {entry.kind === "input" ? ">" : "jarvis"}
+              </span>{" "}
+              {entry.text}
+            </div>
+          ))}
         </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2">

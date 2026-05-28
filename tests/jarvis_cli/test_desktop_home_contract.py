@@ -69,37 +69,24 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn('<QuickAction label="Tools" icon={Settings2} />', source)
         self.assertNotIn('<QuickAction label="Stats" icon={Gauge} />', source)
 
-    def test_home_terminal_embeds_live_chat_pty(self) -> None:
+    def test_home_terminal_uses_desktop_native_command_endpoint(self) -> None:
         source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
-
-        self.assertIn('import ChatPage from "@/pages/ChatPage"', source)
-        self.assertIn("<ChatPage", source)
-        self.assertIn("showSidebar={false}", source)
-        self.assertIn("showPlugins={false}", source)
-        self.assertIn("initialInput={terminalLaunch?.command ?? null}", source)
-        self.assertIn("initialInputKey={terminalLaunch?.id ?? null}", source)
-        self.assertNotIn("useNavigate", source)
-        self.assertNotIn("PTY handoff is queued", source)
-
-    def test_chat_page_accepts_home_prefill_over_pty(self) -> None:
-        source = (ROOT / "web" / "src" / "pages" / "ChatPage.tsx").read_text(
+        api_source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(
+            encoding="utf-8",
+        )
+        server_source = (ROOT / "jarvis_cli" / "web_server.py").read_text(
             encoding="utf-8",
         )
 
-        self.assertIn("initialInput?: string | null", source)
-        self.assertIn("initialInputKey?: number | string | null", source)
-        self.assertIn("showSidebar?: boolean", source)
-        self.assertIn("showPlugins?: boolean", source)
-        self.assertIn("keepAliveWhenInactive?: boolean", source)
-        self.assertIn('const routePrefillParam = searchParams.get("prefill");', source)
-        self.assertIn("const prefillParam = initialInput ?? routePrefillParam;", source)
-        self.assertIn("if (!isActive && !keepAliveWhenInactive) return;", source)
-        self.assertIn("const initialInput =", source)
-        self.assertIn("ws.send(initialInput)", source)
-        self.assertIn('next.delete("prefill")', source)
-        self.assertIn("window.history.replaceState", source)
+        self.assertNotIn('import ChatPage from "@/pages/ChatPage"', source)
+        self.assertNotIn("<ChatPage", source)
+        self.assertIn("api.runTerminalCommand", source)
+        self.assertIn('"/api/terminal/run"', api_source)
+        self.assertIn('@app.post("/api/terminal/run")', server_source)
+        self.assertNotIn("useNavigate", source)
+        self.assertNotIn("PTY handoff is queued", source)
 
     def test_api_client_exposes_runtime_endpoints_for_home(self) -> None:
         source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
@@ -128,18 +115,12 @@ class DesktopHomeContractTests(unittest.TestCase):
         home_source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
-        chat_source = (ROOT / "web" / "src" / "pages" / "ChatPage.tsx").read_text(
-            encoding="utf-8",
-        )
 
-        self.assertIn("onOutputData?:", chat_source)
-        self.assertIn("onOutputData?.(outputText)", chat_source)
-        self.assertIn("handleTerminalOutput", home_source)
-        self.assertIn("awaitingVoiceResponseRef", home_source)
         self.assertIn("api.synthesizeSpeech", home_source)
         self.assertIn("queueVoiceDelta", home_source)
         self.assertIn("audioPlayerRef", home_source)
-        self.assertIn("onOutputData={handleTerminalOutput}", home_source)
+        self.assertIn("api.streamDesktopChat", home_source)
+        self.assertNotIn("awaitingVoiceResponseRef", home_source)
 
     def test_home_uses_desktop_agent_stream_for_plain_language(self) -> None:
         home_source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(

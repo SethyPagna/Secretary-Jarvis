@@ -102,6 +102,12 @@ export const api = {
       onError?: (message: string) => void;
     },
   ) => streamDesktopChat(prompt, handlers),
+  runTerminalCommand: (command: string) =>
+    fetchJSON<TerminalCommandResponse>("/api/terminal/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command }),
+    }),
   getSessions: (limit = 20, offset = 0) =>
     fetchJSON<PaginatedSessions>(`/api/sessions?limit=${limit}&offset=${offset}`),
   getSessionMessages: (id: string) =>
@@ -577,6 +583,12 @@ export interface DesktopChatResponse {
   model: string;
   provider: string;
   latency_ms: number;
+}
+
+export interface TerminalCommandResponse {
+  ok: boolean;
+  command: string;
+  output: string;
 }
 
 async function streamDesktopChat(
