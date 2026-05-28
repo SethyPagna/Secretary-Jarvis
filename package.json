@@ -66,8 +66,7 @@
     ],
     "win": {
       "target": [
-        "portable",
-        "dir"
+        "portable"
       ],
       "icon": "assets/icon.ico",
       "signAndEditExecutable": false
