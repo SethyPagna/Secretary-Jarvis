@@ -38,7 +38,10 @@ import {
   Smartphone,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import type { IntegrationStatusResponse } from "@/lib/api";
+import type {
+  IntegrationStatusResponse,
+  UnifiedSettingsResponse,
+} from "@/lib/api";
 import { getNestedValue, setNestedValue } from "@/lib/nested";
 import { useToast } from "@/hooks/useToast";
 import { Toast } from "@/components/Toast";
@@ -123,7 +126,8 @@ export default function ConfigPage() {
   const [configPath, setConfigPath] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [confirmReset, setConfirmReset] = useState(false);
-  const [unifiedSettings, setUnifiedSettings] = useState<Record<string, any> | null>(null);
+  const [unifiedSettings, setUnifiedSettings] =
+    useState<UnifiedSettingsResponse | null>(null);
   const [integrations, setIntegrations] = useState<IntegrationStatusResponse | null>(null);
   const { toast, showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -188,7 +192,7 @@ export default function ConfigPage() {
       .catch(() => {});
     api
       .getSettings()
-      .then((resp) => setUnifiedSettings(resp as unknown as Record<string, any>))
+      .then(setUnifiedSettings)
       .catch(() => {});
     api
       .getIntegrationStatus(true)

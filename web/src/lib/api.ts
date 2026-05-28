@@ -815,12 +815,60 @@ export interface ModelLoadResponse {
 }
 
 export interface UnifiedSettingsResponse {
-  system: Record<string, unknown>;
-  model: Record<string, unknown>;
-  voice: Record<string, unknown>;
-  messaging_services: Record<string, unknown>;
+  system: {
+    jarvis_home?: string;
+    config_path?: string;
+    env_path?: string;
+    install_method?: string;
+    updates?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
+  model: {
+    model?: string | { default?: string };
+    providers?: Record<string, unknown>;
+    fallback_providers?: unknown[];
+    performance?: {
+      n_ctx?: number;
+      n_batch?: number;
+      max_tokens?: number;
+    };
+    [key: string]: unknown;
+  };
+  voice: {
+    tts?: {
+      provider?: string;
+      [key: string]: unknown;
+    };
+    stt?: {
+      provider?: string;
+      local?: {
+        model?: string;
+        [key: string]: unknown;
+      };
+      [key: string]: unknown;
+    };
+    fallback_chain?: {
+      tts?: string[];
+      stt?: string[];
+    };
+    [key: string]: unknown;
+  };
+  messaging_services: Record<string, MessagingServiceState>;
   skills: { active?: number; listed?: number; total_assets?: number };
-  access: Record<string, unknown>;
+  access: {
+    permissions?: Record<string, unknown>;
+    toolsets?: unknown[];
+    disabled_toolsets?: unknown[];
+    [key: string]: unknown;
+  };
+}
+
+export interface MessagingServiceState {
+  enabled: boolean;
+  configured: boolean;
+  status: string;
+  missing_env: string[];
+  config: Record<string, unknown>;
 }
 
 export interface WhatsAppStatusResponse {
