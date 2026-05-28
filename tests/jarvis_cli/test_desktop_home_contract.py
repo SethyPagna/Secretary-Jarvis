@@ -107,7 +107,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("new MediaRecorder", source)
         self.assertIn("voiceChunksRef", source)
         self.assertIn("api.transcribeVoice", source)
-        self.assertIn("setTerminalInput(transcript)", source)
+        self.assertNotIn("setTerminalInput(transcript)", source)
         self.assertIn('runDesktopAgentTurn(transcript, "voice")', source)
         self.assertIn("Transcribing voice input", source)
         self.assertNotIn("await navigator.mediaDevices?.getUserMedia({ audio: true });\n      setListening(true);", source)

@@ -603,7 +603,6 @@ export default function HomePage() {
           throw new Error(result.error || "STT returned an empty transcript.");
         }
 
-        setTerminalInput(transcript);
         voiceOutputBufferRef.current = "";
         setTerminalEntries((entries) => [
           ...entries,
@@ -832,7 +831,7 @@ export default function HomePage() {
           }}
         />
       </div>
-      <section className="grid min-h-0 min-w-0 w-full max-w-full flex-1 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] 2xl:grid-cols-[minmax(0,1fr)_330px]">
+      <section className="grid min-h-0 min-w-0 w-full max-w-full flex-[1_1_0] grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(230px,280px)] 2xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="relative flex min-h-0 min-w-0 w-full max-w-full flex-col items-center justify-center overflow-hidden px-4 py-3 sm:px-5">
           <div
             className="pointer-events-none absolute inset-x-[8%] top-[8%] h-px opacity-60"
@@ -907,22 +906,18 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="grid min-h-[180px] min-w-0 w-full max-w-full shrink-0 gap-3 rounded-md border border-white/12 bg-[#0d1219]/94 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.25)]">
+      <section className="grid min-h-[170px] min-w-0 w-full max-w-full shrink-0 gap-3 rounded-md border border-white/12 bg-[#0d1219]/94 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.25)]">
         <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
           <div className="flex items-center gap-2 text-[0.82rem] uppercase tracking-[0.08em] text-slate-200/76">
             <Activity className="h-4 w-4 text-cyan-200" />
             <span>Terminal / Chat Input</span>
           </div>
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-cyan-200/12 text-cyan-50/78 transition hover:border-cyan-200/28 hover:bg-cyan-200/8"
-            onClick={() => void runSmoke()}
-            disabled={smokeRunning}
-            title="Run live runtime smoke test"
-            aria-label="Run live runtime smoke test"
+          <span
+            className="rounded-sm border border-cyan-200/12 px-2 py-1 text-[0.66rem] uppercase tracking-[0.1em] text-cyan-50/62"
+            title="Type 'smoke' and press Run for a live runtime check."
           >
-            <Activity className="h-3.5 w-3.5" />
-          </button>
+            Chat stream
+          </span>
         </div>
 
         <div className="min-h-0 overflow-y-auto rounded-sm bg-black/28 p-3 font-mono text-[0.9rem] leading-relaxed text-slate-100/88">
@@ -942,11 +937,11 @@ export default function HomePage() {
           ))}
         </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2">
-            <div className="text-[0.7rem] uppercase tracking-[0.12em] text-slate-300/58">
-              Steering
-            </div>
-            <AudioLevelMeter level={audioLevel} active={listening || speaking || voiceBusy} />
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2">
+          <div className="text-[0.7rem] uppercase tracking-[0.12em] text-slate-300/58">
+            Steering
+          </div>
+          <AudioLevelMeter level={audioLevel} active={listening || speaking || voiceBusy} />
           <div className="flex items-center gap-2">
             <QuickAction
               label={listening ? "Stop listening" : "Voice input"}

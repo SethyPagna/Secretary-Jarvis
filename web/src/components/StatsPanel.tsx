@@ -144,7 +144,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         />
       </div>
 
-      <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-white/10 pt-2 text-[0.72rem] text-slate-200/78">
+      <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-white/10 pt-2 text-[0.7rem] text-slate-200/78">
         <div>
           <div className="text-slate-300/58">Input tokens</div>
           <div className="font-mono text-white">{stats?.tokens_input ?? 0}</div>
@@ -180,7 +180,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         </div>
       </div>
 
-      <div className="shrink-0 space-y-1.5 border-t border-white/10 pt-2 text-[0.74rem]">
+      <div className="shrink-0 space-y-1.5 overflow-hidden border-t border-white/10 pt-2 text-[0.7rem]">
         <RuntimeLine
           label="LLM"
           value={llmRuntime?.model || llm?.model || llm?.backend || llm?.provider}
@@ -212,7 +212,7 @@ function RuntimeLine({
   return (
     <div className="flex min-w-0 items-center justify-between gap-3" title={detail}>
       <span className="shrink-0 text-slate-300/58">{label}</span>
-      <span className="min-w-0 max-w-[72%] truncate text-right font-mono text-white/90">
+      <span className="min-w-0 max-w-[64%] truncate text-right font-mono text-white/90">
         {cleanRuntimeLabel(value)}
       </span>
     </div>
