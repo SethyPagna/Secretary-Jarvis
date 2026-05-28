@@ -104,10 +104,6 @@ voice = [
   "sounddevice==0.5.5",
   "numpy==2.4.3",
 ]
-pty = [
-  "ptyprocess==0.7.0; sys_platform != 'win32'",
-  "pywinpty==2.0.15; sys_platform == 'win32'",
-]
 honcho = ["honcho-ai==2.0.1"]
 mcp = ["mcp==1.26.0"]
 homeassistant = ["aiohttp==3.13.3"]
@@ -140,7 +136,6 @@ termux = [
   # Baseline Android / Termux path for reliable fresh installs.
   "python-telegram-bot[webhooks]==22.6",
   "jarvis-agent[cron]",
-  "jarvis-agent[pty]",
   "jarvis-agent[mcp]",
   "jarvis-agent[honcho]",
   "jarvis-agent[acp]",
@@ -180,7 +175,7 @@ all = [
   # Policy (2026-05-12): `[all]` includes only extras that genuinely
   # CAN'T be lazy-installed via `tools/lazy_deps.py` — i.e. things every
   # session can use, things needed before the agent loop is alive
-  # (desktop terminal/PTY), and skill deps that packagers (Nix, AUR, Homebrew)
+  # (desktop runtime), and skill deps that packagers (AUR, Homebrew)
   # need in the wheel. Anything an opt-in backend (provider, search,
   # TTS, image, memory, messaging platform, terminal sandbox) needs
   # MUST live exclusively in `LAZY_DEPS` and resolve at first use —
@@ -200,7 +195,6 @@ all = [
   # where the user is expected to have a toolchain available.
   "jarvis-agent[cron]",
   "jarvis-agent[dev]",
-  "jarvis-agent[pty]",
   "jarvis-agent[mcp]",
   "jarvis-agent[homeassistant]",
   "jarvis-agent[sms]",
@@ -218,7 +212,7 @@ jarvis-acp = "acp_adapter.entry:main"
 py-modules = ["run_agent", "model_tools", "toolsets", "batch_runner", "trajectory_compressor", "toolset_distributions", "jarvis_bootstrap", "jarvis_constants", "jarvis_state", "jarvis_time", "jarvis_logging", "utils"]
 
 [tool.setuptools.package-data]
-jarvis_cli = ["data/**/*", "web_dist/**/*", "tui_dist/**/*", "scripts/install.sh", "scripts/install.ps1"]
+jarvis_cli = ["data/**/*", "web_dist/**/*", "scripts/install.sh", "scripts/install.ps1"]
 gateway = ["assets/**/*"]
 plugins = [
   "*/dashboard/manifest.json",
@@ -227,7 +221,7 @@ plugins = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["agent", "agent.*", "tools", "tools.*", "jarvis_cli", "gateway", "gateway.*", "tui_gateway", "tui_gateway.*", "cron", "acp_adapter", "plugins", "plugins.*", "providers", "providers.*"]
+include = ["agent", "agent.*", "tools", "tools.*", "jarvis_cli", "gateway", "gateway.*", "cron", "acp_adapter", "plugins", "plugins.*", "providers", "providers.*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
