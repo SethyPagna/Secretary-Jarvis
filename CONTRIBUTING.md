@@ -99,7 +99,7 @@ npm install
 
 ```bash
 mkdir -p ~/.jarvis/{cron,sessions,logs,memories,skills}
-cp cli-config.yaml.example ~/.jarvis/config.yaml
+cp docs/examples/config.yaml.example ~/.jarvis/config.yaml
 touch ~/.jarvis/.env
 
 # Add at minimum an LLM provider key:
@@ -195,7 +195,7 @@ jarvis-agent/
 ├── optional-skills/          # Official optional skills (discoverable via hub, not activated by default)
 ├── tests/                    # Test suite
 │
-├── cli-config.yaml.example   # Example configuration (copied to ~/.jarvis/config.yaml)
+├── docs/examples/config.yaml.example   # Example configuration (copied to ~/.jarvis/config.yaml)
 └── AGENTS.md                 # Development guide for AI coding assistants
 ```
 

@@ -694,10 +694,10 @@ def run_doctor(args):
         else:
             if should_fix:
                 config_path.parent.mkdir(parents=True, exist_ok=True)
-                example_config = PROJECT_ROOT / 'cli-config.yaml.example'
+                example_config = PROJECT_ROOT / 'docs' / 'examples' / 'config.yaml.example'
                 if example_config.exists():
                     shutil.copy2(str(example_config), str(config_path))
-                    check_ok(f"Created {_DHH}/config.yaml from cli-config.yaml.example")
+                    check_ok(f"Created {_DHH}/config.yaml from docs/examples/config.yaml.example")
                 else:
                     from jarvis_cli.config import DEFAULT_CONFIG, save_config
                     save_config(DEFAULT_CONFIG)

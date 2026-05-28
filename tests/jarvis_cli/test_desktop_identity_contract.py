@@ -15,7 +15,7 @@ VISIBLE_PRODUCT_FILES = [
     ROOT / "scripts" / "install.ps1",
     ROOT / "scripts" / "install.sh",
     ROOT / "scripts" / "jarvis-gateway",
-    ROOT / "jarvis-already-has-routines.md",
+    ROOT / "docs" / "plans" / "jarvis-already-has-routines.md",
     ROOT / "jarvis_cli" / "data" / "default_SOUL.md",
     ROOT / "jarvis_cli" / "default_soul.py",
     ROOT / "jarvis_cli" / "data" / "souls" / "soul_manifest.json",
@@ -23,14 +23,16 @@ VISIBLE_PRODUCT_FILES = [
 ]
 
 BANNED_LEGACY_BRAND_TEXT = [
-    "JARVIS Project",
-    "JARVISProject",
-    "jarvisproject",
-    "jarvis.local",
-    "JARVIS",
-    "JarvisCLI",
-    "JarvisClaw",
-    "jarvis-agent",
+    "Hermes",
+    "HERMES",
+    "hermes",
+    "Nous",
+    "NOUS",
+    "nousresearch",
+    "hermes-agent",
+    "HermesCLI",
+    "HermesClaw",
+    "hermes.local",
 ]
 
 
@@ -44,7 +46,7 @@ class DesktopIdentityContractTests(unittest.TestCase):
                     self.assertNotIn(banned, text)
 
     def test_autonomous_agent_skill_is_rebranded_to_jarvis(self) -> None:
-        legacy_path = ROOT / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md"
+        legacy_path = ROOT / "skills" / "autonomous-ai-agents" / "hermes-agent" / "SKILL.md"
         current_path = ROOT / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md"
 
         self.assertFalse(legacy_path.exists())

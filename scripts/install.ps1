@@ -1443,7 +1443,7 @@ function Copy-ConfigTemplates {
     # Create config.yaml
     $configPath = "$JarvisHome\config.yaml"
     if (-not (Test-Path $configPath)) {
-        $examplePath = "$InstallDir\cli-config.yaml.example"
+        $examplePath = "$InstallDir\docs\examples\config.yaml.example"
         if (Test-Path $examplePath) {
             Copy-Item $examplePath $configPath
             Write-Success "Created ~/.jarvis/config.yaml from template"
