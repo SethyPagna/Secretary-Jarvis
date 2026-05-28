@@ -1487,15 +1487,13 @@ def _hex_to_ansi(hex_color: str, *, bold: bool = False) -> str:
 # ────────────────────────────────────────────────────────────────────────
 # Light/dark terminal mode detection.
 #
-# Mirrors ui-tui/src/theme.ts detectLightMode().  Used to decide whether
-# to remap "near-white" skin colors (e.g. #FFF8DC banner_text, #B8860B
-# banner_dim) to darker equivalents that are readable on a light
-# Terminal.app / iTerm2 background.
+# Detect whether the current terminal background is light so near-white skin
+# colors can be remapped to darker equivalents.
 #
 # Detection priority:
-#   1. JARVIS_LIGHT / JARVIS_TUI_LIGHT env (true/false) — explicit override
-#   2. JARVIS_TUI_THEME=light|dark — explicit theme
-#   3. JARVIS_TUI_BACKGROUND=#RRGGBB — explicit bg hint
+#   1. JARVIS_LIGHT env (true/false) — explicit override
+#   2. JARVIS_THEME=light|dark — explicit theme
+#   3. JARVIS_BACKGROUND=#RRGGBB — explicit bg hint
 #   4. COLORFGBG env (set by xterm/Konsole/urxvt) — bg slot 7/15 = light
 #   5. OSC 11 query (\x1b]11;?\x1b\\) — ask the terminal directly
 #   6. Default: assume dark (matches the legacy Jarvis assumption)
@@ -1590,17 +1588,16 @@ def _detect_light_mode() -> bool:
     result = False
     try:
         # 1. Explicit env override
-        for var in ("JARVIS_LIGHT", "JARVIS_TUI_LIGHT"):
-            v = (os.environ.get(var) or "").strip().lower()
-            if _TRUE_RE.match(v):
-                result = True
-                _LIGHT_MODE_CACHE = result
-                return result
-            if _FALSE_RE.match(v):
-                _LIGHT_MODE_CACHE = result
-                return result
+        v = (os.environ.get("JARVIS_LIGHT") or "").strip().lower()
+        if _TRUE_RE.match(v):
+            result = True
+            _LIGHT_MODE_CACHE = result
+            return result
+        if _FALSE_RE.match(v):
+            _LIGHT_MODE_CACHE = result
+            return result
         # 2. Theme hint
-        theme = (os.environ.get("JARVIS_TUI_THEME") or "").strip().lower()
+        theme = (os.environ.get("JARVIS_THEME") or "").strip().lower()
         if theme == "light":
             result = True
             _LIGHT_MODE_CACHE = result
@@ -1609,7 +1606,7 @@ def _detect_light_mode() -> bool:
             _LIGHT_MODE_CACHE = result
             return result
         # 3. Explicit bg hex
-        bg_hint = os.environ.get("JARVIS_TUI_BACKGROUND") or ""
+        bg_hint = os.environ.get("JARVIS_BACKGROUND") or ""
         bg_lum = _luminance_from_hex(bg_hint)
         if bg_lum is not None:
             result = bg_lum >= 0.5
