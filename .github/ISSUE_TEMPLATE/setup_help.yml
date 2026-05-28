@@ -1,4 +1,4 @@
-name: "🔧 Setup / Installation Help"
+﻿name: "🔧 Setup / Installation Help"
 description: Having trouble installing or configuring Jarvis? Ask here.
 title: "[Setup]: "
 labels: ["setup"]
@@ -12,8 +12,8 @@ body:
         - Run `jarvis debug share` and paste the links in the Debug Report section below
         - If you're in a chat session, you can use `/debug` instead — it does the same thing
         - Try `jarvis update` to get the latest version
-        - Check the [README troubleshooting section](https://github.com/JARVISProject/jarvis-agent#troubleshooting)
-        - For general questions, consider the [JARVIS Project Discord](https://discord.gg/JARVISProject) for faster help
+        - Check the [README troubleshooting section](https://github.com/SethyPagna/Secretary-Jarvis#troubleshooting)
+        - For general questions, consider the [JARVIS discussions](https://github.com/SethyPagna/Secretary-Jarvis/discussions) for faster help
 
   - type: textarea
     id: description
@@ -110,3 +110,4 @@ body:
         - Ran `jarvis update`
         - Tried reinstalling with `pip install -e ".[all]"`
         - Checked that OPENROUTER_API_KEY is set in ~/.jarvis/.env
+

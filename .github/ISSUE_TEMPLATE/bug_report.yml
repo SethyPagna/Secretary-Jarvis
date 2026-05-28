@@ -1,4 +1,4 @@
-name: "🐛 Bug Report"
+﻿name: "🐛 Bug Report"
 description: Report a bug — something that's broken, crashes, or behaves incorrectly.
 title: "[Bug]: "
 labels: ["bug"]
@@ -9,7 +9,7 @@ body:
         Thanks for reporting a bug! Please fill out the sections below so we can reproduce and fix it quickly.
 
         **Before submitting**, please:
-        - [ ] Search [existing issues](https://github.com/JARVISProject/jarvis-agent/issues) to avoid duplicates
+        - [ ] Search [existing issues](https://github.com/SethyPagna/Secretary-Jarvis/issues) to avoid duplicates
         - [ ] Update to the latest version (`jarvis update`) and confirm the bug still exists
         - [ ] Run `jarvis debug share` and paste the links below (see Debug Report section)
 
@@ -160,3 +160,4 @@ body:
       label: Are you willing to submit a PR for this?
       options:
         - label: I'd like to fix this myself and submit a PR
+
