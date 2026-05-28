@@ -4,6 +4,7 @@ param(
     [switch]$SkipInstaller,
     [switch]$SkipSmoke,
     [switch]$SkipRendererSmoke,
+    [switch]$KeepBuildArtifacts,
     [int]$SmokePort = 18765
 )
 
@@ -132,6 +133,19 @@ try {
         if (Test-Path $unpackedDir) {
             Remove-Item -LiteralPath $unpackedDir -Recurse -Force
             Write-Host "Removed intermediate release/win-unpacked directory; portable exe remains the release artifact."
+        }
+
+        if (-not $KeepBuildArtifacts) {
+            foreach ($artifactPath in @(
+                (Join-Path $RepoRoot "build"),
+                (Join-Path $RepoRoot "dist"),
+                (Join-Path $RepoRoot "runtime/llama.cpp")
+            )) {
+                if (Test-Path $artifactPath) {
+                    Remove-Item -LiteralPath $artifactPath -Recurse -Force
+                    Write-Host "Removed build artifact: $artifactPath"
+                }
+            }
         }
     }
 }
