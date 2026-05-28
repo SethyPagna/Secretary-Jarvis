@@ -44,7 +44,7 @@ export const en: Translations = {
     general: "General",
     messaging: "Messaging",
     pluginLoadFailed:
-      "Could not load this plugin’s script. Check the Network tab (dashboard-plugins/…) and the server’s plugin path.",
+      "Could not load this plugin’s script. Check the Network tab (desktop extension assets) and the server’s plugin path.",
     pluginNotRegistered:
       "The plugin’s script did not call register(), or the script errored. Open the browser console for details.",
   },
@@ -89,7 +89,7 @@ export const en: Translations = {
     sessionsActiveCount: "{count} active",
     statusOverview: "Status overview",
     system: "System",
-    webUi: "Web UI",
+    webUi: "Desktop UI",
   },
 
   status: {
@@ -261,7 +261,7 @@ export const en: Translations = {
 
   pluginsPage: {
     contextEngineLabel: "Context engine",
-    dashboardSlots: "Dashboard slots",
+    dashboardSlots: "Desktop slots",
     disableRuntime: "Disable",
     enableAfterInstall: "Enable after install",
     enableRuntime: "Enable",
@@ -275,19 +275,19 @@ export const en: Translations = {
     installHint: "Use owner/repo shorthand or a full https:// or git@ clone URL.",
     memoryProviderLabel: "Memory provider",
     missingEnvWarn: "Set these in Keys before the plugin can run:",
-    noDashboardTab: "No dashboard tab",
+    noDashboardTab: "No desktop tab",
     openTab: "Open",
-    orphanHeading: "Dashboard-only extensions (no agent plugin.yaml match)",
+    orphanHeading: "Desktop-only extensions (no agent plugin.yaml match)",
     pluginListHeading: "Installed plugins",
     providerDefaults: "built-in / default",
     providersHeading: "Runtime provider plugins",
     providersHint:
       "Writes memory.provider (empty = built-in) and context.engine to config.yaml. Takes effect next session.",
-    refreshDashboard: "Rescan dashboard extensions",
+    refreshDashboard: "Rescan desktop extensions",
     removeConfirm: "Remove this plugin from ~/.jarvis/plugins/?",
     removeHint: "Only user-installed plugins under ~/.jarvis/plugins can be removed.",
     rescanHeading: "SPA plugin registry",
-    rescanHint: "Rescan after adding files on disk so the dashboard sidebar picks up new manifests.",
+    rescanHint: "Rescan after adding files on disk so the desktop sidebar picks up new manifests.",
     runtimeHeading: "Gateway runtime (YAML plugins)",
     saveProviders: "Save provider settings",
     savedProviders: "Provider settings saved.",
@@ -541,7 +541,7 @@ export const en: Translations = {
     loading: "Loading Kanban board…",
     loadFailed: "Failed to load Kanban board: ",
     loadFailedHint:
-      "The backend auto-creates kanban.db on first read. If this persists, check the dashboard logs.",
+      "The backend auto-creates kanban.db on first read. If this persists, check the desktop logs.",
     board: "Board",
     newBoard: "+ New board",
     newBoardTitle: "New board",
