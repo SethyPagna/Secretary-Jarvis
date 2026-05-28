@@ -127,6 +127,12 @@ try {
                 throw "Electron pack did not create release/JARVIS 1.0.0.exe or release/win-unpacked/JARVIS.exe."
             }
         }
+
+        $unpackedDir = Join-Path $RepoRoot "release/win-unpacked"
+        if (Test-Path $unpackedDir) {
+            Remove-Item -LiteralPath $unpackedDir -Recurse -Force
+            Write-Host "Removed intermediate release/win-unpacked directory; portable exe remains the release artifact."
+        }
     }
 }
 finally {
