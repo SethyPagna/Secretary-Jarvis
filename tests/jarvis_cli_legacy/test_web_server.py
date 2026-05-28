@@ -23,7 +23,7 @@ from jarvis_cli.config import (
 
 
 class TestReloadEnv:
-    """Tests for reload_env() â€” re-reads .env into os.environ."""
+    """Tests for reload_env() — re-reads .env into os.environ."""
 
     def test_adds_new_vars(self, tmp_path):
         """reload_env() adds vars from .env that are not in os.environ."""
@@ -304,7 +304,7 @@ class TestWebServerEndpoints:
     def test_session_token_endpoint_removed(self):
         """GET /api/auth/session-token should no longer exist (token injected via HTML)."""
         resp = self.client.get("/api/auth/session-token")
-        # The endpoint is gone â€” the catch-all SPA route serves index.html
+        # The endpoint is gone — the catch-all SPA route serves index.html
         # or the middleware returns 401 for unauthenticated /api/ paths.
         assert resp.status_code in {200, 404}
         # Either way, it must NOT return the token as JSON
@@ -312,7 +312,7 @@ class TestWebServerEndpoints:
             data = resp.json()
             assert "token" not in data
         except Exception:
-            pass  # Not JSON â€” that's fine (SPA HTML)
+            pass  # Not JSON — that's fine (SPA HTML)
 
     def test_unauthenticated_api_blocked(self):
         """API requests without the session token should be rejected."""
@@ -410,7 +410,7 @@ class TestBuildSchemaFromConfig:
         from collections import Counter
         cats = Counter(e["category"] for e in CONFIG_SCHEMA.values())
         for cat, count in cats.items():
-            assert count >= 2, f"Category '{cat}' has only {count} field(s) â€” should be merged"
+            assert count >= 2, f"Category '{cat}' has only {count} field(s) — should be merged"
 
 
 # ---------------------------------------------------------------------------
@@ -419,7 +419,7 @@ class TestBuildSchemaFromConfig:
 
 
 class TestConfigRoundTrip:
-    """Verify config survives GET â†’ edit â†’ PUT without data loss."""
+    """Verify config survives GET → edit → PUT without data loss."""
 
     @pytest.fixture(autouse=True)
     def _setup(self):
@@ -461,7 +461,7 @@ class TestConfigRoundTrip:
         assert isinstance(before.get("model"), dict)
         original_keys = set(before["model"].keys())
 
-        # GET â†’ PUT unchanged
+        # GET → PUT unchanged
         web_config = self.client.get("/api/config").json()
         assert isinstance(web_config.get("model"), str), "GET should normalize model to string"
 
@@ -533,7 +533,7 @@ class TestConfigRoundTrip:
         for key, entry in schema.items():
             val = get_nested(config, key)
             if val is None:
-                continue  # not set in user config â€” fine
+                continue  # not set in user config — fine
             expected = entry["type"]
             if expected in {"string", "select"} and not isinstance(val, str):
                 mismatches.append(f"{key}: expected str, got {type(val).__name__}")
@@ -1325,7 +1325,7 @@ class TestModelInfoEndpoint:
 
 
 class TestProbeGatewayHealth:
-    """Tests for _probe_gateway_health() â€” cross-container gateway detection."""
+    """Tests for _probe_gateway_health() — cross-container gateway detection."""
 
     def test_returns_false_when_no_url_configured(self, monkeypatch):
         """When GATEWAY_HEALTH_URL is unset, the probe returns (False, None)."""
@@ -1495,7 +1495,7 @@ class TestStatusRemoteGateway:
         assert data["gateway_health_url"] is None
 
     def test_status_remote_running_null_pid(self, monkeypatch):
-        """Remote gateway running but PID not in response â€” pid should be None."""
+        """Remote gateway running but PID not in response — pid should be None."""
         import jarvis_cli.web_server as ws
 
         monkeypatch.setattr(ws, "get_running_pid", lambda: None)
@@ -1519,7 +1519,7 @@ class TestStatusRemoteGateway:
 
 
 class TestNormaliseThemeDefinition:
-    """Tests for _normalise_theme_definition() â€” parses YAML theme files."""
+    """Tests for _normalise_theme_definition() — parses YAML theme files."""
 
     def test_rejects_missing_name(self):
         from jarvis_cli.web_server import _normalise_theme_definition
@@ -1651,7 +1651,7 @@ class TestNormaliseThemeDefinition:
 
 
 class TestDiscoverUserThemes:
-    """Tests for _discover_user_themes() â€” scans ~/.jarvis/dashboard-themes/."""
+    """Tests for _discover_user_themes() — scans ~/.jarvis/dashboard-themes/."""
 
     def test_returns_empty_when_dir_missing(self, tmp_path, monkeypatch):
         monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
@@ -1699,7 +1699,7 @@ class TestDiscoverUserThemes:
 
 class TestNormaliseThemeExtensions:
     """Tests for the extended normaliser fields (assets, customCSS,
-    componentStyles, layoutVariant) â€” the surfaces themes use to reskin
+    componentStyles, layoutVariant) — the surfaces themes use to reskin
     the dashboard without shipping code."""
 
     def test_layout_variant_defaults_to_standard(self):
@@ -1728,7 +1728,7 @@ class TestNormaliseThemeExtensions:
                 "bg": "https://example.com/bg.jpg",
                 "hero": "linear-gradient(180deg, red, blue)",
                 "crest": "/ds-assets/crest.svg",
-                "logo": "  ",  # whitespace-only â€” dropped
+                "logo": "  ",  # whitespace-only — dropped
                 "notAKnownKey": "ignored",
             },
         })
@@ -1746,8 +1746,8 @@ class TestNormaliseThemeExtensions:
                 "custom": {
                     "scan-lines": "/img/scan.png",
                     "my_overlay": "/img/ov.png",
-                    "bad key!": "x",  # non-alnum key â€” rejected
-                    "empty": "",        # empty value â€” rejected
+                    "bad key!": "x",  # non-alnum key — rejected
+                    "empty": "",        # empty value — rejected
                 },
             },
         })
@@ -1792,7 +1792,7 @@ class TestNormaliseThemeExtensions:
                     "bad prop!": "ignored",  # non-alnum prop rejected
                 },
                 "header": {"background": "linear-gradient(red, blue)"},
-                "rogueBucket": {"foo": "bar"},  # not a known bucket â€” rejected
+                "rogueBucket": {"foo": "bar"},  # not a known bucket — rejected
             },
         })
         assert r["componentStyles"]["card"] == {
@@ -1807,8 +1807,8 @@ class TestNormaliseThemeExtensions:
         r = _normalise_theme_definition({
             "name": "t",
             "componentStyles": {
-                "card": {},        # empty â€” dropped entirely
-                "header": {"bad prop!": "ignored"},  # all props rejected â€” bucket dropped
+                "card": {},        # empty — dropped entirely
+                "header": {"bad prop!": "ignored"},  # all props rejected — bucket dropped
                 "footer": {"background": "black"},
             },
         })
@@ -1856,7 +1856,7 @@ class TestPluginAPIAuth:
     def test_plugin_route_allows_auth(self):
         """Plugin API routes should work with a valid session token.
 
-        Use ``/api/plugins/example/hello`` from the example-dashboard plugin â€”
+        Use ``/api/plugins/example/hello`` from the example-dashboard plugin —
         a stable, side-effect-free GET that's always loaded in tests. With a
         valid token the handler should run (200); without one the middleware
         should 401 before the handler is reached.
@@ -1878,7 +1878,7 @@ class TestPluginAPIAuth:
         """Plugin PATCH routes should return 401 without a valid session token.
 
         PATCH is the mutation method most commonly used by the dashboard for
-        kanban task edits â€” explicitly cover it so a future middleware
+        kanban task edits — explicitly cover it so a future middleware
         regression that whitelists non-GET methods can't sneak through.
         """
         resp = self.client.patch(
@@ -1896,14 +1896,14 @@ class TestPluginAPIAuth:
         """Auth must be plugin-agnostic, not kanban-specific.
 
         The middleware fix is at the gate level (no per-plugin allowlist),
-        so any plugin's API surface â€” kanban, jarvis-achievements, future
-        plugins â€” must require the session token. Hit a non-kanban plugin
+        so any plugin's API surface — kanban, jarvis-achievements, future
+        plugins — must require the session token. Hit a non-kanban plugin
         path to lock that in.
         """
         # Real plugin path (jarvis-achievements is loaded by default).
         resp = self.client.get("/api/plugins/jarvis-achievements/overview")
         assert resp.status_code == 401
-        # Same for an arbitrary plugin namespace that doesn't even exist â€”
+        # Same for an arbitrary plugin namespace that doesn't even exist —
         # the middleware should 401 before routing decides 404, so an
         # attacker can't fingerprint plugin names by status codes.
         resp = self.client.get("/api/plugins/_definitely_not_a_plugin_/anything")
@@ -1928,11 +1928,11 @@ class TestPluginAPIAuth:
             ):
                 pass  # if we got here without disconnect, the WS accepted us
         except WebSocketDisconnect:
-            pass  # expected â€” WS endpoint rejected via its own check
+            pass  # expected — WS endpoint rejected via its own check
         except Exception:
             # The kanban plugin may not be mounted in this test environment,
             # in which case the route doesn't exist at all (3xx/4xx during
-            # upgrade). That's fine for this regression â€” it only matters
+            # upgrade). That's fine for this regression — it only matters
             # that the HTTP middleware didn't start intercepting WS upgrades.
             pass
 
@@ -2013,9 +2013,9 @@ class TestDashboardPluginManifestExtensions:
 
     def test_page_scoped_slots_preserved(self, tmp_path, monkeypatch):
         """Page-scoped slot names (e.g. ``sessions:top``) round-trip through
-        the manifest loader untouched.  The backend has no allowlist â€” the
+        the manifest loader untouched.  The backend has no allowlist — the
         frontend ``<PluginSlot name="...">`` placements decide what actually
-        renders â€” but the loader must not mangle colons in slot names."""
+        renders — but the loader must not mangle colons in slot names."""
         monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
         self._write_plugin(tmp_path, "page-slots", {
             "name": "page-slots",
