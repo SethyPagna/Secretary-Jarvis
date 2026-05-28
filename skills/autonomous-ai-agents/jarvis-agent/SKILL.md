@@ -34,7 +34,7 @@ debugging voice and packaging behavior.
 
 ## Setup Checklist
 
-1. Confirm the active branch is `jarvis-remake`.
+1. Confirm the active branch is `main`.
 2. Run backend dependency checks before launching Electron.
 3. Verify `/api/runtime/readiness` for model, TTS, STT, stats, and shutdown
    blockers.

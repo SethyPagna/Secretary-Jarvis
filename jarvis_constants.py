@@ -1,6 +1,6 @@
 """Shared constants for JARVIS.
 
-Import-safe module with no dependencies — can be imported from anywhere
+Import-safe module with no dependencies - can be imported from anywhere
 without risk of circular imports.
 """
 
@@ -44,13 +44,13 @@ def get_jarvis_home() -> Path:
     """Return the Jarvis home directory (default: ~/.jarvis).
 
     Reads JARVIS_HOME env var, falls back to ~/.jarvis.
-    This is the single source of truth — all other copies should import this.
+    This is the single source of truth - all other copies should import this.
 
     When ``JARVIS_HOME`` is unset but an ``active_profile`` file indicates
     a non-default profile is active, logs a loud one-shot warning to
     ``errors.log`` so cross-profile data corruption is diagnosable instead
-    of silent.  Behavior is unchanged otherwise — we still return
-    ``~/.jarvis`` — because raising here would brick 30+ module-level
+    of silent.  Behavior is unchanged otherwise - we still return
+    ``~/.jarvis`` - because raising here would brick 30+ module-level
     callers that import this at load time.  Subprocess spawners are
     expected to propagate ``JARVIS_HOME`` explicitly (see the systemd
     template in ``jarvis_cli/gateway.py`` and the kanban dispatcher in
@@ -87,7 +87,7 @@ def get_jarvis_home() -> Path:
             msg = (
                 f"[JARVIS_HOME fallback] JARVIS_HOME is unset but active "
                 f"profile is {active!r}. Falling back to ~/.jarvis, which "
-                f"is the DEFAULT profile — not {active!r}. Any data this "
+                f"is the DEFAULT profile - not {active!r}. Any data this "
                 f"process writes will land in the wrong profile. The "
                 f"subprocess spawner should pass JARVIS_HOME explicitly "
                 f"(see issue #18594)."
@@ -108,14 +108,14 @@ def get_default_jarvis_root() -> Path:
 
     In Docker or custom deployments where ``JARVIS_HOME`` points outside
     ``~/.jarvis`` (e.g. ``/opt/data``), returns ``JARVIS_HOME`` directly
-    — that IS the root.
+    - that IS the root.
 
     In profile mode where ``JARVIS_HOME`` is ``<root>/profiles/<name>``,
     returns ``<root>`` so that ``profile list`` can see all profiles.
     Works both for standard (``~/.jarvis/profiles/coder``) and Docker
     (``/opt/data/profiles/coder``) layouts.
 
-    Import-safe — no dependencies beyond stdlib.
+    Import-safe - no dependencies beyond stdlib.
     """
     native_home = Path.home() / ".jarvis"
     env_home = os.environ.get("JARVIS_HOME", "")
@@ -132,11 +132,11 @@ def get_default_jarvis_root() -> Path:
     # Docker / custom deployment.
     # Check if this is a profile path: <root>/profiles/<name>
     # If the immediate parent dir is named "profiles", the root is
-    # the grandparent — this covers Docker profiles correctly.
+    # the grandparent - this covers Docker profiles correctly.
     if env_path.parent.name == "profiles":
         return env_path.parent.parent
 
-    # Not a profile path — JARVIS_HOME itself is the root
+    # Not a profile path - JARVIS_HOME itself is the root
     return env_path
 
 
@@ -199,14 +199,14 @@ def get_jarvis_dir(new_subpath: str, old_name: str) -> Path:
 
     New installs get the consolidated layout (e.g. ``cache/images``).
     Existing installs that already have the old path (e.g. ``image_cache``)
-    keep using it — no migration required.
+    keep using it - no migration required.
 
     Args:
         new_subpath: Preferred path relative to JARVIS_HOME (e.g. ``"cache/images"``).
         old_name: Legacy path relative to JARVIS_HOME (e.g. ``"image_cache"``).
 
     Returns:
-        Absolute ``Path`` — old location if it exists on disk, otherwise the new one.
+        Absolute ``Path`` - old location if it exists on disk, otherwise the new one.
     """
     home = get_jarvis_home()
     old_path = home / old_name
@@ -263,12 +263,12 @@ def get_subprocess_home() -> str | None:
     inside the Jarvis data directory instead of the OS-level ``/root`` or
     ``~/``.  This provides:
 
-    * **Docker persistence** — tool configs land inside the persistent volume.
-    * **Profile isolation** — each profile gets its own git identity, SSH
+    * **Docker persistence** - tool configs land inside the persistent volume.
+    * **Profile isolation** - each profile gets its own git identity, SSH
       keys, gh tokens, etc.
 
     The Python process's own ``os.environ["HOME"]`` and ``Path.home()`` are
-    **never** modified — only subprocess environments should inject this value.
+    **never** modified - only subprocess environments should inject this value.
     Activation is directory-based: if the ``home/`` subdirectory doesn't
     exist, returns ``None`` and behavior is unchanged.
     """
@@ -306,7 +306,7 @@ def is_termux() -> bool:
     """Return True when running inside a Termux (Android) environment.
 
     Checks ``TERMUX_VERSION`` (set by Termux) or the Termux-specific
-    ``PREFIX`` path.  Import-safe — no heavy deps.
+    ``PREFIX`` path.  Import-safe - no heavy deps.
     """
     prefix = os.getenv("PREFIX", "")
     return bool(os.getenv("TERMUX_VERSION") or "com.termux/files/usr" in prefix)
@@ -320,7 +320,7 @@ def is_wsl() -> bool:
 
     Checks ``/proc/version`` for the ``microsoft`` marker that both WSL1
     and WSL2 inject.  Result is cached for the process lifetime.
-    Import-safe — no heavy deps.
+    Import-safe - no heavy deps.
     """
     global _wsl_detected
     if _wsl_detected is not None:
@@ -341,7 +341,7 @@ def is_container() -> bool:
 
     Checks ``/.dockerenv`` (Docker), ``/run/.containerenv`` (Podman),
     and ``/proc/1/cgroup`` for container runtime markers.  Result is
-    cached for the process lifetime.  Import-safe — no heavy deps.
+    cached for the process lifetime.  Import-safe - no heavy deps.
     """
     global _container_detected
     if _container_detected is not None:
@@ -395,7 +395,7 @@ def apply_ipv4_preference(force: bool = False) -> None:
 
     On servers with broken or unreachable IPv6, Python tries AAAA records
     first and hangs for the full TCP timeout before falling back to IPv4.
-    This affects httpx, requests, urllib, the OpenAI SDK — everything that
+    This affects httpx, requests, urllib, the OpenAI SDK - everything that
     uses ``socket.getaddrinfo``.
 
     When *force* is True, patches ``getaddrinfo`` so that calls with
@@ -403,7 +403,7 @@ def apply_ipv4_preference(force: bool = False) -> None:
     skipping IPv6 entirely.  If no A record exists, falls back to the
     original unfiltered resolution so pure-IPv6 hosts still work.
 
-    Safe to call multiple times — only patches once.
+    Safe to call multiple times - only patches once.
     Set ``network.force_ipv4: true`` in ``config.yaml`` to enable.
     """
     if not force:
@@ -418,13 +418,13 @@ def apply_ipv4_preference(force: bool = False) -> None:
     _original_getaddrinfo = socket.getaddrinfo
 
     def _ipv4_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-        if family == 0:  # AF_UNSPEC — caller didn't request a specific family
+        if family == 0:  # AF_UNSPEC - caller didn't request a specific family
             try:
                 return _original_getaddrinfo(
                     host, port, socket.AF_INET, type, proto, flags
                 )
             except socket.gaierror:
-                # No A record — fall back to full resolution (pure-IPv6 hosts)
+                # No A record - fall back to full resolution (pure-IPv6 hosts)
                 return _original_getaddrinfo(host, port, family, type, proto, flags)
         return _original_getaddrinfo(host, port, family, type, proto, flags)
 
