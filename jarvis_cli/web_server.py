@@ -15,6 +15,7 @@ import importlib.util
 import json
 import logging
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -104,10 +105,6 @@ _SESSION_TOKEN = secrets.token_urlsafe(32)
 _SESSION_HEADER_NAME = "X-Jarvis-Session-Token"
 _DESKTOP_SHUTDOWN_TOKEN = os.environ.get("JARVIS_DESKTOP_SHUTDOWN_TOKEN", "")
 _DESKTOP_SHUTDOWN_HEADER_NAME = "X-Jarvis-Desktop-Shutdown-Token"
-
-# In-browser Chat tab (/chat, /api/pty, ?).  Off unless ``jarvis dashboard --tui``
-# or JARVIS_DASHBOARD_TUI=1.  Set from :func:`start_server`.
-_DASHBOARD_EMBEDDED_CHAT_ENABLED = False
 
 # Simple rate limiter for the reveal endpoint
 _reveal_timestamps: List[float] = []
@@ -2137,13 +2134,13 @@ def load_local_model_get(model: str):
 
 
 # ---------------------------------------------------------------------------
-# Model assignment ? pick provider+model for main slot or auxiliary slots.
-# Mirrors the model.options JSON-RPC from tui_gateway but uses REST so the
-# Models page (which has no chat PTY open) can drive it.
+# Model assignment - pick provider+model for main slot or auxiliary slots.
+# Exposed as REST so the desktop Models page can drive provider selection
+# without relying on a separate terminal/session protocol.
 # ---------------------------------------------------------------------------
 
 # Canonical auxiliary task slots. Keep in sync with DEFAULT_CONFIG["auxiliary"]
-# in jarvis_cli/config.py ? listed here for deterministic ordering in the UI.
+# in jarvis_cli/config.py; listed here for deterministic ordering in the UI.
 _AUX_TASK_SLOTS: Tuple[str, ...] = (
     "vision",
     "web_extract",
@@ -2163,10 +2160,9 @@ _AUX_TASK_SLOTS: Tuple[str, ...] = (
 def get_model_options():
     """Return authenticated providers + their curated model lists.
 
-    REST equivalent of the ``model.options`` JSON-RPC on tui_gateway, so the
-    dashboard Models page can render the picker without a live chat session.
-    The response shape matches ``model.options`` 1:1 so ``ModelPickerDialog``
-    can share the same types.
+    Return the desktop Models page payload without requiring a live chat
+    session. The response shape is intentionally stable so
+    ``ModelPickerDialog`` can share the same types across model pages.
     """
     try:
         from jarvis_cli.inventory import build_models_payload, load_picker_context
@@ -4491,44 +4487,12 @@ async def get_models_analytics(days: int = 30):
 
 
 # ---------------------------------------------------------------------------
-# /api/pty ? PTY-over-WebSocket bridge for the dashboard "Chat" tab.
-#
-# The endpoint spawns the same ``jarvis --tui`` binary the CLI uses, behind
-# a POSIX pseudo-terminal, and forwards bytes + resize escapes across a
-# WebSocket.  The browser renders the ANSI through xterm.js (see
-# web/src/pages/ChatPage.tsx).
-#
-# Auth: ``?token=<session_token>`` query param (browsers can't set
-# Authorization on the WS upgrade).  Same ephemeral ``_SESSION_TOKEN`` as
-# REST.  Localhost-only ? we defensively reject non-loopback clients even
-# though uvicorn binds to 127.0.0.1.
+# Desktop WebSocket and terminal helpers.
 # ---------------------------------------------------------------------------
 
-import re
-import asyncio
-
-# PTY bridge is POSIX-only (depends on fcntl/termios/ptyprocess).  On native
-# Windows the import raises; catch and leave PtyBridge=None so the rest of
-# the dashboard (sessions, jobs, metrics, config editor) still loads and the
-# /api/pty endpoint cleanly refuses with a WSL-suggested message.
-try:
-    from jarvis_cli.pty_bridge import PtyBridge, PtyUnavailableError
-    _PTY_BRIDGE_AVAILABLE = True
-except ImportError as _pty_import_err:  # pragma: no cover - Windows-only path
-    PtyBridge = None  # type: ignore[assignment]
-    _PTY_BRIDGE_AVAILABLE = False
-
-    class PtyUnavailableError(RuntimeError):  # type: ignore[no-redef]
-        """Stub on platforms where pty_bridge can't be imported."""
-        pass
-
-_RESIZE_RE = re.compile(rb"\x1b\[RESIZE:(\d+);(\d+)\]")
-_PTY_READ_CHUNK_TIMEOUT = 0.2
-_VALID_CHANNEL_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 # Starlette's TestClient reports the peer as "testclient"; treat it as
 # loopback so tests don't need to rewrite request scope.
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", "testclient"})
-_WINDOWS_PROMPT = "\r\n\x1b[96mJARVIS Windows terminal ready.\x1b[0m\r\nPS> "
 
 
 def _is_public_bind() -> bool:
@@ -4548,98 +4512,6 @@ def _ws_client_is_allowed(ws: "WebSocket") -> bool:
     if not client_host:
         return True
     return client_host in _LOOPBACK_HOSTS
-
-# Per-channel subscriber registry used by /api/pub (PTY-side gateway ? dashboard)
-# and /api/events (dashboard ? browser sidebar).  Keyed by an opaque channel id
-# the chat tab generates on mount; entries auto-evict when the last subscriber
-# drops AND the publisher has disconnected.
-_event_channels: dict[str, set] = {}
-_event_lock = asyncio.Lock()
-
-
-def _resolve_chat_argv(
-    resume: Optional[str] = None,
-    sidecar_url: Optional[str] = None,
-) -> tuple[list[str], Optional[str], Optional[dict]]:
-    """Resolve the argv + cwd + env for the chat PTY.
-
-    Default: whatever ``jarvis --tui`` would run.  Tests monkeypatch this
-    function to inject a tiny fake command (``cat``, ``sh -c 'printf ?'``)
-    so nothing has to build Node or the TUI bundle.
-
-    Session resume is propagated via the ``JARVIS_TUI_RESUME`` env var ?
-    matching what ``jarvis_cli.main._launch_tui`` does for the CLI path.
-    Appending ``--resume <id>`` to argv doesn't work because ``ui-tui`` does
-    not parse its argv.
-
-    `sidecar_url` (when set) is forwarded as ``JARVIS_TUI_SIDECAR_URL`` so
-    the spawned ``tui_gateway.entry`` can mirror dispatcher emits to the
-    dashboard's ``/api/pub`` endpoint (see :func:`pub_ws`).
-    """
-    from jarvis_cli.main import PROJECT_ROOT, _make_tui_argv
-
-    argv, cwd = _make_tui_argv(PROJECT_ROOT / "ui-tui", tui_dev=False)
-    env = os.environ.copy()
-    env.setdefault("NODE_ENV", "production")
-    # Browser-embedded chat should prefer stable wheel-based scrollback over
-    # native terminal mouse tracking. When mouse tracking is enabled, wheel
-    # events are consumed by the TUI and forwarded as terminal input, which
-    # makes browser-side transcript scrolling feel broken. Keep the terminal
-    # build unchanged for native CLI usage; only disable mouse tracking for
-    # the dashboard PTY path.
-    env.setdefault("JARVIS_TUI_DISABLE_MOUSE", "1")
-    env.setdefault("JARVIS_TUI_INLINE", "1")
-
-    if resume:
-        latest_resume, _latest_path = _session_latest_descendant(resume)
-        if latest_resume:
-            resume = latest_resume
-        env["JARVIS_TUI_RESUME"] = resume
-
-    if sidecar_url:
-        env["JARVIS_TUI_SIDECAR_URL"] = sidecar_url
-
-    return list(argv), str(cwd) if cwd else None, env
-
-
-def _build_sidecar_url(channel: str) -> Optional[str]:
-    """ws:// URL the PTY child should publish events to, or None when unbound."""
-    host = getattr(app.state, "bound_host", None)
-    port = getattr(app.state, "bound_port", None)
-
-    if not host or not port:
-        return None
-
-    netloc = f"[{host}]:{port}" if ":" in host and not host.startswith("[") else f"{host}:{port}"
-    qs = urllib.parse.urlencode({"token": _SESSION_TOKEN, "channel": channel})
-
-    return f"ws://{netloc}/api/pub?{qs}"
-
-
-async def _broadcast_event(channel: str, payload: str) -> None:
-    """Fan out one publisher frame to every subscriber on `channel`."""
-    async with _event_lock:
-        subs = list(_event_channels.get(channel, ()))
-
-    for sub in subs:
-        try:
-            await sub.send_text(payload)
-        except Exception:
-            # Subscriber went away mid-send; the /api/events finally clause
-            # will remove it from the registry on its next iteration.
-            _log.warning("broadcast send failed for subscriber on %s", channel, exc_info=True)
-
-
-def _channel_or_close_code(ws: WebSocket) -> Optional[str]:
-    """Return the channel id from the query string or None if invalid."""
-    channel = ws.query_params.get("channel", "")
-
-    return channel if _VALID_CHANNEL_RE.match(channel) else None
-
-
-def _terminal_text(text: str) -> str:
-    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
-
 
 async def _run_windows_terminal_command(command: str) -> str:
     def _run_command() -> str:
@@ -4662,286 +4534,6 @@ async def _run_windows_terminal_command(command: str) -> str:
         return "Command timed out after 120 seconds."
     except Exception as exc:
         return f"{type(exc).__name__}: {exc}"
-
-
-async def _windows_terminal_ws(ws: WebSocket) -> None:
-    """Small Windows command bridge for the desktop terminal.
-
-    Native Windows Python has no POSIX PTY. This keeps the desktop terminal
-    useful by running submitted lines through PowerShell while the full TUI
-    PTY remains available on POSIX/WSL.
-    """
-    await ws.send_text(_WINDOWS_PROMPT)
-    buffer = ""
-
-    try:
-        while True:
-            msg = await ws.receive()
-            if msg.get("type") == "websocket.disconnect":
-                break
-            raw = msg.get("bytes")
-            if raw is None:
-                text_payload = msg.get("text")
-                raw = text_payload.encode("utf-8") if isinstance(text_payload, str) else b""
-            if not raw:
-                continue
-            match = _RESIZE_RE.match(raw)
-            if match and match.end() == len(raw):
-                continue
-
-            text = raw.decode("utf-8", errors="ignore")
-            if text.startswith("\x1b"):
-                continue
-
-            for char in text:
-                if char in "\r\n":
-                    await ws.send_text("\r\n")
-                    command = buffer.strip()
-                    buffer = ""
-                    if not command:
-                        await ws.send_text("PS> ")
-                        continue
-                    if command.lower() in {"exit", "quit"}:
-                        await ws.send_text("Closing terminal.\r\n")
-                        await ws.close(code=1000)
-                        return
-                    if command.lower() in {"clear", "cls", "/clear"}:
-                        await ws.send_text("\x1b[2J\x1b[HPS> ")
-                        continue
-                    output = await _run_windows_terminal_command(command)
-                    if output.strip():
-                        await ws.send_text(_terminal_text(output.rstrip()) + "\r\n")
-                    await ws.send_text("PS> ")
-                elif char in {"\b", "\x7f"}:
-                    if buffer:
-                        buffer = buffer[:-1]
-                        await ws.send_text("\b \b")
-                elif char == "\t":
-                    buffer += "    "
-                    await ws.send_text("    ")
-                elif char >= " ":
-                    buffer += char
-                    await ws.send_text(char)
-    except WebSocketDisconnect:
-        return
-
-
-@app.websocket("/api/pty")
-async def pty_ws(ws: WebSocket) -> None:
-    if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
-        await ws.close(code=4403)
-        return
-
-    # --- auth + loopback check (before accept so we can close cleanly) ---
-    token = ws.query_params.get("token", "")
-    expected = _SESSION_TOKEN
-    if not hmac.compare_digest(token.encode(), expected.encode()):
-        await ws.close(code=4401)
-        return
-
-    if not _ws_client_is_allowed(ws):
-        await ws.close(code=4403)
-        return
-
-    await ws.accept()
-
-    if not _PTY_BRIDGE_AVAILABLE:
-        await _windows_terminal_ws(ws)
-        return
-
-    # --- spawn PTY ------------------------------------------------------
-    resume = ws.query_params.get("resume") or None
-    channel = _channel_or_close_code(ws)
-    sidecar_url = _build_sidecar_url(channel) if channel else None
-
-    try:
-        argv, cwd, env = _resolve_chat_argv(resume=resume, sidecar_url=sidecar_url)
-    except SystemExit as exc:
-        # _make_tui_argv calls sys.exit(1) when node/npm is missing.
-        await ws.send_text(f"\r\n\x1b[31mChat unavailable: {exc}\x1b[0m\r\n")
-        await ws.close(code=1011)
-        return
-
-
-    try:
-        bridge = PtyBridge.spawn(argv, cwd=cwd, env=env)
-    except PtyUnavailableError as exc:
-        await ws.send_text(f"\r\n\x1b[31mChat unavailable: {exc}\x1b[0m\r\n")
-        await ws.close(code=1011)
-        return
-    except (FileNotFoundError, OSError) as exc:
-        await ws.send_text(f"\r\n\x1b[31mChat failed to start: {exc}\x1b[0m\r\n")
-        await ws.close(code=1011)
-        return
-
-    loop = asyncio.get_running_loop()
-
-    # --- reader task: PTY master ? WebSocket ----------------------------
-    async def pump_pty_to_ws() -> None:
-        while True:
-            chunk = await loop.run_in_executor(
-                None, bridge.read, _PTY_READ_CHUNK_TIMEOUT
-            )
-            if chunk is None:  # EOF
-                return
-            if not chunk:  # no data this tick; yield control and retry
-                await asyncio.sleep(0)
-                continue
-            try:
-                await ws.send_bytes(chunk)
-            except Exception:
-                return
-
-    reader_task = asyncio.create_task(pump_pty_to_ws())
-
-    # --- writer loop: WebSocket ? PTY master ----------------------------
-    try:
-        while True:
-            msg = await ws.receive()
-            msg_type = msg.get("type")
-            if msg_type == "websocket.disconnect":
-                break
-            raw = msg.get("bytes")
-            if raw is None:
-                text = msg.get("text")
-                raw = text.encode("utf-8") if isinstance(text, str) else b""
-            if not raw:
-                continue
-
-            # Resize escape is consumed locally, never written to the PTY.
-            match = _RESIZE_RE.match(raw)
-            if match and match.end() == len(raw):
-                cols = int(match.group(1))
-                rows = int(match.group(2))
-                bridge.resize(cols=cols, rows=rows)
-                continue
-
-            bridge.write(raw)
-    except WebSocketDisconnect:
-        pass
-    finally:
-        reader_task.cancel()
-        try:
-            await reader_task
-        except (asyncio.CancelledError, Exception):
-            pass
-        bridge.close()
-
-
-# ---------------------------------------------------------------------------
-# /api/ws ? JSON-RPC WebSocket sidecar for the dashboard "Chat" tab.
-#
-# Drives the same `tui_gateway.dispatch` surface Ink uses over stdio, so the
-# dashboard can render structured metadata (model badge, tool-call sidebar,
-# slash launcher, session info) alongside the xterm.js terminal that PTY
-# already paints. Both transports bind to the same session id when one is
-# active, so a tool.start emitted by the agent fans out to both sinks.
-# ---------------------------------------------------------------------------
-
-
-@app.websocket("/api/ws")
-async def gateway_ws(ws: WebSocket) -> None:
-    if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
-        await ws.close(code=4403)
-        return
-
-    token = ws.query_params.get("token", "")
-    if not hmac.compare_digest(token.encode(), _SESSION_TOKEN.encode()):
-        await ws.close(code=4401)
-        return
-
-    if not _ws_client_is_allowed(ws):
-        await ws.close(code=4403)
-        return
-
-    from tui_gateway.ws import handle_ws
-
-    await handle_ws(ws)
-
-
-# ---------------------------------------------------------------------------
-# /api/pub + /api/events ? chat-tab event broadcast.
-#
-# The PTY-side ``tui_gateway.entry`` opens /api/pub at startup (driven by
-# JARVIS_TUI_SIDECAR_URL set in /api/pty's PTY env) and writes every
-# dispatcher emit through it.  The dashboard fans those frames out to any
-# subscriber that opened /api/events on the same channel id.  This is what
-# gives the React sidebar its tool-call feed without breaking the PTY
-# child's stdio handshake with Ink.
-# ---------------------------------------------------------------------------
-
-
-@app.websocket("/api/pub")
-async def pub_ws(ws: WebSocket) -> None:
-    if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
-        await ws.close(code=4403)
-        return
-
-    token = ws.query_params.get("token", "")
-    if not hmac.compare_digest(token.encode(), _SESSION_TOKEN.encode()):
-        await ws.close(code=4401)
-        return
-
-    if not _ws_client_is_allowed(ws):
-        await ws.close(code=4403)
-        return
-
-    channel = _channel_or_close_code(ws)
-    if not channel:
-        await ws.close(code=4400)
-        return
-
-    await ws.accept()
-
-    try:
-        while True:
-            await _broadcast_event(channel, await ws.receive_text())
-    except WebSocketDisconnect:
-        pass
-
-
-@app.websocket("/api/events")
-async def events_ws(ws: WebSocket) -> None:
-    if not _DASHBOARD_EMBEDDED_CHAT_ENABLED:
-        await ws.close(code=4403)
-        return
-
-    token = ws.query_params.get("token", "")
-    if not hmac.compare_digest(token.encode(), _SESSION_TOKEN.encode()):
-        await ws.close(code=4401)
-        return
-
-    if not _ws_client_is_allowed(ws):
-        await ws.close(code=4403)
-        return
-
-    channel = _channel_or_close_code(ws)
-    if not channel:
-        await ws.close(code=4400)
-        return
-
-    await ws.accept()
-
-    async with _event_lock:
-        _event_channels.setdefault(channel, set()).add(ws)
-
-    try:
-        while True:
-            # Subscribers don't speak ? the receive() just blocks until
-            # disconnect so the connection stays open as long as the
-            # browser holds it.
-            await ws.receive_text()
-    except WebSocketDisconnect:
-        pass
-    finally:
-        async with _event_lock:
-            subs = _event_channels.get(channel)
-
-            if subs is not None:
-                subs.discard(ws)
-
-                if not subs:
-                    _event_channels.pop(channel, None)
 
 
 def _normalise_prefix(raw: Optional[str]) -> str:
@@ -4999,10 +4591,8 @@ def mount_spa(application: FastAPI):
         or empty string when served at root.
         """
         html = _index_path.read_text()
-        chat_js = "true" if _DASHBOARD_EMBEDDED_CHAT_ENABLED else "false"
         token_script = (
             f'<script>window.__JARVIS_SESSION_TOKEN__="{_SESSION_TOKEN}";'
-            f"window.__JARVIS_DASHBOARD_EMBEDDED_CHAT__={chat_js};"
             f'window.__JARVIS_BASE_PATH__="{prefix}";</script>'
         )
         if prefix:
@@ -5842,8 +5432,7 @@ def start_server(
     """Start the web UI server."""
     import uvicorn
 
-    global _DASHBOARD_EMBEDDED_CHAT_ENABLED
-    _DASHBOARD_EMBEDDED_CHAT_ENABLED = embedded_chat
+    del embedded_chat  # Kept temporarily for callers while the desktop-only path lands.
 
     _LOCALHOST = ("127.0.0.1", "localhost", "::1")
     if host not in _LOCALHOST and not allow_public:
@@ -5860,8 +5449,6 @@ def start_server(
 
     # Record the bound host so host_header_middleware can validate incoming
     # Host headers against it. Defends against DNS rebinding (GHSA-ppp5-vxwm-4cf7).
-    # bound_port is also stashed so /api/pty can build the back-WS URL the
-    # PTY child uses to publish events to the dashboard sidebar.
     app.state.bound_host = host
     app.state.bound_port = port
 
