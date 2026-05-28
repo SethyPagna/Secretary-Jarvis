@@ -4,11 +4,11 @@ Unified Home, Multi-Model, Multi-Voice, Multi-Platform Desktop Agent
 
 This document is the working source of truth for the JARVIS remake. It turns
 the product blueprint into implementation checkpoints that can be verified,
-committed, and shipped incrementally on the `jarvis-remake` branch.
+committed, and shipped incrementally on `main`.
 
 ## Current Progress
 
-Branch: `jarvis-remake`
+Branch: `main`
 
 Remote: `SethyPagna/Secretary-Jarvis`
 
@@ -94,7 +94,7 @@ Performance targets:
 Goals:
 
 - Use `SethyPagna/Secretary-Jarvis` as the active product repository.
-- Work on `jarvis-remake`.
+- Work on `main`.
 - Keep user-facing product identity on JARVIS.
 - Remove standalone CLI as a user-facing product surface.
 - Keep the historical `jarvis_cli` Python package only as an internal backend namespace until a later low-risk module migration.

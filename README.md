@@ -120,7 +120,7 @@ git clone https://github.com/SethyPagna/Secretary-Jarvis.git
 cd Secretary-Jarvis
 ```
 
-This branch tracks the desktop remake work on `jarvis-remake`.
+The desktop remake is now tracked on `main`.
 
 ## Verification
 

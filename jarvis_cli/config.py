@@ -1594,7 +1594,7 @@ DEFAULT_CONFIG = {
     # The default URL is served from the repository docs/api manifest.
     "model_catalog": {
         "enabled": True,
-        "url": "https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/jarvis-remake/docs/api/model-catalog.json",
+        "url": "https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/docs/api/model-catalog.json",
         # Disk cache TTL in hours.  Beyond this, the CLI refetches on the
         # next /model or `jarvis model` invocation; network failures
         # silently fall back to the stale cache.

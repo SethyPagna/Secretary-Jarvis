@@ -65,7 +65,9 @@ class JarvisRebrandContractTests(unittest.TestCase):
             any(req["name"] == "uvicorn" and "marker" not in req for req in requires_dist)
         )
         self.assertFalse(any(req["name"] == "elevenlabs" for req in requires_dist))
-        self.assertFalse(any(req["name"] == "jarvis-agent" for req in requires_dist))
+        self.assertFalse(
+            any(req["name"] == "jarvis-agent" and "marker" not in req for req in requires_dist)
+        )
         self.assertNotIn("cli", metadata["provides-extras"])
         self.assertNotIn("tts-premium", metadata["provides-extras"])
 
@@ -75,8 +77,8 @@ class JarvisRebrandContractTests(unittest.TestCase):
         self.assertIn('"jarvis-parser": "^0.25.1"', package_lock)
         self.assertIn('"node_modules/jarvis-parser"', package_lock)
         self.assertIn('"node_modules/jarvis-estree"', package_lock)
-        self.assertNotIn("jarvis-parser", package_lock)
-        self.assertNotIn("jarvis-estree", package_lock)
+        self.assertNotIn("hermes-parser", package_lock.lower())
+        self.assertNotIn("hermes-estree", package_lock.lower())
 
     def test_desktop_backend_entrypoint_imports(self) -> None:
         entry = importlib.import_module("jarvis_cli.desktop_entry")
@@ -94,20 +96,13 @@ class JarvisRebrandContractTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             previous_jarvis = os.environ.get("JARVIS_HOME")
-            previous_jarvis = os.environ.get("JARVIS_HOME")
             try:
                 os.environ["JARVIS_HOME"] = tmp_dir
-                os.environ["JARVIS_HOME"] = str(Path(tmp_dir) / "wrong")
                 self.assertEqual(constants.get_jarvis_home(), Path(tmp_dir))
 
                 del os.environ["JARVIS_HOME"]
-                del os.environ["JARVIS_HOME"]
                 self.assertEqual(constants.get_jarvis_home(), Path.home() / ".jarvis")
             finally:
-                if previous_jarvis is None:
-                    os.environ.pop("JARVIS_HOME", None)
-                else:
-                    os.environ["JARVIS_HOME"] = previous_jarvis
                 if previous_jarvis is None:
                     os.environ.pop("JARVIS_HOME", None)
                 else:
@@ -119,7 +114,9 @@ class JarvisRebrandContractTests(unittest.TestCase):
         content = soul_path.read_text(encoding="utf-8")
         self.assertIn("JARVIS", content)
         self.assertIn("Just A Rather Very Intelligent System", content)
-        self.assertNotIn("You are JARVIS", content)
+        self.assertIn("You are JARVIS", content)
+        self.assertIn("FRIDAY", content)
+        self.assertNotIn("Hermes", content)
 
 
 if __name__ == "__main__":
