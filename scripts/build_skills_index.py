@@ -3,8 +3,8 @@
 
 This script crawls every skill source (skills.sh, GitHub taps, official,
 clawhub, lobehub, claude-marketplace) and writes a JSON index with resolved
-GitHub paths. The index is served as a static file on the docs site so that
-`jarvis skills search/install` can use it without hitting the GitHub API.
+GitHub paths. The index is committed under ``docs/api`` so the desktop skills
+page and backend can use it without hitting the GitHub API.
 
 Usage:
     # Local (uses gh CLI or GITHUB_TOKEN for auth)
@@ -13,7 +13,7 @@ Usage:
     # CI (set GITHUB_TOKEN as secret)
     GITHUB_TOKEN=ghp_... python scripts/build_skills_index.py
 
-Output: website/static/api/skills-index.json
+Output: docs/api/skills-index.json
 """
 
 import json
@@ -44,7 +44,7 @@ from tools.skills_hub import (
 )
 import httpx
 
-OUTPUT_PATH = os.path.join(REPO_ROOT, "website", "static", "api", "skills-index.json")
+OUTPUT_PATH = os.path.join(REPO_ROOT, "docs", "api", "skills-index.json")
 INDEX_VERSION = 1
 
 

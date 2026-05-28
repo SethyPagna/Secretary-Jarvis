@@ -158,7 +158,7 @@ Monorepo with npm workspaces. Key packages:
 | — | `packages/page-controller/` | DOM ops + visual feedback |
 | — | `packages/ui/` | Panel + i18n |
 | — | `packages/extension/` | Chrome/Firefox extension |
-| — | `packages/website/` | Docs + landing site |
+| — | `packages/docs/` | Docs + landing site |
 
 ## Verifying it works
 

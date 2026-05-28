@@ -135,7 +135,6 @@ jarvis-agent/
 ├── plugins/context_engine/   # Context engine plugins
 ├── skills/                   # Bundled skills (always available)
 ├── optional-skills/          # Official optional skills (install explicitly)
-├── website/                  # Docusaurus documentation site
 └── tests/                    # Pytest suite (~3,000+ tests)
 ```
 

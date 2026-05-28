@@ -3,7 +3,7 @@
 
 This script reads the in-repo hardcoded curated lists (``OPENROUTER_MODELS``,
 ``_PROVIDER_MODELS["jarvis_managed"]``) and writes them to a JSON manifest that the
-Jarvis CLI fetches at runtime. Publishing the catalog through the docs site
+JARVIS desktop/backend fetches at runtime. Publishing the catalog in ``docs/api``
 lets maintainers update model lists without shipping a Jarvis release.
 
 The runtime fetcher falls back to the same in-repo hardcoded lists if the
@@ -14,10 +14,7 @@ Usage::
 
     python scripts/build_model_catalog.py
 
-Output: ``website/static/api/model-catalog.json``
-
-Live URL (after ``deploy-site.yml`` runs on merge to main):
-``https://jarvis-agent.jarvis.local/docs/api/model-catalog.json``
+Output: ``docs/api/model-catalog.json``
 """
 
 from __future__ import annotations
@@ -35,7 +32,7 @@ os.environ.setdefault("JARVIS_HOME", os.path.join(os.path.expanduser("~"), ".jar
 
 from jarvis_cli.models import OPENROUTER_MODELS, _PROVIDER_MODELS  # noqa: E402
 
-OUTPUT_PATH = os.path.join(REPO_ROOT, "website", "static", "api", "model-catalog.json")
+OUTPUT_PATH = os.path.join(REPO_ROOT, "docs", "api", "model-catalog.json")
 CATALOG_VERSION = 1
 
 
@@ -45,7 +42,7 @@ def build_catalog() -> dict:
         "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "metadata": {
             "source": "jarvis-agent repo",
-            "docs": "https://jarvis-agent.jarvis.local/docs/reference/model-catalog",
+            "docs": "docs/local-model-downloads.md",
         },
         "providers": {
             "openrouter": {

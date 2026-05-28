@@ -194,7 +194,6 @@ jarvis-agent/
 ├── skills/                   # Bundled skills (copied to ~/.jarvis/skills/ on install)
 ├── optional-skills/          # Official optional skills (discoverable via hub, not activated by default)
 ├── tests/                    # Test suite
-├── website/                  # Documentation site (jarvis-agent.jarvis.local)
 │
 ├── cli-config.yaml.example   # Example configuration (copied to ~/.jarvis/config.yaml)
 └── AGENTS.md                 # Development guide for AI coding assistants

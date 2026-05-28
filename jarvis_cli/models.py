@@ -1192,7 +1192,7 @@ def get_curated_jarvis_managed_model_ids() -> list[str]:
     """Return the curated JARVIS Managed model-id list.
 
     Prefers the remotely-hosted catalog manifest (published under
-    ``website/static/api/model-catalog.json``); falls back to the in-repo
+    ``docs/api/model-catalog.json``); falls back to the in-repo
     snapshot in ``_PROVIDER_MODELS["jarvis_managed"]`` when the manifest is
     unreachable. Always returns a list (never None).
     """

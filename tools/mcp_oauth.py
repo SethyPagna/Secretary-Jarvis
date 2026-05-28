@@ -413,7 +413,7 @@ async def _redirect_handler(authorization_url: str) -> None:
             f"\n"
             f"    ssh -N -L {_oauth_port}:127.0.0.1:{_oauth_port} <user>@<this-host>\n"
             f"\n"
-            f"  Then open the URL above. See: https://jarvis-agent.jarvis.local/docs/guides/oauth-over-ssh\n",
+            f"  Then open the URL above. See: docs/jarvis/mcp-integration.md\n",
             file=sys.stderr,
         )
 

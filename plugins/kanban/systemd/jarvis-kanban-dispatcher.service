@@ -15,7 +15,7 @@
 
 [Unit]
 Description=Jarvis Kanban dispatcher (DEPRECATED standalone daemon — prefer gateway-embedded dispatch)
-Documentation=https://jarvis-agent.jarvis.local/docs/user-guide/features/kanban
+Documentation=https://github.com/SethyPagna/Secretary-Jarvis/tree/main/docs/jarvis
 After=network.target
 
 [Service]

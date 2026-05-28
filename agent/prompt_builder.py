@@ -144,7 +144,7 @@ DEFAULT_AGENT_IDENTITY = (
 JARVIS_AGENT_HELP_GUIDANCE = (
     "If the user asks about configuring, setting up, or using JARVIS "
     "itself, load the `jarvis-agent` skill with skill_view(name='jarvis-agent') "
-    "before answering. Docs: https://jarvis-agent.jarvis.local/docs"
+    "before answering. Docs: docs/jarvis"
 )
 
 MEMORY_GUIDANCE = (

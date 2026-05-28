@@ -3100,7 +3100,7 @@ def check_for_skill_updates(
 # Jarvis centralized index source
 # ---------------------------------------------------------------------------
 
-JARVIS_INDEX_URL = "https://jarvis-agent.jarvis.local/docs/api/skills-index.json"
+JARVIS_INDEX_URL = "https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/docs/api/skills-index.json"
 JARVIS_INDEX_CACHE_FILE = INDEX_CACHE_DIR / "jarvis-index.json"
 JARVIS_INDEX_TTL = 6 * 3600  # 6 hours
 
@@ -3108,7 +3108,7 @@ JARVIS_INDEX_TTL = 6 * 3600  # 6 hours
 def _load_jarvis_index() -> Optional[dict]:
     """Fetch the centralized skills index, with local cache.
 
-    The index is a JSON file hosted on the docs site, rebuilt daily by CI.
+    The index is a JSON file committed under docs/api and rebuilt by maintainers.
     We cache it locally for JARVIS_INDEX_TTL seconds to avoid repeated
     downloads within a session.
     """
@@ -3121,7 +3121,7 @@ def _load_jarvis_index() -> Optional[dict]:
         except (OSError, json.JSONDecodeError):
             pass
 
-    # Fetch from docs site
+    # Fetch from repo-hosted docs/api manifest
     try:
         resp = httpx.get(JARVIS_INDEX_URL, timeout=15, follow_redirects=True)
         if resp.status_code != 200:
@@ -3159,7 +3159,7 @@ def _load_stale_index_cache() -> Optional[dict]:
 class JarvisIndexSource(SkillSource):
     """Skill source backed by the centralized Jarvis Skills Index.
 
-    The index is a JSON catalog published to the docs site and rebuilt
+    The index is a JSON catalog published under docs/api and rebuilt
     daily by CI.  It contains metadata + resolved GitHub paths for every
     skill, eliminating the need for users to hit the GitHub API for
     search or path discovery.
