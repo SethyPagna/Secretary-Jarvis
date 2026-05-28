@@ -70,7 +70,6 @@ import ProfilesPage from "@/pages/ProfilesPage";
 import SetupPage from "@/pages/SetupPage";
 import SkillsPage from "@/pages/SkillsPage";
 import PluginsPage from "@/pages/PluginsPage";
-import ChatPage from "@/pages/ChatPage";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useI18n } from "@/i18n";
@@ -78,7 +77,6 @@ import type { Translations } from "@/i18n/types";
 import { PluginPage, PluginSlot, usePlugins } from "@/plugins";
 import type { PluginManifest } from "@/plugins";
 import { useTheme } from "@/themes";
-import { isDashboardEmbeddedChatEnabled } from "@/lib/dashboard-flags";
 import { api } from "@/lib/api";
 
 function UnknownRouteFallback({ pluginsLoading }: { pluginsLoading: boolean }) {
@@ -89,13 +87,6 @@ function UnknownRouteFallback({ pluginsLoading }: { pluginsLoading: boolean }) {
   return <Navigate to="/" replace />;
 }
 
-/**
- * Built-in routes except /chat. Chat is rendered outside <Routes> when
- * embedded so routing still owns the URL for /chat deep-links, browser
- * back/forward, and nav highlight. ChatPage itself keeps inactive instances
- * from opening PTY children, so hidden dashboard routes do not spawn terminal
- * sessions in the background.
- */
 const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/": HomePage,
   "/sessions": SessionsPage,
@@ -118,14 +109,6 @@ const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/env": EnvPage,
   "/docs": DocsPage,
 };
-
-// Route placeholder for /chat.  The persistent ChatPage host (rendered
-// outside <Routes> when embedded chat is on) paints on top; this empty
-// element just claims the path so the `*` catch-all redirect doesn't
-// fire when the user navigates to /chat.
-function ChatRouteSink() {
-  return null;
-}
 
 const BUILTIN_NAV_REST: NavItem[] = [
   {
@@ -355,7 +338,6 @@ export default function App() {
   const normalizedPath = pathname.replace(/\/$/, "") || "/";
   const isChatRoute = normalizedPath === "/chat";
   const isHomeRoute = normalizedPath === "/";
-  const embeddedChat = isDashboardEmbeddedChatEnabled();
 
   // `dashboard.show_token_analytics` gates the Analytics nav item.  The
   // page itself remains reachable by URL (it renders an explanation when
@@ -374,33 +356,9 @@ export default function App() {
       .catch(() => setShowTokenAnalytics(false));
   }, []);
 
-  // A plugin can replace the built-in /chat page via `tab.override: "/chat"`
-  // in its manifest.  When one does, `buildRoutes` already swaps the route
-  // element for <PluginPage />; but we also have to suppress the
-  // ChatPage host below, or the plugin's page and the built-in terminal would
-  // paint on top of each other.  The override is niche
-  // (nothing ships overriding /chat today) but it's an advertised
-  // extension point, so preserve the pre-persistence contract: when a
-  // plugin owns /chat, the built-in chat UI is entirely absent.
-  //
-  // Waiting on `pluginsLoading` is load-bearing: manifests arrive
-  // asynchronously from /api/dashboard/plugins, so on initial render
-  // `chatOverriddenByPlugin` is always false.  Without the loading
-  // gate, the host could mount and then get yanked out from under the user
-  // when the plugin's manifest resolves. Delaying host mount by the plugin-load
-  // window (typically <50ms, worst case 2s safety timeout) is the cheaper
-  // trade-off.
-  const chatOverriddenByPlugin = useMemo(
-    () => manifests.some((m) => m.tab.override === "/chat"),
-    [manifests],
-  );
-
   const builtinRoutes = useMemo(
-    () => ({
-      ...BUILTIN_ROUTES_CORE,
-      ...(embeddedChat ? { "/chat": ChatRouteSink } : {}),
-    }),
-    [embeddedChat],
+    () => BUILTIN_ROUTES_CORE,
+    [],
   );
 
   const builtinNav = useMemo(() => {
@@ -621,34 +579,6 @@ export default function App() {
                     }
                   />
                 </Routes>
-
-                {embeddedChat &&
-                  !chatOverriddenByPlugin &&
-                  (pluginsLoading ? (
-                    isChatRoute ? (
-                      <div
-                        className="flex min-h-0 min-w-0 flex-1 items-center justify-center"
-                        aria-busy="true"
-                        aria-live="polite"
-                      >
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Spinner />
-                          <span>Loading chat...</span>
-                        </div>
-                      </div>
-                    ) : null
-                  ) : (
-                    <div
-                      data-chat-active={isChatRoute ? "true" : "false"}
-                      className={cn(
-                        "min-h-0 min-w-0",
-                        isChatRoute ? "flex flex-1 flex-col" : "hidden",
-                      )}
-                      aria-hidden={!isChatRoute}
-                    >
-                      <ChatPage isActive={isChatRoute} />
-                    </div>
-                  ))}
               </div>
               <PluginSlot name="post-main" />
             </div>
