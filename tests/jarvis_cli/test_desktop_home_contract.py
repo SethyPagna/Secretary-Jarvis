@@ -110,6 +110,9 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn("setTerminalInput(transcript)", source)
         self.assertIn('runDesktopAgentTurn(transcript, "voice")', source)
         self.assertIn("Transcribing voice input", source)
+        self.assertIn("requestInitialPermission", source)
+        self.assertIn('permission.state === "granted"', source)
+        self.assertNotIn('permission.state !== "granted"', source)
         self.assertNotIn("await navigator.mediaDevices?.getUserMedia({ audio: true });\n      setListening(true);", source)
 
     def test_home_voice_output_synthesizes_live_assistant_output(self) -> None:

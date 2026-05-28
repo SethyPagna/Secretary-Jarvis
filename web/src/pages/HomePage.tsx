@@ -86,6 +86,10 @@ const TOOL_TOGGLES = [
   { key: "browser", label: "Browser" },
 ] as const;
 
+const VOICE_SPEECH_THRESHOLD = 0.06;
+const VOICE_AUTO_STOP_SILENCE_MS = 650;
+const VOICE_MAX_NO_SPEECH_MS = 7000;
+
 function subsystemReady(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
@@ -132,6 +136,7 @@ export default function HomePage() {
   const audioMeterContextRef = useRef<AudioContext | null>(null);
   const audioMeterFrameRef = useRef<number | null>(null);
   const audioMeterSourceRef = useRef<AudioNode | null>(null);
+  const autoVoicePromptedRef = useRef(false);
   const voiceHadSpeechRef = useRef(false);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
@@ -711,14 +716,30 @@ export default function HomePage() {
   useEffect(() => {
     if (!autoVoiceArmed || listening || voiceBusy || speaking) return;
     if (!readiness?.stt?.ready) return;
-    if (!navigator.permissions?.query) return;
 
     let cancelled = false;
+    const requestInitialPermission = () => {
+      if (cancelled || autoVoicePromptedRef.current) return;
+      autoVoicePromptedRef.current = true;
+      void startVoiceRecording();
+    };
+
+    if (!navigator.permissions?.query) {
+      void startVoiceRecording();
+      return () => {
+        cancelled = true;
+      };
+    }
+
     navigator.permissions
       .query({ name: "microphone" as PermissionName })
       .then((permission) => {
-        if (cancelled || permission.state !== "granted") return;
-        void startVoiceRecording();
+        if (cancelled || permission.state === "denied") return;
+        if (permission.state === "granted") {
+          void startVoiceRecording();
+          return;
+        }
+        requestInitialPermission();
       })
       .catch(() => undefined);
 
@@ -741,11 +762,7 @@ export default function HomePage() {
       voiceRecordingStartedAtRef.current = now;
     }
 
-    const speechThreshold = 0.06;
-    const silenceMs = 650;
-    const maxNoSpeechMs = 7000;
-
-    if (audioLevel >= speechThreshold) {
+    if (audioLevel >= VOICE_SPEECH_THRESHOLD) {
       voiceHadSpeechRef.current = true;
       voiceSilenceStartedAtRef.current = null;
       return;
@@ -755,13 +772,13 @@ export default function HomePage() {
       if (voiceSilenceStartedAtRef.current === null) {
         voiceSilenceStartedAtRef.current = now;
       }
-      if (now - voiceSilenceStartedAtRef.current >= silenceMs) {
+      if (now - voiceSilenceStartedAtRef.current >= VOICE_AUTO_STOP_SILENCE_MS) {
         stopVoiceRecording();
       }
       return;
     }
 
-    if (now - voiceRecordingStartedAtRef.current >= maxNoSpeechMs) {
+    if (now - voiceRecordingStartedAtRef.current >= VOICE_MAX_NO_SPEECH_MS) {
       stopVoiceRecording();
     }
   }, [audioLevel, listening, stopVoiceRecording]);
