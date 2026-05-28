@@ -11,14 +11,16 @@ import {
 import {
   useEffect,
   useCallback,
+  lazy,
   useMemo,
   useRef,
   useState,
+  Suspense,
   type ChangeEvent,
   type FormEvent,
 } from "react";
 
-import { JarvisOrb, type OrbState } from "@/components/JarvisOrb";
+import type { OrbState } from "@/components/JarvisOrb";
 import { StatsPanel } from "@/components/StatsPanel";
 import {
   api,
@@ -30,6 +32,12 @@ import {
   type TeamSoulInfo,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+const JarvisOrb = lazy(() =>
+  import("@/components/JarvisOrb").then((module) => ({
+    default: module.JarvisOrb,
+  })),
+);
 
 type TerminalEntry = {
   kind: "input" | "output";
@@ -835,7 +843,9 @@ export default function HomePage() {
           />
           <div className="relative grid min-h-[210px] w-full max-w-[620px] place-items-center overflow-visible">
             <TeamSoulOrbit souls={visibleSouls} activeSoul={stats?.active_soul ?? "jarvis"} />
-            <JarvisOrb audioLevel={audioLevel} state={orbState} className="z-10" />
+            <Suspense fallback={<OrbLoadingFallback />}>
+              <JarvisOrb audioLevel={audioLevel} state={orbState} className="z-10" />
+            </Suspense>
           </div>
 
           <div className="mt-2 flex flex-col items-center gap-2 text-center">
@@ -1042,6 +1052,17 @@ function TeamSoulOrbit({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function OrbLoadingFallback() {
+  return (
+    <div
+      aria-label="Loading JARVIS orb"
+      className="relative z-10 grid aspect-square w-[clamp(150px,18vw,215px)] place-items-center overflow-visible"
+    >
+      <div className="h-[58%] w-[58%] rounded-full bg-cyan-100/72 shadow-[0_0_46px_rgba(125,249,255,0.34),0_0_90px_rgba(184,108,255,0.22)]" />
     </div>
   );
 }
