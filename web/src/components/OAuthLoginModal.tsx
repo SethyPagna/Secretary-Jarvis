@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ExternalLink, X, Check } from "lucide-react";
 import { Button } from "@jarvis_managed-research/ui/ui/components/button";
 import { CopyButton } from "@jarvis_managed-research/ui/ui/components/command-block";
@@ -6,6 +6,7 @@ import { Spinner } from "@jarvis_managed-research/ui/ui/components/spinner";
 import { H2 } from "@/components/NouiTypography";
 import { api, type OAuthProvider, type OAuthStartResponse } from "@/lib/api";
 import { Input } from "@/components/ui/input";
+import { useScheduledPoll } from "@/hooks/useScheduledPoll";
 import { useI18n } from "@/i18n";
 import { cn, themedBody } from "@/lib/utils";
 
@@ -32,7 +33,6 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const isMounted = useRef(true);
-  const pollTimer = useRef<number | null>(null);
   const { t } = useI18n();
 
   // Initiate flow on mount
@@ -58,7 +58,6 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
       });
     return () => {
       isMounted.current = false;
-      if (pollTimer.current !== null) window.clearInterval(pollTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -81,37 +80,32 @@ export function OAuthLoginModal({ provider, onClose, onSuccess }: Props) {
     return () => window.clearInterval(tick);
   }, [secondsLeft, phase, t]);
 
-  // Device-code: poll backend every 2s
-  useEffect(() => {
-    if (!start || start.flow !== "device_code" || phase !== "polling") return;
+  const pollDeviceCode = useCallback(async () => {
+    if (!start || start.flow !== "device_code") return;
     const sid = start.session_id;
-    pollTimer.current = window.setInterval(async () => {
-      try {
-        const resp = await api.pollOAuthSession(provider.id, sid);
-        if (!isMounted.current) return;
-        if (resp.status === "approved") {
-          setPhase("approved");
-          if (pollTimer.current !== null)
-            window.clearInterval(pollTimer.current);
-          onSuccess(`${provider.name} connected`);
-          window.setTimeout(() => isMounted.current && onClose(), 1500);
-        } else if (resp.status !== "pending") {
-          setPhase("error");
-          setErrorMsg(resp.error_message || `Login ${resp.status}`);
-          if (pollTimer.current !== null)
-            window.clearInterval(pollTimer.current);
-        }
-      } catch (e) {
-        if (!isMounted.current) return;
+    try {
+      const resp = await api.pollOAuthSession(provider.id, sid);
+      if (!isMounted.current) return;
+      if (resp.status === "approved") {
+        setPhase("approved");
+        onSuccess(`${provider.name} connected`);
+        window.setTimeout(() => isMounted.current && onClose(), 1500);
+      } else if (resp.status !== "pending") {
         setPhase("error");
-        setErrorMsg(`Polling failed: ${e}`);
-        if (pollTimer.current !== null) window.clearInterval(pollTimer.current);
+        setErrorMsg(resp.error_message || `Login ${resp.status}`);
       }
-    }, 2000);
-    return () => {
-      if (pollTimer.current !== null) window.clearInterval(pollTimer.current);
-    };
-  }, [start, phase, provider.id, provider.name, onSuccess, onClose]);
+    } catch (e) {
+      if (!isMounted.current) return;
+      setPhase("error");
+      setErrorMsg(`Polling failed: ${e}`);
+    }
+  }, [onClose, onSuccess, provider.id, provider.name, start]);
+
+  useScheduledPoll(pollDeviceCode, {
+    enabled: Boolean(start && start.flow === "device_code" && phase === "polling"),
+    immediate: false,
+    intervalMs: 2000,
+  });
 
   const handleSubmitPkceCode = async () => {
     if (!start || start.flow !== "pkce") return;
