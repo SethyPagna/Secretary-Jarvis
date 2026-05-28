@@ -1,4 +1,4 @@
-import test from 'node:test';
+﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,7 +9,7 @@ import {
   matchesAllowedUser,
   normalizeWhatsAppIdentifier,
   parseAllowedUsers,
-} from './allowlist.js';
+} from './allowlist.mjs';
 
 test('normalizeWhatsAppIdentifier strips jid syntax and plus prefix', () => {
   assert.equal(normalizeWhatsAppIdentifier('+19175395595@s.whatsapp.net'), '19175395595');
@@ -78,3 +78,5 @@ test('matchesAllowedUser rejects everyone when allowlist is empty (#8389)', () =
     rmSync(sessionDir, { recursive: true, force: true });
   }
 });
+
+

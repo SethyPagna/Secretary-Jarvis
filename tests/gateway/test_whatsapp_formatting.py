@@ -1,4 +1,4 @@
-"""Tests for WhatsApp message formatting and chunking.
+﻿"""Tests for WhatsApp message formatting and chunking.
 
 Covers:
 - format_message(): markdown → WhatsApp syntax conversion
@@ -27,7 +27,7 @@ def _make_adapter():
     adapter.config = MagicMock()
     adapter.config.extra = {}
     adapter._bridge_port = 3000
-    adapter._bridge_script = "/tmp/test-bridge.js"
+    adapter._bridge_script = "/tmp/test-bridge.mjs"
     adapter._session_path = MagicMock()
     adapter._bridge_log_fh = None
     adapter._bridge_log = None
@@ -341,3 +341,4 @@ class TestWhatsAppTier:
     def test_whatsapp_tool_progress_is_new(self):
         from gateway.display_config import resolve_display_setting
         assert resolve_display_setting({}, "whatsapp", "tool_progress") == "new"
+

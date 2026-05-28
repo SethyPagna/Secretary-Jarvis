@@ -1317,7 +1317,7 @@ def cmd_whatsapp(args):
     # â”€â”€ Step 4: Install bridge dependencies â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     project_root = Path(__file__).resolve().parents[1]
     bridge_dir = project_root / "scripts" / "whatsapp-bridge"
-    bridge_script = bridge_dir / "bridge.js"
+    bridge_script = bridge_dir / "bridge.mjs"
 
     if not bridge_script.exists():
         print(f"\nâœ— Bridge script not found at {bridge_script}")
@@ -11211,7 +11211,7 @@ def main():
         description=(
             "Inspect shell-script hooks declared in ~/.jarvis/config.yaml, "
             "test them against synthetic payloads, and manage the first-use "
-            "consent allowlist at ~/.jarvis/shell-hooks-allowlist.json."
+            "consent allowlist at ~/.jarvis/shell-hooks-allowlist.mjson."
         ),
     )
     hooks_subparsers = hooks_parser.add_subparsers(dest="hooks_action")
@@ -13122,3 +13122,4 @@ Examples:
 
 if __name__ == "__main__":
     main()
+

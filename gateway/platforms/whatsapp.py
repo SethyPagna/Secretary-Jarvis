@@ -1,4 +1,4 @@
-"""
+﻿"""
 WhatsApp platform adapter.
 
 WhatsApp integration is more complex than Telegram/Discord because:
@@ -253,7 +253,7 @@ class WhatsAppAdapter(BasePlatformAdapter):
         self._bridge_port: int = config.extra.get("bridge_port", 3000)
         self._bridge_script: Optional[str] = config.extra.get(
             "bridge_script",
-            str(self._DEFAULT_BRIDGE_DIR / "bridge.js"),
+            str(self._DEFAULT_BRIDGE_DIR / "bridge.mjs"),
         )
         self._session_path: Path = Path(config.extra.get(
             "session_path",
@@ -1280,3 +1280,4 @@ class WhatsAppAdapter(BasePlatformAdapter):
         except Exception as e:
             print(f"[{self.name}] Error building event: {e}")
             return None
+

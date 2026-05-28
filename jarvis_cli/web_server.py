@@ -1,4 +1,4 @@
-"""
+﻿"""
 JARVIS - Web UI server.
 
 Provides a FastAPI backend serving the Vite/React frontend and REST API
@@ -1401,7 +1401,7 @@ def _whatsapp_status_payload() -> dict[str, Any]:
         "session_path": str(session_path),
         "bridge_dir": str(bridge_dir),
         "qr_login_available": bridge_ready,
-        "start_command": "node scripts/whatsapp-bridge/bridge.js",
+        "start_command": "node scripts/whatsapp-bridge/bridge.mjs",
     }
 
 
@@ -5503,3 +5503,4 @@ def start_server(
     # rather than X-Forwarded-For's rewritten value (which would defeat the
     # loopback gate when behind a reverse proxy).
     uvicorn.run(app, host=host, port=port, log_level="warning", proxy_headers=False)
+

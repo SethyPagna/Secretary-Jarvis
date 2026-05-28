@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * JARVIS WhatsApp Bridge
  *
@@ -15,7 +15,7 @@
  *   GET  /health         - Health check
  *
  * Usage:
- *   node bridge.js --port 3000 --session ~/.jarvis/whatsapp/session
+ *   node bridge.mjs --port 3000 --session ~/.jarvis/whatsapp/session
  */
 
 import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, downloadMediaMessage } from '@whiskeysockets/baileys';
@@ -28,7 +28,7 @@ import { randomBytes } from 'crypto';
 import { execSync } from 'child_process';
 import { tmpdir } from 'os';
 import qrcode from 'qrcode-terminal';
-import { matchesAllowedUser, parseAllowedUsers } from './allowlist.js';
+import { matchesAllowedUser, parseAllowedUsers } from './allowlist.mjs';
 
 // Parse CLI args
 const args = process.argv.slice(2);
@@ -727,3 +727,5 @@ if (PAIR_ONLY) {
     startSocket();
   });
 }
+
+

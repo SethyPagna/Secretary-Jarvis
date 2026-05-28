@@ -1,4 +1,4 @@
-"""Tests for WhatsApp connect() error handling.
+﻿"""Tests for WhatsApp connect() error handling.
 
 Regression tests for two bugs in WhatsAppAdapter.connect():
 
@@ -46,7 +46,7 @@ def _make_adapter():
     adapter.platform = Platform.WHATSAPP
     adapter.config = MagicMock()
     adapter._bridge_port = 19876
-    adapter._bridge_script = "/tmp/test-bridge.js"
+    adapter._bridge_script = "/tmp/test-bridge.mjs"
     adapter._session_path = Path("/tmp/test-wa-session")
     adapter._bridge_log_fh = None
     adapter._bridge_log = None
@@ -643,7 +643,7 @@ class TestNoCredsPreflight:
         # Point bridge_script at a real existing file so the earlier
         # bridge-missing check doesn't trip — we want to exercise the
         # creds.json check specifically.
-        bridge = tmp_path / "bridge.js"
+        bridge = tmp_path / "bridge.mjs"
         bridge.write_text("// stub")
         adapter._bridge_script = str(bridge)
         adapter._session_path = tmp_path / "session"  # no creds.json inside
@@ -676,7 +676,7 @@ class TestNoCredsPreflight:
         adapter.platform = Platform.WHATSAPP
         adapter.config = MagicMock()
         adapter._bridge_port = 19877
-        bridge = tmp_path / "bridge.js"
+        bridge = tmp_path / "bridge.mjs"
         bridge.write_text("// stub")
         adapter._bridge_script = str(bridge)
         session_dir = tmp_path / "session"
@@ -701,3 +701,4 @@ class TestNoCredsPreflight:
         # but the fatal-error code is NOT the "not paired" one.
         assert result is False
         assert adapter._fatal_error_code != "whatsapp_not_paired"
+
