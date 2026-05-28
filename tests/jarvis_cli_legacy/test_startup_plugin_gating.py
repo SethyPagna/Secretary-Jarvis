@@ -78,10 +78,10 @@ def _live_subcommand_names() -> set[str]:
         (["jarvis", "-w"], None),
         # -p / --profile is stripped from sys.argv by
         # _apply_profile_override() at import time, so it never reaches
-        # _first_positional_argv. We test with just -w / --tui here.
-        (["jarvis", "-w", "--tui"], None),
+        # _first_positional_argv. We test with just -w here.
+        (["jarvis", "-w"], None),
         (["jarvis", "version"], "version"),
-        (["jarvis", "--tui", "chat"], "chat"),
+        (["jarvis", "--ignore-rules", "chat"], "chat"),
         (["jarvis", "-w", "logs"], "logs"),
         (["jarvis", "chat", "hello world"], "chat"),
         (["jarvis", "gateway", "run"], "gateway"),
@@ -116,8 +116,8 @@ def test_first_positional_argv(argv, expected):
         ["jarvis", "version"],               # known built-in
         ["jarvis", "logs"],
         ["jarvis", "gateway", "run"],
-        ["jarvis", "--tui"],
-        ["jarvis", "-w", "--tui"],
+        ["jarvis", "--ignore-rules"],
+        ["jarvis", "-w"],
         ["jarvis", "chat", "hi"],
         ["jarvis", "help"],                  # accepted built-in-ish
         ["jarvis", "-m", "gpt5", "chat"],    # flag-value-skipping

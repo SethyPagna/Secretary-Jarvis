@@ -39,10 +39,6 @@ class TestResolveJarvisBin:
 
 
 class TestExtractInheritedFlags:
-    def test_extracts_tui_and_dev(self):
-        argv = ["--tui", "--dev", "chat"]
-        assert relaunch_mod._extract_inherited_flags(argv) == ["--tui", "--dev"]
-
     def test_extracts_profile_with_value(self):
         argv = ["--profile", "work", "chat"]
         assert relaunch_mod._extract_inherited_flags(argv) == ["--profile", "work"]
@@ -59,16 +55,16 @@ class TestExtractInheritedFlags:
         ]
 
     def test_skips_unknown_flags(self):
-        argv = ["--foo", "bar", "--tui"]
-        assert relaunch_mod._extract_inherited_flags(argv) == ["--tui"]
+        argv = ["--foo", "bar", "--removed-ui"]
+        assert relaunch_mod._extract_inherited_flags(argv) == []
 
     def test_does_not_consume_flag_like_value(self):
-        argv = ["--tui", "--resume", "abc123"]
-        assert relaunch_mod._extract_inherited_flags(argv) == ["--tui"]
+        argv = ["--profile", "--resume", "abc123"]
+        assert relaunch_mod._extract_inherited_flags(argv) == ["--resume", "abc123"]
 
     def test_preserves_multiple_skills(self):
-        argv = ["-s", "foo", "-s", "bar", "--tui"]
-        assert relaunch_mod._extract_inherited_flags(argv) == ["-s", "foo", "-s", "bar", "--tui"]
+        argv = ["-s", "foo", "-s", "bar", "chat"]
+        assert relaunch_mod._extract_inherited_flags(argv) == ["-s", "foo", "-s", "bar"]
 
 
 class TestInheritedFlagTable:
@@ -86,7 +82,7 @@ class TestInheritedFlagTable:
 
     def test_store_true_flags_do_not_take_value(self):
         table = dict(relaunch_mod._INHERITED_FLAGS_TABLE)
-        for flag in ["--tui", "--dev", "--yolo", "--ignore-user-config", "--ignore-rules"]:
+        for flag in ["--yolo", "--ignore-user-config", "--ignore-rules"]:
             assert table[flag] is False, f"{flag} should not take a value"
 
     def test_value_flags_take_value(self):
@@ -116,12 +112,12 @@ class TestBuildRelaunchArgv:
 
     def test_preserves_inherited_flags(self, monkeypatch):
         monkeypatch.setattr(relaunch_mod, "resolve_jarvis_bin", lambda: "/usr/bin/jarvis")
-        original = ["--tui", "--dev", "--profile", "work", "sessions", "browse"]
+        original = ["--profile", "work", "--model", "qwen", "sessions", "browse"]
         argv = relaunch_mod.build_relaunch_argv(["--resume", "abc"], original_argv=original)
-        assert "--tui" in argv
-        assert "--dev" in argv
         assert "--profile" in argv
         assert "work" in argv
+        assert "--model" in argv
+        assert "qwen" in argv
         assert "--resume" in argv
         assert "abc" in argv
         # The original subcommand should not survive
@@ -130,11 +126,11 @@ class TestBuildRelaunchArgv:
 
     def test_can_disable_preserve(self, monkeypatch):
         monkeypatch.setattr(relaunch_mod, "resolve_jarvis_bin", lambda: "/usr/bin/jarvis")
-        original = ["--tui", "chat"]
+        original = ["--profile", "work", "chat"]
         argv = relaunch_mod.build_relaunch_argv(
             ["--resume", "abc"], preserve_inherited=False, original_argv=original
         )
-        assert "--tui" not in argv
+        assert "--profile" not in argv
         assert argv == ["/usr/bin/jarvis", "--resume", "abc"]
 
 

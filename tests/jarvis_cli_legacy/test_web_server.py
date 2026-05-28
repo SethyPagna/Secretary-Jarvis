@@ -1,4 +1,4 @@
-"""Tests for jarvis_cli.web_server and related config utilities."""
+﻿"""Tests for jarvis_cli.web_server and related config utilities."""
 
 import os
 import json
@@ -23,7 +23,7 @@ from jarvis_cli.config import (
 
 
 class TestReloadEnv:
-    """Tests for reload_env() — re-reads .env into os.environ."""
+    """Tests for reload_env() â€” re-reads .env into os.environ."""
 
     def test_adds_new_vars(self, tmp_path):
         """reload_env() adds vars from .env that are not in os.environ."""
@@ -304,7 +304,7 @@ class TestWebServerEndpoints:
     def test_session_token_endpoint_removed(self):
         """GET /api/auth/session-token should no longer exist (token injected via HTML)."""
         resp = self.client.get("/api/auth/session-token")
-        # The endpoint is gone — the catch-all SPA route serves index.html
+        # The endpoint is gone â€” the catch-all SPA route serves index.html
         # or the middleware returns 401 for unauthenticated /api/ paths.
         assert resp.status_code in {200, 404}
         # Either way, it must NOT return the token as JSON
@@ -312,7 +312,7 @@ class TestWebServerEndpoints:
             data = resp.json()
             assert "token" not in data
         except Exception:
-            pass  # Not JSON — that's fine (SPA HTML)
+            pass  # Not JSON â€” that's fine (SPA HTML)
 
     def test_unauthenticated_api_blocked(self):
         """API requests without the session token should be rejected."""
@@ -410,7 +410,7 @@ class TestBuildSchemaFromConfig:
         from collections import Counter
         cats = Counter(e["category"] for e in CONFIG_SCHEMA.values())
         for cat, count in cats.items():
-            assert count >= 2, f"Category '{cat}' has only {count} field(s) — should be merged"
+            assert count >= 2, f"Category '{cat}' has only {count} field(s) â€” should be merged"
 
 
 # ---------------------------------------------------------------------------
@@ -419,7 +419,7 @@ class TestBuildSchemaFromConfig:
 
 
 class TestConfigRoundTrip:
-    """Verify config survives GET → edit → PUT without data loss."""
+    """Verify config survives GET â†’ edit â†’ PUT without data loss."""
 
     @pytest.fixture(autouse=True)
     def _setup(self):
@@ -461,7 +461,7 @@ class TestConfigRoundTrip:
         assert isinstance(before.get("model"), dict)
         original_keys = set(before["model"].keys())
 
-        # GET → PUT unchanged
+        # GET â†’ PUT unchanged
         web_config = self.client.get("/api/config").json()
         assert isinstance(web_config.get("model"), str), "GET should normalize model to string"
 
@@ -533,7 +533,7 @@ class TestConfigRoundTrip:
         for key, entry in schema.items():
             val = get_nested(config, key)
             if val is None:
-                continue  # not set in user config — fine
+                continue  # not set in user config â€” fine
             expected = entry["type"]
             if expected in {"string", "select"} and not isinstance(val, str):
                 mismatches.append(f"{key}: expected str, got {type(val).__name__}")
@@ -872,9 +872,9 @@ class TestNewEndpoints:
             tools_config,
             "_get_effective_configurable_toolsets",
             lambda: [
-                ("web", "🔍 Web Search & Scraping", "web_search, web_extract"),
-                ("skills", "📚 Skills", "list, view, manage"),
-                ("memory", "💾 Memory", "persistent memory across sessions"),
+                ("web", "ðŸ” Web Search & Scraping", "web_search, web_extract"),
+                ("skills", "ðŸ“š Skills", "list, view, manage"),
+                ("memory", "ðŸ’¾ Memory", "persistent memory across sessions"),
             ],
         )
         monkeypatch.setattr(
@@ -904,7 +904,7 @@ class TestNewEndpoints:
         assert resp.json() == [
             {
                 "name": "web",
-                "label": "🔍 Web Search & Scraping",
+                "label": "ðŸ” Web Search & Scraping",
                 "description": "web_search, web_extract",
                 "enabled": True,
                 "available": True,
@@ -913,7 +913,7 @@ class TestNewEndpoints:
             },
             {
                 "name": "skills",
-                "label": "📚 Skills",
+                "label": "ðŸ“š Skills",
                 "description": "list, view, manage",
                 "enabled": True,
                 "available": True,
@@ -922,7 +922,7 @@ class TestNewEndpoints:
             },
             {
                 "name": "memory",
-                "label": "💾 Memory",
+                "label": "ðŸ’¾ Memory",
                 "description": "persistent memory across sessions",
                 "enabled": False,
                 "available": False,
@@ -1325,7 +1325,7 @@ class TestModelInfoEndpoint:
 
 
 class TestProbeGatewayHealth:
-    """Tests for _probe_gateway_health() — cross-container gateway detection."""
+    """Tests for _probe_gateway_health() â€” cross-container gateway detection."""
 
     def test_returns_false_when_no_url_configured(self, monkeypatch):
         """When GATEWAY_HEALTH_URL is unset, the probe returns (False, None)."""
@@ -1495,7 +1495,7 @@ class TestStatusRemoteGateway:
         assert data["gateway_health_url"] is None
 
     def test_status_remote_running_null_pid(self, monkeypatch):
-        """Remote gateway running but PID not in response — pid should be None."""
+        """Remote gateway running but PID not in response â€” pid should be None."""
         import jarvis_cli.web_server as ws
 
         monkeypatch.setattr(ws, "get_running_pid", lambda: None)
@@ -1519,7 +1519,7 @@ class TestStatusRemoteGateway:
 
 
 class TestNormaliseThemeDefinition:
-    """Tests for _normalise_theme_definition() — parses YAML theme files."""
+    """Tests for _normalise_theme_definition() â€” parses YAML theme files."""
 
     def test_rejects_missing_name(self):
         from jarvis_cli.web_server import _normalise_theme_definition
@@ -1651,7 +1651,7 @@ class TestNormaliseThemeDefinition:
 
 
 class TestDiscoverUserThemes:
-    """Tests for _discover_user_themes() — scans ~/.jarvis/dashboard-themes/."""
+    """Tests for _discover_user_themes() â€” scans ~/.jarvis/dashboard-themes/."""
 
     def test_returns_empty_when_dir_missing(self, tmp_path, monkeypatch):
         monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
@@ -1699,7 +1699,7 @@ class TestDiscoverUserThemes:
 
 class TestNormaliseThemeExtensions:
     """Tests for the extended normaliser fields (assets, customCSS,
-    componentStyles, layoutVariant) — the surfaces themes use to reskin
+    componentStyles, layoutVariant) â€” the surfaces themes use to reskin
     the dashboard without shipping code."""
 
     def test_layout_variant_defaults_to_standard(self):
@@ -1728,7 +1728,7 @@ class TestNormaliseThemeExtensions:
                 "bg": "https://example.com/bg.jpg",
                 "hero": "linear-gradient(180deg, red, blue)",
                 "crest": "/ds-assets/crest.svg",
-                "logo": "  ",  # whitespace-only — dropped
+                "logo": "  ",  # whitespace-only â€” dropped
                 "notAKnownKey": "ignored",
             },
         })
@@ -1746,8 +1746,8 @@ class TestNormaliseThemeExtensions:
                 "custom": {
                     "scan-lines": "/img/scan.png",
                     "my_overlay": "/img/ov.png",
-                    "bad key!": "x",  # non-alnum key — rejected
-                    "empty": "",        # empty value — rejected
+                    "bad key!": "x",  # non-alnum key â€” rejected
+                    "empty": "",        # empty value â€” rejected
                 },
             },
         })
@@ -1792,7 +1792,7 @@ class TestNormaliseThemeExtensions:
                     "bad prop!": "ignored",  # non-alnum prop rejected
                 },
                 "header": {"background": "linear-gradient(red, blue)"},
-                "rogueBucket": {"foo": "bar"},  # not a known bucket — rejected
+                "rogueBucket": {"foo": "bar"},  # not a known bucket â€” rejected
             },
         })
         assert r["componentStyles"]["card"] == {
@@ -1807,8 +1807,8 @@ class TestNormaliseThemeExtensions:
         r = _normalise_theme_definition({
             "name": "t",
             "componentStyles": {
-                "card": {},        # empty — dropped entirely
-                "header": {"bad prop!": "ignored"},  # all props rejected — bucket dropped
+                "card": {},        # empty â€” dropped entirely
+                "header": {"bad prop!": "ignored"},  # all props rejected â€” bucket dropped
                 "footer": {"background": "black"},
             },
         })
@@ -1856,7 +1856,7 @@ class TestPluginAPIAuth:
     def test_plugin_route_allows_auth(self):
         """Plugin API routes should work with a valid session token.
 
-        Use ``/api/plugins/example/hello`` from the example-dashboard plugin —
+        Use ``/api/plugins/example/hello`` from the example-dashboard plugin â€”
         a stable, side-effect-free GET that's always loaded in tests. With a
         valid token the handler should run (200); without one the middleware
         should 401 before the handler is reached.
@@ -1878,7 +1878,7 @@ class TestPluginAPIAuth:
         """Plugin PATCH routes should return 401 without a valid session token.
 
         PATCH is the mutation method most commonly used by the dashboard for
-        kanban task edits — explicitly cover it so a future middleware
+        kanban task edits â€” explicitly cover it so a future middleware
         regression that whitelists non-GET methods can't sneak through.
         """
         resp = self.client.patch(
@@ -1896,14 +1896,14 @@ class TestPluginAPIAuth:
         """Auth must be plugin-agnostic, not kanban-specific.
 
         The middleware fix is at the gate level (no per-plugin allowlist),
-        so any plugin's API surface — kanban, jarvis-achievements, future
-        plugins — must require the session token. Hit a non-kanban plugin
+        so any plugin's API surface â€” kanban, jarvis-achievements, future
+        plugins â€” must require the session token. Hit a non-kanban plugin
         path to lock that in.
         """
         # Real plugin path (jarvis-achievements is loaded by default).
         resp = self.client.get("/api/plugins/jarvis-achievements/overview")
         assert resp.status_code == 401
-        # Same for an arbitrary plugin namespace that doesn't even exist —
+        # Same for an arbitrary plugin namespace that doesn't even exist â€”
         # the middleware should 401 before routing decides 404, so an
         # attacker can't fingerprint plugin names by status codes.
         resp = self.client.get("/api/plugins/_definitely_not_a_plugin_/anything")
@@ -1928,11 +1928,11 @@ class TestPluginAPIAuth:
             ):
                 pass  # if we got here without disconnect, the WS accepted us
         except WebSocketDisconnect:
-            pass  # expected — WS endpoint rejected via its own check
+            pass  # expected â€” WS endpoint rejected via its own check
         except Exception:
             # The kanban plugin may not be mounted in this test environment,
             # in which case the route doesn't exist at all (3xx/4xx during
-            # upgrade). That's fine for this regression — it only matters
+            # upgrade). That's fine for this regression â€” it only matters
             # that the HTTP middleware didn't start intercepting WS upgrades.
             pass
 
@@ -2013,9 +2013,9 @@ class TestDashboardPluginManifestExtensions:
 
     def test_page_scoped_slots_preserved(self, tmp_path, monkeypatch):
         """Page-scoped slot names (e.g. ``sessions:top``) round-trip through
-        the manifest loader untouched.  The backend has no allowlist — the
+        the manifest loader untouched.  The backend has no allowlist â€” the
         frontend ``<PluginSlot name="...">`` placements decide what actually
-        renders — but the loader must not mangle colons in slot names."""
+        renders â€” but the loader must not mangle colons in slot names."""
         monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
         self._write_plugin(tmp_path, "page-slots", {
             "name": "page-slots",
@@ -2049,320 +2049,3 @@ class TestDashboardPluginManifestExtensions:
             "cron:bottom",
             "chat:top",
         ]
-
-
-# ---------------------------------------------------------------------------
-# /api/pty WebSocket — terminal bridge for the dashboard "Chat" tab.
-#
-# These tests drive the endpoint with a tiny fake command (typically ``cat``
-# or ``sh -c 'printf …'``) instead of the real ``jarvis --tui`` binary.  The
-# endpoint resolves its argv through ``_resolve_chat_argv``, so tests
-# monkeypatch that hook.
-# ---------------------------------------------------------------------------
-
-import sys
-
-
-skip_on_windows = pytest.mark.skipif(
-    sys.platform.startswith("win"), reason="PTY bridge is POSIX-only"
-)
-
-
-@skip_on_windows
-class TestPtyWebSocket:
-    @pytest.fixture(autouse=True)
-    def _setup(self, monkeypatch, _isolate_jarvis_home):
-        from starlette.testclient import TestClient
-
-        import jarvis_cli.web_server as ws
-
-        # Avoid exec'ing the actual TUI in tests: every test below installs
-        # its own fake argv via ``ws._resolve_chat_argv``.
-        self.ws_module = ws
-        monkeypatch.setattr(ws, "_DASHBOARD_EMBEDDED_CHAT_ENABLED", True)
-        self.token = ws._SESSION_TOKEN
-        self.client = TestClient(ws.app)
-
-    def _url(self, token: str | None = None, **params: str) -> str:
-        tok = token if token is not None else self.token
-        # TestClient.websocket_connect takes the path; it reconstructs the
-        # query string, so we pass it inline.
-        from urllib.parse import urlencode
-
-        q = {"token": tok, **params}
-        return f"/api/pty?{urlencode(q)}"
-
-    def test_resolve_chat_argv_uses_dashboard_scroll_env(self, monkeypatch):
-        """Dashboard chat runs the TUI in browser-scrollback mode."""
-        import jarvis_cli.main as main_mod
-
-        monkeypatch.setattr(
-            main_mod,
-            "_make_tui_argv",
-            lambda project_root, tui_dev=False: (["node", "dist/entry.js"], "/tmp/ui-tui"),
-        )
-
-        _argv, _cwd, env = self.ws_module._resolve_chat_argv()
-
-        assert env["JARVIS_TUI_INLINE"] == "1"
-        assert env["JARVIS_TUI_DISABLE_MOUSE"] == "1"
-
-    def test_rejects_when_embedded_chat_disabled(self, monkeypatch):
-        monkeypatch.setattr(self.ws_module, "_DASHBOARD_EMBEDDED_CHAT_ENABLED", False)
-        from starlette.websockets import WebSocketDisconnect
-
-        with pytest.raises(WebSocketDisconnect) as exc:
-            with self.client.websocket_connect(self._url()):
-                pass
-        assert exc.value.code == 4403
-
-    def test_rejects_missing_token(self, monkeypatch):
-        monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
-            lambda resume=None, sidecar_url=None: (["/bin/cat"], None, None),
-        )
-        from starlette.websockets import WebSocketDisconnect
-
-        with pytest.raises(WebSocketDisconnect) as exc:
-            with self.client.websocket_connect("/api/pty"):
-                pass
-        assert exc.value.code == 4401
-
-    def test_rejects_bad_token(self, monkeypatch):
-        monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
-            lambda resume=None, sidecar_url=None: (["/bin/cat"], None, None),
-        )
-        from starlette.websockets import WebSocketDisconnect
-
-        with pytest.raises(WebSocketDisconnect) as exc:
-            with self.client.websocket_connect(self._url(token="wrong")):
-                pass
-        assert exc.value.code == 4401
-
-    def test_streams_child_stdout_to_client(self, monkeypatch):
-        monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
-            lambda resume=None, sidecar_url=None: (
-                ["/bin/sh", "-c", "printf jarvis-ws-ok"],
-                None,
-                None,
-            ),
-        )
-        with self.client.websocket_connect(self._url()) as conn:
-            # Drain frames until we see the needle or time out.  TestClient's
-            # recv_bytes blocks; loop until we have the signal byte string.
-            buf = b""
-            import time
-
-            deadline = time.monotonic() + 5.0
-            while time.monotonic() < deadline:
-                try:
-                    frame = conn.receive_bytes()
-                except Exception:
-                    break
-                if frame:
-                    buf += frame
-                if b"jarvis-ws-ok" in buf:
-                    break
-            assert b"jarvis-ws-ok" in buf
-
-    def test_client_input_reaches_child_stdin(self, monkeypatch):
-        # ``cat`` echoes stdin back, so a write → read round-trip proves
-        # the full duplex path.
-        monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
-            lambda resume=None, sidecar_url=None: (["/bin/cat"], None, None),
-        )
-        with self.client.websocket_connect(self._url()) as conn:
-            conn.send_bytes(b"round-trip-payload\n")
-            buf = b""
-            import time
-
-            deadline = time.monotonic() + 5.0
-            while time.monotonic() < deadline:
-                frame = conn.receive_bytes()
-                if frame:
-                    buf += frame
-                if b"round-trip-payload" in buf:
-                    break
-            assert b"round-trip-payload" in buf
-
-    def test_resize_escape_is_forwarded(self, monkeypatch):
-        # Resize escape gets intercepted and applied via TIOCSWINSZ, then the
-        # child reads the TTY ioctl directly. Avoid tput because CI may not set
-        # TERM for non-interactive shells.
-        import sys
-
-        winsize_script = (
-            "import fcntl, struct, termios, time; "
-            "time.sleep(0.15); "
-            "rows, cols, *_ = struct.unpack('HHHH', "
-            "fcntl.ioctl(0, termios.TIOCGWINSZ, b'\\0' * 8)); "
-            "print(cols); print(rows)"
-        )
-        monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
-            # sleep gives the test time to push the resize before the child reads the ioctl.
-            lambda resume=None, sidecar_url=None: (
-                [sys.executable, "-c", winsize_script],
-                None,
-                None,
-            ),
-        )
-        with self.client.websocket_connect(self._url()) as conn:
-            conn.send_text("\x1b[RESIZE:99;41]")
-            buf = b""
-            import time
-
-            deadline = time.monotonic() + 5.0
-            while time.monotonic() < deadline:
-                frame = conn.receive_bytes()
-                if frame:
-                    buf += frame
-                if b"99" in buf and b"41" in buf:
-                    break
-            assert b"99" in buf and b"41" in buf
-
-    def test_unavailable_platform_closes_with_message(self, monkeypatch):
-        from jarvis_cli.pty_bridge import PtyUnavailableError
-
-        def _raise(argv, **kwargs):
-            raise PtyUnavailableError("pty missing for tests")
-
-        monkeypatch.setattr(
-            self.ws_module,
-            "_resolve_chat_argv",
-            lambda resume=None, sidecar_url=None: (["/bin/cat"], None, None),
-        )
-        # Patch PtyBridge.spawn at the web_server module's binding.
-        import jarvis_cli.web_server as ws_mod
-
-        monkeypatch.setattr(ws_mod.PtyBridge, "spawn", classmethod(lambda cls, *a, **k: _raise(*a, **k)))
-
-        with self.client.websocket_connect(self._url()) as conn:
-            # Expect a final text frame with the error message, then close.
-            msg = conn.receive_text()
-            assert "pty missing" in msg or "unavailable" in msg.lower() or "pty" in msg.lower()
-
-    def test_resume_parameter_is_forwarded_to_argv(self, monkeypatch):
-        captured: dict = {}
-
-        def fake_resolve(resume=None, sidecar_url=None):
-            captured["resume"] = resume
-            return (["/bin/sh", "-c", "printf resume-arg-ok"], None, None)
-
-        monkeypatch.setattr(self.ws_module, "_resolve_chat_argv", fake_resolve)
-
-        with self.client.websocket_connect(self._url(resume="sess-42")) as conn:
-            # Drain briefly so the handler actually invokes the resolver.
-            try:
-                conn.receive_bytes()
-            except Exception:
-                pass
-        assert captured.get("resume") == "sess-42"
-
-    def test_channel_param_propagates_sidecar_url(self, monkeypatch):
-        """When /api/pty is opened with ?channel=, the PTY child gets a
-        JARVIS_TUI_SIDECAR_URL env var pointing back at /api/pub on the
-        same channel — which is how tool events reach the dashboard sidebar."""
-        captured: dict = {}
-
-        def fake_resolve(resume=None, sidecar_url=None):
-            captured["sidecar_url"] = sidecar_url
-            return (["/bin/sh", "-c", "printf sidecar-ok"], None, None)
-
-        monkeypatch.setattr(self.ws_module, "_resolve_chat_argv", fake_resolve)
-        monkeypatch.setattr(
-            self.ws_module.app.state, "bound_host", "127.0.0.1", raising=False
-        )
-        monkeypatch.setattr(
-            self.ws_module.app.state, "bound_port", 9119, raising=False
-        )
-
-        with self.client.websocket_connect(self._url(channel="abc-123")) as conn:
-            try:
-                conn.receive_bytes()
-            except Exception:
-                pass
-
-        url = captured.get("sidecar_url") or ""
-        assert url.startswith("ws://127.0.0.1:9119/api/pub?")
-        assert "channel=abc-123" in url
-        assert "token=" in url
-
-    def test_pub_broadcasts_to_events_subscribers(self, monkeypatch):
-        """Frame written to /api/pub is rebroadcast verbatim to every
-        /api/events subscriber on the same channel."""
-        import time
-        from urllib.parse import urlencode
-        from jarvis_cli import web_server as ws_mod
-
-        qs = urlencode({"token": self.token, "channel": "broadcast-test"})
-        pub_path = f"/api/pub?{qs}"
-        sub_path = f"/api/events?{qs}"
-
-        with self.client.websocket_connect(sub_path) as sub:
-            # Wait for the subscriber to be registered on the server side.
-            # websocket_connect returns when ws.accept() completes, but the
-            # server adds us to ``_event_channels`` in a follow-up await,
-            # so a publish immediately after connect can race ahead of the
-            # subscriber registration and the message is dropped.
-            deadline = time.monotonic() + 5.0
-            while time.monotonic() < deadline:
-                if ws_mod._event_channels.get("broadcast-test"):
-                    break
-                time.sleep(0.01)
-            else:
-                raise AssertionError(
-                    "subscriber did not register on channel within 5s"
-                )
-
-            with self.client.websocket_connect(pub_path) as pub:
-                pub.send_text('{"type":"tool.start","payload":{"tool_id":"t1"}}')
-                # Yield control so the server-side broadcast handler can
-                # process the frame.  TestClient runs the ASGI app in a
-                # background thread; a small sleep gives that thread time
-                # to call _broadcast_event before we start blocking on
-                # receive_text().  Without this, under heavy CI load the
-                # receive can race the broadcast and hang until
-                # pytest-timeout kills us.
-                import queue, threading
-                recv_q: queue.Queue = queue.Queue()
-
-                def _recv():
-                    try:
-                        recv_q.put(sub.receive_text())
-                    except Exception as exc:
-                        recv_q.put(exc)
-
-                t = threading.Thread(target=_recv, daemon=True)
-                t.start()
-                try:
-                    received = recv_q.get(timeout=10.0)
-                except queue.Empty:
-                    raise AssertionError(
-                        "broadcast not received within 10s — server likely "
-                        "dropped the frame silently (see _broadcast_event "
-                        "except Exception: pass)"
-                    )
-                if isinstance(received, Exception):
-                    raise received
-
-        assert "tool.start" in received
-        assert '"tool_id":"t1"' in received
-
-    def test_events_rejects_missing_channel(self):
-        from starlette.websockets import WebSocketDisconnect
-
-        with pytest.raises(WebSocketDisconnect) as exc:
-            with self.client.websocket_connect(
-                f"/api/events?token={self.token}"
-            ):
-                pass
-        assert exc.value.code == 4400

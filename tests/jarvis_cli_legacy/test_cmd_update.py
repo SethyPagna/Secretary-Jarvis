@@ -1,4 +1,4 @@
-"""Tests for cmd_update — branch fallback when remote branch doesn't exist."""
+﻿"""Tests for cmd_update â€” branch fallback when remote branch doesn't exist."""
 
 import subprocess
 from types import SimpleNamespace
@@ -126,15 +126,13 @@ class TestCmdUpdateBranchFallback:
             if call.args and call.args[0][0] == "/usr/bin/npm"
         ]
 
-        # cmd_update runs npm commands in three locations:
-        #   1. repo root  — slash-command / TUI bridge deps
-        #   2. ui-tui/    — Ink TUI deps
-        #   3. web/       — install + "npm run build" for the web frontend
+        # cmd_update runs npm commands in two locations:
+        #   1. repo root  - shared JS tooling/deps
+        #   2. web/       - install + "npm run build" for the web frontend
         #
-        # Repo-root and ui-tui installs intentionally omit `--silent` and run
-        # without `capture_output` so optional postinstall scripts (e.g.
-        # `@askjo/camofox-browser`'s browser-binary fetch) print progress —
-        # otherwise long downloads look like a hang (#18840).  The web/ install
+        # Repo-root install intentionally omits `--silent` and runs without
+        # `capture_output` so optional postinstall scripts print progress;
+        # otherwise long downloads look like a hang (#18840). The web/ install
         # keeps `--silent` because its build step is short and noisy.
         update_flags = [
             "/usr/bin/npm",
@@ -143,31 +141,29 @@ class TestCmdUpdateBranchFallback:
             "--no-audit",
             "--progress=false",
         ]
-        assert npm_calls[:2] == [
+        assert npm_calls[:1] == [
             (update_flags, PROJECT_ROOT),
-            (update_flags, PROJECT_ROOT / "ui-tui"),
         ]
-        if len(npm_calls) > 2:
-            assert npm_calls[2:] == [
+        if len(npm_calls) > 1:
+            assert npm_calls[1:] == [
                 (["/usr/bin/npm", "ci", "--silent"], PROJECT_ROOT / "web"),
                 (["/usr/bin/npm", "run", "build"], PROJECT_ROOT / "web"),
             ]
 
-        # Regression for #18840: repo root + ui-tui installs must stream
-        # output (capture_output=False) so postinstall progress is visible
-        # to the user.
-        repo_and_tui_calls = [
+        # Regression for #18840: repo root install must stream output
+        # (capture_output=False) so postinstall progress is visible to the user.
+        repo_calls = [
             call
             for call in mock_run.call_args_list
             if call.args
             and call.args[0][0] == "/usr/bin/npm"
             and call.args[0][1] == "ci"
-            and call.kwargs.get("cwd") in {PROJECT_ROOT, PROJECT_ROOT / "ui-tui"}
+            and call.kwargs.get("cwd") == PROJECT_ROOT
         ]
-        assert len(repo_and_tui_calls) == 2
-        for call in repo_and_tui_calls:
+        assert len(repo_calls) == 1
+        for call in repo_calls:
             assert call.kwargs.get("capture_output") is False, (
-                "repo-root / ui-tui npm install must stream output "
+                "repo-root npm install must stream output "
                 "(no capture_output) so postinstall progress is visible"
             )
 

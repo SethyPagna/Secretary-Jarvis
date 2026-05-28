@@ -1,6 +1,6 @@
 """Tests for ``jarvis_cli.voice`` — the TUI gateway's voice wrapper.
 
-The module is imported *lazily* by ``tui_gateway/server.py`` so that a
+The module is imported *lazily* by desktop and gateway paths so that a
 box with missing audio deps fails at call time (returning a clean RPC
 error) rather than at gateway startup. These tests therefore only
 assert the public contract the gateway depends on: the three symbols
@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 class TestPublicAPI:
     def test_gateway_symbols_importable(self):
-        """Match the exact import shape tui_gateway/server.py uses."""
+        """Match the exact import shape desktop/gateway callers use."""
         from jarvis_cli.voice import (
             speak_text,
             start_recording,

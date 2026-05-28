@@ -21,7 +21,7 @@ Three tools, picked by situation:
 |---|---|
 | **`breakpoint()` + pdb** | Local, interactive, simplest. Add `breakpoint()` in the source, run normally, get a REPL at that line. |
 | **`python -m pdb`** | Launch an existing script under pdb with no source edits. Useful for quick poking. |
-| **`debugpy`** | Remote / headless / "attach to already-running process." Talks DAP, scriptable from terminal, works for long-lived processes (gateway, daemon, PTY children). |
+| **`debugpy`** | Remote / headless / "attach to already-running process." Talks DAP, scriptable from terminal, works for long-lived processes (gateway, desktop backend, daemon). |
 
 **Start with `breakpoint()`.** It's the cheapest thing that works.
 
@@ -29,9 +29,9 @@ Three tools, picked by situation:
 
 - A test fails and the traceback doesn't reveal why a value is wrong
 - You need to step through a function and watch a collection mutate
-- A long-running process (jarvis gateway, tui_gateway) misbehaves and you can't restart it
+- A long-running process (jarvis gateway, desktop backend, daemon) misbehaves and you can't restart it
 - Post-mortem: an exception fired in prod-ish code and you want to inspect locals at the crash site
-- A subprocess / child (Python `_SlashWorker`, PTY bridge worker) is the actual bug site
+- A subprocess / child process is the actual bug site
 
 **Don't use for:** things `print()` / `logging.debug` solve in under a minute, or things `pytest -vv --tb=long --showlocals` already reveals.
 
@@ -146,7 +146,7 @@ sys.excepthook = excepthook
 
 ## Recipe 5: Remote debug with debugpy (attach to running process)
 
-For long-lived processes: Jarvis gateway, tui_gateway, a daemon, a process that's already misbehaving and can't be restarted clean.
+For long-lived processes: Jarvis gateway, desktop backend, a daemon, a process that's already misbehaving and can't be restarted clean.
 
 ### Setup
 
@@ -281,22 +281,22 @@ See Recipe 3. Always add `-p no:xdist` or run single tests without xdist.
 ### `run_agent.py` / CLI — one-shot
 Easiest: add `breakpoint()` near the suspect line, then run `jarvis` normally. Control returns to your terminal at the pause point.
 
-### `tui_gateway` subprocess (spawned by `jarvis --tui`)
-The gateway runs as a child of the Node TUI. Options:
+### Desktop backend child process
+The packaged desktop app starts the FastAPI backend as a child process. Options:
 
-**A. Source-edit the gateway:**
+**A. Source-edit the backend entrypoint:**
 ```python
-# tui_gateway/server.py near the top of serve()
+# jarvis_cli/desktop_entry.py near startup
 import debugpy
 debugpy.listen(("127.0.0.1", 5678))
 debugpy.wait_for_client()
 ```
-Start `jarvis --tui`. The TUI will appear frozen (its backend is waiting). Attach a client; execution resumes when you `continue`.
+Start the desktop app. The backend waits for your debugger before serving requests. Attach a client; execution resumes when you `continue`.
 
 **B. Use `remote-pdb` at a specific handler:**
 ```python
 from remote_pdb import set_trace
-set_trace(host="127.0.0.1", port=4444)   # in the RPC handler you want to trap
+set_trace(host="127.0.0.1", port=4444)   # in the handler you want to trap
 ```
 Trigger the matching slash command from the TUI, then `nc 127.0.0.1 4444` in another terminal.
 
