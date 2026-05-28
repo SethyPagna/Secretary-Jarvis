@@ -1,9 +1,12 @@
 import {
   useCallback,
   useEffect,
+  lazy,
   useMemo,
   useState,
+  Suspense,
   type ComponentType,
+  type LazyExoticComponent,
   type ReactNode,
 } from "react";
 import {
@@ -55,21 +58,6 @@ import { DesktopTitleBar } from "@/components/DesktopTitleBar";
 import { PageHeaderProvider } from "@/contexts/PageHeaderProvider";
 import { useSystemActions } from "@/contexts/useSystemActions";
 import type { SystemAction } from "@/contexts/system-actions-context";
-import CommandsPage from "@/pages/CommandsPage";
-import ConfigPage from "@/pages/ConfigPage";
-import DocsPage from "@/pages/DocsPage";
-import EnvPage from "@/pages/EnvPage";
-import GuidesPage from "@/pages/GuidesPage";
-import SessionsPage from "@/pages/SessionsPage";
-import LogsPage from "@/pages/LogsPage";
-import AnalyticsPage from "@/pages/AnalyticsPage";
-import ModelsPage from "@/pages/ModelsPage";
-import HomePage from "@/pages/HomePage";
-import CronPage from "@/pages/CronPage";
-import ProfilesPage from "@/pages/ProfilesPage";
-import SetupPage from "@/pages/SetupPage";
-import SkillsPage from "@/pages/SkillsPage";
-import PluginsPage from "@/pages/PluginsPage";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useI18n } from "@/i18n";
@@ -79,6 +67,24 @@ import type { PluginManifest } from "@/plugins";
 import { useTheme } from "@/themes";
 import { api } from "@/lib/api";
 
+type RouteComponent = ComponentType | LazyExoticComponent<ComponentType>;
+
+const AnalyticsPage = lazy(() => import("@/pages/AnalyticsPage"));
+const CommandsPage = lazy(() => import("@/pages/CommandsPage"));
+const ConfigPage = lazy(() => import("@/pages/ConfigPage"));
+const CronPage = lazy(() => import("@/pages/CronPage"));
+const DocsPage = lazy(() => import("@/pages/DocsPage"));
+const EnvPage = lazy(() => import("@/pages/EnvPage"));
+const GuidesPage = lazy(() => import("@/pages/GuidesPage"));
+const HomePage = lazy(() => import("@/pages/HomePage"));
+const LogsPage = lazy(() => import("@/pages/LogsPage"));
+const ModelsPage = lazy(() => import("@/pages/ModelsPage"));
+const PluginsPage = lazy(() => import("@/pages/PluginsPage"));
+const ProfilesPage = lazy(() => import("@/pages/ProfilesPage"));
+const SessionsPage = lazy(() => import("@/pages/SessionsPage"));
+const SetupPage = lazy(() => import("@/pages/SetupPage"));
+const SkillsPage = lazy(() => import("@/pages/SkillsPage"));
+
 function UnknownRouteFallback({ pluginsLoading }: { pluginsLoading: boolean }) {
   if (pluginsLoading) {
     // Render nothing during the plugin-load window; a spinner here would just flash.
@@ -87,7 +93,7 @@ function UnknownRouteFallback({ pluginsLoading }: { pluginsLoading: boolean }) {
   return <Navigate to="/" replace />;
 }
 
-const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
+const BUILTIN_ROUTES_CORE: Record<string, RouteComponent> = {
   "/": HomePage,
   "/sessions": SessionsPage,
   "/analytics": AnalyticsPage,
@@ -257,7 +263,7 @@ function groupSidebarItems(items: NavItem[]): SidebarNavGroup[] {
 }
 
 function buildRoutes(
-  builtinRoutes: Record<string, ComponentType>,
+  builtinRoutes: Record<string, RouteComponent>,
   manifests: PluginManifest[],
 ): Array<{
   key: string;
@@ -568,17 +574,25 @@ export default function App() {
                     "min-h-0 flex flex-1 flex-col",
                 )}
               >
-                <Routes>
-                  {routes.map(({ key, path, element }) => (
-                    <Route key={key} path={path} element={element} />
-                  ))}
-                  <Route
-                    path="*"
-                    element={
-                      <UnknownRouteFallback pluginsLoading={pluginsLoading} />
-                    }
-                  />
-                </Routes>
+                <Suspense
+                  fallback={
+                    <div className="flex min-h-[220px] items-center justify-center text-slate-300">
+                      <Spinner />
+                    </div>
+                  }
+                >
+                  <Routes>
+                    {routes.map(({ key, path, element }) => (
+                      <Route key={key} path={path} element={element} />
+                    ))}
+                    <Route
+                      path="*"
+                      element={
+                        <UnknownRouteFallback pluginsLoading={pluginsLoading} />
+                      }
+                    />
+                  </Routes>
+                </Suspense>
               </div>
               <PluginSlot name="post-main" />
             </div>

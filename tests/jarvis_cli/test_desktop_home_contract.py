@@ -8,7 +8,8 @@ class DesktopHomeContractTests(unittest.TestCase):
     def test_app_routes_to_unified_home_and_desktop_nav(self) -> None:
         source = (ROOT / "web" / "src" / "App.tsx").read_text(encoding="utf-8")
 
-        self.assertIn('import HomePage from "@/pages/HomePage"', source)
+        self.assertIn('const HomePage = lazy(() => import("@/pages/HomePage"))', source)
+        self.assertIn("<Suspense", source)
         self.assertIn('"/": HomePage', source)
         self.assertIn('path: "/"', source)
         self.assertIn('label: "Home"', source)
