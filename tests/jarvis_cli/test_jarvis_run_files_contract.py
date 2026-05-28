@@ -13,6 +13,7 @@ class JarvisRunFilesContractTests(unittest.TestCase):
             "run-jarvis.cmd",
             "stop-jarvis.cmd",
             "run/desktop/setup-jarvis.ps1",
+            "run/desktop/setup-jarvis.sh",
             "run/desktop/run-jarvis.ps1",
             "run/desktop/stop-jarvis.ps1",
         ):
