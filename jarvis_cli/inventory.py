@@ -80,7 +80,8 @@ def load_picker_context() -> ConfigContext:
     """Load the disk-config snapshot every consumer needs.
 
     Replaces the inline 17-LOC config-slice that ``web_server.py`` and
-    ``tui_gateway/server.py`` (×2 sites) used to do.
+    the desktop model picker and gateway model selection paths used to do
+    separately.
     """
     from jarvis_cli.config import get_compatible_custom_providers, load_config
 

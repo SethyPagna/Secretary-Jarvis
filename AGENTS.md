@@ -190,69 +190,45 @@ if canonical == "mycommand":
 
 ---
 
-## TUI Architecture (ui-tui + tui_gateway)
+## Desktop Architecture
 
-The TUI is a full replacement for the classic (prompt_toolkit) CLI, activated via `jarvis --tui` or `JARVIS_TUI=1`.
+The desktop app is the primary JARVIS surface. Electron owns the window,
+tray, packaging, shutdown lifecycle, and frontend shell. The embedded Python
+FastAPI backend owns models, skills, memory, gateway services, voice, stats,
+and local terminal execution.
 
 ### Process Model
 
+```text
+JARVIS.exe
+  ├─ Electron main process
+  ├─ React desktop renderer from web/
+  └─ jarvis-desktop-backend child process
+       ├─ REST/SSE API on localhost
+       ├─ /ws/stats live telemetry
+       ├─ local model runtime control
+       ├─ STT/TTS endpoints
+       └─ gateway bridges for messaging platforms
 ```
-jarvis --tui
-  └─ Node (Ink)  ──stdio JSON-RPC──  Python (tui_gateway)
-       │                                  └─ AIAgent + tools + sessions
-       └─ renders transcript, composer, prompts, activity
-```
 
-TypeScript owns the screen. Python owns sessions, tools, model calls, and slash command logic.
-
-### Transport
-
-Newline-delimited JSON-RPC over stdio. Requests from Ink, events from Python. See `tui_gateway/server.py` for the full method/event catalog.
+React is the actual desktop experience. Do not add a second terminal UI or a
+parallel chat protocol. Home chat, voice capture, terminal commands, model
+status, stats, and gateway state must use the FastAPI desktop endpoints.
 
 ### Key Surfaces
 
-| Surface | Ink component | Gateway method |
-|---------|---------------|----------------|
-| Chat streaming | `app.tsx` + `messageLine.tsx` | `prompt.submit` → `message.delta/complete` |
-| Tool activity | `thinking.tsx` | `tool.start/progress/complete` |
-| Approvals | `prompts.tsx` | `approval.respond` ← `approval.request` |
-| Clarify/sudo/secret | `prompts.tsx`, `maskedPrompt.tsx` | `clarify/sudo/secret.respond` |
-| Session picker | `sessionPicker.tsx` | `session.list/resume` |
-| Slash commands | Local handler + fallthrough | `slash.exec` → `_SlashWorker`, `command.dispatch` |
-| Completions | `useCompletion` hook | `complete.slash`, `complete.path` |
-| Theming | `theme.ts` + `branding.tsx` | `gateway.ready` with skin data |
+| Surface | Frontend | Backend |
+|---------|----------|---------|
+| Streaming chat | `web/src/pages/HomePage.tsx` | `POST /api/desktop/chat/stream` |
+| Terminal command | Home terminal panel | `POST /api/terminal/run` |
+| Voice input | Web Audio/MediaRecorder | `POST /api/voice/transcribe` |
+| Voice output | Desktop audio playback | `POST /api/voice/synthesize` |
+| Stats | `StatsPanel` | `GET /api/stats`, `WS /ws/stats` |
+| Models | `ModelsPage` | `/api/models/*`, `/api/model/options` |
+| Gateway | Platforms/Settings | `/api/platforms/*`, bridge modules |
 
-### Slash Command Flow
-
-1. Built-in client commands (`/help`, `/quit`, `/clear`, `/resume`, `/copy`, `/paste`, etc.) handled locally in `app.tsx`
-2. Everything else → `slash.exec` (runs in persistent `_SlashWorker` subprocess) → `command.dispatch` fallback
-
-### Dev Commands
-
-```bash
-cd ui-tui
-npm install       # first time
-npm run dev       # watch mode (rebuilds jarvis-ink + tsx --watch)
-npm start         # production
-npm run build     # full build (jarvis-ink + tsc)
-npm run type-check # typecheck only (tsc --noEmit)
-npm run lint      # eslint
-npm run fmt       # prettier
-npm test          # vitest
-```
-
-### TUI in the Dashboard (`jarvis dashboard` → `/chat`)
-
-The dashboard embeds the real `jarvis --tui` — **not** a rewrite.  See `jarvis_cli/pty_bridge.py` + the `@app.websocket("/api/pty")` endpoint in `jarvis_cli/web_server.py`.
-
-- Browser loads `web/src/pages/ChatPage.tsx`, which mounts xterm.js's `Terminal` with the WebGL renderer, `@xterm/addon-fit` for container-driven resize, and `@xterm/addon-unicode11` for modern wide-character widths.
-- `/api/pty?token=…` upgrades to a WebSocket; auth uses the same ephemeral `_SESSION_TOKEN` as REST, via query param (browsers can't set `Authorization` on WS upgrade).
-- The server spawns whatever `jarvis --tui` would spawn, through `ptyprocess` (POSIX PTY — WSL works, native Windows does not).
-- Frames: raw PTY bytes each direction; resize via `\x1b[RESIZE:<cols>;<rows>]` intercepted on the server and applied with `TIOCSWINSZ`.
-
-**Do not re-implement the primary chat experience in React.** The main transcript, composer/input flow (including slash-command behavior), and PTY-backed terminal belong to the embedded `jarvis --tui` — anything new you add to Ink shows up in the dashboard automatically. If you find yourself rebuilding the transcript or composer for the dashboard, stop and extend Ink instead.
-
-**Structured React UI around the TUI is allowed when it is not a second chat surface.** Sidebar widgets, inspectors, summaries, status panels, and similar supporting views (e.g. `ChatSidebar`, `ModelPickerDialog`, `ToolCall`) are fine when they complement the embedded TUI rather than replacing the transcript / composer / terminal. Keep their state independent of the PTY child's session and surface their failures non-destructively so the terminal pane keeps working unimpaired.
+Desktop work should improve those surfaces directly and keep the packaged app
+as the truth for user-facing behavior.
 
 ---
 

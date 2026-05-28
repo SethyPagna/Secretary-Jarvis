@@ -49,8 +49,8 @@ Implemented checkpoints:
 | Home browser voice bridge | Done | Microphone uses MediaRecorder, posts raw audio to `/api/voice/transcribe`, dispatches transcript into embedded PTY, and can synthesize live terminal output through `/api/voice/synthesize` |
 | Desktop cloud voice guard | Done | Desktop TTS refuses the legacy cloud-cloning provider and keeps voice playback on Kokoro, OmniVoice, system, or other configured local-compatible providers |
 | Title bar notification drawer | Done | Bell button opens/closes a desktop notification drawer with backend/gateway alert placeholder state |
-| Home terminal live PTY handoff | Done | Non-status Home commands navigate into the live `/api/pty` chat terminal with a prefilled command instead of a placeholder |
-| Embedded Home xterm | Done | Home mounts the xterm-backed `ChatPage` directly with sidebar/plugin chrome disabled and no hidden inactive PTY sessions |
+| Home terminal command bridge | Done | Non-status Home commands execute through `/api/terminal/run` and stream results into the unified Home terminal panel |
+| Embedded Home terminal | Done | Home owns the desktop terminal/chat surface directly without mounting the removed terminal UI bridge or hidden inactive sessions |
 | Frontend dependency guard | Done | Lockfile preserves canonical third-party parser package names so ESLint can start |
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |

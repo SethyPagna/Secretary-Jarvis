@@ -1,4 +1,4 @@
-# JARVIS Documentation Pack
+﻿# JARVIS Documentation Pack
 
 > Imported from the local source documentation and rewritten for the JARVIS desktop-first app. Run commands from the integrated Home terminal unless a section explicitly refers to packaging or automation.
 
@@ -20,7 +20,7 @@
 ---
 sidebar_position: 1
 title: "Quickstart"
-description: "Your first conversation with JARVIS — from install to chatting in under 5 minutes"
+description: "Your first conversation with JARVIS â€” from install to chatting in under 5 minutes"
 ---
 
 # Quickstart
@@ -29,7 +29,7 @@ This guide gets you from zero to a working Jarvis setup that survives real use. 
 
 ## Prefer to watch?
 
-**Onchain AI Garage** put together a Masterclass walkthrough of installation, setup, and basic commands — a good companion to this page if you'd rather follow along on video. For more, see the full [JARVIS Tutorials & Use Cases](https://www.youtube.com/channel/UCqB1bhMwGsW-yefBxYwFCCg) playlist.
+**Onchain AI Garage** put together a Masterclass walkthrough of installation, setup, and basic commands â€” a good companion to this page if you'd rather follow along on video. For more, see the full [JARVIS Tutorials & Use Cases](https://www.youtube.com/channel/UCqB1bhMwGsW-yefBxYwFCCg) playlist.
 
 <div style={{position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', maxWidth: '100%', marginBottom: '1.5rem'}}>
   <iframe
@@ -58,7 +58,7 @@ Pick the row that matches your goal:
 | I just want Jarvis working on my machine | `jarvis setup` | Run a real chat and verify it responds |
 | I already know my provider | `jarvis model` | Save the config, then start chatting |
 | I want a bot or always-on setup | `jarvis gateway setup` after CLI works | Connect Telegram, Discord, Slack, or another platform |
-| I want a local or self-hosted model | `jarvis model` → custom endpoint | Verify the endpoint, model name, and context length |
+| I want a local or self-hosted model | `jarvis model` â†’ custom endpoint | Verify the endpoint, model name, and context length |
 | I want multi-provider fallback | `jarvis model` first | Add routing and fallback only after the base chat works |
 
 **Rule of thumb:** if Jarvis cannot complete a normal chat, do not add more features yet. Get one clean conversation working first, then layer on gateway, cron, skills, voice, or routing.
@@ -67,7 +67,7 @@ Pick the row that matches your goal:
 
 ## 1. Install JARVIS
 
-**Option A — pip (simplest):**
+**Option A â€” pip (simplest):**
 
 ```bash
 pip install jarvis-agent
@@ -76,7 +76,7 @@ jarvis postinstall     # optional: installs Node.js, browser, ripgrep, ffmpeg + 
 
 PyPI releases track tagged versions (major/minor releases), not every commit on `main`. For bleeding-edge, use Option B.
 
-**Option B — git installer (tracks main branch):**
+**Option B â€” git installer (tracks main branch):**
 
 ```bash
 # Linux / macOS / WSL2 / Android (Termux)
@@ -113,14 +113,14 @@ Good defaults:
 |----------|-----------|---------------|
 | **JARVIS Managed** | Subscription-based, zero-config | OAuth login via `jarvis model` |
 | **OpenAI Codex** | ChatGPT OAuth, uses Codex models | Device code auth via `jarvis model` |
-| **Anthropic** | Claude models directly — Max plan + extra usage credits (OAuth), or API key for pay-per-token | `jarvis model` → OAuth login (requires Max + extra credits), or an Anthropic API key |
+| **Anthropic** | Claude models directly â€” Max plan + extra usage credits (OAuth), or API key for pay-per-token | `jarvis model` â†’ OAuth login (requires Max + extra credits), or an Anthropic API key |
 | **OpenRouter** | Multi-provider routing across many models | Enter your API key |
 | **Z.AI** | GLM / Zhipu-hosted models | Set `GLM_API_KEY` / `ZAI_API_KEY` |
 | **Kimi / Moonshot** | Moonshot-hosted coding and chat models | Set `KIMI_API_KEY` (or the Kimi-Coding-specific `KIMI_CODING_API_KEY`) |
 | **Kimi / Moonshot China** | China-region Moonshot endpoint | Set `KIMI_CN_API_KEY` |
 | **Arcee AI** | Trinity models | Set `ARCEEAI_API_KEY` |
 | **GMI Cloud** | Multi-model direct API | Set `GMI_API_KEY` |
-| **MiniMax (OAuth)** | MiniMax-M2.7 via browser OAuth — no API key needed | `jarvis model` → MiniMax (OAuth) |
+| **MiniMax (OAuth)** | MiniMax-M2.7 via browser OAuth â€” no API key needed | `jarvis model` â†’ MiniMax (OAuth) |
 | **MiniMax** | International MiniMax endpoint | Set `MINIMAX_API_KEY` |
 | **MiniMax China** | China-region MiniMax endpoint | Set `MINIMAX_CN_API_KEY` |
 | **Alibaba Cloud** | Qwen models via DashScope | Set `DASHSCOPE_API_KEY` |
@@ -143,15 +143,15 @@ JARVIS requires a model with at least **64,000 tokens** of context. Models with 
 :::
 
 :::tip
-You can switch providers at any time with `jarvis model` — no lock-in. For a full list of all supported providers and setup details, see [AI Providers](../integrations/providers.md).
+You can switch providers at any time with `jarvis model` â€” no lock-in. For a full list of all supported providers and setup details, see [AI Providers](../integrations/providers.md).
 :::
 
 ### How settings are stored
 
 Jarvis separates secrets from normal config:
 
-- **Secrets and tokens** → `~/.jarvis/.env`
-- **Non-secret settings** → `~/.jarvis/config.yaml`
+- **Secrets and tokens** â†’ `~/.jarvis/.env`
+- **Non-secret settings** â†’ `~/.jarvis/config.yaml`
 
 The easiest way to set values correctly is through the CLI:
 
@@ -166,15 +166,14 @@ The right value goes to the right file automatically.
 ## 3. Run Your First Chat
 
 ```bash
-jarvis            # classic CLI
-jarvis --tui      # modern TUI (recommended)
+jarvis            # CLI chat
+jarvis dashboard  # desktop/web dashboard during development
 ```
 
-You'll see a welcome banner with your model, available tools, and skills. Use a prompt that's specific and easy to verify:
-
-:::tip Pick your interface
-Jarvis ships with two terminal interfaces: the classic `prompt_toolkit` CLI and a newer [TUI](../user-guide/tui.md) with modal overlays, mouse selection, and non-blocking input. Both share the same sessions, slash commands, and config — try each with `jarvis` vs `jarvis --tui`.
-:::
+You'll see a welcome banner with your model, available tools, and skills. The
+packaged desktop app is the recommended everyday interface; the CLI remains a
+developer and automation entry point. Use a prompt that's specific and easy to
+verify:
 
 ```
 Summarize this repo in 5 bullets and tell me what the main entrypoint is.
@@ -213,7 +212,7 @@ That should bring you back to the session you just had. If it doesn't, check whe
 ### Use the terminal
 
 ```
-❯ What's my disk usage? Show the top 5 largest directories.
+â¯ What's my disk usage? Show the top 5 largest directories.
 ```
 
 The agent runs terminal commands on your behalf and shows results.
@@ -236,7 +235,7 @@ Press `Alt+Enter`, `Ctrl+J`, or `Shift+Enter` to add a new line. `Shift+Enter` r
 
 ### Interrupt the agent
 
-If the agent is taking too long, type a new message and press Enter — it interrupts the current task and switches to your new instructions. `Ctrl+C` also works.
+If the agent is taking too long, type a new message and press Enter â€” it interrupts the current task and switches to your new instructions. `Ctrl+C` also works.
 
 ## 6. Add the Next Layer
 
@@ -252,9 +251,9 @@ Connect [Telegram](/docs/user-guide/messaging/telegram), [Discord](/docs/user-gu
 
 ### Automation and tools
 
-- `jarvis tools` — tune tool access per platform
-- `jarvis skills` — browse and install reusable workflows
-- Cron — only after your bot or CLI setup is stable
+- `jarvis tools` â€” tune tool access per platform
+- `jarvis skills` â€” browse and install reusable workflows
+- Cron â€” only after your bot or CLI setup is stable
 
 ### Sandboxed terminal
 
@@ -355,13 +354,13 @@ That sequence gets you from "broken vibes" back to a known state fast.
 
 ## Next Steps
 
-- **[CLI Guide](../user-guide/cli.md)** — Master the terminal interface
-- **[Configuration](../user-guide/configuration.md)** — Customize your setup
-- **[Messaging Gateway](../user-guide/messaging/index.md)** — Connect Telegram, Discord, Slack, WhatsApp, Signal, Email, Home Assistant, Teams, and more
-- **[Tools & Toolsets](../user-guide/features/tools.md)** — Explore available capabilities
-- **[AI Providers](../integrations/providers.md)** — Full provider list and setup details
-- **[Skills System](../user-guide/features/skills.md)** — Reusable workflows and knowledge
-- **[Tips & Best Practices](../guides/tips.md)** — Power user tips
+- **[CLI Guide](../user-guide/cli.md)** â€” Master the terminal interface
+- **[Configuration](../user-guide/configuration.md)** â€” Customize your setup
+- **[Messaging Gateway](../user-guide/messaging/index.md)** â€” Connect Telegram, Discord, Slack, WhatsApp, Signal, Email, Home Assistant, Teams, and more
+- **[Tools & Toolsets](../user-guide/features/tools.md)** â€” Explore available capabilities
+- **[AI Providers](../integrations/providers.md)** â€” Full provider list and setup details
+- **[Skills System](../user-guide/features/skills.md)** â€” Reusable workflows and knowledge
+- **[Tips & Best Practices](../guides/tips.md)** â€” Power user tips
 
 ## Source: `user-guide/features/overview.md`
 
@@ -377,43 +376,43 @@ JARVIS includes a rich set of capabilities that extend far beyond basic chat. Fr
 
 ## Core
 
-- **[Tools & Toolsets](tools.md)** — Tools are functions that extend the agent's capabilities. They're organized into logical toolsets that can be enabled or disabled per platform, covering web search, terminal execution, file editing, memory, delegation, and more.
-- **[Skills System](skills.md)** — On-demand knowledge documents the agent can load when needed. Skills follow a progressive disclosure pattern to minimize token usage and are compatible with the [agentskills.io](https://agentskills.io/specification) open standard.
-- **[Persistent Memory](memory.md)** — Bounded, curated memory that persists across sessions. Jarvis remembers your preferences, projects, environment, and things it has learned via `MEMORY.md` and `USER.md`.
-- **[Context Files](context-files.md)** — Jarvis automatically discovers and loads project context files (`.jarvis.md`, `AGENTS.md`, `CLAUDE.md`, `SOUL.md`, `.cursorrules`) that shape how it behaves in your project.
-- **[Context References](context-references.md)** — Type `@` followed by a reference to inject files, folders, git diffs, and URLs directly into your messages. Jarvis expands the reference inline and appends the content automatically.
-- **[Checkpoints](../checkpoints-and-rollback.md)** — Jarvis automatically snapshots your working directory before making file changes, giving you a safety net to roll back with `/rollback` if something goes wrong.
+- **[Tools & Toolsets](tools.md)** â€” Tools are functions that extend the agent's capabilities. They're organized into logical toolsets that can be enabled or disabled per platform, covering web search, terminal execution, file editing, memory, delegation, and more.
+- **[Skills System](skills.md)** â€” On-demand knowledge documents the agent can load when needed. Skills follow a progressive disclosure pattern to minimize token usage and are compatible with the [agentskills.io](https://agentskills.io/specification) open standard.
+- **[Persistent Memory](memory.md)** â€” Bounded, curated memory that persists across sessions. Jarvis remembers your preferences, projects, environment, and things it has learned via `MEMORY.md` and `USER.md`.
+- **[Context Files](context-files.md)** â€” Jarvis automatically discovers and loads project context files (`.jarvis.md`, `AGENTS.md`, `CLAUDE.md`, `SOUL.md`, `.cursorrules`) that shape how it behaves in your project.
+- **[Context References](context-references.md)** â€” Type `@` followed by a reference to inject files, folders, git diffs, and URLs directly into your messages. Jarvis expands the reference inline and appends the content automatically.
+- **[Checkpoints](../checkpoints-and-rollback.md)** â€” Jarvis automatically snapshots your working directory before making file changes, giving you a safety net to roll back with `/rollback` if something goes wrong.
 
 ## Automation
 
-- **[Scheduled Tasks (Cron)](cron.md)** — Schedule tasks to run automatically with natural language or cron expressions. Jobs can attach skills, deliver results to any platform, and support pause/resume/edit operations.
-- **[Subagent Delegation](delegation.md)** — The `delegate_task` tool spawns child agent instances with isolated context, restricted toolsets, and their own terminal sessions. Run 3 concurrent subagents by default (configurable) for parallel workstreams.
-- **[Code Execution](code-execution.md)** — The `execute_code` tool lets the agent write Python scripts that call Jarvis tools programmatically, collapsing multi-step workflows into a single LLM turn via sandboxed RPC execution.
-- **[Event Hooks](hooks.md)** — Run custom code at key lifecycle points. Gateway hooks handle logging, alerts, and webhooks; plugin hooks handle tool interception, metrics, and guardrails.
-- **[Batch Processing](batch-processing.md)** — Run the Jarvis agent across hundreds or thousands of prompts in parallel, generating structured ShareGPT-format trajectory data for training data generation or evaluation.
+- **[Scheduled Tasks (Cron)](cron.md)** â€” Schedule tasks to run automatically with natural language or cron expressions. Jobs can attach skills, deliver results to any platform, and support pause/resume/edit operations.
+- **[Subagent Delegation](delegation.md)** â€” The `delegate_task` tool spawns child agent instances with isolated context, restricted toolsets, and their own terminal sessions. Run 3 concurrent subagents by default (configurable) for parallel workstreams.
+- **[Code Execution](code-execution.md)** â€” The `execute_code` tool lets the agent write Python scripts that call Jarvis tools programmatically, collapsing multi-step workflows into a single LLM turn via sandboxed RPC execution.
+- **[Event Hooks](hooks.md)** â€” Run custom code at key lifecycle points. Gateway hooks handle logging, alerts, and webhooks; plugin hooks handle tool interception, metrics, and guardrails.
+- **[Batch Processing](batch-processing.md)** â€” Run the Jarvis agent across hundreds or thousands of prompts in parallel, generating structured ShareGPT-format trajectory data for training data generation or evaluation.
 
 ## Media & Web
 
-- **[Voice Mode](voice-mode.md)** — Full voice interaction across CLI and messaging platforms. Talk to the agent using your microphone, hear spoken replies, and have live voice conversations in Discord voice channels.
-- **[Browser Automation](browser.md)** — Full browser automation with multiple backends: Browserbase cloud, Browser Use cloud, local Chrome/Brave/Chromium/Edge via CDP, or local Chromium. Navigate websites, fill forms, and extract information.
-- **[Vision & Image Paste](vision.md)** — Multimodal vision support. Paste images from your clipboard into the CLI and ask the agent to analyze, describe, or work with them using any vision-capable model.
-- **[Image Generation](image-generation.md)** — Generate images from text prompts using FAL.ai. Nine models supported (FLUX 2 Klein/Pro, GPT-Image 1.5/2, Nano Banana Pro, Ideogram V3, Recraft V4 Pro, Qwen, Z-Image Turbo); pick one via `jarvis tools`.
-- **[Voice & TTS](tts.md)** — Text-to-speech output and voice message transcription across all messaging platforms, with ten native provider options: Edge TTS (free), ElevenLabs, OpenAI TTS, MiniMax, Mistral Voxtral, Google Gemini, xAI, NeuTTS, KittenTTS, and Piper — plus custom command providers for any local TTS CLI.
+- **[Voice Mode](voice-mode.md)** â€” Full voice interaction across CLI and messaging platforms. Talk to the agent using your microphone, hear spoken replies, and have live voice conversations in Discord voice channels.
+- **[Browser Automation](browser.md)** â€” Full browser automation with multiple backends: Browserbase cloud, Browser Use cloud, local Chrome/Brave/Chromium/Edge via CDP, or local Chromium. Navigate websites, fill forms, and extract information.
+- **[Vision & Image Paste](vision.md)** â€” Multimodal vision support. Paste images from your clipboard into the CLI and ask the agent to analyze, describe, or work with them using any vision-capable model.
+- **[Image Generation](image-generation.md)** â€” Generate images from text prompts using FAL.ai. Nine models supported (FLUX 2 Klein/Pro, GPT-Image 1.5/2, Nano Banana Pro, Ideogram V3, Recraft V4 Pro, Qwen, Z-Image Turbo); pick one via `jarvis tools`.
+- **[Voice & TTS](tts.md)** â€” Text-to-speech output and voice message transcription across all messaging platforms, with ten native provider options: Edge TTS (free), ElevenLabs, OpenAI TTS, MiniMax, Mistral Voxtral, Google Gemini, xAI, NeuTTS, KittenTTS, and Piper â€” plus custom command providers for any local TTS CLI.
 
 ## Integrations
 
-- **[MCP Integration](mcp.md)** — Connect to any MCP server via stdio or HTTP transport. Access external tools from GitHub, databases, file systems, and internal APIs without writing native Jarvis tools. Includes per-server tool filtering and sampling support.
-- **[Provider Routing](provider-routing.md)** — Fine-grained control over which AI providers handle your requests. Optimize for cost, speed, or quality with sorting, whitelists, blacklists, and priority ordering.
-- **[Fallback Providers](fallback-providers.md)** — Automatic failover to backup LLM providers when your primary model encounters errors, including independent fallback for auxiliary tasks like vision and compression.
-- **[Credential Pools](credential-pools.md)** — Distribute API calls across multiple keys for the same provider. Automatic rotation on rate limits or failures.
-- **[Prompt caching](../configuration#prompt-caching)** — Built-in cross-session 1-hour prefix cache for Claude on native Anthropic, OpenRouter, and JARVIS Managed. Always-on; no configuration required.
-- **[Memory Providers](memory-providers.md)** — Plug in external memory backends (Honcho, OpenViking, Mem0, Hindsight, Holographic, RetainDB, ByteRover, Supermemory) for cross-session user modeling and personalization beyond the built-in memory system.
-- **[API Server](api-server.md)** — Expose Jarvis as an OpenAI-compatible HTTP endpoint. Connect any frontend that speaks the OpenAI format — Open WebUI, LobeChat, LibreChat, and more.
-- **[IDE Integration (ACP)](acp.md)** — Use Jarvis inside ACP-compatible editors such as VS Code, Zed, and JetBrains. Chat, tool activity, file diffs, and terminal commands render inside your editor.
-- **[RL Training](rl-training.md)** — Generate trajectory data from agent sessions for reinforcement learning and model fine-tuning.
+- **[MCP Integration](mcp.md)** â€” Connect to any MCP server via stdio or HTTP transport. Access external tools from GitHub, databases, file systems, and internal APIs without writing native Jarvis tools. Includes per-server tool filtering and sampling support.
+- **[Provider Routing](provider-routing.md)** â€” Fine-grained control over which AI providers handle your requests. Optimize for cost, speed, or quality with sorting, whitelists, blacklists, and priority ordering.
+- **[Fallback Providers](fallback-providers.md)** â€” Automatic failover to backup LLM providers when your primary model encounters errors, including independent fallback for auxiliary tasks like vision and compression.
+- **[Credential Pools](credential-pools.md)** â€” Distribute API calls across multiple keys for the same provider. Automatic rotation on rate limits or failures.
+- **[Prompt caching](../configuration#prompt-caching)** â€” Built-in cross-session 1-hour prefix cache for Claude on native Anthropic, OpenRouter, and JARVIS Managed. Always-on; no configuration required.
+- **[Memory Providers](memory-providers.md)** â€” Plug in external memory backends (Honcho, OpenViking, Mem0, Hindsight, Holographic, RetainDB, ByteRover, Supermemory) for cross-session user modeling and personalization beyond the built-in memory system.
+- **[API Server](api-server.md)** â€” Expose Jarvis as an OpenAI-compatible HTTP endpoint. Connect any frontend that speaks the OpenAI format â€” Open WebUI, LobeChat, LibreChat, and more.
+- **[IDE Integration (ACP)](acp.md)** â€” Use Jarvis inside ACP-compatible editors such as VS Code, Zed, and JetBrains. Chat, tool activity, file diffs, and terminal commands render inside your editor.
+- **[RL Training](rl-training.md)** â€” Generate trajectory data from agent sessions for reinforcement learning and model fine-tuning.
 
 ## Customization
 
-- **[Personality & SOUL.md](personality.md)** — Fully customizable agent personality. `SOUL.md` is the primary identity file — the first thing in the system prompt — and you can swap in built-in or custom `/personality` presets per session.
-- **[Skins & Themes](skins.md)** — Customize the CLI's visual presentation: banner colors, spinner faces and verbs, response-box labels, branding text, and the tool activity prefix.
-- **[Plugins](plugins.md)** — Add custom tools, hooks, and integrations without modifying core code. Three plugin types: general plugins (tools/hooks), memory providers (cross-session knowledge), and context engines (alternative context management). Managed via the unified `jarvis plugins` interactive UI.
+- **[Personality & SOUL.md](personality.md)** â€” Fully customizable agent personality. `SOUL.md` is the primary identity file â€” the first thing in the system prompt â€” and you can swap in built-in or custom `/personality` presets per session.
+- **[Skins & Themes](skins.md)** â€” Customize the CLI's visual presentation: banner colors, spinner faces and verbs, response-box labels, branding text, and the tool activity prefix.
+- **[Plugins](plugins.md)** â€” Add custom tools, hooks, and integrations without modifying core code. Three plugin types: general plugins (tools/hooks), memory providers (cross-session knowledge), and context engines (alternative context management). Managed via the unified `jarvis plugins` interactive UI.

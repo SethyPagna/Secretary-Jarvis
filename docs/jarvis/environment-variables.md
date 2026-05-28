@@ -1,4 +1,4 @@
-# Environment Variables
+﻿# Environment Variables
 
 > Imported from the local source documentation and rewritten for the JARVIS desktop-first app. Run commands from the integrated Home terminal unless a section explicitly refers to packaging or automation.
 
@@ -28,9 +28,9 @@ All variables go in `~/.jarvis/.env`. You can also set them with `jarvis config 
 | `AI_GATEWAY_BASE_URL` | Override AI Gateway base URL (default: `https://ai-gateway.vercel.sh/v1`) |
 | `OPENAI_API_KEY` | API key for custom OpenAI-compatible endpoints (used with `OPENAI_BASE_URL`) |
 | `OPENAI_BASE_URL` | Base URL for custom endpoint (VLLM, SGLang, etc.) |
-| `COPILOT_GITHUB_TOKEN` | GitHub token for Copilot API — first priority (OAuth `gho_*` or fine-grained PAT `github_pat_*`; classic PATs `ghp_*` are **not supported**) |
-| `GH_TOKEN` | GitHub token — second priority for Copilot (also used by `gh` CLI) |
-| `GITHUB_TOKEN` | GitHub token — third priority for Copilot |
+| `COPILOT_GITHUB_TOKEN` | GitHub token for Copilot API â€” first priority (OAuth `gho_*` or fine-grained PAT `github_pat_*`; classic PATs `ghp_*` are **not supported**) |
+| `GH_TOKEN` | GitHub token â€” second priority for Copilot (also used by `gh` CLI) |
+| `GITHUB_TOKEN` | GitHub token â€” third priority for Copilot |
 | `JARVIS_COPILOT_ACP_COMMAND` | Override Copilot ACP CLI binary path (default: `copilot`) |
 | `COPILOT_CLI_PATH` | Alias for `JARVIS_COPILOT_ACP_COMMAND` |
 | `JARVIS_COPILOT_ACP_ARGS` | Override Copilot ACP arguments (default: `--acp --stdio`) |
@@ -46,9 +46,9 @@ All variables go in `~/.jarvis/.env`. You can also set them with `jarvis config 
 | `ARCEE_BASE_URL` | Override Arcee base URL (default: `https://api.arcee.ai/api/v1`) |
 | `GMI_API_KEY` | GMI Cloud API key ([gmicloud.ai](https://www.gmicloud.ai/)) |
 | `GMI_BASE_URL` | Override GMI Cloud base URL (default: `https://api.gmi-serving.com/v1`) |
-| `MINIMAX_API_KEY` | MiniMax API key — global endpoint ([minimax.io](https://www.minimax.io)). **Not used by `minimax-oauth`** (OAuth path uses browser login instead). |
-| `MINIMAX_BASE_URL` | Override MiniMax base URL (default: `https://api.minimax.io/anthropic` — Jarvis uses MiniMax's Anthropic Messages-compatible endpoint). **Not used by `minimax-oauth`**. |
-| `MINIMAX_CN_API_KEY` | MiniMax API key — China endpoint ([minimaxi.com](https://www.minimaxi.com)). **Not used by `minimax-oauth`** (OAuth path uses browser login instead). |
+| `MINIMAX_API_KEY` | MiniMax API key â€” global endpoint ([minimax.io](https://www.minimax.io)). **Not used by `minimax-oauth`** (OAuth path uses browser login instead). |
+| `MINIMAX_BASE_URL` | Override MiniMax base URL (default: `https://api.minimax.io/anthropic` â€” Jarvis uses MiniMax's Anthropic Messages-compatible endpoint). **Not used by `minimax-oauth`**. |
+| `MINIMAX_CN_API_KEY` | MiniMax API key â€” China endpoint ([minimaxi.com](https://www.minimaxi.com)). **Not used by `minimax-oauth`** (OAuth path uses browser login instead). |
 | `MINIMAX_CN_BASE_URL` | Override MiniMax China base URL (default: `https://api.minimaxi.com/anthropic`). **Not used by `minimax-oauth`**. |
 | `KILOCODE_API_KEY` | Kilo Code API key ([kilo.ai](https://kilo.ai)) |
 | `KILOCODE_BASE_URL` | Override Kilo Code base URL (default: `https://api.kilo.ai/api/gateway`) |
@@ -80,13 +80,13 @@ All variables go in `~/.jarvis/.env`. You can also set them with `jarvis config 
 | `DASHSCOPE_BASE_URL` | Custom DashScope base URL (default: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`; use `https://dashscope.aliyuncs.com/compatible-mode/v1` for mainland-China region) |
 | `DEEPSEEK_API_KEY` | DeepSeek API key for direct DeepSeek access ([platform.deepseek.com](https://platform.deepseek.com/api_keys)) |
 | `DEEPSEEK_BASE_URL` | Custom DeepSeek API base URL |
-| `NOVITA_API_KEY` | NovitaAI API key — AI-native cloud for Model API, Agent Sandbox, and GPU Cloud ([novita.ai/settings/key-management](https://novita.ai/settings/key-management)) |
+| `NOVITA_API_KEY` | NovitaAI API key â€” AI-native cloud for Model API, Agent Sandbox, and GPU Cloud ([novita.ai/settings/key-management](https://novita.ai/settings/key-management)) |
 | `NOVITA_BASE_URL` | Override NovitaAI base URL (default: `https://api.novita.ai/openai/v1`) |
-| `NVIDIA_API_KEY` | NVIDIA NIM API key — Nemotron and open models ([build.nvidia.com](https://build.nvidia.com)) |
+| `NVIDIA_API_KEY` | NVIDIA NIM API key â€” Nemotron and open models ([build.nvidia.com](https://build.nvidia.com)) |
 | `NVIDIA_BASE_URL` | Override NVIDIA base URL (default: `https://integrate.api.nvidia.com/v1`; set to `http://localhost:8000/v1` for a local NIM endpoint) |
-| `STEPFUN_API_KEY` | StepFun API key — Step-series models ([platform.stepfun.com](https://platform.stepfun.com)) |
+| `STEPFUN_API_KEY` | StepFun API key â€” Step-series models ([platform.stepfun.com](https://platform.stepfun.com)) |
 | `STEPFUN_BASE_URL` | Override StepFun base URL (default: `https://api.stepfun.com/v1`) |
-| `OLLAMA_API_KEY` | Ollama Cloud API key — managed Ollama catalog without local GPU ([ollama.com/settings/keys](https://ollama.com/settings/keys)) |
+| `OLLAMA_API_KEY` | Ollama Cloud API key â€” managed Ollama catalog without local GPU ([ollama.com/settings/keys](https://ollama.com/settings/keys)) |
 | `OLLAMA_BASE_URL` | Override Ollama Cloud base URL (default: `https://ollama.com/v1`) |
 | `XAI_API_KEY` | xAI (Grok) API key for chat + TTS + web search ([console.x.ai](https://console.x.ai/)) |
 | `XAI_BASE_URL` | Override xAI base URL (default: `https://api.x.ai/v1`) |
@@ -95,9 +95,9 @@ All variables go in `~/.jarvis/.env`. You can also set them with `jarvis config 
 | `AWS_PROFILE` | AWS named profile for Bedrock authentication (reads `~/.aws/credentials`). Leave unset to use default boto3 credential chain. |
 | `BEDROCK_BASE_URL` | Override Bedrock runtime base URL (default: `https://bedrock-runtime.us-east-1.amazonaws.com`; usually leave unset and use `AWS_REGION` instead) |
 | `JARVIS_QWEN_BASE_URL` | Qwen Portal base URL override (default: `https://portal.qwen.ai/v1`) |
-| `OPENCODE_ZEN_API_KEY` | OpenCode Zen API key — pay-as-you-go access to curated models ([opencode.ai](https://opencode.ai/auth)) |
+| `OPENCODE_ZEN_API_KEY` | OpenCode Zen API key â€” pay-as-you-go access to curated models ([opencode.ai](https://opencode.ai/auth)) |
 | `OPENCODE_ZEN_BASE_URL` | Override OpenCode Zen base URL |
-| `OPENCODE_GO_API_KEY` | OpenCode Go API key — $10/month subscription for open models ([opencode.ai](https://opencode.ai/auth)) |
+| `OPENCODE_GO_API_KEY` | OpenCode Go API key â€” $10/month subscription for open models ([opencode.ai](https://opencode.ai/auth)) |
 | `OPENCODE_GO_BASE_URL` | Override OpenCode Go base URL |
 | `CLAUDE_CODE_OAUTH_TOKEN` | Explicit Claude Code token override if you export one manually |
 | `JARVIS_MODEL` | Override model name at process level (used by cron scheduler; prefer `config.yaml` for normal use) |
@@ -105,7 +105,7 @@ All variables go in `~/.jarvis/.env`. You can also set them with `jarvis config 
 | `JARVIS_LOCAL_STT_COMMAND` | Optional local speech-to-text command template. Supports `{input_path}`, `{output_dir}`, `{language}`, and `{model}` placeholders |
 | `JARVIS_LOCAL_STT_LANGUAGE` | Default language passed to `JARVIS_LOCAL_STT_COMMAND` or auto-detected local `whisper` CLI fallback (default: `en`) |
 | `JARVIS_HOME` | Override Jarvis config directory (default: `~/.jarvis`). Also scopes the gateway PID file and systemd service name, so multiple installations can run concurrently |
-| `JARVIS_GIT_BASH_PATH` | **Windows only.** Override `bash.exe` discovery for the terminal tool. Points at any bash — full Git-for-Windows install, WSL bash via symlink, MSYS2, Cygwin. The installer sets this automatically to the PortableGit it provisioned. See the [Windows (Native) Guide](../user-guide/windows-native.md#how-jarvis-runs-shell-commands-on-windows) |
+| `JARVIS_GIT_BASH_PATH` | **Windows only.** Override `bash.exe` discovery for the terminal tool. Points at any bash â€” full Git-for-Windows install, WSL bash via symlink, MSYS2, Cygwin. The installer sets this automatically to the PortableGit it provisioned. See the [Windows (Native) Guide](../user-guide/windows-native.md#how-jarvis-runs-shell-commands-on-windows) |
 | `JARVIS_DISABLE_WINDOWS_UTF8` | **Windows only.** Set to `1` to disable the UTF-8 stdio shim (`configure_windows_stdio()`) and fall back to the console's locale code page. Useful for bisecting encoding bugs; rarely the right setting in normal operation |
 | `JARVIS_KANBAN_HOME` | Override the shared Jarvis root that anchors the kanban board (db + workspaces + worker logs). Falls back to `get_default_jarvis_root()` (the parent of any active profile). Useful for tests and unusual deployments |
 | `JARVIS_KANBAN_BOARD` | Pin the active kanban board for this process. Takes precedence over `~/.jarvis/kanban/current`; the dispatcher injects this into worker subprocess env so workers physically cannot see tasks on other boards. Defaults to `default`. Slug validation: lowercase alphanumerics + hyphens + underscores, 1-64 chars |
@@ -115,11 +115,11 @@ All variables go in `~/.jarvis/.env`. You can also set them with `jarvis config 
 
 ## Provider Auth (OAuth)
 
-For native Anthropic auth, Jarvis prefers Claude Code's own credential files when they exist because those credentials can refresh automatically. **OAuth against Anthropic requires a Claude Max plan with purchased extra usage credits** — Jarvis routes as Claude Code, which only draws from the Max plan's extra/overage credits, not the base Max allowance, and does not work on Claude Pro. Without Max + extra credits, use an API key instead. Environment variables such as `ANTHROPIC_TOKEN` remain useful as manual overrides, but they are no longer the preferred path for Claude Max login.
+For native Anthropic auth, Jarvis prefers Claude Code's own credential files when they exist because those credentials can refresh automatically. **OAuth against Anthropic requires a Claude Max plan with purchased extra usage credits** â€” Jarvis routes as Claude Code, which only draws from the Max plan's extra/overage credits, not the base Max allowance, and does not work on Claude Pro. Without Max + extra credits, use an API key instead. Environment variables such as `ANTHROPIC_TOKEN` remain useful as manual overrides, but they are no longer the preferred path for Claude Max login.
 
 | Variable | Description |
 |----------|-------------|
-| `JARVIS_INFERENCE_PROVIDER` | Override provider selection: `auto`, `custom`, `openrouter`, `jarvis_managed`, `openai-codex`, `copilot`, `copilot-acp`, `anthropic`, `huggingface`, `novita`, `gemini`, `zai`, `kimi-coding`, `kimi-coding-cn`, `minimax`, `minimax-cn`, `minimax-oauth` (browser OAuth login — no API key required; see [MiniMax OAuth guide](../guides/minimax-oauth.md)), `kilocode`, `xiaomi`, `arcee`, `gmi`, `stepfun`, `alibaba`, `alibaba-coding-plan` (alias `alibaba_coding`), `deepseek`, `nvidia`, `ollama-cloud`, `xai` (alias `grok`), `xai-oauth` (browser OAuth login for SuperGrok subscribers — no API key required; see [xAI Grok OAuth guide](../guides/xai-grok-oauth.md)), `google-gemini-cli`, `qwen-oauth`, `bedrock`, `opencode-zen`, `opencode-go`, `ai-gateway`, `tencent-tokenhub` (default: `auto`) |
+| `JARVIS_INFERENCE_PROVIDER` | Override provider selection: `auto`, `custom`, `openrouter`, `jarvis_managed`, `openai-codex`, `copilot`, `copilot-acp`, `anthropic`, `huggingface`, `novita`, `gemini`, `zai`, `kimi-coding`, `kimi-coding-cn`, `minimax`, `minimax-cn`, `minimax-oauth` (browser OAuth login â€” no API key required; see [MiniMax OAuth guide](../guides/minimax-oauth.md)), `kilocode`, `xiaomi`, `arcee`, `gmi`, `stepfun`, `alibaba`, `alibaba-coding-plan` (alias `alibaba_coding`), `deepseek`, `nvidia`, `ollama-cloud`, `xai` (alias `grok`), `xai-oauth` (browser OAuth login for SuperGrok subscribers â€” no API key required; see [xAI Grok OAuth guide](../guides/xai-grok-oauth.md)), `google-gemini-cli`, `qwen-oauth`, `bedrock`, `opencode-zen`, `opencode-go`, `ai-gateway`, `tencent-tokenhub` (default: `auto`) |
 | `JARVIS_PORTAL_BASE_URL` | Override JARVIS Managed URL (for development/testing) |
 | `JARVIS_MANAGED_INFERENCE_BASE_URL` | Override JARVIS Managed inference API URL |
 | `JARVIS_JARVIS_MANAGED_MIN_KEY_TTL_SECONDS` | Min agent key TTL before re-mint (default: 1800 = 30min) |
@@ -136,7 +136,7 @@ For native Anthropic auth, Jarvis prefers Claude Code's own credential files whe
 | `FIRECRAWL_API_KEY` | Web scraping and cloud browser ([firecrawl.dev](https://firecrawl.dev/)) |
 | `FIRECRAWL_API_URL` | Custom Firecrawl API endpoint for self-hosted instances (optional) |
 | `TAVILY_API_KEY` | Tavily API key for AI-native web search, extract, and crawl ([app.tavily.com](https://app.tavily.com/home)) |
-| `SEARXNG_URL` | SearXNG instance URL for free self-hosted web search — no API key required ([searxng.github.io](https://searxng.github.io/searxng/)) |
+| `SEARXNG_URL` | SearXNG instance URL for free self-hosted web search â€” no API key required ([searxng.github.io](https://searxng.github.io/searxng/)) |
 | `TAVILY_BASE_URL` | Override the Tavily API endpoint. Useful for corporate proxies and self-hosted Tavily-compatible search backends. Same pattern as `GROQ_BASE_URL`. |
 | `EXA_API_KEY` | Exa API key for AI-native web search and contents ([exa.ai](https://exa.ai/)) |
 | `BROWSERBASE_API_KEY` | Browser automation ([browserbase.com](https://browserbase.com/)) |
@@ -177,16 +177,16 @@ Environment variables for the bundled [`observability/langfuse`](/docs/user-guid
 | `JARVIS_LANGFUSE_PUBLIC_KEY` | Langfuse project public key (`pk-lf-...`). Required. |
 | `JARVIS_LANGFUSE_SECRET_KEY` | Langfuse project secret key (`sk-lf-...`). Required. |
 | `JARVIS_LANGFUSE_BASE_URL` | Langfuse server URL (default: `https://cloud.langfuse.com`). Set for self-hosted. |
-| `JARVIS_LANGFUSE_ENV` | Environment tag on traces (`production`, `staging`, …) |
+| `JARVIS_LANGFUSE_ENV` | Environment tag on traces (`production`, `staging`, â€¦) |
 | `JARVIS_LANGFUSE_RELEASE` | Release/version tag on traces |
-| `JARVIS_LANGFUSE_SAMPLE_RATE` | SDK sampling rate 0.0–1.0 (default: `1.0`) |
+| `JARVIS_LANGFUSE_SAMPLE_RATE` | SDK sampling rate 0.0â€“1.0 (default: `1.0`) |
 | `JARVIS_LANGFUSE_MAX_CHARS` | Per-field truncation for serialized payloads (default: `12000`) |
 | `JARVIS_LANGFUSE_DEBUG` | `true` enables verbose plugin logging to `agent.log` |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_BASE_URL` | Standard Langfuse SDK names. Accepted as fallbacks when the `JARVIS_LANGFUSE_*` equivalents are unset. |
 
 ### JARVIS Tool Gateway
 
-These variables configure the [Tool Gateway](/docs/user-guide/features/tool-gateway) for paid JARVIS Managed subscribers or self-hosted gateway deployments. Most users don't need to set these — the gateway is configured automatically via `jarvis model` or `jarvis tools`.
+These variables configure the [Tool Gateway](/docs/user-guide/features/tool-gateway) for paid JARVIS Managed subscribers or self-hosted gateway deployments. Most users don't need to set these â€” the gateway is configured automatically via `jarvis model` or `jarvis tools`.
 
 | Variable | Description |
 |----------|-------------|
@@ -202,7 +202,7 @@ These variables configure the [Tool Gateway](/docs/user-guide/features/tool-gate
 | `TERMINAL_ENV` | Backend: `local`, `docker`, `ssh`, `singularity`, `modal`, `daytona`, `vercel_sandbox` |
 | `JARVIS_DOCKER_BINARY` | Override the container binary Jarvis shells out to (e.g. `podman`, `/usr/local/bin/docker`). When unset, Jarvis auto-discovers `docker` or `podman` on `PATH`. Needed when both are installed and you want the non-default, or when the binary lives outside `PATH`. |
 | `TERMINAL_DOCKER_IMAGE` | Docker image (default: `nikolaik/python-nodejs:python3.11-nodejs20`) |
-| `TERMINAL_DOCKER_FORWARD_ENV` | JSON array of env var names to explicitly forward into Docker terminal sessions. Note: skill-declared `required_environment_variables` are forwarded automatically — you only need this for vars not declared by any skill. |
+| `TERMINAL_DOCKER_FORWARD_ENV` | JSON array of env var names to explicitly forward into Docker terminal sessions. Note: skill-declared `required_environment_variables` are forwarded automatically â€” you only need this for vars not declared by any skill. |
 | `TERMINAL_DOCKER_VOLUMES` | Additional Docker volume mounts (comma-separated `host:container` pairs) |
 | `TERMINAL_DOCKER_MOUNT_CWD_TO_WORKSPACE` | Advanced opt-in: mount the launch cwd into Docker `/workspace` (`true`/`false`, default: `false`) |
 | `TERMINAL_SINGULARITY_IMAGE` | Singularity image or `.sif` path |
@@ -257,19 +257,19 @@ For cloud sandbox backends, persistence is filesystem-oriented. `TERMINAL_LIFETI
 | `TELEGRAM_CRON_THREAD_ID` | Forum topic ID to receive cron deliveries; overrides `TELEGRAM_HOME_CHANNEL_THREAD_ID` for cron only. Use in topic mode so replies to cron messages open a new session instead of hitting the system lobby (#24409). |
 | `TELEGRAM_WEBHOOK_URL` | Public HTTPS URL for webhook mode (enables webhook instead of polling) |
 | `TELEGRAM_WEBHOOK_PORT` | Local listen port for webhook server (default: `8443`) |
-| `TELEGRAM_WEBHOOK_SECRET` | Secret token Telegram echoes back in each update for verification. **Required whenever `TELEGRAM_WEBHOOK_URL` is set** — the gateway refuses to start without it (GHSA-3vpc-7q5r-276h). Generate with `openssl rand -hex 32`. |
+| `TELEGRAM_WEBHOOK_SECRET` | Secret token Telegram echoes back in each update for verification. **Required whenever `TELEGRAM_WEBHOOK_URL` is set** â€” the gateway refuses to start without it (GHSA-3vpc-7q5r-276h). Generate with `openssl rand -hex 32`. |
 | `TELEGRAM_REACTIONS` | Enable emoji reactions on messages during processing (default: `false`) |
 | `TELEGRAM_REQUIRE_MENTION` | Require an explicit trigger before responding in Telegram groups. Equivalent to `telegram.require_mention` in `config.yaml`. |
 | `TELEGRAM_MENTION_PATTERNS` | JSON array, newline-separated list, or comma-separated list of regex wake-word patterns accepted when Telegram group mention gating is enabled. Equivalent to `telegram.mention_patterns`. |
 | `TELEGRAM_EXCLUSIVE_BOT_MENTIONS` | When enabled, explicit `@...bot` mentions in Telegram groups route only to the mentioned bot usernames before reply or wake-word fallbacks run. Default: `true`. Equivalent to `telegram.exclusive_bot_mentions`. |
 | `TELEGRAM_REPLY_TO_MODE` | Reply-reference behavior: `off`, `first` (default), or `all`. Matches the Discord pattern. |
 | `TELEGRAM_IGNORED_THREADS` | Comma-separated Telegram forum topic/thread IDs where the bot never responds |
-| `TELEGRAM_PROXY` | Proxy URL for Telegram connections — overrides `HTTPS_PROXY`. Supports `http://`, `https://`, `socks5://` |
+| `TELEGRAM_PROXY` | Proxy URL for Telegram connections â€” overrides `HTTPS_PROXY`. Supports `http://`, `https://`, `socks5://` |
 | `DISCORD_BOT_TOKEN` | Discord bot token |
 | `DISCORD_ALLOWED_USERS` | Comma-separated Discord user IDs allowed to use the bot |
-| `DISCORD_ALLOWED_ROLES` | Comma-separated Discord role IDs allowed to use the bot (OR with `DISCORD_ALLOWED_USERS`). Auto-enables the Members intent. Useful when moderation teams churn — role grants propagate automatically. |
+| `DISCORD_ALLOWED_ROLES` | Comma-separated Discord role IDs allowed to use the bot (OR with `DISCORD_ALLOWED_USERS`). Auto-enables the Members intent. Useful when moderation teams churn â€” role grants propagate automatically. |
 | `DISCORD_ALLOWED_CHANNELS` | Comma-separated Discord channel IDs. When set, the bot only responds in these channels (plus DMs if allowed). Overrides `config.yaml` `discord.allowed_channels`. |
-| `DISCORD_PROXY` | Proxy URL for Discord connections — overrides `HTTPS_PROXY`. Supports `http://`, `https://`, `socks5://` |
+| `DISCORD_PROXY` | Proxy URL for Discord connections â€” overrides `HTTPS_PROXY`. Supports `http://`, `https://`, `socks5://` |
 | `DISCORD_HOME_CHANNEL` | Default Discord channel for cron delivery |
 | `DISCORD_HOME_CHANNEL_NAME` | Display name for the Discord home channel |
 | `DISCORD_COMMAND_SYNC_POLICY` | Discord slash-command startup sync policy: `safe` (diff and reconcile), `bulk` (legacy `tree.sync()`), or `off` |
@@ -317,10 +317,10 @@ For cloud sandbox backends, persistence is filesystem-oriented. `TERMINAL_LIFETI
 | `TWILIO_ACCOUNT_SID` | Twilio Account SID (shared with telephony skill) |
 | `TWILIO_AUTH_TOKEN` | Twilio Auth Token (shared with telephony skill; also used for webhook signature validation) |
 | `TWILIO_PHONE_NUMBER` | Twilio phone number in E.164 format (shared with telephony skill) |
-| `SMS_WEBHOOK_URL` | Public URL for Twilio signature validation — must match the webhook URL in Twilio Console (required) |
+| `SMS_WEBHOOK_URL` | Public URL for Twilio signature validation â€” must match the webhook URL in Twilio Console (required) |
 | `SMS_WEBHOOK_PORT` | Webhook listener port for inbound SMS (default: `8080`) |
 | `SMS_WEBHOOK_HOST` | Webhook bind address (default: `0.0.0.0`) |
-| `SMS_INSECURE_NO_SIGNATURE` | Set to `true` to disable Twilio signature validation (local dev only — not for production) |
+| `SMS_INSECURE_NO_SIGNATURE` | Set to `true` to disable Twilio signature validation (local dev only â€” not for production) |
 | `SMS_ALLOWED_USERS` | Comma-separated E.164 phone numbers allowed to chat |
 | `SMS_ALLOW_ALL_USERS` | Allow all SMS senders without an allowlist |
 | `SMS_HOME_CHANNEL` | Phone number for cron job / notification delivery |
@@ -346,8 +346,8 @@ For cloud sandbox backends, persistence is filesystem-oriented. `TERMINAL_LIFETI
 | `FEISHU_ENCRYPT_KEY` | Optional encryption key for webhook mode |
 | `FEISHU_VERIFICATION_TOKEN` | Optional verification token for webhook mode |
 | `FEISHU_ALLOWED_USERS` | Comma-separated Feishu user IDs allowed to message the bot |
-| `FEISHU_ALLOW_BOTS` | `none` (default) / `mentions` / `all` — accept inbound messages from other bots. See [bot-to-bot messaging](../user-guide/messaging/feishu.md#bot-to-bot-messaging) |
-| `FEISHU_REQUIRE_MENTION` | `true` (default) / `false` — whether group messages must @mention the bot. Override per-chat via `group_rules.<chat_id>.require_mention`. |
+| `FEISHU_ALLOW_BOTS` | `none` (default) / `mentions` / `all` â€” accept inbound messages from other bots. See [bot-to-bot messaging](../user-guide/messaging/feishu.md#bot-to-bot-messaging) |
+| `FEISHU_REQUIRE_MENTION` | `true` (default) / `false` â€” whether group messages must @mention the bot. Override per-chat via `group_rules.<chat_id>.require_mention`. |
 | `FEISHU_HOME_CHANNEL` | Feishu chat ID for cron delivery and notifications |
 | `WECOM_BOT_ID` | WeCom AI Bot ID from admin console |
 | `WECOM_SECRET` | WeCom AI Bot secret |
@@ -370,7 +370,7 @@ For cloud sandbox backends, persistence is filesystem-oriented. `TERMINAL_LIFETI
 | `WEIXIN_DM_POLICY` | Direct message policy: `open`, `allowlist`, `pairing`, `disabled` (default: `open`) |
 | `WEIXIN_GROUP_POLICY` | Group message policy: `open`, `allowlist`, `disabled` (default: `disabled`) |
 | `WEIXIN_ALLOWED_USERS` | Comma-separated Weixin user IDs allowed to DM the bot |
-| `WEIXIN_GROUP_ALLOWED_USERS` | Comma-separated Weixin **group chat IDs** (not member user IDs) allowed to interact with the bot. The variable name is legacy — it expects group IDs. Only takes effect when iLink actually delivers group events; QR-login iLink bot identities (`...@im.bot`) typically don't receive ordinary WeChat group messages. |
+| `WEIXIN_GROUP_ALLOWED_USERS` | Comma-separated Weixin **group chat IDs** (not member user IDs) allowed to interact with the bot. The variable name is legacy â€” it expects group IDs. Only takes effect when iLink actually delivers group events; QR-login iLink bot identities (`...@im.bot`) typically don't receive ordinary WeChat group messages. |
 | `WEIXIN_HOME_CHANNEL` | Weixin chat ID for cron delivery and notifications |
 | `WEIXIN_HOME_CHANNEL_NAME` | Display name for the Weixin home channel |
 | `WEIXIN_ALLOW_ALL_USERS` | Allow all Weixin users without an allowlist (`true`/`false`) |
@@ -401,7 +401,7 @@ For cloud sandbox backends, persistence is filesystem-oriented. `TERMINAL_LIFETI
 | `MATTERMOST_REPLY_MODE` | Reply style: `thread` (threaded replies) or `off` (flat messages, default) |
 | `MATRIX_HOMESERVER` | Matrix homeserver URL (e.g. `https://matrix.org`) |
 | `MATRIX_ACCESS_TOKEN` | Matrix access token for bot authentication |
-| `MATRIX_USER_ID` | Matrix user ID (e.g. `@jarvis:matrix.org`) — required for password login, optional with access token |
+| `MATRIX_USER_ID` | Matrix user ID (e.g. `@jarvis:matrix.org`) â€” required for password login, optional with access token |
 | `MATRIX_PASSWORD` | Matrix password (alternative to access token) |
 | `MATRIX_ALLOWED_USERS` | Comma-separated Matrix user IDs allowed to message the bot (e.g. `@alice:matrix.org`) |
 | `MATRIX_HOME_ROOM` | Room ID for proactive message delivery (e.g. `!abc123:matrix.org`) |
@@ -422,9 +422,9 @@ For cloud sandbox backends, persistence is filesystem-oriented. `TERMINAL_LIFETI
 | `API_SERVER_KEY` | Bearer token for API server authentication. Enforced for non-loopback binding. |
 | `API_SERVER_CORS_ORIGINS` | Comma-separated browser origins allowed to call the API server directly (for example `http://localhost:3000,http://127.0.0.1:3000`). Default: disabled. |
 | `API_SERVER_PORT` | Port for the API server (default: `8642`) |
-| `API_SERVER_HOST` | Host/bind address for the API server (default: `127.0.0.1`). Use `0.0.0.0` for network access — requires `API_SERVER_KEY` and a narrow `API_SERVER_CORS_ORIGINS` allowlist. |
+| `API_SERVER_HOST` | Host/bind address for the API server (default: `127.0.0.1`). Use `0.0.0.0` for network access â€” requires `API_SERVER_KEY` and a narrow `API_SERVER_CORS_ORIGINS` allowlist. |
 | `API_SERVER_MODEL_NAME` | Model name advertised on `/v1/models`. Defaults to the profile name (or `jarvis-agent` for the default profile). Useful for multi-user setups where frontends like Open WebUI need distinct model names per connection. |
-| `GATEWAY_PROXY_URL` | URL of a remote Jarvis API server to forward messages to ([proxy mode](/docs/user-guide/messaging/matrix#proxy-mode-e2ee-on-macos)). When set, the gateway handles platform I/O only — all agent work is delegated to the remote server. Also configurable via `gateway.proxy_url` in `config.yaml`. |
+| `GATEWAY_PROXY_URL` | URL of a remote Jarvis API server to forward messages to ([proxy mode](/docs/user-guide/messaging/matrix#proxy-mode-e2ee-on-macos)). When set, the gateway handles platform I/O only â€” all agent work is delegated to the remote server. Also configurable via `gateway.proxy_url` in `config.yaml`. |
 | `GATEWAY_PROXY_KEY` | Bearer token for authenticating with the remote API server in proxy mode. Must match `API_SERVER_KEY` on the remote host. |
 | `MESSAGING_CWD` | Working directory for terminal commands in messaging mode (default: `~`) |
 | `GATEWAY_ALLOWED_USERS` | Comma-separated user IDs allowed across all platforms |
@@ -456,20 +456,20 @@ Inbound change-notification listener for Graph events (Teams meetings, calendar,
 
 ### Teams Meeting Summary Delivery
 
-Only used when the [`teams_pipeline` plugin](/docs/user-guide/messaging/msgraph-webhook) is enabled. Settings are also configurable under `platforms.teams.extra` in `config.yaml` — env vars take priority when both are set. See [Microsoft Teams → Meeting Summary Delivery](/docs/user-guide/messaging/teams#meeting-summary-delivery-teams-meeting-pipeline).
+Only used when the [`teams_pipeline` plugin](/docs/user-guide/messaging/msgraph-webhook) is enabled. Settings are also configurable under `platforms.teams.extra` in `config.yaml` â€” env vars take priority when both are set. See [Microsoft Teams â†’ Meeting Summary Delivery](/docs/user-guide/messaging/teams#meeting-summary-delivery-teams-meeting-pipeline).
 
 | Variable | Description |
 |----------|-------------|
 | `TEAMS_DELIVERY_MODE` | `graph` or `incoming_webhook`. |
 | `TEAMS_INCOMING_WEBHOOK_URL` | Teams-generated webhook URL; required when `TEAMS_DELIVERY_MODE=incoming_webhook`. |
-| `TEAMS_GRAPH_ACCESS_TOKEN` | Pre-acquired delegated access token for Graph delivery. Rarely needed — the writer falls back to the `MSGRAPH_*` app credentials when unset. |
+| `TEAMS_GRAPH_ACCESS_TOKEN` | Pre-acquired delegated access token for Graph delivery. Rarely needed â€” the writer falls back to the `MSGRAPH_*` app credentials when unset. |
 | `TEAMS_TEAM_ID` | Target Team ID for channel delivery (`graph` mode). |
 | `TEAMS_CHANNEL_ID` | Target channel ID (paired with `TEAMS_TEAM_ID`). |
 | `TEAMS_CHAT_ID` | Target 1:1 or group chat ID (alternative to team+channel for `graph` mode). |
 
 ### LINE Messaging API
 
-Used by the bundled LINE platform plugin (`plugins/platforms/line/`). See [Messaging Gateway → LINE](/docs/user-guide/messaging/line) for full setup.
+Used by the bundled LINE platform plugin (`plugins/platforms/line/`). See [Messaging Gateway â†’ LINE](/docs/user-guide/messaging/line) for full setup.
 
 | Variable | Description |
 |----------|-------------|
@@ -477,16 +477,16 @@ Used by the bundled LINE platform plugin (`plugins/platforms/line/`). See [Messa
 | `LINE_CHANNEL_SECRET` | Channel secret (Basic settings tab); used for HMAC-SHA256 webhook signature verification. Required. |
 | `LINE_HOST` | Webhook bind host (default: `0.0.0.0`). |
 | `LINE_PORT` | Webhook bind port (default: `8646`). |
-| `LINE_PUBLIC_URL` | Public HTTPS base URL (e.g. `https://my-tunnel.example.com`). Required for image / audio / video sends — LINE only accepts HTTPS-reachable URLs. |
+| `LINE_PUBLIC_URL` | Public HTTPS base URL (e.g. `https://my-tunnel.example.com`). Required for image / audio / video sends â€” LINE only accepts HTTPS-reachable URLs. |
 | `LINE_ALLOWED_USERS` | Comma-separated user IDs allowed to DM the bot (`U`-prefixed). |
 | `LINE_ALLOWED_GROUPS` | Comma-separated group IDs the bot will respond in (`C`-prefixed). |
 | `LINE_ALLOWED_ROOMS` | Comma-separated room IDs the bot will respond in (`R`-prefixed). |
-| `LINE_ALLOW_ALL_USERS` | Dev-only escape hatch — accepts any source. Default: `false`. |
+| `LINE_ALLOW_ALL_USERS` | Dev-only escape hatch â€” accepts any source. Default: `false`. |
 | `LINE_HOME_CHANNEL` | Default delivery target for cron jobs with `deliver: line`. |
 | `LINE_SLOW_RESPONSE_THRESHOLD` | Seconds before the slow-LLM Template Buttons postback fires (default: `45`). Set `0` to disable and always Push-fallback. |
 | `LINE_PENDING_TEXT` | Bubble text shown alongside the postback button. |
 | `LINE_BUTTON_LABEL` | Postback button label (default: `Get answer`). |
-| `LINE_DELIVERED_TEXT` | Reply when an already-delivered postback is tapped again (default: `Already replied ✅`). |
+| `LINE_DELIVERED_TEXT` | Reply when an already-delivered postback is tapped again (default: `Already replied âœ…`). |
 | `LINE_INTERRUPTED_TEXT` | Reply when a `/stop`-orphaned postback button is tapped (default: `Run was interrupted before completion.`). |
 
 ### Advanced Messaging Tuning
@@ -505,7 +505,7 @@ Advanced per-platform knobs for throttling the outbound message batcher. Most us
 | `JARVIS_DISCORD_TEXT_BATCH_DELAY_SECONDS` | Grace window before flushing a queued Discord text chunk (default: `0.6`). |
 | `JARVIS_DISCORD_TEXT_BATCH_SPLIT_DELAY_SECONDS` | Delay between split chunks when a Discord message exceeds the length limit (default: `2.0`). |
 | `JARVIS_MATRIX_TEXT_BATCH_DELAY_SECONDS` / `_SPLIT_DELAY_SECONDS` | Matrix equivalents of the Telegram batch knobs. |
-| `JARVIS_FEISHU_TEXT_BATCH_DELAY_SECONDS` / `_SPLIT_DELAY_SECONDS` / `_MAX_CHARS` / `_MAX_MESSAGES` | Feishu batcher tuning — delay, split delay, max chars per message, max messages per batch. |
+| `JARVIS_FEISHU_TEXT_BATCH_DELAY_SECONDS` / `_SPLIT_DELAY_SECONDS` / `_MAX_CHARS` / `_MAX_MESSAGES` | Feishu batcher tuning â€” delay, split delay, max chars per message, max messages per batch. |
 | `JARVIS_FEISHU_MEDIA_BATCH_DELAY_SECONDS` | Feishu media flush delay. |
 | `JARVIS_FEISHU_DEDUP_CACHE_SIZE` | Size of the Feishu webhook dedup cache (default: `1024`). |
 | `JARVIS_WECOM_TEXT_BATCH_DELAY_SECONDS` / `_SPLIT_DELAY_SECONDS` | WeCom batcher tuning. |
@@ -513,9 +513,9 @@ Advanced per-platform knobs for throttling the outbound message batcher. Most us
 | `JARVIS_RESTART_DRAIN_TIMEOUT` | Gateway: seconds to wait for active runs to drain on `/restart` before forcing the restart (default: `900`). |
 | `JARVIS_GATEWAY_PLATFORM_CONNECT_TIMEOUT` | Per-platform connect timeout during gateway startup (seconds). |
 | `JARVIS_GATEWAY_BUSY_INPUT_MODE` | Default gateway busy-input behavior: `queue`, `steer`, or `interrupt`. Can be overridden per chat with `/busy`. |
-| `JARVIS_GATEWAY_BUSY_ACK_ENABLED` | Whether the gateway sends an acknowledgment message (⚡/⏳/⏩) when a user sends input while the agent is busy (default: `true`). Set to `false` to suppress these messages entirely — the input is still queued/steered/interrupts as normal, only the chat reply is silenced. Bridged from `display.busy_ack_enabled` in `config.yaml`. |
+| `JARVIS_GATEWAY_BUSY_ACK_ENABLED` | Whether the gateway sends an acknowledgment message (âš¡/â³/â©) when a user sends input while the agent is busy (default: `true`). Set to `false` to suppress these messages entirely â€” the input is still queued/steered/interrupts as normal, only the chat reply is silenced. Bridged from `display.busy_ack_enabled` in `config.yaml`. |
 | `JARVIS_FILE_MUTATION_VERIFIER` | Enable the per-turn file-mutation verifier footer (default: `true`). When enabled, Jarvis appends an advisory listing any `write_file` / `patch` calls that failed during the turn and were not superseded by a successful write. Set to `0`, `false`, `no`, or `off` to suppress. Mirrors `display.file_mutation_verifier` in `config.yaml`; the env var wins when set. |
-| `JARVIS_CRON_TIMEOUT` | Inactivity timeout for cron job agent runs in seconds (default: `600`). The agent can run indefinitely while actively calling tools or receiving stream tokens — this only triggers when idle. Set to `0` for unlimited. |
+| `JARVIS_CRON_TIMEOUT` | Inactivity timeout for cron job agent runs in seconds (default: `600`). The agent can run indefinitely while actively calling tools or receiving stream tokens â€” this only triggers when idle. Set to `0` for unlimited. |
 | `JARVIS_CRON_SCRIPT_TIMEOUT` | Timeout for pre-run scripts attached to cron jobs in seconds (default: `120`). Override for scripts that need longer execution (e.g., randomized delays for anti-bot timing). Also configurable via `cron.script_timeout_seconds` in `config.yaml`. |
 | `JARVIS_CRON_MAX_PARALLEL` | Max cron jobs run in parallel per tick (default: `4`). |
 
@@ -549,12 +549,12 @@ Advanced per-platform knobs for throttling the outbound message batcher. Most us
 | `JARVIS_CHECKPOINT_TIMEOUT` | Timeout for filesystem checkpoint creation in seconds (default: `30`). |
 | `JARVIS_EXEC_ASK` | Enable execution approval prompts in gateway mode (`true`/`false`) |
 | `JARVIS_ENABLE_PROJECT_PLUGINS` | Enable auto-discovery of repo-local plugins from `./.jarvis/plugins/` (`true`/`false`, default: `false`) |
-| `JARVIS_PLUGINS_DEBUG` | `1`/`true` to surface verbose plugin-discovery logs on stderr — directories scanned, manifests parsed, skip reasons, and full tracebacks on parse or `register()` failure. Aimed at plugin authors. |
+| `JARVIS_PLUGINS_DEBUG` | `1`/`true` to surface verbose plugin-discovery logs on stderr â€” directories scanned, manifests parsed, skip reasons, and full tracebacks on parse or `register()` failure. Aimed at plugin authors. |
 | `JARVIS_BACKGROUND_NOTIFICATIONS` | Background process notification mode in gateway: `all` (default), `result`, `error`, `off` |
 | `JARVIS_EPHEMERAL_SYSTEM_PROMPT` | Ephemeral system prompt injected at API-call time (never persisted to sessions) |
 | `JARVIS_PREFILL_MESSAGES_FILE` | Path to a JSON file of ephemeral prefill messages injected at API-call time. |
-| `JARVIS_ALLOW_PRIVATE_URLS` | `true`/`false` — allow tools to fetch localhost/private-network URLs. Off by default in gateway mode. |
-| `JARVIS_REDACT_SECRETS` | `true`/`false` — control secret redaction in tool output, logs, and chat responses (default: `true`). |
+| `JARVIS_ALLOW_PRIVATE_URLS` | `true`/`false` â€” allow tools to fetch localhost/private-network URLs. Off by default in gateway mode. |
+| `JARVIS_REDACT_SECRETS` | `true`/`false` â€” control secret redaction in tool output, logs, and chat responses (default: `true`). |
 | `JARVIS_WRITE_SAFE_ROOT` | Optional directory prefix that restricts `write_file`/`patch` writes; paths outside require approval. |
 | `JARVIS_DISABLE_FILE_STATE_GUARD` | Set to `1` to turn off the "file changed since you read it" guard on `patch`/`write_file`. |
 | `JARVIS_CORE_TOOLS` | Comma-separated override for the canonical core tool list (advanced; rarely needed). |
@@ -567,16 +567,15 @@ Advanced per-platform knobs for throttling the outbound message batcher. Most us
 | `JARVIS_OAUTH_FILE` | Override the path used for OAuth credential storage (default: `~/.jarvis/auth.json`). |
 | `JARVIS_AGENT_HELP_GUIDANCE` | Append additional guidance text to the system prompt for custom deployments. |
 | `JARVIS_AGENT_LOGO` | Override the ASCII banner logo at CLI startup. |
-| `DELEGATION_MAX_CONCURRENT_CHILDREN` | Max parallel subagents per `delegate_task` batch (default: `3`, floor of 1, no ceiling). Also configurable via `delegation.max_concurrent_children` in `config.yaml` — the config value takes priority. |
+| `DELEGATION_MAX_CONCURRENT_CHILDREN` | Max parallel subagents per `delegate_task` batch (default: `3`, floor of 1, no ceiling). Also configurable via `delegation.max_concurrent_children` in `config.yaml` â€” the config value takes priority. |
 
 ## Interface
 
 | Variable | Description |
 |----------|-------------|
-| `JARVIS_TUI` | Launch the [TUI](../user-guide/tui.md) instead of the classic CLI when set to `1`. Equivalent to passing `--tui`. |
-| `JARVIS_TUI_DIR` | Path to a prebuilt `ui-tui/` directory (must contain `dist/entry.js` and populated `node_modules`). Used by distros and Nix to skip the first-launch `npm install`. |
-| `JARVIS_TUI_RESUME` | Resume a specific TUI session by ID on launch. When set, `jarvis --tui` skips forging a fresh session and picks up the named session instead — useful for re-attaching after a disconnect or terminal crash. |
-| `JARVIS_TUI_THEME` | Force the TUI color theme: `light`, `dark`, or a raw 6-character background hex (e.g. `ffffff` or `1a1a2e`). When unset, Jarvis auto-detects using `COLORFGBG` and terminal background queries; this variable overrides detection on terminals (Ghostty, Warp, iTerm2, etc.) that don't set `COLORFGBG`. |
+| `JARVIS_DESKTOP_EMBEDDED` | Set by the packaged desktop app so the backend enables desktop-safe startup behavior and local service warmups. |
+| `JARVIS_WEB_DIST` | Override the built frontend directory served by `jarvis dashboard` or the embedded backend. |
+| `JARVIS_DESKTOP_SHUTDOWN_TOKEN` | One-shot shutdown token used by Electron to protect `/api/shutdown` from unrelated localhost callers. |
 | `JARVIS_INFERENCE_MODEL` | Force the model for `jarvis -z` / `jarvis chat` without mutating `config.yaml`. Pairs with `JARVIS_INFERENCE_PROVIDER`. Useful for scripted callers (sweeper, CI, batch runners) that need to override the default model per run. |
 
 ## Session Settings
@@ -585,11 +584,11 @@ Advanced per-platform knobs for throttling the outbound message batcher. Most us
 |----------|-------------|
 | `SESSION_IDLE_MINUTES` | Reset sessions after N minutes of inactivity (default: 1440) |
 | `SESSION_RESET_HOUR` | Daily reset hour in 24h format (default: 4 = 4am) |
-| `JARVIS_SESSION_ID` | **Exported automatically into every tool subprocess** Jarvis spawns (`terminal`, `execute_code`, persistent shell, Docker/Singularity backends, delegated subagent runs). Set by the agent to the current session ID; user scripts called from tools can read it to correlate their output, telemetry, or side effects with the originating Jarvis session. **You should not set this manually** — overriding it from a parent shell only takes effect outside an agent run, and is overwritten the moment the agent starts a session. |
+| `JARVIS_SESSION_ID` | **Exported automatically into every tool subprocess** Jarvis spawns (`terminal`, `execute_code`, persistent shell, Docker/Singularity backends, delegated subagent runs). Set by the agent to the current session ID; user scripts called from tools can read it to correlate their output, telemetry, or side effects with the originating Jarvis session. **You should not set this manually** â€” overriding it from a parent shell only takes effect outside an agent run, and is overwritten the moment the agent starts a session. |
 
 ## Context Compression (config.yaml only)
 
-Context compression is configured exclusively through `config.yaml` — there are no environment variables for it. Threshold settings live in the `compression:` block, while the summarization model/provider lives under `auxiliary.compression:`.
+Context compression is configured exclusively through `config.yaml` â€” there are no environment variables for it. Threshold settings live in the `compression:` block, while the summarization model/provider lives under `auxiliary.compression:`.
 
 ```yaml
 compression:
@@ -620,7 +619,7 @@ For task-specific direct endpoints, Jarvis uses the task's configured API key or
 
 ## Fallback Providers (config.yaml only)
 
-The primary model fallback chain is configured exclusively through `config.yaml` — there are no environment variables for it. Add a top-level `fallback_providers` list with `provider` and `model` keys to enable automatic failover when your main model encounters errors.
+The primary model fallback chain is configured exclusively through `config.yaml` â€” there are no environment variables for it. Add a top-level `fallback_providers` list with `provider` and `model` keys to enable automatic failover when your main model encounters errors.
 
 ```yaml
 fallback_providers:
@@ -646,5 +645,5 @@ These go in `~/.jarvis/config.yaml` under the `provider_routing` section:
 | `data_collection` | `"allow"` (default) or `"deny"` to exclude data-storing providers |
 
 :::tip
-Use `jarvis config set` to set environment variables — it automatically saves them to the right file (`.env` for secrets, `config.yaml` for everything else).
+Use `jarvis config set` to set environment variables â€” it automatically saves them to the right file (`.env` for secrets, `config.yaml` for everything else).
 :::
