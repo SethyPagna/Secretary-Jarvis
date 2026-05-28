@@ -89,6 +89,10 @@ const TOOL_TOGGLES = [
 const VOICE_SPEECH_THRESHOLD = 0.06;
 const VOICE_AUTO_STOP_SILENCE_MS = 650;
 const VOICE_MAX_NO_SPEECH_MS = 7000;
+const RUNTIME_POLL_VISIBLE_MS = 10_000;
+const RUNTIME_POLL_BACKGROUND_MS = 30_000;
+const STATS_POLL_VISIBLE_MS = 1_000;
+const STATS_POLL_BACKGROUND_MS = 5_000;
 
 function subsystemReady(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
@@ -254,6 +258,12 @@ export default function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
+    let runtimeTimer: number | null = null;
+
+    const runtimePollDelay = () =>
+      document.visibilityState === "visible"
+        ? RUNTIME_POLL_VISIBLE_MS
+        : RUNTIME_POLL_BACKGROUND_MS;
 
     const refreshStaticRuntime = () => {
       void Promise.allSettled([
@@ -271,19 +281,30 @@ export default function HomePage() {
             setTeamSouls(soulsResult.value.souls);
           }
         },
-      );
+      ).finally(() => {
+        if (!cancelled) {
+          runtimeTimer = window.setTimeout(refreshStaticRuntime, runtimePollDelay());
+        }
+      });
     };
 
     refreshStaticRuntime();
-    const runtimeTimer = window.setInterval(refreshStaticRuntime, 10_000);
     return () => {
       cancelled = true;
-      window.clearInterval(runtimeTimer);
+      if (runtimeTimer !== null) {
+        window.clearTimeout(runtimeTimer);
+      }
     };
   }, []);
 
   useEffect(() => {
     let cancelled = false;
+    let statsTimer: number | null = null;
+
+    const statsPollDelay = () =>
+      document.visibilityState === "visible" && statsVisible
+        ? STATS_POLL_VISIBLE_MS
+        : STATS_POLL_BACKGROUND_MS;
 
     const refreshStats = () => {
       void api
@@ -293,16 +314,22 @@ export default function HomePage() {
         })
         .catch(() => {
           if (!cancelled) setStats(null);
+        })
+        .finally(() => {
+          if (!cancelled) {
+            statsTimer = window.setTimeout(refreshStats, statsPollDelay());
+          }
         });
     };
 
     refreshStats();
-    const statsTimer = window.setInterval(refreshStats, 1_000);
     return () => {
       cancelled = true;
-      window.clearInterval(statsTimer);
+      if (statsTimer !== null) {
+        window.clearTimeout(statsTimer);
+      }
     };
-  }, []);
+  }, [statsVisible]);
 
   useEffect(() => {
     return () => {
