@@ -2,7 +2,7 @@
 Jarvis CLI - Unified command-line interface for JARVIS.
 
 Provides subcommands for:
-- jarvis chat          - Interactive chat (same as ./jarvis)
+- jarvis chat          - Interactive chat in the desktop backend runtime
 - jarvis gateway       - Run gateway in foreground
 - jarvis gateway start - Start gateway service
 - jarvis gateway stop  - Stop gateway service
