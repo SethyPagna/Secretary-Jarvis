@@ -1,0 +1,16 @@
+{
+  "id": "jarvis-agent",
+  "name": "JARVIS",
+  "version": "0.14.0",
+  "description": "JARVIS desktop agent with ACP editor integration, persistent memory, specialist souls, skills, and rich tool support.",
+  "repository": "https://github.com/SethyPagna/Secretary-Jarvis",
+  "website": "https://github.com/SethyPagna/Secretary-Jarvis/tree/jarvis-remake/docs/jarvis",
+  "authors": ["SethyPagna"],
+  "license": "MIT",
+  "distribution": {
+    "uvx": {
+      "package": "jarvis-agent[acp]==0.14.0",
+      "args": ["jarvis-acp"]
+    }
+  }
+}

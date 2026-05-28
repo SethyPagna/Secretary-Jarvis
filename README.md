@@ -1,85 +1,141 @@
-# Jarvis
+# JARVIS
 
-Jarvis is a strict local-first assistant platform foundation: model routing, policy guardrails, memory, agents, skills, connectors, and a cinematic local dashboard.
+JARVIS is a desktop-first AI agent: one home screen for chat, terminal work,
+voice, local model control, live stats, permissions, platforms, workflows, and
+settings.
 
-This repository is intentionally owned by Jarvis. OpenClaw, Ruflo, and additional open-source Jarvis variants are treated as references under `vendor/reference/`, not as the app shell.
+The product direction is simple: the desktop app is the control surface. The
+integrated terminal remains available inside the Home page, but the standalone
+command-line program is no longer the primary user experience.
 
-## Current Foundation
+## What It Does
 
-- React/Vite dashboard with grouped control-room sections and a brief-first Jarvis presence.
-- Electron HUD is the primary floating desktop assistant; Tauri remains the full dashboard/fallback shell.
-- Local gateway service exposing model, memory, agent, connector, skill, and policy state.
-- Ready downloaded models are tracked separately from needed feature downloads and future scaling models.
-- Python Brain and C++ Muscle service boundaries for orchestration and native inference.
-- TypeScript core package with tested policy and routing primitives.
-- Strict local-only defaults. Cloud providers are represented as disabled adapters.
-- Local voice assets are linked under `assets/voice`.
-- Hugging Face/Ollama model weights are kept outside Git under the parent `models/` folder.
+| Area | Capability |
+| --- | --- |
+| Unified Home | Orb state, live assistant stream, terminal panel, voice input, voice output, runtime stats, quick actions, notifications |
+| Models | llama.cpp first, vLLM second, Ollama last, plus API-key providers configured from the Models page |
+| Voice | Local Kokoro and OmniVoice-style voice simulation from bundled assets, system fallback, faster-whisper STT, whisper.cpp, and optional OpenAI Whisper API |
+| Souls | Detailed identity and voice profiles that can hot-swap without restarting the app |
+| Permissions | Tool toggles, filesystem boundaries, browser/network controls, and gateway-specific permission profiles |
+| Platforms | Telegram, Discord, WhatsApp, Slack, Signal, Email, Matrix, iMessage, Webhook, and LINE through a single managed gateway |
+| Workflow | React Flow automation canvas with triggers, actions, logic, execution status, and YAML storage |
+| Packaging | Electron plus bundled Python backend, packaged as desktop installers with hidden child processes owned by the app lifecycle |
 
-## Commands
+## Quick Run
+
+On Windows, use the root launchers:
 
 ```powershell
+.\setup-jarvis.cmd
+.\run-jarvis.cmd
+```
+
+`run-jarvis.cmd` prefers the packaged desktop app at
+`release\JARVIS 1.0.0.exe` when it exists. Otherwise it falls back to the
+Electron development shell. It also enables minimize-to-tray and points the
+backend at the sibling `models\` folder when that folder exists.
+
+The packaged exe does not start Docker. Local AI runs through native helpers
+owned by the desktop lifecycle: llama.cpp first, vLLM second when configured,
+and Ollama only as a final user-configured fallback.
+
+Useful launch switches:
+
+```powershell
+.\run-jarvis.cmd
+.\run-jarvis.cmd -ModelsDir "C:\path\to\models"
+.\run-jarvis.cmd -NoTray
+.\run-jarvis.cmd -Dev
+```
+
+To terminate everything JARVIS owns, including backend and local model helper
+children:
+
+```powershell
+.\stop-jarvis.cmd
+```
+
+Close-to-tray keeps the app alive. `Quit JARVIS` from the tray menu, Alt+F4
+when tray mode is disabled, or `stop-jarvis.cmd` performs full shutdown.
+
+## Local Development
+
+Backend development entrypoint:
+
+```bash
+jarvis-desktop-backend --host 127.0.0.1 --port 8765 --no-open
+```
+
+Desktop development entrypoint:
+
+```bash
 npm install
-npm run build
-npm test
-npm run dev:gateway
-npm run dev:dashboard
-npm run dev:brain
-npm run dev:desktop
-npm run hud -w @jarvis/desktop
+npm run desktop:dev
 ```
 
-Start local Jarvis services:
+The Electron shell starts the backend as a hidden child process, opens the
+frameless desktop window, and calls `/api/shutdown` before terminating backend
+children. The local runtime manager starts native model helpers as child
+processes and stops them before backend shutdown.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-jarvis.ps1 -OpenDashboard
+## Runtime Priorities
+
+Local LLM priority:
+
+1. llama.cpp
+2. vLLM
+3. Ollama
+
+Voice priority:
+
+1. Kokoro from local model/assets
+2. OmniVoice-style local simulation from bundled reference voices
+3. System TTS fallback
+4. Custom OpenAI-compatible TTS endpoint when the user configures one
+
+Speech-to-text priority:
+
+1. faster-whisper with downloaded local models
+2. whisper.cpp with local GGML/GGUF models
+3. OpenAI Whisper API only when a user supplies an API key
+
+## Production Gates
+
+JARVIS is only ready to ship when automated checks prove:
+
+- The active LLM returns a real non-empty response.
+- Tokens per second, latency, and blockers are reported by runtime smoke tests.
+- TTS produces playable audio through the same response path used by desktop chat.
+- STT transcribes microphone audio into the Home input and dispatches it into the live terminal/chat stream.
+- Stats are real process/system values, not placeholders.
+- Window close, tray quit, and backend shutdown terminate all owned child processes.
+- PyInstaller and electron-builder packaging produce a launchable portable desktop executable.
+
+## Repository
+
+Primary repository:
+
+```bash
+git clone https://github.com/SethyPagna/Secretary-Jarvis.git
+cd Secretary-Jarvis
 ```
 
-Register Jarvis to start local background services at Windows logon:
+This branch tracks the desktop remake work on `jarvis-remake`.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\register-startup-task.ps1
+## Verification
+
+Focused checks used during the desktop remake:
+
+```bash
+python -m unittest tests.jarvis_cli.test_jarvis_rebrand_contract
+python -m unittest tests.jarvis_cli.test_desktop_home_contract
+python -m unittest tests.jarvis_cli.test_desktop_identity_contract
+cd web && npm run build
 ```
 
-## Windows Setup
+Packaging checks also require FastAPI, Uvicorn, Pydantic, and PyInstaller to be
+installed in the active Python environment or available from a local wheelhouse.
 
-Doctor-only:
+## License
 
-```powershell
-.\scripts\setup-windows.ps1
-```
-
-Install missing free/open-source tooling where possible:
-
-```powershell
-.\scripts\setup-windows.ps1 -Install
-```
-
-Pull the balanced Ollama model pack after reviewing storage needs:
-
-```powershell
-.\scripts\setup-windows.ps1 -PullBalancedModels
-```
-
-The dashboard is designed to consume `http://localhost:4317/api/status`, with seeded local fallback data when the gateway is offline.
-
-## Setup Lists
-
-Jarvis keeps two separate setup lists:
-
-- Needed feature downloads: models/tools the code is already wired to use once you download them.
-- Future scaling models: optional larger models for later switching and benchmarking.
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\show-setup-lists.ps1
-```
-
-See `docs/setup-lists.md`.
-
-## Model Weights
-
-See `docs/local-model-downloads.md` for copy-paste PowerShell commands that clone Hugging Face repos and download full local snapshots. The model folders are ignored by Git on purpose.
-
-## Reference Audit
-
-See `docs/reference-audit.md` for the local OpenClaw/Ruflo/Jarvis variant source audit and adoption rules.
+MIT. See [LICENSE](LICENSE).
