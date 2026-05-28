@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { PluginSlot } from "@/plugins";
+import { useScheduledPoll } from "@/hooks/useScheduledPoll";
 
 const FILES = ["agent", "errors", "gateway"] as const;
 const LEVELS = ["ALL", "DEBUG", "INFO", "WARNING", "ERROR"] as const;
@@ -71,7 +72,7 @@ export default function LogsPage() {
   const fetchLogs = useCallback(() => {
     setLoading(true);
     setError(null);
-    api
+    return api
       .getLogs({ file, lines: lineCount, level, component })
       .then((resp) => {
         setLines(resp.lines);
@@ -89,7 +90,7 @@ export default function LogsPage() {
     setAfterTitle(
       <span className="flex items-center gap-1.5">
         <Badge tone="secondary" className="text-xs">
-          {formatFilterLabel(file)} · {formatFilterLabel(level)} ·{" "}
+          {formatFilterLabel(file)} / {formatFilterLabel(level)} /{" "}
           {formatFilterLabel(component)}
         </Badge>
         <Button
@@ -147,11 +148,11 @@ export default function LogsPage() {
     fetchLogs();
   }, [fetchLogs]);
 
-  useEffect(() => {
-    if (!autoRefresh) return;
-    const interval = setInterval(fetchLogs, 5000);
-    return () => clearInterval(interval);
-  }, [autoRefresh, fetchLogs]);
+  useScheduledPoll(fetchLogs, {
+    enabled: autoRefresh,
+    immediate: false,
+    intervalMs: 5000,
+  });
 
   return (
     <div className="flex min-w-0 max-w-full flex-col gap-4">

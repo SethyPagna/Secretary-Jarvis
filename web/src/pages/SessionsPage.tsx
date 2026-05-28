@@ -33,6 +33,7 @@ import { timeAgo } from "@/lib/utils";
 import { Markdown } from "@/components/Markdown";
 import { PlatformsCard } from "@/components/PlatformsCard";
 import { Toast } from "@/components/Toast";
+import { useScheduledPoll } from "@/hooks/useScheduledPoll";
 import { Button } from "@jarvis_managed-research/ui/ui/components/button";
 import { ListItem } from "@jarvis_managed-research/ui/ui/components/list-item";
 import { Segmented } from "@jarvis_managed-research/ui/ui/components/segmented";
@@ -506,21 +507,14 @@ export default function SessionsPage() {
     loadSessions(page);
   }, [loadSessions, page]);
 
-  useEffect(() => {
-    const loadOverview = () => {
-      api
-        .getStatus()
-        .then(setStatus)
-        .catch(() => {});
-      api
-        .getSessions(50)
-        .then((r) => setOverviewSessions(r.sessions))
-        .catch(() => {});
-    };
-    loadOverview();
-    const id = setInterval(loadOverview, 5000);
-    return () => clearInterval(id);
+  const loadOverview = useCallback(() => {
+    return Promise.allSettled([
+      api.getStatus().then(setStatus),
+      api.getSessions(50).then((response) => setOverviewSessions(response.sessions)),
+    ]);
   }, []);
+
+  useScheduledPoll(loadOverview, { intervalMs: 5000 });
 
   useEffect(() => {
     const el = logScrollRef.current;

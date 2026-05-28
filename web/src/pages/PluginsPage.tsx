@@ -33,6 +33,7 @@ import { useI18n } from "@/i18n";
 import { PluginSlot } from "@/plugins";
 import { cn } from "@/lib/utils";
 import { usePageHeader } from "@/contexts/usePageHeader";
+import { useScheduledPoll } from "@/hooks/useScheduledPoll";
 
 /** Select value for built-in memory (`config` uses empty string). Never use `""`; UI Select maps empty value to an empty label. */
 const MEMORY_PROVIDER_BUILTIN = "__jarvis_memory_builtin__";
@@ -81,25 +82,14 @@ export default function PluginsPage() {
     void loadHub().finally(() => setLoading(false));
   }, [loadHub]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const refreshStatus = () => {
-      void api
-        .getStatus()
-        .then((next) => {
-          if (!cancelled) setStatus(next);
-        })
-        .catch(() => {
-          if (!cancelled) setStatus(null);
-        });
-    };
-    refreshStatus();
-    const timer = window.setInterval(refreshStatus, 3000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
+  const refreshStatus = useCallback(() => {
+    return api
+      .getStatus()
+      .then(setStatus)
+      .catch(() => setStatus(null));
   }, []);
+
+  useScheduledPoll(refreshStatus, { intervalMs: 3000 });
 
   useEffect(() => {
     setAfterTitle(

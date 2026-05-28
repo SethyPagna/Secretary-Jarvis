@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { api } from "@/lib/api";
 import type { StatusResponse } from "@/lib/api";
+import { useScheduledPoll } from "@/hooks/useScheduledPoll";
 
 const POLL_MS = 10_000;
 
@@ -11,17 +12,14 @@ const POLL_MS = 10_000;
 export function useSidebarStatus() {
   const [status, setStatus] = useState<StatusResponse | null>(null);
 
-  useEffect(() => {
-    const load = () => {
-      api
-        .getStatus()
-        .then(setStatus)
-        .catch(() => {});
-    };
-    load();
-    const id = setInterval(load, POLL_MS);
-    return () => clearInterval(id);
+  const load = useCallback(() => {
+    return api
+      .getStatus()
+      .then(setStatus)
+      .catch(() => undefined);
   }, []);
+
+  useScheduledPoll(load, { intervalMs: POLL_MS });
 
   return status;
 }
