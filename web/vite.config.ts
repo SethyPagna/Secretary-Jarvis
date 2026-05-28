@@ -6,13 +6,13 @@ import path from "path";
 const BACKEND = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:9119";
 
 /**
- * In production the Python `jarvis dashboard` server injects a one-shot
- * session token into `index.html` (see `jarvis_cli/web_server.py`). The
- * Vite dev server serves its own `index.html`, so unless we forward that
- * token, every protected `/api/*` call 401s.
+ * In production the Python desktop backend injects a one-shot session token
+ * into `index.html` (see `jarvis_cli/web_server.py`). The Vite dev server
+ * serves its own `index.html`, so unless we forward that token, protected
+ * `/api/*` calls return 401.
  *
- * This plugin fetches the running dashboard's `index.html` on each dev page
- * load, scrapes the `window.__JARVIS_SESSION_TOKEN__` assignment, and
+ * This plugin fetches the running desktop backend's `index.html` on each dev
+ * page load, scrapes the `window.__JARVIS_SESSION_TOKEN__` assignment, and
  * re-injects it into the dev HTML. No-op in production builds.
  */
 function jarvisDevToken(): Plugin {
@@ -28,8 +28,8 @@ function jarvisDevToken(): Plugin {
         const match = html.match(TOKEN_RE);
         if (!match) {
           console.warn(
-            `[jarvis] Could not find session token in ${BACKEND} — ` +
-              `is \`jarvis dashboard\` running? /api calls will 401.`,
+            `[jarvis] Could not find session token in ${BACKEND} - ` +
+              `is the JARVIS desktop backend running? /api calls will 401.`,
           );
           return;
         }
@@ -42,8 +42,8 @@ function jarvisDevToken(): Plugin {
         ];
       } catch (err) {
         console.warn(
-          `[jarvis] Dashboard at ${BACKEND} unreachable — ` +
-            `start it with \`jarvis dashboard\` or set JARVIS_DASHBOARD_URL. ` +
+          `[jarvis] Desktop backend at ${BACKEND} unreachable - ` +
+            `start JARVIS or set JARVIS_DASHBOARD_URL. ` +
             `(${(err as Error).message})`,
         );
       }
@@ -61,13 +61,13 @@ export default defineConfig({
     },
     // When @jarvis_managed-research/ui is symlinked via `file:../../design-language`,
     // Node's module resolution would pick up shared deps from
-    // design-language/node_modules/*, giving us two copies + breaking
-    // hooks (useRef-of-null), webgl contexts, etc. Force everything that
-    // exists in BOTH places to use the dashboard's copy.
+    // design-language/node_modules/*, giving us two copies and breaking hooks
+    // (useRef-of-null), webgl contexts, etc. Force packages that exist in both
+    // places to use the desktop app's copy.
     //
-    // Don't list packages here that only exist in the DS (nanostores,
-    // @nanostores/react) — Vite dedupe errors out when it can't find
-    // them at the project root.
+    // Do not list packages here that only exist in the design system
+    // (nanostores, @nanostores/react). Vite dedupe errors out when it cannot
+    // find them at the project root.
     dedupe: [
       "react",
       "react-dom",
@@ -88,9 +88,9 @@ export default defineConfig({
         target: BACKEND,
         ws: true,
       },
-      // Same host as `jarvis dashboard` must serve these; Vite has no
-      // dashboard-plugins/* files, so without this, plugin scripts 404
-      // or receive index.html in dev.
+      // Same host as the JARVIS desktop backend must serve these. Vite has no
+      // dashboard-plugins/* files, so plugin scripts would otherwise 404 or
+      // receive index.html in dev.
       "/dashboard-plugins": BACKEND,
     },
   },

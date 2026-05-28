@@ -3,6 +3,7 @@
   "productName": "JARVIS",
   "version": "1.0.0",
   "description": "JARVIS desktop agent with an embedded Python backend, local model orchestration, and voice readiness checks.",
+  "author": "SethyPagna",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
