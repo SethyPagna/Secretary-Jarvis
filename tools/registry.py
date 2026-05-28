@@ -1,4 +1,4 @@
-"""Central registry for all jarvis-agent tools.
+﻿"""Central registry for all jarvis-agent tools.
 
 Each tool file calls ``registry.register()`` at module level to declare its
 schema, handler, toolset membership, and availability check.  ``model_tools.py``
@@ -11,7 +11,7 @@ Import chain (circular-import safe):
            ^
     model_tools.py  (imports tools.registry + all tool modules)
            ^
-    run_agent.py, cli.py, batch_runner.py, etc.
+    run_agent.py, cli.py, tools/batch_runner.py, etc.
 """
 
 import ast
@@ -587,3 +587,4 @@ def tool_result(data=None, **kwargs) -> str:
     if data is not None:
         return json.dumps(data, ensure_ascii=False)
     return json.dumps(kwargs, ensure_ascii=False)
+

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Batch Agent Runner
 
@@ -11,13 +11,13 @@ across multiple prompts from a dataset. It includes:
 - Tool usage statistics aggregation across all batches
 
 Usage:
-    python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run
+    python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 --run_name=my_run
     
     # Resume an interrupted run
-    python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --resume
+    python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --resume
     
     # Use a specific toolset distribution
-    python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --distribution=image_gen
+    python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --distribution=image_gen
 """
 
 # IMPORTANT: jarvis_bootstrap must be the very first import — UTF-8 stdio
@@ -1199,24 +1199,24 @@ def main(
         
     Examples:
         # Basic usage
-        python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run
+        python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 --run_name=my_run
         
         # Resume interrupted run
-        python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --resume
+        python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 --run_name=my_run --resume
         
         # Use specific distribution
-        python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=image_test --distribution=image_gen
+        python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 --run_name=image_test --distribution=image_gen
         
         # With disabled reasoning and max tokens
-        python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run \\
+        python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 --run_name=my_run \\
                                --reasoning_disabled --max_tokens=128000
         
         # With prefill messages from file
-        python batch_runner.py --dataset_file=data.jsonl --batch_size=10 --run_name=my_run \\
+        python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 --run_name=my_run \\
                                --prefill_messages_file=configs/prefill_opus.json
         
         # List available distributions
-        python batch_runner.py --list_distributions
+        python -m tools.batch_runner --list_distributions
     """
     # Handle list distributions
     if list_distributions:
@@ -1230,7 +1230,7 @@ def main(
             print_distribution_info(dist_name)
         
         print("\n💡 Usage:")
-        print("  python batch_runner.py --dataset_file=data.jsonl --batch_size=10 \\")
+        print("  python -m tools.batch_runner --dataset_file=data.jsonl --batch_size=10 \\")
         print("                         --run_name=my_run --distribution=<name>")
         return
     
@@ -1318,4 +1318,6 @@ def main(
 
 if __name__ == "__main__":
     fire.Fire(main)
+
+
 

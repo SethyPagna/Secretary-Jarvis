@@ -1,6 +1,6 @@
-"""Trajectory saving utilities and static helpers.
+﻿"""Trajectory saving utilities and static helpers.
 
-_convert_to_trajectory_format stays as an AIAgent method (batch_runner.py
+_convert_to_trajectory_format stays as an AIAgent method (tools/batch_runner.py
 calls agent._convert_to_trajectory_format). Only the static helpers and
 the file-write logic live here.
 """
@@ -54,3 +54,4 @@ def save_trajectory(trajectory: List[Dict[str, Any]], model: str,
         logger.info("Trajectory saved to %s", filename)
     except Exception as e:
         logger.warning("Failed to save trajectory: %s", e)
+

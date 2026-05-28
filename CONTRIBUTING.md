@@ -1,4 +1,4 @@
-# Contributing to JARVIS
+﻿# Contributing to JARVIS
 
 Thank you for contributing to JARVIS! This guide covers everything you need: setting up your dev environment, understanding the architecture, deciding what to build, and getting your PR merged.
 
@@ -140,7 +140,7 @@ jarvis-agent/
 ├── model_tools.py            # Tool orchestration (thin layer over tools/registry.py)
 ├── toolsets.py               # Tool groupings and presets (jarvis-cli, jarvis-telegram, etc.)
 ├── jarvis_state.py           # SQLite session database with FTS5 full-text search, session titles
-├── batch_runner.py           # Parallel batch processing for trajectory generation
+├── tools/batch_runner.py           # Parallel batch processing for trajectory generation
 │
 ├── agent/                    # Agent internals (extracted modules)
 │   ├── prompt_builder.py         # System prompt assembly (identity, skills, context files, memory)
@@ -919,3 +919,4 @@ test(tools): add unit tests for file_operations
 ## License
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+

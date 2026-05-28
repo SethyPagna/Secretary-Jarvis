@@ -1,4 +1,4 @@
-"""Tests for config.get() null-coalescing in tool configuration.
+﻿"""Tests for config.get() null-coalescing in tool configuration.
 
 YAML ``null`` values (or ``~``) for a present key make ``dict.get(key, default)``
 return ``None`` instead of the default — calling ``.lower()`` on that raises
@@ -83,11 +83,11 @@ class TestMCPAuthNullGuard:
 # ── Trajectory compressor ─────────────────────────────────────────────────
 
 class TestTrajectoryCompressorNullGuard:
-    """trajectory_compressor.py — _detect_provider() and config loading"""
+    """tools/trajectory_compressor.py — _detect_provider() and config loading"""
 
     def test_null_base_url_does_not_crash(self):
         """base_url=None should not crash _detect_provider()."""
-        from trajectory_compressor import CompressionConfig, TrajectoryCompressor
+        from tools.trajectory_compressor import CompressionConfig, TrajectoryCompressor
 
         config = CompressionConfig()
         config.base_url = None
@@ -101,7 +101,7 @@ class TestTrajectoryCompressorNullGuard:
 
     def test_config_loading_null_base_url_keeps_default(self):
         """YAML ``summarization: {base_url: null}`` should keep default."""
-        from trajectory_compressor import CompressionConfig
+        from tools.trajectory_compressor import CompressionConfig
         from jarvis_constants import OPENROUTER_BASE_URL
 
         config = CompressionConfig()
@@ -109,3 +109,4 @@ class TestTrajectoryCompressorNullGuard:
 
         config.base_url = data["summarization"].get("base_url") or config.base_url
         assert config.base_url == OPENROUTER_BASE_URL
+

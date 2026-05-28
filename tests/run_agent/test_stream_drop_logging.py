@@ -1,4 +1,4 @@
-"""Tests for richer stream-drop diagnostics in agent.log.
+﻿"""Tests for richer stream-drop diagnostics in agent.log.
 
 When a subagent's stream drops mid-tool-call, the WARNING in agent.log must
 carry enough breadcrumbs to answer "WHY did it drop" without requiring a
@@ -242,6 +242,7 @@ def test_emit_stream_drop_ui_omits_suffix_without_diag():
 def test_quiet_mode_does_not_clobber_runagent_logger_level():
     """Regression guard for the parent fix — must persist across this PR."""
     _ = _make_agent()
-    for name in ("run_agent", "tools", "trajectory_compressor", "cron", "jarvis_cli"):
+    for name in ("run_agent", "tools", "tools.trajectory_compressor", "cron", "jarvis_cli"):
         logger = logging.getLogger(name)
         assert logger.getEffectiveLevel() <= logging.WARNING
+

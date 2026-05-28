@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 SWE Runner with Jarvis Trajectory Format
 
 A runner that uses Jarvis-Agent's built-in execution environments
 (local, docker, modal) and outputs trajectories in the Jarvis-Agent format
-compatible with batch_runner.py and trajectory_compressor.py.
+compatible with tools/batch_runner.py and tools/trajectory_compressor.py.
 
 Features:
 - Uses Jarvis-Agent's Docker, Modal, or Local environments for command execution
@@ -314,7 +314,7 @@ class MiniSWERunner:
         """
         Convert internal message format to Jarvis trajectory format.
         
-        This produces the exact format used by batch_runner.py.
+        This produces the exact format used by tools/batch_runner.py.
         """
         trajectory = []
         
@@ -733,3 +733,4 @@ def main(
 
 if __name__ == "__main__":
     fire.Fire(main)
+

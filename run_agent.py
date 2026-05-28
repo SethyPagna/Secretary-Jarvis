@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 AI Agent Runner with Tool Calling
 
@@ -4244,3 +4244,4 @@ def main(
 if __name__ == "__main__":
     import fire
     fire.Fire(main)
+

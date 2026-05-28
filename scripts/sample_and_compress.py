@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Sample and Compress HuggingFace Datasets
 
@@ -267,7 +267,7 @@ def run_compression(input_dir: Path, output_dir: Path, config_path: str):
     # Import the compressor
     import sys
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from trajectory_compressor import TrajectoryCompressor, CompressionConfig
+    from tools.trajectory_compressor import TrajectoryCompressor, CompressionConfig
     
     print(f"\n🗜️  Running trajectory compression...")
     print(f"   Input: {input_dir}")
@@ -407,3 +407,4 @@ def main(
 
 if __name__ == "__main__":
     fire.Fire(main)
+

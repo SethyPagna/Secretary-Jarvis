@@ -1,4 +1,4 @@
-"""Windows UTF-8 bootstrap for Jarvis entry points.
+﻿"""Windows UTF-8 bootstrap for Jarvis entry points.
 
 Python on Windows has two long-standing text-encoding footguns:
 
@@ -15,7 +15,7 @@ Python on Windows has two long-standing text-encoding footguns:
 This module fixes both on Windows *only* — POSIX is untouched.  It
 should be imported at the very top of every Jarvis entry point
 (``jarvis``, ``jarvis-agent``, ``jarvis-acp``, ``python -m gateway.run``,
-``batch_runner.py``, ``cron/scheduler.py``) before any other imports
+``tools/batch_runner.py``, ``cron/scheduler.py``) before any other imports
 that might do file I/O or print to stdout.
 
 What this module does on Windows:
@@ -127,3 +127,4 @@ def apply_windows_utf8_bootstrap() -> bool:
 # the very top of their module, before importing anything else.  The
 # import side effect does the right thing.
 apply_windows_utf8_bootstrap()
+

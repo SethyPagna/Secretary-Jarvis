@@ -1,4 +1,4 @@
-"""Tests for jarvis_bootstrap — Windows UTF-8 stdio shim.
+﻿"""Tests for jarvis_bootstrap — Windows UTF-8 stdio shim.
 
 The bootstrap module is imported at the top of every Jarvis entry point
 (jarvis, jarvis-agent, jarvis-acp, gateway, batch_runner, cli.py).  It
@@ -245,7 +245,7 @@ class TestEntryPointsImportBootstrap:
         "run_agent.py",          # jarvis-agent (console_script)
         "acp_adapter/entry.py",  # jarvis-acp (console_script)
         "gateway/run.py",        # gateway
-        "batch_runner.py",       # batch mode
+        "tools/batch_runner.py",       # batch mode
         "cli.py",                # legacy direct-launch CLI
     ]
 
@@ -312,3 +312,4 @@ class TestEntryPointsImportBootstrap:
             f"configured before anything else initializes.  Move the "
             f"'import jarvis_bootstrap' line to be the first import."
         )
+

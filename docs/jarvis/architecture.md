@@ -1,4 +1,4 @@
-# Architecture
+﻿# Architecture
 
 > Imported from the local source documentation and rewritten for the JARVIS desktop-first app. Run commands from the integrated Home terminal unless a section explicitly refers to packaging or automation.
 
@@ -64,7 +64,7 @@ jarvis-agent/
 ├── toolsets.py               # Tool groupings and platform presets
 ├── jarvis_state.py           # SQLite session/state database with FTS5
 ├── jarvis_constants.py       # JARVIS_HOME, profile-aware paths
-├── batch_runner.py           # Batch trajectory generation
+├── tools/batch_runner.py           # Batch trajectory generation
 │
 ├── agent/                    # Agent internals
 │   ├── prompt_builder.py     # System prompt assembly
@@ -276,7 +276,7 @@ tools/*.py  (each calls registry.register() at import time)
        ↑
 model_tools.py  (imports tools/registry + triggers tool discovery)
        ↑
-run_agent.py, cli.py, batch_runner.py, environments/
+run_agent.py, cli.py, tools/batch_runner.py, environments/
 ```
 
 This chain means tool registration happens at import time, before any agent instance is created. Any `tools/*.py` file with a top-level `registry.register()` call is auto-discovered — no manual import list needed.
@@ -1024,3 +1024,4 @@ Tool calls may execute sequentially or concurrently depending on the tool mix an
 - [Built-in Tools Reference](../reference/tools-reference.md)
 - [Agent Loop Internals](./agent-loop.md)
 - [ACP Internals](./acp-internals.md)
+

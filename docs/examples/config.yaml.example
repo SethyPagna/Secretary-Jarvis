@@ -1,4 +1,4 @@
-# JARVIS CLI Configuration
+﻿# JARVIS CLI Configuration
 # Copy this file to cli-config.yaml and customize as needed.
 # This file configures the CLI behavior. Environment variables in .env take precedence.
 
@@ -1098,3 +1098,4 @@ display:
 #     - command: "~/.jarvis/agent-hooks/log-orchestration.sh"
 #
 # hooks_auto_accept: false
+

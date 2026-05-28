@@ -1,4 +1,4 @@
-"""Centralized logging setup for JARVIS.
+﻿"""Centralized logging setup for JARVIS.
 
 Provides a single ``setup_logging()`` entry point that both the CLI and
 gateway call early in their startup path.  All log files live under
@@ -143,7 +143,7 @@ class _ComponentFilter(logging.Filter):
 # Used by _ComponentFilter and exposed for ``jarvis logs --component``.
 COMPONENT_PREFIXES = {
     "gateway": ("gateway", "jarvis_plugins"),
-    "agent": ("agent", "run_agent", "model_tools", "batch_runner"),
+    "agent": ("agent", "run_agent", "model_tools", "tools.batch_runner"),
     "tools": ("tools",),
     "cli": ("jarvis_cli", "cli"),
     "cron": ("cron",),
@@ -395,3 +395,4 @@ def _read_logging_config():
     except Exception:
         pass
     return (None, None, None)
+

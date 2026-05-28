@@ -239,7 +239,7 @@ TIPS = [
     "Checkpoints use shadow repos in ~/.jarvis/checkpoints/ â€” your project's .git is never touched.",
 
     # --- Batch & Data ---
-    "batch_runner.py processes hundreds of prompts in parallel for training data generation.",
+    "tools/batch_runner.py processes hundreds of prompts in parallel for training data generation.",
     "jarvis chat -Q enables quiet mode for programmatic use â€” suppresses banner and spinner.",
     "Trajectory saving (--save-trajectories) captures full tool-use traces for model training.",
 
@@ -402,7 +402,7 @@ TIPS = [
     'TELEGRAM_WEBHOOK_SECRET is required whenever TELEGRAM_WEBHOOK_URL is set â€” generate with openssl rand -hex 32.',
 
     # --- Batch ---
-    "batch_runner.py --resume content-matches completed prompts by text so dataset reorders don't re-run finished work.",
+    "tools/batch_runner.py --resume content-matches completed prompts by text so dataset reorders don't re-run finished work.",
 
     # --- Less-Known Slash Commands ---
     '/new starts a fresh session in place (alias /reset) â€” fresh session ID, clean history, CLI stays open.',
@@ -478,4 +478,5 @@ def get_random_tip(exclude_recent: int = 0) -> str:
             deduplication across sessions.
     """
     return random.choice(TIPS)
+
 

@@ -1,4 +1,4 @@
-"""Tests that callable api_key (Entra ID bearer provider) flows through
+﻿"""Tests that callable api_key (Entra ID bearer provider) flows through
 the agent stack without coercion.
 
 The OpenAI Python SDK accepts ``api_key: str | None | Callable[[], str]``,
@@ -248,7 +248,7 @@ class TestBatchRunnerCallableHandling:
         importing avoids spinning up the full BatchRunner."""
         from pathlib import Path
         src = (Path(__file__).resolve().parent.parent.parent
-               / "batch_runner.py").read_text()
+               / "tools" / "batch_runner.py").read_text()
         assert "callable(self.api_key) and not isinstance(self.api_key, str)" in src, (
             "BatchRunner.api_key callable check changed — update test or "
             "verify the new predicate still routes Entra token providers "
@@ -373,3 +373,4 @@ class TestInlinedDisplayMasks:
             "surface a Microsoft Entra ID branch before slicing the "
             "key prefix."
         )
+

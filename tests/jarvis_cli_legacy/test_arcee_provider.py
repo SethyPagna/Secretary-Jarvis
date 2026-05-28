@@ -1,4 +1,4 @@
-"""Tests for Arcee AI provider support — standard direct API provider."""
+﻿"""Tests for Arcee AI provider support — standard direct API provider."""
 
 import types
 
@@ -164,7 +164,7 @@ class TestArceeURLMapping:
         assert "arceeai" in _PROVIDER_PREFIXES
 
     def test_trajectory_compressor_detects_arcee(self):
-        import trajectory_compressor as tc
+        import tools.trajectory_compressor as tc
         comp = tc.TrajectoryCompressor.__new__(tc.TrajectoryCompressor)
         comp.config = types.SimpleNamespace(base_url="https://api.arcee.ai/api/v1")
         assert comp._detect_provider() == "arcee"
@@ -199,3 +199,4 @@ class TestArceeAuxiliary:
         """Arcee uses main-model-first — no entry in _API_KEY_PROVIDER_AUX_MODELS."""
         from agent.auxiliary_client import _API_KEY_PROVIDER_AUX_MODELS
         assert "arcee" not in _API_KEY_PROVIDER_AUX_MODELS
+

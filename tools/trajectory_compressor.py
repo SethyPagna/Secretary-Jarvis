@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Trajectory Compressor
 
@@ -15,19 +15,19 @@ Compression Strategy:
 
 Usage:
     # Compress a directory of JSONL files
-    python trajectory_compressor.py --input=data/my_run
+    python -m tools.trajectory_compressor --input=data/my_run
     
     # Compress a single JSONL file
-    python trajectory_compressor.py --input=data/trajectories.jsonl
+    python -m tools.trajectory_compressor --input=data/trajectories.jsonl
     
     # Compress 15% sample of a file
-    python trajectory_compressor.py --input=data/trajectories.jsonl --sample_percent=15
+    python -m tools.trajectory_compressor --input=data/trajectories.jsonl --sample_percent=15
     
     # Compress with custom output and token target
-    python trajectory_compressor.py --input=data/trajectories.jsonl --output=compressed.jsonl --target_max_tokens=16000
+    python -m tools.trajectory_compressor --input=data/trajectories.jsonl --output=compressed.jsonl --target_max_tokens=16000
     
     # Compress 10% sample from a directory
-    python trajectory_compressor.py --input=data/my_run --sample_percent=10
+    python -m tools.trajectory_compressor --input=data/my_run --sample_percent=10
 """
 
 import json
@@ -1316,16 +1316,16 @@ def main(
     
     Examples:
         # Compress a directory (original behavior)
-        python trajectory_compressor.py --input=data/my_run
+        python -m tools.trajectory_compressor --input=data/my_run
         
         # Compress a single file
-        python trajectory_compressor.py --input=data/trajectories.jsonl
+        python -m tools.trajectory_compressor --input=data/trajectories.jsonl
         
         # Compress 15% sample of a file
-        python trajectory_compressor.py --input=data/trajectories.jsonl --sample_percent=15
+        python -m tools.trajectory_compressor --input=data/trajectories.jsonl --sample_percent=15
         
         # Compress 10% sample with custom output
-        python trajectory_compressor.py --input=data/trajectories.jsonl --sample_percent=10 --output=data/sampled_compressed.jsonl
+        python -m tools.trajectory_compressor --input=data/trajectories.jsonl --sample_percent=10 --output=data/sampled_compressed.jsonl
     """
     import random
     import tempfile
@@ -1506,3 +1506,5 @@ def main(
 
 if __name__ == "__main__":
     fire.Fire(main)
+
+

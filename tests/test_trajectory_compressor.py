@@ -1,4 +1,4 @@
-"""Tests for trajectory_compressor.py — config, metrics, and compression logic."""
+﻿"""Tests for tools/trajectory_compressor.py — config, metrics, and compression logic."""
 
 import importlib
 import json
@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, patch, MagicMock
 
 import pytest
 
-from trajectory_compressor import (
+from tools.trajectory_compressor import (
     CompressionConfig,
     TrajectoryMetrics,
     AggregateMetrics,
@@ -25,8 +25,8 @@ def test_import_loads_env_from_jarvis_home(tmp_path, monkeypatch):
     monkeypatch.setenv("JARVIS_HOME", str(home))
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
-    sys.modules.pop("trajectory_compressor", None)
-    importlib.import_module("trajectory_compressor")
+    sys.modules.pop("tools.trajectory_compressor", None)
+    importlib.import_module("tools.trajectory_compressor")
 
     assert os.getenv("OPENROUTER_API_KEY") == "from-jarvis-home"
 
@@ -508,3 +508,4 @@ class TestGenerateSummary:
         summary = await tc._generate_summary_async("Turn content", metrics)
 
         assert summary == "[CONTEXT SUMMARY]:"
+

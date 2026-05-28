@@ -1,4 +1,4 @@
-"""Tests for batch_runner checkpoint behavior — incremental writes, resume, atomicity."""
+﻿"""Tests for batch_runner checkpoint behavior — incremental writes, resume, atomicity."""
 
 import json
 import os
@@ -12,7 +12,7 @@ import pytest
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from batch_runner import BatchRunner, _process_batch_worker
+from tools.batch_runner import BatchRunner, _process_batch_worker
 
 
 @pytest.fixture
@@ -173,7 +173,7 @@ class TestBatchWorkerResumeBehavior:
             "toolsets_used": [],
         }
 
-        monkeypatch.setattr("batch_runner._process_single_prompt", lambda *args, **kwargs: prompt_result)
+        monkeypatch.setattr("tools.batch_runner._process_single_prompt", lambda *args, **kwargs: prompt_result)
 
         result = _process_batch_worker((
             1,
@@ -250,3 +250,4 @@ class TestFinalCheckpointNoDuplicates:
             buggy.extend(br.get("completed_prompts", []))
         # Every index appears twice
         assert len(buggy) == 2 * len(set(buggy))
+
