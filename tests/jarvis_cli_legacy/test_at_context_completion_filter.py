@@ -1,8 +1,8 @@
 """Regression test: `@folder:` completion must only surface directories and
 `@file:` must only surface regular files.
 
-Reported during TUI v2 blitz testing: typing `@folder:` showed .dockerignore,
-.env, .gitignore, etc. alongside the actual directories because the path-
+Reported during TUI v2 blitz testing: typing `@folder:` showed files like
+.env and .gitignore alongside the actual directories because the path-
 completion branch yielded every entry regardless of the explicit prefix, and
 auto-switched the completion kind based on `is_dir`. That defeated the user's
 explicit choice and rendered the `@folder:` / `@file:` prefixes useless for

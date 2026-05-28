@@ -72,7 +72,6 @@ def should_rebrand(path: Path) -> bool:
         "Dockerfile",
         "MANIFEST.in",
         ".env.example",
-        ".dockerignore",
         ".gitignore",
     }
 

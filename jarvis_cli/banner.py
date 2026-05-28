@@ -220,7 +220,7 @@ def check_via_pypi() -> Optional[int]:
 def check_for_updates() -> Optional[int]:
     """Check whether a Jarvis update is available.
 
-    Two paths: if ``JARVIS_REVISION`` is set (nix builds embed it), compare
+    Two paths: if ``JARVIS_REVISION`` is set (packaged builds can embed it), compare
     it to upstream main via ``git ls-remote``. Otherwise look for a local
     git checkout and count commits behind ``origin/main``.
 
@@ -665,7 +665,7 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
             else:
                 # UPDATE_AVAILABLE_NO_COUNT: nix-built jarvis; we know an update
                 # exists but not by how much, and we don't know how the user
-                # installed it (nix run, profile, system flake, home-manager).
+                # installed it (packaged app, profile, or external package manager).
                 managed_cmd = get_managed_update_command()
                 line = "[bold yellow]⚠ update available[/]"
                 if managed_cmd:

@@ -21,7 +21,6 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOCKERFILE = REPO_ROOT / "Dockerfile"
-DOCKERIGNORE = REPO_ROOT / ".dockerignore"
 
 
 @pytest.fixture(scope="module")
@@ -156,12 +155,3 @@ def test_dockerfile_materializes_local_tui_ink_package(dockerfile_text):
         "so ``await import('@jarvis/ink')`` resolves at runtime."
     )
 
-
-def test_dockerignore_excludes_nested_dependency_dirs():
-    if not DOCKERIGNORE.exists():
-        pytest.skip(".dockerignore not present in this checkout")
-
-    text = DOCKERIGNORE.read_text()
-
-    assert "**/node_modules" in text
-    assert "**/.venv" in text

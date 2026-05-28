@@ -5,7 +5,7 @@ Preserves critical flags (--tui, --dev, --profile, --model, etc.) across
 process replacement so that ``jarvis sessions browse`` or post-setup relaunch
 doesn't silently drop the user's UI mode or other preferences.
 
-Also works when ``jarvis`` is not on PATH (e.g. ``nix run`` or ``python -m``).
+Also works when ``jarvis`` is not on PATH (for example ``python -m``).
 """
 
 import os

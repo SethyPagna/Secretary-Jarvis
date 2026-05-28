@@ -11,7 +11,6 @@ VISIBLE_PRODUCT_FILES = [
     ROOT / "docs" / "JARVIS_MASTER_BLUEPRINT.md",
     ROOT / "docs" / "jarvis" / "index.md",
     ROOT / "acp_registry" / "agent.json",
-    ROOT / "flake.nix",
     ROOT / "scripts" / "install.cmd",
     ROOT / "scripts" / "install.ps1",
     ROOT / "scripts" / "install.sh",
