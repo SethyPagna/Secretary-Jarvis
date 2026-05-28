@@ -14,16 +14,16 @@ Features:
 
 Usage:
     # Run a single task with local environment
-    python mini_swe_runner.py --task "Create a hello world Python script" --env local
+    python -m tools.mini_swe_runner --task "Create a hello world Python script" --env local
     
     # Run with Docker
-    python mini_swe_runner.py --task "List files in /tmp" --env docker --image python:3.11-slim
+    python -m tools.mini_swe_runner --task "List files in /tmp" --env docker --image python:3.11-slim
     
     # Run with Modal (cloud)
-    python mini_swe_runner.py --task "Install numpy and test it" --env modal --image python:3.11-slim
+    python -m tools.mini_swe_runner --task "Install numpy and test it" --env modal --image python:3.11-slim
     
     # Batch mode from JSONL file
-    python mini_swe_runner.py --prompts_file prompts.jsonl --output_file trajectories.jsonl --env docker
+    python -m tools.mini_swe_runner --prompts_file prompts.jsonl --output_file trajectories.jsonl --env docker
 """
 
 import json
@@ -670,13 +670,13 @@ def main(
         
     Examples:
         # Single task with local environment
-        python mini_swe_runner.py --task "Create hello.py that prints Hello World"
+        python -m tools.mini_swe_runner --task "Create hello.py that prints Hello World"
         
         # Single task with Docker
-        python mini_swe_runner.py --task "List files" --env docker
+        python -m tools.mini_swe_runner --task "List files" --env docker
         
         # Batch from file
-        python mini_swe_runner.py --prompts_file tasks.jsonl --output_file results.jsonl
+        python -m tools.mini_swe_runner --prompts_file tasks.jsonl --output_file results.jsonl
     """
     print("🚀 Mini-SWE Runner with Jarvis Trajectory Format")
     print("=" * 60)
@@ -728,7 +728,7 @@ def main(
     
     else:
         print("❌ Please provide either --task or --prompts_file")
-        print("   Example: python mini_swe_runner.py --task 'Create a hello world script'")
+        print("   Example: python -m tools.mini_swe_runner --task 'Create a hello world script'")
 
 
 if __name__ == "__main__":
