@@ -180,7 +180,6 @@ def main(argv: Sequence[str] | None = None) -> None:
         port=args.port,
         open_browser=not args.no_open,
         allow_public=args.allow_public,
-        embedded_chat=True,
     )
 
 

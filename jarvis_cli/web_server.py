@@ -941,7 +941,7 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
 
 @app.post("/api/terminal/run")
 async def post_terminal_run(body: TerminalCommandRequest):
-    """Run one desktop terminal command without opening the legacy TUI bridge."""
+    """Run one desktop terminal command without opening a separate shell UI."""
     command = (body.command or "").strip()
     if not command:
         raise HTTPException(status_code=400, detail="Command is required")
@@ -5426,13 +5426,9 @@ def start_server(
     port: int = 9119,
     open_browser: bool = True,
     allow_public: bool = False,
-    *,
-    embedded_chat: bool = False,
 ):
     """Start the web UI server."""
     import uvicorn
-
-    del embedded_chat  # Kept temporarily for callers while the desktop-only path lands.
 
     _LOCALHOST = ("127.0.0.1", "localhost", "::1")
     if host not in _LOCALHOST and not allow_public:
@@ -5475,7 +5471,7 @@ def start_server(
         import webbrowser
 
         # On headless Linux (no DISPLAY or WAYLAND_DISPLAY) some registered
-        # browsers are TUI programs (links, lynx, www-browser) that try to
+        # browsers are terminal programs (links, lynx, www-browser) that try to
         # take over the terminal.  That can send SIGHUP to the server process
         # and cause an immediate exit even though uvicorn bound successfully.
         # Skip the auto-open attempt on headless systems and let the user
