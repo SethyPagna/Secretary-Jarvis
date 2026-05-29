@@ -6,7 +6,7 @@ command replies, restart-drain notices.  Agent-generated output, log lines,
 error tracebacks, tool outputs, and slash-command descriptions all stay in
 English.
 
-Catalog files live under ``locales/<lang>.yaml`` at the repo root.  Each
+Catalog files live under ``jarvis_cli/data/locales/<lang>.yaml``.  Each
 catalog is a flat dict keyed by dotted paths (e.g. ``approval.choose`` or
 ``gateway.approval_expired``).  Missing keys fall back to English; if English
 is missing too, the key path itself is returned so a broken catalog never
@@ -34,6 +34,7 @@ import logging
 import os
 import threading
 from functools import lru_cache
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
@@ -87,11 +88,26 @@ _catalog_lock = threading.Lock()
 def _locales_dir() -> Path:
     """Return the directory containing locale YAML files.
 
-    Lives next to the repo root so both the bundled install and editable
-    checkouts find it without PYTHONPATH gymnastics.
+    Locales are package data now, with a repo-root fallback for older editable
+    checkouts. This keeps the root folder cleaner and lets packaged builds
+    ship translations beside the rest of the desktop data.
     """
-    # agent/i18n.py -> agent/ -> repo root
-    return Path(__file__).resolve().parent.parent / "locales"
+    repo_root = Path(__file__).resolve().parent.parent
+    candidates = [
+        repo_root / "jarvis_cli" / "data" / "locales",
+        repo_root / "locales",
+    ]
+
+    resource_root = os.environ.get("JARVIS_RESOURCE_ROOT")
+    if resource_root:
+        candidates.insert(0, Path(resource_root) / "jarvis_cli" / "data" / "locales")
+
+    try:
+        candidates.insert(0, Path(str(files("jarvis_cli").joinpath("data", "locales"))))
+    except Exception as exc:
+        logger.debug("Could not resolve packaged locale resources: %s", exc)
+
+    return next((candidate for candidate in candidates if candidate.is_dir()), candidates[0])
 
 
 def _normalize_lang(value: Any) -> str:

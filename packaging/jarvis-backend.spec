@@ -8,6 +8,7 @@ repo_root = Path(SPECPATH).parent
 entrypoint = repo_root / "jarvis_cli" / "desktop_entry.py"
 data_files = [
     (str(repo_root / "jarvis_cli" / "data" / "default_SOUL.md"), "jarvis_cli/data"),
+    (str(repo_root / "jarvis_cli" / "data" / "locales"), "jarvis_cli/data/locales"),
     (str(repo_root / "jarvis_cli" / "data" / "souls"), "jarvis_cli/data/souls"),
 ]
 web_dist = repo_root / "jarvis_cli" / "web_dist"

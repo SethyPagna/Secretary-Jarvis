@@ -10,7 +10,7 @@ import yaml
 from agent import i18n
 
 
-LOCALES_DIR = Path(__file__).resolve().parents[2] / "locales"
+LOCALES_DIR = Path(__file__).resolve().parents[2] / "jarvis_cli" / "data" / "locales"
 
 
 def _load_raw(lang: str) -> dict:
@@ -38,7 +38,7 @@ def _flatten(d, prefix="") -> dict:
 def test_all_locales_exist():
     """Every supported language must have a catalog file on disk."""
     for lang in i18n.SUPPORTED_LANGUAGES:
-        assert (LOCALES_DIR / f"{lang}.yaml").is_file(), f"missing locales/{lang}.yaml"
+        assert (LOCALES_DIR / f"{lang}.yaml").is_file(), f"missing jarvis_cli/data/locales/{lang}.yaml"
 
 
 @pytest.mark.parametrize("lang", [l for l in i18n.SUPPORTED_LANGUAGES if l != "en"])
