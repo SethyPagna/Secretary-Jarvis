@@ -72,6 +72,8 @@ class DesktopPackagingContractTests(unittest.TestCase):
     def test_package_json_exposes_build_with_smoke_default(self) -> None:
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
 
+        self.assertIn("desktop:check", package["scripts"])
+        self.assertIn("check-production.ps1", package["scripts"]["desktop:check"])
         self.assertIn("desktop:build", package["scripts"])
         self.assertIn("build-desktop.ps1", package["scripts"]["desktop:build"])
         self.assertNotIn("SkipSmoke", package["scripts"]["desktop:build"])
@@ -132,6 +134,23 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("pyinstaller", wheelhouse.lower())
         self.assertIn("--prefer-binary", wheelhouse)
         self.assertIn("wheelhouse", wheelhouse)
+
+    def test_production_check_runs_contracts_build_preflight_and_process_guard(self) -> None:
+        checker = (ROOT / "scripts" / "check-production.ps1").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("test_repository_layout_contract", checker)
+        self.assertIn("test_desktop_packaging_contract", checker)
+        self.assertIn("test_runtime_smoke", checker)
+        self.assertIn("npm.cmd --prefix web run build", checker)
+        self.assertIn("Resolve-DesktopPython", checker)
+        self.assertIn('@("3.11", "3.12")', checker)
+        self.assertIn(' "-$version"', checker)
+        self.assertIn("check-desktop-python-deps.ps1", checker)
+        self.assertIn("-Python $desktopPython", checker)
+        self.assertIn("release/JARVIS 1.0.0.exe", checker)
+        self.assertIn("Test-OwnedRuntimeProcesses", checker)
 
 
 if __name__ == "__main__":

@@ -48,6 +48,12 @@ Useful launch switches:
 .\run-jarvis.cmd -Dev
 ```
 
+To run the automated readiness sweep:
+
+```powershell
+npm run desktop:check
+```
+
 To terminate everything JARVIS owns, including backend and local model helper
 children:
 
