@@ -50,6 +50,27 @@ function Test-OwnedRuntimeProcesses {
     Write-Host "No owned JARVIS/runtime processes are running."
 }
 
+function Test-NodeRuntimeScripts {
+    $node = Get-Command node -ErrorAction Stop
+    $runtimeScripts = @(
+        "electron/main.js",
+        "electron/preload.js",
+        "web/eslint.config.js",
+        "scripts/after-pack-icon.cjs",
+        "scripts/whatsapp-bridge/allowlist.mjs",
+        "scripts/whatsapp-bridge/bridge.mjs",
+        "optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
+        "skills/creative/p5js/scripts/export-frames.js"
+    )
+
+    foreach ($script in $runtimeScripts) {
+        & $node.Source --check $script
+        if ($LASTEXITCODE -ne 0) {
+            throw "Node syntax check failed: $script"
+        }
+    }
+}
+
 Push-Location $RepoRoot
 try {
     $desktopPython = Resolve-DesktopPython
@@ -63,6 +84,10 @@ try {
             tests.jarvis_cli.test_runtime_readiness `
             tests.jarvis_cli.test_runtime_smoke `
             tests.jarvis_cli.test_runtime_stats
+    }
+
+    Invoke-Checked "Node/Electron runtime script syntax" {
+        Test-NodeRuntimeScripts
     }
 
     if (-not $SkipWebBuild) {
