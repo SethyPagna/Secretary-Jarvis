@@ -318,7 +318,7 @@ that:
   log are the review surface.
 - JARVIS includes supply-chain guards for MCP server
   launches and for dependency / bundled-package changes in CI; see
-  `CONTRIBUTING.md` for specifics.
+  `.github/CONTRIBUTING.md` for specifics.
 
 ---
 

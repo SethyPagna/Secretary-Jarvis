@@ -7,6 +7,6 @@ contact_links:
     url: https://github.com/SethyPagna/Secretary-Jarvis/blob/main/README.md
     about: Check the README and docs before opening an issue.
   - name: 🤝 Contributing Guide
-    url: https://github.com/SethyPagna/Secretary-Jarvis/blob/main/CONTRIBUTING.md
+    url: https://github.com/SethyPagna/Secretary-Jarvis/blob/main/.github/CONTRIBUTING.md
     about: Read this before submitting a PR.
 
