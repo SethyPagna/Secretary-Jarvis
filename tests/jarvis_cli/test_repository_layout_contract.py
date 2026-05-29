@@ -87,6 +87,15 @@ def _tracked_paths() -> list[Path]:
     return [Path(line) for line in result.stdout.splitlines() if line]
 
 
+def _is_git_ignored(path: str) -> bool:
+    result = subprocess.run(
+        ["git", "check-ignore", "-q", path],
+        cwd=ROOT,
+        check=False,
+    )
+    return result.returncode == 0
+
+
 class RepositoryLayoutContractTests(unittest.TestCase):
     def test_tracked_root_files_are_intentional(self) -> None:
         tracked_root_files = {
@@ -125,6 +134,28 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         self.assertTrue((ROOT / ".github" / "SECURITY.md").is_file())
         self.assertTrue((ROOT / "jarvis_cli" / "data" / "locales" / "en.yaml").is_file())
         self.assertFalse((ROOT / "locales").exists())
+
+    def test_gitignore_keeps_skill_assets_trackable(self) -> None:
+        self.assertFalse(_is_git_ignored("skills/creative/p5js/references/export-pipeline.md"))
+        self.assertFalse(_is_git_ignored("skills/creative/p5js/scripts/export-frames.js"))
+        self.assertFalse(_is_git_ignored("optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md"))
+        self.assertFalse(_is_git_ignored("plugins/jarvis-achievements/dashboard/dist/index.js"))
+
+    def test_gitignore_still_ignores_generated_dependency_and_release_dirs(self) -> None:
+        self.assertTrue(_is_git_ignored("node_modules/example-package/index.js"))
+        self.assertTrue(_is_git_ignored("web/node_modules/example-package/index.js"))
+        self.assertTrue(_is_git_ignored("release/JARVIS 1.0.0.exe"))
+        self.assertTrue(_is_git_ignored("runtime/llama.cpp/llama-server.exe"))
+        self.assertTrue(_is_git_ignored("jarvis_cli/web_dist/index.html"))
+
+    def test_skill_and_plugin_assets_referenced_by_manifests_are_tracked(self) -> None:
+        tracked = {path.as_posix() for path in _tracked_paths()}
+
+        self.assertIn("skills/creative/p5js/references/export-pipeline.md", tracked)
+        self.assertIn("skills/creative/p5js/scripts/export-frames.js", tracked)
+        self.assertIn("optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md", tracked)
+        self.assertIn("plugins/jarvis-achievements/dashboard/dist/index.js", tracked)
+        self.assertIn("plugins/jarvis-achievements/dashboard/dist/style.css", tracked)
 
 
 if __name__ == "__main__":
