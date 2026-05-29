@@ -13,7 +13,8 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertEqual(package["productName"], "JARVIS")
         self.assertEqual(package["main"], "electron/main.js")
         self.assertEqual(package["scripts"]["desktop:dev"], "electron .")
-        self.assertEqual(package["scripts"]["desktop:pack"], "electron-builder")
+        self.assertIn("stage_llamacpp_runtime.py", package["scripts"]["desktop:pack"])
+        self.assertIn("electron-builder", package["scripts"]["desktop:pack"])
         self.assertIn("electron", package["devDependencies"])
         self.assertIn("electron-builder", package["devDependencies"])
         extra_resources = package["build"]["extraResources"]
@@ -82,6 +83,19 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("/api/runtime/local/stop", source)
         self.assertNotIn("JARVIS_DOCKER_AUTOSTART", source)
         self.assertNotIn("/api/runtime/docker/start", source)
+
+    def test_main_process_warms_desktop_services_after_backend_ready(self) -> None:
+        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+
+        self.assertIn("DESKTOP_WARMUP_ENDPOINTS", source)
+        self.assertIn("warmBackendServices", source)
+        self.assertIn("maybeStartLocalRuntime()", source)
+        self.assertIn("/api/runtime/readiness", source)
+        self.assertIn("/api/models/list", source)
+        self.assertIn("/api/souls/team", source)
+        self.assertIn("/api/skills", source)
+        self.assertIn("backendReady", source)
+        self.assertLess(source.index("await waitForBackend()"), source.index("void warmBackendServices()"))
 
     def test_preload_exposes_limited_desktop_bridge(self) -> None:
         source = (ROOT / "electron" / "preload.js").read_text(encoding="utf-8")

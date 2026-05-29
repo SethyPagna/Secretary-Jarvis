@@ -14,6 +14,14 @@ const LOCAL_RUNTIME_AUTOSTART = !/^(0|false|no)$/i.test(process.env.JARVIS_LOCAL
 const LOCAL_RUNTIME_START_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_RUNTIME_START_TIMEOUT_MS || '180000', 10)
 const LOCAL_RUNTIME_STOP_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_RUNTIME_STOP_TIMEOUT_MS || '10000', 10)
 const REMOTE_DEBUGGING_PORT = process.env.JARVIS_REMOTE_DEBUGGING_PORT || ''
+const DESKTOP_WARMUP_ENDPOINTS = [
+  '/api/runtime/readiness',
+  '/api/models/list',
+  '/api/stats',
+  '/api/souls/team',
+  '/api/skills'
+]
+const DESKTOP_WARMUP_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_DESKTOP_WARMUP_TIMEOUT_MS || '10000', 10)
 
 if (/^\d+$/.test(REMOTE_DEBUGGING_PORT)) {
   app.commandLine.appendSwitch('remote-debugging-port', REMOTE_DEBUGGING_PORT)
@@ -330,6 +338,26 @@ async function stopLocalRuntime() {
   }
 }
 
+async function warmBackendServices() {
+  const localRuntime = await maybeStartLocalRuntime()
+  const results = await Promise.allSettled(
+    DESKTOP_WARMUP_ENDPOINTS.map((endpoint) => fetchJson(endpoint, { timeoutMs: DESKTOP_WARMUP_TIMEOUT_MS }))
+  )
+  const summary = results.map((result, index) => ({
+    endpoint: DESKTOP_WARMUP_ENDPOINTS[index],
+    ok: result.status === 'fulfilled',
+    error: result.status === 'rejected'
+      ? result.reason instanceof Error ? result.reason.message : String(result.reason)
+      : ''
+  }))
+
+  appendDesktopLog('[jarvis-desktop] backend warmup complete', JSON.stringify({
+    localRuntime,
+    summary
+  }))
+  return { localRuntime, summary }
+}
+
 function trayIconCandidates() {
   const resourcesPath = process.resourcesPath || ''
   return [
@@ -584,8 +612,10 @@ app.whenReady().then(async () => {
     appendDesktopLog('[jarvis-desktop] backend preflight failed; opening offline-capable shell')
   }
 
+  let backendReady = false
   try {
     await waitForBackend()
+    backendReady = true
     appendDesktopLog('[jarvis-desktop] backend ready')
   } catch (error) {
     console.warn('[jarvis-desktop] backend readiness check failed; opening offline-capable shell', error)
@@ -595,7 +625,9 @@ app.whenReady().then(async () => {
   createMainWindow()
   createTray()
 
-  void maybeStartLocalRuntime()
+  if (backendReady) {
+    void warmBackendServices()
+  }
 })
 
 app.on('activate', () => {
