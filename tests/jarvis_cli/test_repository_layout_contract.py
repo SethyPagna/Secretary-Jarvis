@@ -147,6 +147,8 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         self.assertTrue(_is_git_ignored("release/JARVIS 1.0.0.exe"))
         self.assertTrue(_is_git_ignored("runtime/llama.cpp/llama-server.exe"))
         self.assertTrue(_is_git_ignored("jarvis_cli/web_dist/index.html"))
+        self.assertTrue(_is_git_ignored("web/public/fonts/Collapse-Regular.woff2"))
+        self.assertTrue(_is_git_ignored("web/public/ds-assets/crest.svg"))
 
     def test_skill_and_plugin_assets_referenced_by_manifests_are_tracked(self) -> None:
         tracked = {path.as_posix() for path in _tracked_paths()}
