@@ -53,7 +53,8 @@ try {
         throw "JARVIS desktop packaging requires Python 3.11 or 3.12 so Kokoro local TTS can be bundled. Found Python $pythonVersion at $Python."
     }
 
-    $dependencyCheck = Join-Path $PSScriptRoot "check-desktop-python-deps.ps1"
+    $ChecksRoot = Resolve-Path (Join-Path $PSScriptRoot "..\checks")
+    $dependencyCheck = Join-Path $ChecksRoot "check-desktop-python-deps.ps1"
     & $dependencyCheck -Python $Python
 
     if (-not (Test-Path "desktop/web/node_modules")) {
@@ -89,7 +90,7 @@ try {
     $backendLaunch = if (Test-Path $backendExe) { $backendExe } else { $backendBin }
 
     if (-not $SkipSmoke) {
-        $smokeScript = Join-Path $PSScriptRoot "smoke-desktop-backend.ps1"
+        $smokeScript = Join-Path $ChecksRoot "smoke-desktop-backend.ps1"
         & $smokeScript `
             -BackendCommand $backendLaunch `
             -BackendArgs @("--host", "127.0.0.1", "--port", [string]$SmokePort, "--no-open") `
@@ -119,7 +120,7 @@ try {
         if (-not $SkipRendererSmoke) {
             $portableExe = Join-Path $RepoRoot "desktop/release/JARVIS 1.0.0.exe"
             $unpackedExe = Join-Path $RepoRoot "desktop/release/win-unpacked/JARVIS.exe"
-            $rendererSmoke = Join-Path $PSScriptRoot "smoke-electron-renderer.ps1"
+            $rendererSmoke = Join-Path $ChecksRoot "smoke-electron-renderer.ps1"
             if (Test-Path $portableExe) {
                 & $rendererSmoke -AppPath $portableExe -BackendPort ($SmokePort + 1) -DebugPort ($SmokePort + 601) -TimeoutSec 180
             }
