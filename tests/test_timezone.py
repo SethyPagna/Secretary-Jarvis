@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, MagicMock
 from zoneinfo import ZoneInfo
 
-import jarvis_time
+from jarvis_cli import time_utils as jarvis_time
 
 
 def _reset_jarvis_time_cache():

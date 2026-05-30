@@ -39,7 +39,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from jarvis_constants import get_jarvis_home
 from jarvis_cli._subprocess_compat import windows_hide_flags
 from jarvis_cli.config import load_config, _expand_env_vars
-from jarvis_time import now as _jarvis_now
+from jarvis_cli.time_utils import now as _jarvis_now
 
 logger = logging.getLogger(__name__)
 
