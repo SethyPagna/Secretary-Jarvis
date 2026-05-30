@@ -90,7 +90,7 @@ def _model_config_dict(config: Dict[str, object]) -> Dict[str, object]:
 
 
 def _toolset_enabled(config: Dict[str, object], toolset_key: str) -> bool:
-    from toolsets import resolve_toolset
+    from tools.toolsets import resolve_toolset
 
     platform_toolsets = config.get("platform_toolsets")
     if not isinstance(platform_toolsets, dict) or not platform_toolsets:

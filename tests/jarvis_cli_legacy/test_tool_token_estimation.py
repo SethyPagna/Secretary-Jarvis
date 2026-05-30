@@ -198,7 +198,7 @@ def test_status_fn_empty_selection():
         pytest.skip("tiktoken unavailable")
 
     from jarvis_cli.tools_config import CONFIGURABLE_TOOLSETS
-    from toolsets import resolve_toolset
+    from tools.toolsets import resolve_toolset
 
     ts_keys = [ts_key for ts_key, _, _ in CONFIGURABLE_TOOLSETS]
 

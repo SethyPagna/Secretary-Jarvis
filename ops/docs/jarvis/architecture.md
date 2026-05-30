@@ -61,7 +61,7 @@ jarvis-agent/
 ├── run_agent.py              # AIAgent — core conversation loop (large file)
 ├── cli.py                    # JarvisDesktopRuntime — interactive terminal UI (large file)
 ├── model_tools.py            # Tool discovery, schema collection, dispatch
-├── toolsets.py               # Tool groupings and platform presets
+├── tools/toolsets.py               # Tool groupings and platform presets
 ├── jarvis_state.py           # SQLite session/state database with FTS5
 ├── jarvis_constants.py       # JARVIS_HOME, profile-aware paths
 ├── tools/batch_runner.py           # Batch trajectory generation
@@ -804,7 +804,7 @@ Primary files:
 
 - `tools/registry.py`
 - `model_tools.py`
-- `toolsets.py`
+- `tools/toolsets.py`
 - `tools/terminal_tool.py`
 - `tools/environments/*`
 

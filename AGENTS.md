@@ -23,7 +23,7 @@ entry points you'll actually edit.
 jarvis-agent/
 ├── run_agent.py          # AIAgent class — core conversation loop (~12k LOC)
 ├── model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
-├── toolsets.py           # Toolset definitions, JARVIS core tool list
+├── tools/toolsets.py           # Toolset definitions, JARVIS core tool list
 ├── cli.py                # JARVIS interactive shell orchestrator (~11k LOC)
 ├── jarvis_state.py       # SessionDB — SQLite session store (FTS5 search)
 ├── jarvis_constants.py   # get_jarvis_home(), display_jarvis_home() — profile-aware paths
@@ -238,7 +238,7 @@ For most custom or local-only tools, do **not** edit Jarvis core. Use the plugin
 route instead: create `~/.jarvis/plugins/<name>/plugin.yaml` and
 `~/.jarvis/plugins/<name>/__init__.py`, then register tools with
 `ctx.register_tool(...)`. Plugin toolsets are discovered automatically and can be
-enabled or disabled without touching `tools/` or `toolsets.py`.
+enabled or disabled without touching `tools/` or `tools/toolsets.py`.
 
 Use the built-in route below only when the user is explicitly contributing a new
 core Jarvis tool that should ship in the base system.
@@ -266,7 +266,7 @@ registry.register(
 )
 ```
 
-**2. Add to `toolsets.py`** — either `_JARVIS_CORE_TOOLS` (all platforms) or a new toolset. **This step is required:** auto-discovery imports the tool and registers its schema, but the tool is only *exposed to an agent* if its name appears in a toolset. `_JARVIS_CORE_TOOLS` is not dead code — it's the default bundle every platform's base toolset inherits from.
+**2. Add to `tools/toolsets.py`** — either `_JARVIS_CORE_TOOLS` (all platforms) or a new toolset. **This step is required:** auto-discovery imports the tool and registers its schema, but the tool is only *exposed to an agent* if its name appears in a toolset. `_JARVIS_CORE_TOOLS` is not dead code — it's the default bundle every platform's base toolset inherits from.
 
 Auto-discovery: any `tools/*.py` file with a top-level `registry.register()` call is imported automatically — no manual import list to maintain. Wiring into a toolset is still a deliberate, manual step.
 
@@ -669,7 +669,7 @@ contributor skill PRs.
 
 ## Toolsets
 
-All toolsets are defined in `toolsets.py` as a single `TOOLSETS` dict.
+All toolsets are defined in `tools/toolsets.py` as a single `TOOLSETS` dict.
 Each platform's adapter picks a base toolset (e.g. Telegram uses
 `"messaging"`); `_JARVIS_CORE_TOOLS` is the default bundle most
 platforms inherit from.

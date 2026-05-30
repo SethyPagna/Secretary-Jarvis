@@ -621,17 +621,17 @@ class TestRegistration:
 
 class TestToolsetInclusion:
     def test_discord_tools_in_jarvis_discord_toolset(self):
-        from toolsets import TOOLSETS
+        from tools.toolsets import TOOLSETS
         assert "discord" in TOOLSETS["jarvis-discord"]["tools"]
         assert "discord_admin" in TOOLSETS["jarvis-discord"]["tools"]
 
     def test_discord_tools_not_in_core_tools(self):
-        from toolsets import _JARVIS_CORE_TOOLS
+        from tools.toolsets import _JARVIS_CORE_TOOLS
         assert "discord" not in _JARVIS_CORE_TOOLS
         assert "discord_admin" not in _JARVIS_CORE_TOOLS
 
     def test_discord_tools_not_in_other_toolsets(self):
-        from toolsets import TOOLSETS
+        from tools.toolsets import TOOLSETS
         for name, ts in TOOLSETS.items():
             if name in {"jarvis-discord", "jarvis-gateway", "discord", "discord_admin"}:
                 continue

@@ -4265,7 +4265,7 @@ async def get_toolsets():
         _get_platform_tools,
         _toolset_has_keys,
     )
-    from toolsets import resolve_toolset
+    from tools.toolsets import resolve_toolset
 
     config = load_config()
     enabled_toolsets = _get_platform_tools(

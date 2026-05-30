@@ -53,7 +53,7 @@ def _validate_explicit_toolsets(toolsets: object = None) -> tuple[list[str] | No
         return None, None
 
     try:
-        from toolsets import validate_toolset
+        from tools.toolsets import validate_toolset
     except Exception as exc:
         return None, f"jarvis -z: failed to validate --toolsets: {exc}\n"
 

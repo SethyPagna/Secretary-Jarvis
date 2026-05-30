@@ -50,7 +50,7 @@ from jarvis_cli.cli_output import (  # noqa: E402 — late import block
 
 # Toolsets shown in the configurator, grouped for display.
 # Each entry: (toolset_name, label, description)
-# These map to keys in toolsets.py TOOLSETS dict.
+# These map to keys in tools/toolsets.py TOOLSETS dict.
 CONFIGURABLE_TOOLSETS = [
     ("web",             "🔍 Web Search & Scraping",    "web_search, web_extract"),
     ("browser",         "🌐 Browser Automation",       "navigate, click, type, scroll"),
@@ -1118,7 +1118,7 @@ def _get_platform_tools(
     include_default_mcp_servers: bool = True,
 ) -> Set[str]:
     """Resolve which individual toolset names are enabled for a platform."""
-    from toolsets import resolve_toolset, TOOLSETS
+    from tools.toolsets import resolve_toolset, TOOLSETS
 
     platform_toolsets = config.get("platform_toolsets") or {}
     toolset_names = platform_toolsets.get(platform)
@@ -1496,7 +1496,7 @@ def _estimate_tool_tokens() -> Dict[str, int]:
 def _prompt_toolset_checklist(platform_label: str, enabled: Set[str], platform: str = "cli") -> Set[str]:
     """Multi-select checklist of toolsets. Returns set of selected toolset keys."""
     from jarvis_cli.curses_ui import curses_checklist
-    from toolsets import resolve_toolset
+    from tools.toolsets import resolve_toolset
 
     # Pre-compute per-tool token counts (cached after first call).
     tool_tokens = _estimate_tool_tokens()

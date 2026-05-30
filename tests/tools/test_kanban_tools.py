@@ -28,7 +28,7 @@ def test_kanban_tools_hidden_without_env_var(monkeypatch, tmp_path):
 
     import tools.kanban_tools  # ensure registered
     from tools.registry import invalidate_check_fn_cache, registry
-    from toolsets import resolve_toolset
+    from tools.toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
     schema = registry.get_definitions(set(resolve_toolset("jarvis-cli")), quiet=True)
@@ -48,7 +48,7 @@ def test_kanban_tools_visible_with_env_var(monkeypatch, tmp_path):
 
     import tools.kanban_tools  # ensure registered
     from tools.registry import invalidate_check_fn_cache, registry
-    from toolsets import resolve_toolset
+    from tools.toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
     schema = registry.get_definitions(set(resolve_toolset("jarvis-cli")), quiet=True)
@@ -102,7 +102,7 @@ def test_worker_with_kanban_toolset_still_hides_board_routing(monkeypatch, tmp_p
 
     import tools.kanban_tools  # ensure registered
     from tools.registry import invalidate_check_fn_cache, registry
-    from toolsets import resolve_toolset
+    from tools.toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
     schema = registry.get_definitions(set(resolve_toolset("jarvis-cli")), quiet=True)
@@ -127,7 +127,7 @@ def test_kanban_tools_visible_with_toolset_config(monkeypatch, tmp_path):
 
     import tools.kanban_tools  # ensure registered
     from tools.registry import invalidate_check_fn_cache, registry
-    from toolsets import resolve_toolset
+    from tools.toolsets import resolve_toolset
 
     invalidate_check_fn_cache()
     schema = registry.get_definitions(set(resolve_toolset("jarvis-cli")), quiet=True)

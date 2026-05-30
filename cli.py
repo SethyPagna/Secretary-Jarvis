@@ -800,19 +800,19 @@ from jarvis_cli.commands import SlashCommandCompleter, SlashCommandAutoSuggest
 
 
 def get_all_toolsets(*args, **kwargs):
-    from toolsets import get_all_toolsets as _get_all_toolsets
+    from tools.toolsets import get_all_toolsets as _get_all_toolsets
 
     return _get_all_toolsets(*args, **kwargs)
 
 
 def get_toolset_info(*args, **kwargs):
-    from toolsets import get_toolset_info as _get_toolset_info
+    from tools.toolsets import get_toolset_info as _get_toolset_info
 
     return _get_toolset_info(*args, **kwargs)
 
 
 def validate_toolset(*args, **kwargs):
-    from toolsets import validate_toolset as _validate_toolset
+    from tools.toolsets import validate_toolset as _validate_toolset
 
     return _validate_toolset(*args, **kwargs)
 

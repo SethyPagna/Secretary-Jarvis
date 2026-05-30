@@ -865,7 +865,7 @@ class TestNewEndpoints:
 
     def test_toolsets_list_matches_cli_enabled_state(self, monkeypatch):
         import jarvis_cli.tools_config as tools_config
-        import toolsets as toolsets_module
+        import tools.toolsets as toolsets_module
         import jarvis_cli.web_server as web_server
 
         monkeypatch.setattr(

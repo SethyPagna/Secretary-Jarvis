@@ -849,7 +849,7 @@ modifying Jarvis core, use the plugin route instead:
 - [Build a Jarvis Plugin](/docs/guides/build-a-jarvis-plugin)
 
 Default to plugins for most custom tool creation. Only follow this page when
-you explicitly want to ship a new built-in tool in `tools/` and `toolsets.py`.
+you explicitly want to ship a new built-in tool in `tools/` and `tools/toolsets.py`.
 :::
 
 Make it a **Skill** when the capability can be expressed as instructions + shell commands + existing tools (arXiv search, git workflows, Docker management, PDF processing).
@@ -861,7 +861,7 @@ Make it a **Tool** when it requires end-to-end integration with API keys, custom
 Adding a tool touches **2 files**:
 
 1. **`tools/your_tool.py`** — handler, schema, check function, `registry.register()` call
-2. **`toolsets.py`** — add tool name to `_JARVIS_CORE_TOOLS` (or a specific toolset)
+2. **`tools/toolsets.py`** — add tool name to `_JARVIS_CORE_TOOLS` (or a specific toolset)
 
 Any `tools/*.py` file with a top-level `registry.register()` call is auto-discovered at startup — no manual import list required.
 
@@ -952,7 +952,7 @@ registry.register(
 
 ## Step 2: Add the Built-in Tool to a Toolset
 
-In `toolsets.py`, add the tool name:
+In `tools/toolsets.py`, add the tool name:
 
 ```python
 # If it should be available on all platforms (CLI + messaging):
@@ -1035,7 +1035,7 @@ OPTIONAL_ENV_VARS = {
 ## Checklist
 
 - [ ] Tool file created with handler, schema, check function, and registration
-- [ ] Added to appropriate toolset in `toolsets.py`
+- [ ] Added to appropriate toolset in `tools/toolsets.py`
 - [ ] Confirmed this really should be a built-in/core tool and not a plugin
 - [ ] Handler returns JSON strings, errors returned as `{"error": "..."}`
 - [ ] Optional: API key added to `OPTIONAL_ENV_VARS` in `jarvis_cli/config.py`

@@ -288,7 +288,7 @@ class TestMediaModule:
 
 class TestToolset:
     def test_yuanbao_toolset_registered(self):
-        """toolsets.py 中存在 jarvis-yuanbao 键"""
+        """tools/toolsets.py 中存在 jarvis-yuanbao 键"""
         import importlib
         ts = importlib.import_module("toolsets")
         assert hasattr(ts, "TOOLSETS") or hasattr(ts, "toolsets")

@@ -122,11 +122,11 @@ class TestBrowserConsoleToolsetWiring:
     """browser_console must be reachable via toolset resolution."""
 
     def test_in_browser_toolset(self):
-        from toolsets import TOOLSETS
+        from tools.toolsets import TOOLSETS
         assert "browser_console" in TOOLSETS["browser"]["tools"]
 
     def test_in_jarvis_core_tools(self):
-        from toolsets import _JARVIS_CORE_TOOLS
+        from tools.toolsets import _JARVIS_CORE_TOOLS
         assert "browser_console" in _JARVIS_CORE_TOOLS
 
     def test_in_legacy_toolset_map(self):

@@ -201,7 +201,7 @@ inappropriate formatting (e.g., markdown on platforms that don't render it).
 
 ---
 
-## 7. Toolset (`toolsets.py`)
+## 7. Toolset (`tools/toolsets.py`)
 
 Add a named toolset for your platform:
 
@@ -367,7 +367,7 @@ After implementing everything, verify with:
 python -m pytest tests/ -q
 
 # Grep for your platform name to find any missed integration points
-grep -r "telegram\|discord\|whatsapp\|slack" gateway/ tools/ agent/ cron/ jarvis_cli/ toolsets.py \
+grep -r "telegram\|discord\|whatsapp\|slack" gateway/ tools/ agent/ cron/ jarvis_cli/ tools/toolsets.py \
   --include="*.py" -l | sort -u
 # Check each file in the output — if it mentions other platforms but not yours, you missed it
 ```

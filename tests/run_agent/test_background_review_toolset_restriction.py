@@ -143,7 +143,7 @@ def test_background_review_agent_tools_are_limited():
     derived from — if a future PR adds e.g. `terminal` to the `memory`
     toolset, the review-fork safety contract silently breaks.
     """
-    from toolsets import resolve_multiple_toolsets
+    from tools.toolsets import resolve_multiple_toolsets
 
     expected_tools = set(resolve_multiple_toolsets(["memory", "skills"]))
 

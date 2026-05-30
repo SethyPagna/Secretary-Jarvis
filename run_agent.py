@@ -4069,7 +4069,7 @@ def main(
     # Handle tool listing
     if list_tools:
         from model_tools import get_all_tool_names, get_available_toolsets
-        from toolsets import get_all_toolsets, get_toolset_info
+        from tools.toolsets import get_all_toolsets, get_toolset_info
         
         print("📋 Available Tools & Toolsets:")
         print("-" * 50)
