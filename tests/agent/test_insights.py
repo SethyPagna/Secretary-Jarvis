@@ -4,7 +4,7 @@ import time
 import pytest
 from pathlib import Path
 
-from jarvis_state import SessionDB
+from jarvis_cli.session_state import SessionDB
 from agent.insights import (
     InsightsEngine,
     _estimate_cost,

@@ -27,11 +27,11 @@ def store(tmp_path, monkeypatch):
 
     Pin DEFAULT_DB_PATH to tmp_path so SessionDB() can't write to the real
     ~/.jarvis/state.db. (DEFAULT_DB_PATH is a module-level constant computed
-    at jarvis_state import time, before pytest's JARVIS_HOME monkeypatch
+    at session_state import time, before pytest's JARVIS_HOME monkeypatch
     fires — the autouse fixture's JARVIS_HOME override doesn't help here.)
     """
-    import jarvis_state
-    monkeypatch.setattr(jarvis_state, "DEFAULT_DB_PATH", tmp_path / "state.db")
+    import jarvis_cli.session_state as session_state
+    monkeypatch.setattr(session_state, "DEFAULT_DB_PATH", tmp_path / "state.db")
     config = GatewayConfig()
     s = SessionStore(sessions_dir=tmp_path, config=config)
     return s

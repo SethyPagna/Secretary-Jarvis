@@ -585,7 +585,7 @@ def scan_sessions(
     at the end.
     """
     try:
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
     except Exception as exc:
         return {"sessions": [], "aggregate": {}, "error": f"Could not import SessionDB: {exc}", "scan_meta": {"mode": "failed", "sessions_total": 0, "sessions_rescanned": 0, "sessions_reused": 0}}
 

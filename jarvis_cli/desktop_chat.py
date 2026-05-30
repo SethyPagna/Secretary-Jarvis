@@ -62,7 +62,7 @@ def _normalize_toolsets(toolsets: object = None) -> list[str] | None:
 
 def _create_session_db():
     try:
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
 
         return SessionDB()
     except Exception as exc:

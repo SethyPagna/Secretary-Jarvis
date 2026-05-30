@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-from jarvis_state import SessionDB
+from jarvis_cli.session_state import SessionDB
 from tools.todo_tool import TodoStore
 
 

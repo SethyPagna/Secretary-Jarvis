@@ -73,9 +73,9 @@ def test_session_search_lazily_opens_db_when_entrypoint_did_not_pass_one(monkeyp
         def __new__(cls):
             return sentinel_db
 
-    jarvis_state = ModuleType("jarvis_state")
-    jarvis_state.SessionDB = FakeSessionDB
-    monkeypatch.setitem(sys.modules, "jarvis_state", jarvis_state)
+    fake_session_state = ModuleType("jarvis_cli.session_state")
+    fake_session_state.SessionDB = FakeSessionDB
+    monkeypatch.setitem(sys.modules, "jarvis_cli.session_state", fake_session_state)
 
     session_search_mod = ModuleType("tools.session_search_tool")
 

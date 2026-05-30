@@ -21,7 +21,7 @@ def _run_show_insights(command: str):
     cli_obj = JarvisCLI.__new__(JarvisCLI)
     db = MagicMock()
     _InsightsEngineStub.calls = []
-    with patch("jarvis_state.SessionDB", return_value=db), \
+    with patch("jarvis_cli.session_state.SessionDB", return_value=db), \
          patch("agent.insights.InsightsEngine", _InsightsEngineStub):
         cli_obj._show_insights(command)
     return _InsightsEngineStub.calls, db

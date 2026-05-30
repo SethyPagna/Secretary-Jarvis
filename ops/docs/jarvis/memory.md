@@ -1051,7 +1051,7 @@ JARVIS uses a SQLite database (`~/.jarvis/state.db`) to persist session
 metadata, full message history, and model configuration across CLI and gateway
 sessions. This replaces the earlier per-session JSONL file approach.
 
-Source file: `jarvis_state.py`
+Source file: `session_state.py`
 
 
 ## Architecture Overview
@@ -1227,7 +1227,7 @@ _CHECKPOINT_EVERY_N_WRITES = 50
 ### Initialize
 
 ```python
-from jarvis_state import SessionDB
+from jarvis_cli.session_state import SessionDB
 
 db = SessionDB()                           # Default: ~/.jarvis/state.db
 db = SessionDB(db_path=Path("/tmp/test.db"))  # Custom path

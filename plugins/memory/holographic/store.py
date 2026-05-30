@@ -129,8 +129,8 @@ class MemoryStore:
         """Create tables, indexes, and triggers if they do not exist. Enable WAL mode."""
         # Use the shared WAL-fallback helper so memory_store.db degrades
         # gracefully on NFS/SMB/FUSE-mounted JARVIS_HOME (same issue as
-        # state.db / kanban.db — see jarvis_state._WAL_INCOMPAT_MARKERS).
-        from jarvis_state import apply_wal_with_fallback
+        # state.db / kanban.db — see session_state._WAL_INCOMPAT_MARKERS).
+        from jarvis_cli.session_state import apply_wal_with_fallback
         apply_wal_with_fallback(self._conn, db_label="memory_store.db (holographic)")
         self._conn.executescript(_SCHEMA)
         # Migrate: add hrr_vector column if missing (safe for existing databases)

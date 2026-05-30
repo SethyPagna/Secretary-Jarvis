@@ -6,7 +6,7 @@ anchor, the call returns goal (bookend_start) + match (window) + resolution
 """
 import pytest
 
-from jarvis_state import SessionDB
+from jarvis_cli.session_state import SessionDB
 
 
 @pytest.fixture

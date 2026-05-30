@@ -494,7 +494,7 @@ class AIAgent:
         if self._session_db is not None:
             return self._session_db
         try:
-            from jarvis_state import SessionDB
+            from jarvis_cli.session_state import SessionDB
 
             self._session_db = SessionDB()
             return self._session_db

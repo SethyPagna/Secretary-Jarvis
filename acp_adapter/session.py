@@ -412,7 +412,7 @@ class SessionManager:
         if self._db_instance is not None:
             return self._db_instance
         try:
-            from jarvis_state import SessionDB
+            from jarvis_cli.session_state import SessionDB
             jarvis_home = get_jarvis_home()
             self._db_instance = SessionDB(db_path=jarvis_home / "state.db")
             return self._db_instance

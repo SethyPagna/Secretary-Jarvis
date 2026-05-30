@@ -217,7 +217,7 @@ def _get_session_db() -> Optional[Any]:
     """
     try:
         from jarvis_cli.constants import get_jarvis_home
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
 
         home = str(get_jarvis_home())
     except Exception as exc:  # pragma: no cover

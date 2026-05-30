@@ -108,11 +108,11 @@ class TestWebServerEndpoints:
         except ImportError:
             pytest.skip("fastapi/starlette not installed")
 
-        import jarvis_state
+        import jarvis_cli.session_state as session_state
         from jarvis_cli.constants import get_jarvis_home
         from jarvis_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
-        monkeypatch.setattr(jarvis_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")
+        monkeypatch.setattr(session_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")
 
         self.client = TestClient(app)
         self.client.headers[_SESSION_HEADER_NAME] = _SESSION_TOKEN
@@ -561,11 +561,11 @@ class TestNewEndpoints:
         except ImportError:
             pytest.skip("fastapi/starlette not installed")
 
-        import jarvis_state
+        import jarvis_cli.session_state as session_state
         from jarvis_cli.constants import get_jarvis_home
         from jarvis_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
-        monkeypatch.setattr(jarvis_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")
+        monkeypatch.setattr(session_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")
 
         self.client = TestClient(app)
         self.client.headers[_SESSION_HEADER_NAME] = _SESSION_TOKEN
@@ -973,7 +973,7 @@ class TestNewEndpoints:
         }
 
     def test_analytics_usage_includes_skill_breakdown(self):
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
 
         db = SessionDB()
         try:
@@ -1837,11 +1837,11 @@ class TestPluginAPIAuth:
         except ImportError:
             pytest.skip("fastapi/starlette not installed")
 
-        import jarvis_state
+        import jarvis_cli.session_state as session_state
         from jarvis_cli.constants import get_jarvis_home
         from jarvis_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
-        monkeypatch.setattr(jarvis_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")
+        monkeypatch.setattr(session_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")
 
         self.client = TestClient(app)
         self.auth_client = TestClient(app)

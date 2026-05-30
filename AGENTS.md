@@ -25,7 +25,7 @@ jarvis-agent/
 ├── tools/model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
 ├── tools/toolsets.py           # Toolset definitions, JARVIS core tool list
 ├── cli.py                # JARVIS interactive shell orchestrator (~11k LOC)
-├── jarvis_state.py       # SessionDB — SQLite session store (FTS5 search)
+├── session_state.py       # SessionDB — SQLite session store (FTS5 search)
 ├── jarvis_cli/constants.py   # get_jarvis_home(), display_jarvis_home() — profile-aware paths
 ├── jarvis_cli/logging_config.py     # setup_logging() — agent.log / errors.log / gateway.log (profile-aware)
 ├── tools/batch_runner.py       # Parallel batch processing

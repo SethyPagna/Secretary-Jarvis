@@ -14,8 +14,8 @@ from gateway.session import SessionStore
 async def test_gateway_retry_replaces_last_user_turn_in_transcript(tmp_path, monkeypatch):
     # Pin DEFAULT_DB_PATH so SessionDB() doesn't write to the real ~/.jarvis/state.db.
     # (Module-level constant snapshot, see test_load_transcript_db_only.)
-    import jarvis_state
-    monkeypatch.setattr(jarvis_state, "DEFAULT_DB_PATH", tmp_path / "state.db")
+    import jarvis_cli.session_state as session_state
+    monkeypatch.setattr(session_state, "DEFAULT_DB_PATH", tmp_path / "state.db")
 
     config = GatewayConfig()
     store = SessionStore(sessions_dir=tmp_path, config=config)

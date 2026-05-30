@@ -1962,7 +1962,7 @@ def test_latest_summaries_batch_omits_tasks_without_summary(kanban_home):
 
 
 # ---------------------------------------------------------------------------
-# NFS / network-filesystem fallback (see jarvis_state.apply_wal_with_fallback)
+# NFS / network-filesystem fallback (see session_state.apply_wal_with_fallback)
 # ---------------------------------------------------------------------------
 
 def test_connect_falls_back_to_delete_on_locking_protocol(kanban_home, caplog):
@@ -1993,7 +1993,7 @@ def test_connect_falls_back_to_delete_on_locking_protocol(kanban_home, caplog):
         )
 
     with _patch("jarvis_cli.kanban_db.sqlite3.connect", side_effect=wal_blocking_connect):
-        with caplog.at_level("WARNING", logger="jarvis_state"):
+        with caplog.at_level("WARNING", logger="jarvis_cli.session_state"):
             conn = kb.connect()
 
     # One fallback warning, naming kanban.db

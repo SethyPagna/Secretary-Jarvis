@@ -1,10 +1,10 @@
-"""Tests for jarvis_state.py — SessionDB SQLite CRUD, FTS5 search, export."""
+"""Tests for session_state.py — SessionDB SQLite CRUD, FTS5 search, export."""
 
 import time
 import pytest
 from pathlib import Path
 
-from jarvis_state import SessionDB
+from jarvis_cli.session_state import SessionDB
 
 
 @pytest.fixture()
@@ -733,7 +733,7 @@ class TestFTS5Search:
 
     def test_sanitize_fts5_query_strips_dangerous_chars(self):
         """Unit test for _sanitize_fts5_query static method."""
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
         s = SessionDB._sanitize_fts5_query
         assert s('hello world') == 'hello world'
         assert '+' not in s('C++')
@@ -750,7 +750,7 @@ class TestFTS5Search:
 
     def test_sanitize_fts5_preserves_quoted_phrases(self):
         """Properly paired double-quoted phrases should be preserved."""
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
         s = SessionDB._sanitize_fts5_query
         # Simple quoted phrase
         assert s('"exact phrase"') == '"exact phrase"'
@@ -765,7 +765,7 @@ class TestFTS5Search:
 
     def test_sanitize_fts5_quotes_hyphenated_terms(self):
         """Hyphenated terms should be wrapped in quotes for exact matching."""
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
         s = SessionDB._sanitize_fts5_query
         # Simple hyphenated term
         assert s('chat-send') == '"chat-send"'
@@ -787,7 +787,7 @@ class TestFTS5Search:
 
     def test_sanitize_fts5_quotes_dotted_terms(self):
         """Dotted terms should be wrapped in quotes to avoid FTS5 query parse edge cases."""
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
         s = SessionDB._sanitize_fts5_query
 
         assert s('P2.2') == '"P2.2"'
@@ -813,7 +813,7 @@ class TestFTS5Search:
         Without quoting, a search for 'sp_new' becomes an AND query
         ('sp AND new') that fails to match rows indexed as 'sp_new1'.
         """
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
         s = SessionDB._sanitize_fts5_query
         # Simple underscored term
         assert s('sp_new') == '"sp_new"'
@@ -846,7 +846,7 @@ class TestCJKSearchFallback:
     """
 
     def test_cjk_detection_covers_all_ranges(self):
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
         f = SessionDB._contains_cjk
         # Chinese (CJK Unified Ideographs)
         assert f("记忆断裂") is True
@@ -1498,7 +1498,7 @@ class TestSchemaInit:
         assert "schema_version" in tables
 
     def test_schema_version(self, db):
-        from jarvis_state import SCHEMA_VERSION
+        from jarvis_cli.session_state import SCHEMA_VERSION
         cursor = db._conn.execute("SELECT version FROM schema_version")
         version = cursor.fetchone()[0]
         assert version == SCHEMA_VERSION
@@ -1797,7 +1797,7 @@ class TestSchemaInit:
         migrated_db = SessionDB(db_path=db_path)
 
         # Verify migration
-        from jarvis_state import SCHEMA_VERSION
+        from jarvis_cli.session_state import SCHEMA_VERSION
         cursor = migrated_db._conn.execute("SELECT version FROM schema_version")
         assert cursor.fetchone()[0] == SCHEMA_VERSION
 
@@ -1941,7 +1941,7 @@ class TestSchemaInit:
         This is the architectural invariant: SCHEMA_SQL declares the
         desired schema, _reconcile_columns ensures it matches reality.
         """
-        from jarvis_state import SCHEMA_SQL
+        from jarvis_cli.session_state import SCHEMA_SQL
 
         expected = SessionDB._parse_schema_columns(SCHEMA_SQL)
         for table_name, declared_cols in expected.items():
@@ -2622,7 +2622,7 @@ class TestConcurrentWriteSafety:
         # There is no public API, so we check the kwarg via the module default.
         import sqlite3
         import inspect
-        from jarvis_state import SessionDB as _SessionDB
+        from jarvis_cli.session_state import SessionDB as _SessionDB
         src = inspect.getsource(_SessionDB.__init__)
         assert "30" in src, (
             "SQLite timeout should be at least 30s to handle CLI/gateway lock contention"
@@ -2990,7 +2990,7 @@ class TestFTS5ToolCallMigration:
             assert len(session_db.search_messages("LEGACYARG")) == 1, \
                 "v11 migration must backfill tool_calls JSON into FTS"
             # schema_version bumped
-            from jarvis_state import SCHEMA_VERSION
+            from jarvis_cli.session_state import SCHEMA_VERSION
             row = session_db._conn.execute(
                 "SELECT version FROM schema_version LIMIT 1"
             ).fetchone()

@@ -43,7 +43,7 @@ Usage:
     jarvis claw migrate --dry-run  # Preview migration without changes
 """
 
-# IMPORTANT: jarvis_cli.bootstrap must be the very first import ó it sets up
+# IMPORTANT: jarvis_cli.bootstrap must be the very first import ÔøΩ it sets up
 # UTF-8 stdio on Windows so print()/subprocess children don't hit
 # UnicodeEncodeError with non-ASCII characters.  No-op on POSIX.
 #
@@ -55,7 +55,7 @@ Usage:
 # point at the old module set.  Without
 # this guard, jarvis crashes on import and the user can't run
 # ``jarvis update`` to recover.  Missing the bootstrap means UTF-8 stdio
-# setup is skipped on Windows ó degraded, not broken.  POSIX is unaffected.
+# setup is skipped on Windows ÔøΩ degraded, not broken.  POSIX is unaffected.
 try:
     import jarvis_cli.bootstrap  # noqa: F401
 except ModuleNotFoundError:
@@ -172,7 +172,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 
 # ---------------------------------------------------------------------------
-# Profile override ó MUST happen before any jarvis module import.
+# Profile override ÔøΩ MUST happen before any jarvis module import.
 #
 # Many modules cache JARVIS_HOME at import time (module-level constants).
 # We intercept --profile/-p from sys.argv here and set the env var so that
@@ -214,7 +214,7 @@ def _apply_profile_override() -> None:
     # parent directory name (e.g. ~/.jarvis/profiles/coder or
     # /opt/data/profiles/coder).  If JARVIS_HOME points to the jarvis root
     # instead (e.g. systemd hardcodes JARVIS_HOME=/root/.jarvis), we must
-    # still read active_profile ó the user may have switched profiles via
+    # still read active_profile ÔøΩ the user may have switched profiles via
     # `jarvis profile use` and the gateway should honour that choice.
     # See issue #22502.
     jarvis_home_env = os.environ.get("JARVIS_HOME", "")
@@ -279,7 +279,7 @@ load_jarvis_dotenv(project_env=PROJECT_ROOT / ".env")
 # var BEFORE jarvis_cli.logging_config imports agent.redact (which snapshots the flag at
 # module-import time). Without this, config.yaml's toggle is ignored because
 # the setup_logging() call below imports agent.redact, which reads the env var
-# exactly once. Env var in .env still wins ó this is config.yaml fallback only.
+# exactly once. Env var in .env still wins ÔøΩ this is config.yaml fallback only.
 try:
     if "JARVIS_REDACT_SECRETS" not in os.environ:
         import yaml as _yaml_early
@@ -295,16 +295,16 @@ try:
             del _early_sec_cfg
         del _cfg_path
 except Exception:
-    pass  # best-effort ó redaction stays at default (enabled) on config errors
+    pass  # best-effort ÔøΩ redaction stays at default (enabled) on config errors
 
-# Initialize centralized file logging early ó all `jarvis` subcommands
+# Initialize centralized file logging early ÔøΩ all `jarvis` subcommands
 # (chat, setup, gateway, config, etc.) write to agent.log + errors.log.
 try:
     from jarvis_cli.logging_config import setup_logging as _setup_logging
 
     _setup_logging(mode="cli")
 except Exception:
-    pass  # best-effort ó don't crash the CLI if logging setup fails
+    pass  # best-effort ÔøΩ don't crash the CLI if logging setup fails
 
 # Apply IPv4 preference early, before any HTTP clients are created.
 try:
@@ -317,7 +317,7 @@ try:
         _apply_ipv4(force=True)
     del _early_cfg, _net
 except Exception:
-    pass  # best-effort ó don't crash if config isn't available yet
+    pass  # best-effort ÔøΩ don't crash if config isn't available yet
 
 import logging
 import threading
@@ -394,7 +394,7 @@ def _read_git_revision_fingerprint(repo_root: Path) -> str | None:
             packed_sha = _read_packed_ref(common_dir, ref)
             if packed_sha:
                 return f"git:{ref}:{packed_sha}"
-            # Ref name is known but unresolved ó still stable across launches,
+            # Ref name is known but unresolved ÔøΩ still stable across launches,
             # and the version/release fallback in the caller will invalidate
             # after `jarvis update`.
             return f"git:{ref}:unresolved"
@@ -507,7 +507,7 @@ def _has_any_provider_configured() -> bool:
     _has_jarvis_config = _model_name and _model_name != _DEFAULT_MODEL
 
     # Check env vars (may be set by .env or shell).
-    # OPENAI_BASE_URL alone counts ó local models (vLLM, llama.cpp, etc.)
+    # OPENAI_BASE_URL alone counts ÔøΩ local models (vLLM, llama.cpp, etc.)
     # often don't require an API key.
     from jarvis_cli.auth import PROVIDER_REGISTRY
 
@@ -566,7 +566,7 @@ def _has_any_provider_configured() -> bool:
         except Exception:
             pass
 
-    # Check config.yaml ó if model is a dict with an explicit provider set,
+    # Check config.yaml ÔøΩ if model is a dict with an explicit provider set,
     # the user has gone through setup (fresh installs have model as a plain
     # string).  Also covers custom endpoints that store api_key/base_url in
     # config rather than .env.
@@ -578,7 +578,7 @@ def _has_any_provider_configured() -> bool:
             return True
 
     # Check for Claude Code OAuth credentials (~/.claude/.credentials.json)
-    # Only count these if Jarvis has been explicitly configured ó Claude Code
+    # Only count these if Jarvis has been explicitly configured ÔøΩ Claude Code
     # being installed doesn't mean the user wants Jarvis to use their tokens.
     if _has_jarvis_config:
         try:
@@ -677,12 +677,12 @@ def _session_browse_picker(sessions: list) -> Optional[str]:
 
                 # Header line
                 if search_text:
-                    header = f"  Browse sessions ó filter: {search_text}?à"
+                    header = f"  Browse sessions ÔøΩ filter: {search_text}?ÔøΩ"
                     header_attr = curses.A_BOLD
                     if curses.has_colors():
                         header_attr |= curses.color_pair(3)
                 else:
-                    header = "  Browse sessions ó ?ë?ì navigate  Enter select  Type to filter  Esc quit"
+                    header = "  Browse sessions ÔøΩ ?ÔøΩ?ÔøΩ navigate  Enter select  Type to filter  Esc quit"
                     header_attr = curses.A_BOLD
                     if curses.has_colors():
                         header_attr |= curses.color_pair(2)
@@ -843,7 +843,7 @@ def _resolve_last_session(source: str = "cli") -> Optional[str]:
     """Look up the most recently-used session ID for a source."""
     db = None
     try:
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
 
         db = SessionDB()
         sessions = db.search_sessions(source=source, limit=1)
@@ -904,7 +904,7 @@ def _exec_in_container(container_info: dict, cli_args: list):
         sys.exit(1)
 
     # Rootful containers (NixOS systemd service) are invisible to unprivileged
-    # users ó Podman uses per-user namespaces, Docker needs group access.
+    # users ÔøΩ Podman uses per-user namespaces, Docker needs group access.
     # Probe whether the runtime can see the container; if not, try via sudo.
     sudo_path = None
     probe = _probe_container(
@@ -925,7 +925,7 @@ def _exec_in_container(container_info: dict, cli_args: list):
                     f"\n"
                     f"The container is likely running as root. Your user cannot see it\n"
                     f"because {backend} uses per-user namespaces. Grant passwordless\n"
-                    f"sudo for {backend} ó the -n (non-interactive) flag is required\n"
+                    f"sudo for {backend} ÔøΩ the -n (non-interactive) flag is required\n"
                     f"because a password prompt would hang or break piped commands.\n"
                     f"\n"
                     f"On NixOS:\n"
@@ -982,7 +982,7 @@ def _resolve_session_by_name_or_id(name_or_id: str) -> Optional[str]:
       resumed at the live tip instead of a stale parent with no messages.
     """
     try:
-        from jarvis_state import SessionDB
+        from jarvis_cli.session_state import SessionDB
 
         db = SessionDB()
 
@@ -1014,7 +1014,7 @@ def _pin_kanban_board_env() -> None:
     """Pin the active kanban board into ``JARVIS_KANBAN_BOARD`` for the chat session.
 
     Without this, in-process tools (``kanban_*``) and shelled-out CLI calls
-    (``jarvis kanban Ö``) resolve the board on different paths: the env-pin if
+    (``jarvis kanban ÔøΩ``) resolve the board on different paths: the env-pin if
     set, otherwise the global ``<root>/kanban/current`` file. A concurrent
     ``jarvis kanban boards switch`` from another session can flip the file
     mid-turn, so the same chat sees its tool calls hit board A while its shell
@@ -1037,7 +1037,7 @@ def cmd_chat(args):
     continue_val = getattr(args, "continue_last", None)
     if continue_val and not getattr(args, "resume", None):
         if isinstance(continue_val, str):
-            # -c "session name" ó resolve by title or ID
+            # -c "session name" ÔøΩ resolve by title or ID
             resolved = _resolve_session_by_name_or_id(continue_val)
             if resolved:
                 args.resume = resolved
@@ -1046,7 +1046,7 @@ def cmd_chat(args):
                 print("Use 'jarvis sessions list' to see available sessions.")
                 sys.exit(1)
         else:
-            # -c with no argument ó continue the most recent session
+            # -c with no argument ÔøΩ continue the most recent session
             last_id = _resolve_last_session(source="cli")
             if last_id:
                 args.resume = last_id
@@ -1060,10 +1060,10 @@ def cmd_chat(args):
         resolved = _resolve_session_by_name_or_id(resume_val)
         if resolved:
             args.resume = resolved
-        # If resolution fails, keep the original value ó _init_agent will
+        # If resolution fails, keep the original value ÔøΩ _init_agent will
         # report "Session not found" with the original input
 
-    # xAI retirement warning ó one-shot, non-blocking, never fails startup
+    # xAI retirement warning ÔøΩ one-shot, non-blocking, never fails startup
     try:
         from jarvis_cli.xai_retirement import (
             MIGRATION_GUIDE_URL,
@@ -1142,7 +1142,7 @@ def cmd_chat(args):
     # --ignore-user-config: make load_cli_config() / load_config() skip the
     # user's ~/.jarvis/config.yaml and return built-in defaults. Set BEFORE
     # importing cli (which runs `CLI_CONFIG = load_cli_config()` at module
-    # import time). Credentials in .env are still loaded ó this flag only
+    # import time). Credentials in .env are still loaded ÔøΩ this flag only
     # ignores behavioral/config settings.
     if getattr(args, "ignore_user_config", False):
         os.environ["JARVIS_IGNORE_USER_CONFIG"] = "1"
@@ -1200,7 +1200,7 @@ def cmd_gateway(args):
 
 def cmd_proxy(args):
     """Local OpenAI-compatible proxy to OAuth providers."""
-    # Lazy import ó pulls in aiohttp, which is gated behind an extras install
+    # Lazy import ÔøΩ pulls in aiohttp, which is gated behind an extras install
     # for users who don't run the proxy or the messaging gateway.
     from jarvis_cli.proxy.cli import cmd_proxy as _cmd_proxy
 
@@ -1225,7 +1225,7 @@ def cmd_whatsapp(args):
         print("How will you use WhatsApp with Jarvis?")
         print()
         print("  1. Separate bot number (recommended)")
-        print("     People message the bot's number directly ó cleanest experience.")
+        print("     People message the bot's number directly ÔøΩ cleanest experience.")
         print(
             "     Requires a second phone number with WhatsApp installed on a device."
         )
@@ -1245,18 +1245,18 @@ def cmd_whatsapp(args):
             wa_mode = "bot"
             print("  ? Mode: separate bot number")
             print()
-            print("  +-------------------------------------------------+ê")
-            print("  ¶  Getting a second number for the bot:           ¶")
-            print("  ¶                                                 ¶")
-            print("  ¶  Easiest: Install WhatsApp Business (free app)  ¶")
-            print("  ¶  on your phone with a second number:            ¶")
-            print("  ¶    ï Dual-SIM: use your 2nd SIM slot            ¶")
-            print("  ¶    ï Google Voice: free US number (voice.google) ¶")
-            print("  ¶    ï Prepaid SIM: $3-10, verify once            ¶")
-            print("  ¶                                                 ¶")
-            print("  ¶  WhatsApp Business runs alongside your personal ¶")
-            print("  ¶  WhatsApp ó no second phone needed.             ¶")
-            print("  +î-------------------------------------------------+ò")
+            print("  +-------------------------------------------------+ÔøΩ")
+            print("  ÔøΩ  Getting a second number for the bot:           ÔøΩ")
+            print("  ÔøΩ                                                 ÔøΩ")
+            print("  ÔøΩ  Easiest: Install WhatsApp Business (free app)  ÔøΩ")
+            print("  ÔøΩ  on your phone with a second number:            ÔøΩ")
+            print("  ÔøΩ    ÔøΩ Dual-SIM: use your 2nd SIM slot            ÔøΩ")
+            print("  ÔøΩ    ÔøΩ Google Voice: free US number (voice.google) ÔøΩ")
+            print("  ÔøΩ    ÔøΩ Prepaid SIM: $3-10, verify once            ÔøΩ")
+            print("  ÔøΩ                                                 ÔøΩ")
+            print("  ÔøΩ  WhatsApp Business runs alongside your personal ÔøΩ")
+            print("  ÔøΩ  WhatsApp ÔøΩ no second phone needed.             ÔøΩ")
+            print("  +ÔøΩ-------------------------------------------------+ÔøΩ")
         else:
             save_env_value("WHATSAPP_MODE", "self-chat")
             wa_mode = "self-chat"
@@ -1276,7 +1276,7 @@ def cmd_whatsapp(args):
     # bridge-bootstrap timeout and queued WhatsApp for indefinite retries.
     # Now: aborted setup leaves WHATSAPP_ENABLED unset ? gateway skips it.
     # Re-runs that already have WHATSAPP_ENABLED=true (from a prior
-    # successful pairing) stay enabled ó we just don't write it pre-emptively.
+    # successful pairing) stay enabled ÔøΩ we just don't write it pre-emptively.
     print()
     if (get_env_value("WHATSAPP_ENABLED") or "").lower() == "true":
         print("? WhatsApp is already enabled")
@@ -1312,7 +1312,7 @@ def cmd_whatsapp(args):
             save_env_value("WHATSAPP_ALLOWED_USERS", phone.replace(" ", ""))
             print(f"  ? Allowed users set: {phone}")
         else:
-            print("  ? No allowlist ó the agent will respond to ALL incoming messages")
+            print("  ? No allowlist ÔøΩ the agent will respond to ALL incoming messages")
 
     # -- Step 4: Install bridge dependencies ------------------------------
     project_root = Path(__file__).resolve().parents[1]
@@ -1329,7 +1329,7 @@ def cmd_whatsapp(args):
         )
         npm = shutil.which("npm")
         if not npm:
-            print("  ? npm not found on PATH ó install Node.js first")
+            print("  ? npm not found on PATH ÔøΩ install Node.js first")
             return
         try:
             result = subprocess.run(
@@ -1369,7 +1369,7 @@ def cmd_whatsapp(args):
             session_dir.mkdir(parents=True, exist_ok=True)
             print("  ? Session cleared")
         else:
-            # Existing pairing ó ensure WHATSAPP_ENABLED reflects that.
+            # Existing pairing ÔøΩ ensure WHATSAPP_ENABLED reflects that.
             # (Older installs may have lost the env var; covers re-runs
             # where the user picked "no, keep my session" but the var
             # was never set or got removed.)
@@ -1421,7 +1421,7 @@ def cmd_whatsapp(args):
             print("  Next steps:")
             print("    1. Start the gateway:  jarvis gateway")
             print("    2. Open WhatsApp ? Message Yourself")
-            print("    3. Type a message ó the agent will reply")
+            print("    3. Type a message ÔøΩ the agent will reply")
             print()
             print("  Tip: Agent responses are prefixed with '? JARVIS'")
             print("  so you can tell them apart from your own messages.")
@@ -1460,7 +1460,7 @@ def cmd_postinstall(args):
 
 
 def cmd_model(args):
-    """Select default model ó starts with provider selection, then model picker."""
+    """Select default model ÔøΩ starts with provider selection, then model picker."""
     _require_tty("model")
     select_provider_and_model(args=args)
 
@@ -1705,7 +1705,7 @@ def select_provider_and_model(args=None):
     print(f"  Active provider:  {active_label}")
     print()
 
-    # Step 1: Provider selection ó flat list from CANONICAL_PROVIDERS
+    # Step 1: Provider selection ÔøΩ flat list from CANONICAL_PROVIDERS
     all_providers = [(p.slug, p.tui_desc) for p in CANONICAL_PROVIDERS]
 
     for key, provider_info in _custom_provider_map.items():
@@ -1713,7 +1713,7 @@ def select_provider_and_model(args=None):
         base_url = provider_info["base_url"]
         short_url = base_url.replace("https://", "").replace("http://", "").rstrip("/")
         saved_model = provider_info.get("model", "")
-        model_hint = f" ó {saved_model}" if saved_model else ""
+        model_hint = f" ÔøΩ {saved_model}" if saved_model else ""
         all_providers.append((key, f"{name} ({short_url}){model_hint}"))
 
     # Build the menu
@@ -1721,7 +1721,7 @@ def select_provider_and_model(args=None):
     default_idx = 0
     for key, label in all_providers:
         if active and key == active:
-            ordered.append((key, f"{label}  ?ê currently active"))
+            ordered.append((key, f"{label}  ?ÔøΩ currently active"))
             default_idx = len(ordered) - 1
         else:
             ordered.append((key, label))
@@ -1869,7 +1869,7 @@ def _clear_stale_openai_base_url():
 # its own provider+model pair in config.yaml under `auxiliary.<task>`.
 #
 # The UI lives behind "Configure auxiliary models..." at the bottom of the
-# `jarvis model` provider picker. It does NOT re-run credential setup ó it
+# `jarvis model` provider picker. It does NOT re-run credential setup ÔøΩ it
 # only routes already-authenticated providers to specific aux tasks. Users
 # configure new providers through the normal `jarvis model` flow first.
 # -----------------------------------------------------------------------------
@@ -1917,7 +1917,7 @@ def _save_aux_choice(
 ) -> None:
     """Persist an auxiliary task's provider/model to config.yaml.
 
-    Only writes the four routing fields ó timeout, download_timeout, and any
+    Only writes the four routing fields ÔøΩ timeout, download_timeout, and any
     other task-specific settings are preserved untouched. The main model
     config (``model.default``/``model.provider``) is never modified.
     """
@@ -1962,7 +1962,7 @@ def _reset_aux_to_auto() -> int:
             if entry.get(field):
                 entry[field] = ""
                 changed = True
-        # Preserve timeout/download_timeout ó those are user-tuned, not routing
+        # Preserve timeout/download_timeout ÔøΩ those are user-tuned, not routing
         if changed:
             count += 1
     save_config(cfg)
@@ -1970,7 +1970,7 @@ def _reset_aux_to_auto() -> int:
 
 
 def _aux_config_menu() -> None:
-    """Top-level auxiliary-model picker ó choose a task to configure.
+    """Top-level auxiliary-model picker ÔøΩ choose a task to configure.
 
     Loops until the user picks "Back" so multiple tasks can be configured
     without returning to the main provider menu.
@@ -1982,10 +1982,10 @@ def _aux_config_menu() -> None:
         aux = cfg.get("auxiliary", {}) if isinstance(cfg.get("auxiliary"), dict) else {}
 
         print()
-        print("  Auxiliary models ó side-task routing")
+        print("  Auxiliary models ÔøΩ side-task routing")
         print()
         print("  Side tasks (vision, compression, web extraction, etc.) default")
-        print('  to your main chat model.  "auto" means "use my main model" ó')
+        print('  to your main chat model.  "auto" means "use my main model" ÔøΩ')
         print("  Jarvis only falls back to a lightweight backend (OpenRouter,")
         print("  JARVIS Managed) if the main model is unavailable.  Override a")
         print("  task below if you want it pinned to a specific provider/model.")
@@ -2033,7 +2033,7 @@ def _aux_select_for_task(task: str) -> None:
 
     Uses ``list_authenticated_providers()`` to only show providers the user
     has already configured. This avoids re-running OAuth/credential flows
-    inside the aux picker ó users set up new providers through the normal
+    inside the aux picker ÔøΩ users set up new providers through the normal
     ``jarvis model`` flow, then route aux tasks to them here.
     """
     from jarvis_cli.config import load_config
@@ -2062,7 +2062,7 @@ def _aux_select_for_task(task: str) -> None:
     entries: list[tuple[str, str, list[str]]] = []  # (slug, label, models)
     # "auto" always first
     auto_marker = (
-        "  ?ê current" if current_provider == "auto" and not current_base_url else ""
+        "  ?ÔøΩ current" if current_provider == "auto" and not current_base_url else ""
     )
     entries.append(("__auto__", f"auto (recommended){auto_marker}", []))
 
@@ -2071,19 +2071,19 @@ def _aux_select_for_task(task: str) -> None:
         name = p.get("name") or slug
         total = p.get("total_models", 0)
         models = p.get("models") or []
-        model_hint = f" ó {total} models" if total else ""
+        model_hint = f" ÔøΩ {total} models" if total else ""
         marker = (
-            "  ?ê current" if slug == current_provider and not current_base_url else ""
+            "  ?ÔøΩ current" if slug == current_provider and not current_base_url else ""
         )
         entries.append((slug, f"{name}{model_hint}{marker}", list(models)))
 
     # Custom endpoint (raw base_url)
-    custom_marker = "  ?ê current" if current_base_url else ""
+    custom_marker = "  ?ÔøΩ current" if current_base_url else ""
     entries.append(("__custom__", f"Custom endpoint (direct URL){custom_marker}", []))
     entries.append(("__back__", "Back", []))
 
     print()
-    print(f"  Configure {display_name} ó current: {_format_aux_current(task_cfg)}")
+    print(f"  Configure {display_name} ÔøΩ current: {_format_aux_current(task_cfg)}")
     print()
 
     idx = _prompt_provider_choice([label for _, label, _ in entries], default=0)
@@ -2103,7 +2103,7 @@ def _aux_select_for_task(task: str) -> None:
         _aux_flow_custom_endpoint(task, task_cfg)
         return
 
-    # Regular provider ó pick a model from its curated list
+    # Regular provider ÔøΩ pick a model from its curated list
     _aux_flow_provider_model(task, slug, models, current_model)
 
 
@@ -2286,7 +2286,7 @@ def _model_flow_openrouter(config, current_model=""):
 
     openrouter_models = model_ids(force_refresh=True)
 
-    # Fetch live pricing (non-blocking ó returns empty dict on failure)
+    # Fetch live pricing (non-blocking ÔøΩ returns empty dict on failure)
     pricing = get_pricing_for_provider("openrouter", force_refresh=True)
 
     selected = _prompt_model_selection(
@@ -2418,7 +2418,7 @@ def _model_flow_jarvis_managed(config, current_model="", args=None):
         # login_jarvis_managed already handles model selection + config update
         return
 
-    # Already logged in ó use curated model list (same as OpenRouter defaults).
+    # Already logged in ÔøΩ use curated model list (same as OpenRouter defaults).
     # The live /models endpoint returns hundreds of models; the curated list
     # shows only agentic models users recognize from OpenRouter.
     from jarvis_cli.models import (
@@ -2462,13 +2462,13 @@ def _model_flow_jarvis_managed(config, current_model="", args=None):
         print(f"Could not verify credentials: {msg}")
         return
 
-    # Fetch live pricing (non-blocking ó returns empty dict on failure)
+    # Fetch live pricing (non-blocking ÔøΩ returns empty dict on failure)
     pricing = get_pricing_for_provider("jarvis_managed")
 
     # Check if user is on free tier
     free_tier = check_jarvis_managed_free_tier()
 
-    # Resolve portal URL early ó needed both for upgrade links and for the
+    # Resolve portal URL early ÔøΩ needed both for upgrade links and for the
     # freeRecommendedModels endpoint below.
     _jarvis_managed_portal_url = ""
     try:
@@ -2485,7 +2485,7 @@ def _model_flow_jarvis_managed(config, current_model="", args=None):
     # docs-hosted manifest haven't caught up yet.
     #
     # For paid users: mirror the same idea with paidRecommendedModels so
-    # newly-launched paid models surface in the picker too ó independent
+    # newly-launched paid models surface in the picker too ÔøΩ independent
     # of CLI release cadence.
     unavailable_models: list[str] = []
     if free_tier:
@@ -2514,7 +2514,7 @@ def _model_flow_jarvis_managed(config, current_model="", args=None):
         return
 
     print(
-        f'Showing {len(model_ids)} curated models ó use "Enter custom model name" for others.'
+        f'Showing {len(model_ids)} curated models ÔøΩ use "Enter custom model name" for others.'
     )
 
     selected = _prompt_model_selection(
@@ -2716,7 +2716,7 @@ def _model_flow_xai_oauth(_config, current_model="", *, args=None):
             return
 
     # Resolve a usable base URL.  ``resolve_xai_oauth_runtime_credentials``
-    # only reads from the auth.json singleton ó but credentials may legitimately
+    # only reads from the auth.json singleton ÔøΩ but credentials may legitimately
     # live only in the pool (e.g. after ``jarvis auth add xai-oauth``).  Fall
     # back to the default base URL in that case so the model picker still
     # completes successfully instead of bailing out with
@@ -2733,7 +2733,7 @@ def _model_flow_xai_oauth(_config, current_model="", *, args=None):
     if selected:
         _save_model_choice(selected)
         _update_config_for_provider("xai-oauth", base_url)
-        print(f"Default model set to: {selected} (via xAI Grok OAuth ó SuperGrok Subscription)")
+        print(f"Default model set to: {selected} (via xAI Grok OAuth ÔøΩ SuperGrok Subscription)")
     else:
         print("No change.")
 
@@ -2837,7 +2837,7 @@ def _model_flow_minimax_oauth(config, current_model="", args=None):
 
 
 def _model_flow_google_gemini_cli(_config, current_model=""):
-    """Google Gemini OAuth (PKCE) via Cloud Code Assist ó supports free AND paid tiers.
+    """Google Gemini OAuth (PKCE) via Cloud Code Assist ÔøΩ supports free AND paid tiers.
 
     Flow:
       1. Show upfront warning about Google's ToS stance (per opencode-gemini-auth).
@@ -2890,7 +2890,7 @@ def _model_flow_google_gemini_cli(_config, current_model=""):
             print(f"  Using GCP project: {project_id}")
         else:
             print(
-                "  No GCP project configured ó free tier will be auto-provisioned on first request."
+                "  No GCP project configured ÔøΩ free tier will be auto-provisioned on first request."
             )
     except Exception as exc:
         print(f"Failed to resolve Gemini credentials: {exc}")
@@ -3024,7 +3024,7 @@ def _model_flow_custom(config):
     else:
         print("  API mode: auto-detect")
 
-    # Select model ó use probe results when available, fall back to manual input
+    # Select model ÔøΩ use probe results when available, fall back to manual input
     model_name = ""
     detected_models = probe.get("models") or []
     try:
@@ -3053,7 +3053,7 @@ def _model_flow_custom(config):
             "Context length in tokens [leave blank for auto-detect]: "
         ).strip()
 
-        # Prompt for a display name ó shown in the provider menu on future runs
+        # Prompt for a display name ÔøΩ shown in the provider menu on future runs
         default_name = _auto_provider_name(effective_url)
         display_name = input(f"Display name [{default_name}]: ").strip() or default_name
     except (KeyboardInterrupt, EOFError):
@@ -3071,7 +3071,7 @@ def _model_flow_custom(config):
             if context_length <= 0:
                 context_length = None
         except ValueError:
-            print(f"Invalid context length: {context_length_str} ó will auto-detect.")
+            print(f"Invalid context length: {context_length_str} ÔøΩ will auto-detect.")
             context_length = None
 
     if model_name:
@@ -3248,7 +3248,7 @@ def _save_custom_provider(
 ):
     """Save a custom endpoint to custom_providers in config.yaml.
 
-    Deduplicates by base_url ó if the URL already exists, updates the
+    Deduplicates by base_url ÔøΩ if the URL already exists, updates the
     model name, context_length, and api_mode but doesn't add a duplicate entry.
     Uses *name* when provided, otherwise auto-generates from the URL.
     """
@@ -3259,7 +3259,7 @@ def _save_custom_provider(
     if not isinstance(providers, list):
         providers = []
 
-    # Check if this URL is already saved ó update model/context_length if so
+    # Check if this URL is already saved ÔøΩ update model/context_length if so
     for entry in providers:
         if isinstance(entry, dict) and entry.get("base_url", "").rstrip(
             "/"
@@ -3314,11 +3314,11 @@ def _model_flow_azure_foundry(config, current_model=""):
     Anthropic-style (``/v1/messages``) endpoints, and two authentication
     modes:
 
-    * **API key** (default) ó uses ``AZURE_FOUNDRY_API_KEY`` from .env.
-    * **Microsoft Entra ID** ó keyless, RBAC-based auth via the
+    * **API key** (default) ÔøΩ uses ``AZURE_FOUNDRY_API_KEY`` from .env.
+    * **Microsoft Entra ID** ÔøΩ keyless, RBAC-based auth via the
       ``azure-identity`` SDK (Managed Identity / Workload Identity / az
       login / VS Code / azd / service principal env vars). Works on both
-      OpenAI-style and Anthropic-style endpoints ó Microsoft RBAC is
+      OpenAI-style and Anthropic-style endpoints ÔøΩ Microsoft RBAC is
       per-resource and the same ``Azure AI User`` role grants
       both. For OpenAI-style the OpenAI SDK's native callable
       ``api_key=`` contract is used; for Anthropic-style an
@@ -3457,7 +3457,7 @@ def _model_flow_azure_foundry(config, current_model=""):
     if use_entra:
         print()
         if not has_azure_identity_installed():
-            print("?ê The 'azure-identity' package is not installed yet.")
+            print("?ÔøΩ The 'azure-identity' package is not installed yet.")
             print(
                 "  Jarvis will install it now (the preflight below "
                 "triggers the lazy-install). To skip lazy installs, "
@@ -3475,7 +3475,7 @@ def _model_flow_azure_foundry(config, current_model=""):
             entra_overrides["scope"] = _persisted_scope_override
 
         print()
-        print("?ê Probing Microsoft Entra ID credential chain (up to 10s)...")
+        print("?ÔøΩ Probing Microsoft Entra ID credential chain (up to 10s)...")
         _config = EntraIdentityConfig(
             scope=entra_scope,
         )
@@ -3501,7 +3501,7 @@ def _model_flow_azure_foundry(config, current_model=""):
                 print("Cancelled.")
                 return
 
-        # Build the token provider for the detection probe (best-effort ó
+        # Build the token provider for the detection probe (best-effort ÔøΩ
         # if the credential chain failed above, this will silently return
         # None inside azure_detect and the probe falls back to manual).
         try:
@@ -3526,7 +3526,7 @@ def _model_flow_azure_foundry(config, current_model=""):
 
     # -- Step 4: auto-detect transport + models -----------------------
     print()
-    print("?ê Probing endpoint to auto-detect transport and models...")
+    print("?ÔøΩ Probing endpoint to auto-detect transport and models...")
     detection = azure_detect.detect(
         effective_url,
         api_key=effective_key,
@@ -3881,7 +3881,7 @@ def _model_flow_named_custom(config, provider_info):
                 # Only persist an inline api_key when the user originally had
                 # one (either a literal secret or a ``${VAR}`` template). When
                 # the entry relies on ``key_env``, do not synthesize a
-                # ``${key_env}`` api_key ó the runtime already resolves the
+                # ``${key_env}`` api_key ÔøΩ the runtime already resolves the
                 # key from ``key_env`` directly, and writing the resolved
                 # secret (or even a synthesized template) would silently
                 # downgrade credential hygiene on entries that intentionally
@@ -3945,7 +3945,7 @@ def _prompt_reasoning_effort_selection(efforts, current_effort=""):
 
     def _label(effort):
         if effort == current_effort:
-            return f"{effort}  ?ê currently in use"
+            return f"{effort}  ?ÔøΩ currently in use"
         return effort
 
     disable_label = "Disable reasoning"
@@ -4146,7 +4146,7 @@ def _model_flow_copilot(config, current_model=""):
         model_list = _PROVIDER_MODELS.get(provider_id, [])
         if model_list:
             print(
-                "  ? Could not auto-detect models from GitHub Copilot ó showing defaults."
+                "  ? Could not auto-detect models from GitHub Copilot ÔøΩ showing defaults."
             )
             print('    Use "Enter custom model name" if you do not see your model.')
 
@@ -4283,7 +4283,7 @@ def _model_flow_copilot_acp(config, current_model=""):
         model_list = _PROVIDER_MODELS.get("copilot", [])
         if model_list:
             print(
-                "  ? Could not auto-detect models from GitHub Copilot ó showing defaults."
+                "  ? Could not auto-detect models from GitHub Copilot ÔøΩ showing defaults."
             )
             print('    Use "Enter custom model name" if you do not see your model.')
 
@@ -4334,7 +4334,7 @@ def _prompt_api_key(pconfig, existing_key: str, provider_id: str = "") -> tuple:
     recover from a malformed paste without editing ``~/.jarvis/.env`` by hand.
 
     Returns ``(resolved_key, abort)``.  ``abort=True`` means the caller should
-    ``return`` immediately ó the user cancelled entry, declined to replace, or
+    ``return`` immediately ÔøΩ the user cancelled entry, declined to replace, or
     cleared the key and is now unconfigured.
     """
     import getpass
@@ -4372,7 +4372,7 @@ def _prompt_api_key(pconfig, existing_key: str, provider_id: str = "") -> tuple:
         print()
         return new_key, False
 
-    # Already configured ó offer K / R / C --------------------------------
+    # Already configured ÔøΩ offer K / R / C --------------------------------
     from jarvis_cli.env_loader import format_secret_source_suffix
 
     source_suffix = format_secret_source_suffix(key_env) if key_env else ""
@@ -4416,7 +4416,7 @@ def _model_flow_kimi(config, current_model=""):
     - sk-kimi-* keys   ? api.kimi.com/coding/v1  (Kimi Coding Plan)
     - Other keys        ? api.moonshot.ai/v1      (legacy Moonshot)
 
-    No manual base URL prompt ó endpoint is determined by key prefix.
+    No manual base URL prompt ÔøΩ endpoint is determined by key prefix.
     """
     from jarvis_cli.auth import (
         PROVIDER_REGISTRY,
@@ -4464,7 +4464,7 @@ def _model_flow_kimi(config, current_model=""):
         save_env_value(base_url_env, "")
     print()
 
-    # Step 3: Model selection ó show appropriate models for the endpoint
+    # Step 3: Model selection ÔøΩ show appropriate models for the endpoint
     if is_coding_plan:
         # Coding Plan models (kimi-k2.6 first)
         model_list = [
@@ -4580,7 +4580,7 @@ def _model_flow_stepfun(config, current_model=""):
     ordered_regions = []
     for region_key, label in region_choices:
         if region_key == current_region:
-            ordered_regions.insert(0, (region_key, f"{label}  ?ê currently active"))
+            ordered_regions.insert(0, (region_key, f"{label}  ?ÔøΩ currently active"))
         else:
             ordered_regions.append((region_key, label))
     ordered_regions.append(("cancel", "Cancel"))
@@ -4603,7 +4603,7 @@ def _model_flow_stepfun(config, current_model=""):
         model_list = _PROVIDER_MODELS.get(provider_id, [])
         if model_list:
             print(
-                f"  Could not auto-detect models from {pconfig.name} API ó "
+                f"  Could not auto-detect models from {pconfig.name} API ÔøΩ "
                 "showing Step Plan fallback catalog."
             )
 
@@ -4636,7 +4636,7 @@ def _model_flow_stepfun(config, current_model=""):
 
 
 def _model_flow_bedrock_api_key(config, region, current_model=""):
-    """Bedrock API Key mode ó uses the OpenAI-compatible bedrock-mantle endpoint.
+    """Bedrock API Key mode ÔøΩ uses the OpenAI-compatible bedrock-mantle endpoint.
 
     For developers who don't have an AWS account but received a Bedrock API Key
     from their AWS admin. Works like any OpenAI-compatible endpoint.
@@ -4680,7 +4680,7 @@ def _model_flow_bedrock_api_key(config, region, current_model=""):
         print("  ? API key saved.")
     print()
 
-    # Model selection ó use static list (mantle doesn't need boto3 for discovery)
+    # Model selection ÔøΩ use static list (mantle doesn't need boto3 for discovery)
     model_list = _PROVIDER_MODELS.get("bedrock", [])
     print(f"  Showing {len(model_list)} curated models")
 
@@ -4728,7 +4728,7 @@ def _model_flow_bedrock_api_key(config, region, current_model=""):
 def _model_flow_bedrock(config, current_model=""):
     """AWS Bedrock provider: verify credentials, pick region, discover models.
 
-    Uses the native Converse API via boto3 ó not the OpenAI-compatible endpoint.
+    Uses the native Converse API via boto3 ÔøΩ not the OpenAI-compatible endpoint.
     Auth is handled by the AWS SDK default credential chain (env vars, profile,
     instance role), so no API key prompt is needed.
     """
@@ -4781,7 +4781,7 @@ def _model_flow_bedrock(config, current_model=""):
     print("    1. IAM credential chain (recommended)")
     print("       Works with EC2 instance roles, SSO, env vars, aws configure")
     print("    2. Bedrock API Key")
-    print("       Enter your Bedrock API Key directly ó also supports")
+    print("       Enter your Bedrock API Key directly ÔøΩ also supports")
     print("       team scenarios where an admin distributes keys")
     print()
     try:
@@ -4794,7 +4794,7 @@ def _model_flow_bedrock(config, current_model=""):
         _model_flow_bedrock_api_key(config, region, current_model)
         return
 
-    # 3. Model discovery ó try live API first, fall back to static list
+    # 3. Model discovery ÔøΩ try live API first, fall back to static list
     print(f"  Discovering models in {region}...")
     live_models = discover_bedrock_models(region)
 
@@ -5030,13 +5030,13 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
     if override and base_url_env:
         if not override.startswith(("http://", "https://")):
             print(
-                "  Invalid URL ó must start with http:// or https://. Keeping current value."
+                "  Invalid URL ÔøΩ must start with http:// or https://. Keeping current value."
             )
         else:
             save_env_value(base_url_env, override)
             effective_base = override
 
-    # Model selection ó resolution order:
+    # Model selection ÔøΩ resolution order:
     #   1. models.dev registry (cached, filtered for agentic/tool-capable models)
     #   2. Curated static fallback list (offline insurance)
     #   3. Live /models endpoint probe (small providers without models.dev data)
@@ -5064,7 +5064,7 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
         api_key_for_probe = existing_key or (get_env_value(key_env) if key_env else "")
         # During setup, force a live refresh so the picker reflects newly
         # released models (e.g. deepseek v4 flash, kimi k2.6) the moment
-        # the user enters their key ó not an hour later when the disk
+        # the user enters their key ÔøΩ not an hour later when the disk
         # cache TTL expires.
         model_list = fetch_ollama_cloud_models(
             api_key=api_key_for_probe,
@@ -5102,12 +5102,12 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
                 model_list = curated
                 if model_list:
                     print(
-                        f'  Showing {len(model_list)} curated models ó use "Enter custom model name" for others.'
+                        f'  Showing {len(model_list)} curated models ÔøΩ use "Enter custom model name" for others.'
                     )
     else:
         curated = _PROVIDER_MODELS.get(provider_id, [])
 
-        # Try models.dev first ó returns tool-capable models, filtered for noise
+        # Try models.dev first ÔøΩ returns tool-capable models, filtered for noise
         mdev_models: list = []
         try:
             from agent.models_dev import list_agentic_models
@@ -5131,10 +5131,10 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
                 model_list = mdev_models
             print(f"  Found {len(model_list)} model(s) from models.dev registry")
         elif curated and len(curated) >= 8:
-            # Curated list is substantial ó use it directly, skip live probe
+            # Curated list is substantial ÔøΩ use it directly, skip live probe
             model_list = curated
             print(
-                f'  Showing {len(model_list)} curated models ó use "Enter custom model name" for others.'
+                f'  Showing {len(model_list)} curated models ÔøΩ use "Enter custom model name" for others.'
             )
         else:
             api_key_for_probe = existing_key or (
@@ -5148,7 +5148,7 @@ def _model_flow_api_key_provider(config, provider_id, current_model=""):
                 model_list = curated
                 if model_list:
                     print(
-                        f'  Showing {len(model_list)} curated models ó use "Enter custom model name" for others.'
+                        f'  Showing {len(model_list)} curated models ÔøΩ use "Enter custom model name" for others.'
                     )
             # else: no defaults either, will fall through to raw input
 
@@ -5225,7 +5225,7 @@ def _run_anthropic_oauth_flow(save_env_value):
 
     try:
         print()
-        print("  Running 'claude setup-token' ó follow the prompts below.")
+        print("  Running 'claude setup-token' ÔøΩ follow the prompts below.")
         print("  A browser window will open for you to authorize access.")
         print()
         token = run_oauth_setup_token()
@@ -5236,7 +5236,7 @@ def _run_anthropic_oauth_flow(save_env_value):
             print("  ? OAuth credentials saved.")
             return True
 
-        # Subprocess completed but no token auto-detected ó ask user to paste
+        # Subprocess completed but no token auto-detected ÔøΩ ask user to paste
         print()
         print("  If the setup-token was displayed above, paste it here:")
         print()
@@ -5258,7 +5258,7 @@ def _run_anthropic_oauth_flow(save_env_value):
         return False
 
     except FileNotFoundError:
-        # Claude CLI not installed ó guide user through manual setup
+        # Claude CLI not installed ÔøΩ guide user through manual setup
         print()
         print("  The 'claude' CLI is required for OAuth login.")
         print()
@@ -5282,12 +5282,12 @@ def _run_anthropic_oauth_flow(save_env_value):
             save_anthropic_oauth_token(token, save_fn=save_env_value)
             print("  ? Setup-token saved.")
             return True
-        print("  Cancelled ó install Claude Code and try again.")
+        print("  Cancelled ÔøΩ install Claude Code and try again.")
         return False
 
 
 def _model_flow_anthropic(config, current_model=""):
-    """Flow for Anthropic provider ó OAuth subscription, API key, or Claude Code creds."""
+    """Flow for Anthropic provider ÔøΩ OAuth subscription, API key, or Claude Code creds."""
     from jarvis_cli.auth import (
         _prompt_model_selection,
         _save_model_choice,
@@ -5336,7 +5336,7 @@ def _model_flow_anthropic(config, current_model=""):
             from jarvis_cli.auth import PROVIDER_REGISTRY
 
             # Surface which env var supplied the key so users with
-            # Bitwarden see "(from Bitwarden)" ó without this, a detected
+            # Bitwarden see "(from Bitwarden)" ÔøΩ without this, a detected
             # BSM key looks identical to a key in .env and users assume
             # nothing is wired up.
             source_suffix = ""
@@ -5420,7 +5420,7 @@ def _model_flow_anthropic(config, current_model=""):
     if selected:
         _save_model_choice(selected)
 
-        # Update config with provider ó clear base_url since
+        # Update config with provider ÔøΩ clear base_url since
         # resolve_runtime_provider() always hardcodes Anthropic's URL.
         # Leaving a stale base_url in config can contaminate other
         # providers if the user switches without running 'jarvis model'.
@@ -5485,12 +5485,12 @@ def cmd_slack(args):
     """Slack integration helpers.
 
     Dispatches ``jarvis slack <subcommand>``. Currently supports:
-      manifest ó print or write a Slack app manifest with every gateway
+      manifest ÔøΩ print or write a Slack app manifest with every gateway
                  command registered as a first-class slash.
     """
     sub = getattr(args, "slack_command", None)
     if sub in {None, ""}:
-        # No subcommand ó print usage hint.
+        # No subcommand ÔøΩ print usage hint.
         print(
             "usage: jarvis slack <subcommand>\n"
             "\n"
@@ -5581,7 +5581,7 @@ def _print_version_info(*, check_updates: bool = True) -> None:
     print(f"Python: {sys.version.split()[0]}")
 
     # Check for key dependencies.  Use importlib.metadata rather than
-    # ``import openai`` ó the SDK drags in ~800ms of pydantic-backed type
+    # ``import openai`` ÔøΩ the SDK drags in ~800ms of pydantic-backed type
     # modules just to expose ``__version__``.  Metadata lookup is ~2ms.
     try:
         from importlib.metadata import version as _pkg_version, PackageNotFoundError
@@ -5596,7 +5596,7 @@ def _print_version_info(*, check_updates: bool = True) -> None:
     if not check_updates:
         return
 
-    # Show update status (synchronous ó acceptable since user asked for version info)
+    # Show update status (synchronous ÔøΩ acceptable since user asked for version info)
     try:
         from jarvis_cli.banner import check_for_updates
         from jarvis_cli.config import recommended_update_command
@@ -5605,7 +5605,7 @@ def _print_version_info(*, check_updates: bool = True) -> None:
         if behind and behind > 0:
             commits_word = "commit" if behind == 1 else "commits"
             print(
-                f"Update available: {behind} {commits_word} behind ó "
+                f"Update available: {behind} {commits_word} behind ÔøΩ "
                 f"run '{recommended_update_command()}'"
             )
         elif behind == 0:
@@ -5656,7 +5656,7 @@ def _clear_bytecode_cache(root: Path) -> int:
 
 
 # Critical files that every ``jarvis`` invocation imports at startup. If any
-# of these fail to parse after a pull, the CLI is bricked ó the user can't
+# of these fail to parse after a pull, the CLI is bricked ÔøΩ the user can't
 # even run ``jarvis update`` again to roll forward. The post-pull syntax
 # guard validates these and auto-rolls-back on failure.
 _UPDATE_CRITICAL_FILES = (
@@ -5699,7 +5699,7 @@ def _validate_critical_files_syntax(root) -> tuple[bool, str | None, str | None]
     source tree's ``__pycache__/`` so we don't race with concurrent test
     workers that walk the same dir, and so we don't leave a stale pyc
     behind in production if the next interpreter run picks a different
-    Python version. The pyc is discarded on function return either way ó
+    Python version. The pyc is discarded on function return either way ÔøΩ
     we only care about the compile-or-not signal.
 
     Returns ``(ok, failing_path, error_message)``. ``ok=True`` means every
@@ -5713,7 +5713,7 @@ def _validate_critical_files_syntax(root) -> tuple[bool, str | None, str | None]
         for relpath in _UPDATE_CRITICAL_FILES:
             path = root / relpath
             if not path.exists():
-                # Missing file is suspicious but not necessarily fatal ó a future
+                # Missing file is suspicious but not necessarily fatal ÔøΩ a future
                 # refactor may legitimately remove one of these. Skip and move on.
                 continue
             # Mirror the relative path under the tmpdir so two different
@@ -5771,7 +5771,7 @@ def _gateway_prompt(prompt_text: str, default: str = "", timeout: float = 300.0)
                 pass
         _time.sleep(0.5)
 
-    # Timeout ó clean up and use default
+    # Timeout ÔøΩ clean up and use default
     prompt_path.unlink(missing_ok=True)
     response_path.unlink(missing_ok=True)
     print(f"  (no response after {int(timeout)}s, using default: {default!r})")
@@ -5828,7 +5828,7 @@ def _run_npm_install_deterministic(
     sync on a WIP checkout).  Without this, ``npm install`` on npm = 10 silently
     rewrites committed lockfiles (stripping ``"peer": true`` etc.), which leaves
     the working tree dirty and causes the next ``jarvis update`` to stash the
-    lockfile ó repeatedly.
+    lockfile ÔøΩ repeatedly.
     """
     lockfile = cwd / "package-lock.json"
     if lockfile.exists():
@@ -5844,7 +5844,7 @@ def _run_npm_install_deterministic(
         )
         if ci_result.returncode == 0:
             return ci_result
-        # Fall through to `npm install` ó lockfile may be out of sync on a
+        # Fall through to `npm install` ÔøΩ lockfile may be out of sync on a
         # WIP fork/branch, or `npm ci` may not be available on very old npm.
     install_cmd = [npm, "install", *extra_args]
     return subprocess.run(
@@ -5929,7 +5929,7 @@ def _build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
         errors="replace",
     )
     if r2.returncode != 0:
-        # Retry once after a short delay ó covers boot-time races on Windows
+        # Retry once after a short delay ÔøΩ covers boot-time races on Windows
         # (antivirus scanning Node.js binaries, npm cache not ready, transient
         # I/O when launched via Scheduled Task at logon). See issue #23817.
         _time.sleep(3)
@@ -5950,9 +5950,9 @@ def _build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
 
         # If a stale dist exists, serve it as a fallback instead of failing.
         # A stale UI is far better than no UI for non-interactive callers
-        # (Windows Scheduled Tasks, CI) ó issue #23817.
+        # (Windows Scheduled Tasks, CI) ÔøΩ issue #23817.
         if dist_index.exists():
-            _say("  ? Web UI build failed ó serving stale dist as fallback")
+            _say("  ? Web UI build failed ÔøΩ serving stale dist as fallback")
             if stderr_tail:
                 _say(f"  Build error:\n  {stderr_tail}")
             return True
@@ -5979,7 +5979,7 @@ def _find_stale_dashboard_pids() -> list[int]:
     auth headers the old backend doesn't recognise ? every API call 401s).
 
     The dashboard has no service manager (systemd / launchd), no PID file,
-    and we can't know the original launch args ó so the only sane action
+    and we can't know the original launch args ÔøΩ so the only sane action
     after an update is to kill the stale process and let the user restart
     it.  This helper is just the detection step; see
     ``_kill_stale_dashboard_processes`` for the kill.
@@ -6082,7 +6082,7 @@ def _print_curator_first_run_notice() -> None:
     except Exception:
         return
     if state.get("last_run_at"):
-        # Curator has run before (real or already seeded) ó no notice needed.
+        # Curator has run before (real or already seeded) ÔøΩ no notice needed.
         return
     try:
         hours = curator.get_interval_hours()
@@ -6108,7 +6108,7 @@ def _print_curator_recent_run_notice() -> None:
 
     The curator runs in the background (gateway tick + CLI session start),
     so users learn about skill consolidations only by stumbling into a
-    rename. ``jarvis update`` is a high-attention surface ó surface the
+    rename. ``jarvis update`` is a high-attention surface ÔøΩ surface the
     most recent run's rename map here, once.
 
     Show-once: state stamps ``last_run_summary_shown_at`` after printing.
@@ -6128,7 +6128,7 @@ def _print_curator_recent_run_notice() -> None:
 
     last_run_at = state.get("last_run_at")
     if not last_run_at:
-        return  # no curator run yet ó first-run notice handles this case
+        return  # no curator run yet ÔøΩ first-run notice handles this case
 
     if state.get("last_run_summary_shown_at") == last_run_at:
         return  # already shown for this run
@@ -6137,7 +6137,7 @@ def _print_curator_recent_run_notice() -> None:
     if not summary:
         return
 
-    # Only print when there's something interesting to show ó i.e. the
+    # Only print when there's something interesting to show ÔøΩ i.e. the
     # rename map block was appended (multi-line summary). A bare "auto:
     # no changes; llm: no change" doesn't warrant interrupting the
     # update flow.
@@ -6153,7 +6153,7 @@ def _print_curator_recent_run_notice() -> None:
     # Format the timestamp as "Xh ago" for readability.
     when = _format_time_ago(last_run_at)
     print()
-    print(f"? Skill curator ó last run {when}")
+    print(f"? Skill curator ÔøΩ last run {when}")
     for line in summary.splitlines():
         print(f"  {line}")
     print(
@@ -6239,13 +6239,13 @@ def _kill_stale_dashboard_processes(
         import signal as _signal
         import time as _time
 
-        # SIGTERM first ó give each process a chance to shut down cleanly
+        # SIGTERM first ÔøΩ give each process a chance to shut down cleanly
         # (uvicorn closes its socket, flushes logs, etc.).
         for pid in pids:
             try:
                 os.kill(pid, _signal.SIGTERM)
             except ProcessLookupError:
-                # Already gone ó count as killed.
+                # Already gone ÔøΩ count as killed.
                 killed.append(pid)
             except (PermissionError, OSError) as e:
                 failed.append((pid, str(e)))
@@ -6417,7 +6417,7 @@ def _update_via_zip(args):
             print(f"  + {len(result['copied'])} new: {', '.join(result['copied'])}")
         if result.get("updated"):
             print(
-                f"  ?ë {len(result['updated'])} updated: {', '.join(result['updated'])}"
+                f"  ?ÔøΩ {len(result['updated'])} updated: {', '.join(result['updated'])}"
             )
         if result.get("user_modified"):
             print(f"  ~ {len(result['user_modified'])} user-modified (kept)")
@@ -6471,7 +6471,7 @@ def _stash_local_changes_if_needed(git_cmd: list[str], cwd: Path) -> Optional[st
     stash_name = datetime.now(timezone.utc).strftime(
         "jarvis-update-autostash-%Y%m%d-%H%M%S"
     )
-    print("? Local changes detected ó stashing before update...")
+    print("? Local changes detected ÔøΩ stashing before update...")
     subprocess.run(
         git_cmd + ["stash", "push", "--include-untracked", "-m", stash_name],
         cwd=cwd,
@@ -6552,7 +6552,7 @@ def _restore_stashed_changes(
         text=True,
     )
 
-    # Check for unmerged (conflicted) files ó can happen even when returncode is 0
+    # Check for unmerged (conflicted) files ÔøΩ can happen even when returncode is 0
     unmerged = subprocess.run(
         git_cmd + ["diff", "--name-only", "--diff-filter=U"],
         cwd=cwd,
@@ -6573,12 +6573,12 @@ def _restore_stashed_changes(
         if conflicted_files:
             print("\nConflicted files:")
             for f in conflicted_files.splitlines():
-                print(f"  ï {f}")
+                print(f"  ÔøΩ {f}")
 
-        print("\nYour stashed changes are preserved ó nothing is lost.")
+        print("\nYour stashed changes are preserved ÔøΩ nothing is lost.")
         print(f"  Stash ref: {stash_ref}")
 
-        # Always reset to clean state ó leaving conflict markers in source
+        # Always reset to clean state ÔøΩ leaving conflict markers in source
         # files makes jarvis completely unrunnable (SyntaxError on import).
         # The user's changes are safe in the stash for manual recovery.
         subprocess.run(
@@ -6588,7 +6588,7 @@ def _restore_stashed_changes(
         )
         print("Working tree reset to clean state.")
         print(f"Restore your changes later with: git stash apply {stash_ref}")
-        # Don't sys.exit ó the code update itself succeeded, only the stash
+        # Don't sys.exit ÔøΩ the code update itself succeeded, only the stash
         # restore had conflicts.  Let cmd_update continue with pip install,
         # skill sync, and gateway restart.
         return False
@@ -6870,11 +6870,11 @@ def _invalidate_update_cache():
     """Delete the update-check cache for ALL profiles so no banner
     reports a stale "commits behind" count after a successful update.
 
-    The git repo is shared across profiles ó when one profile runs
+    The git repo is shared across profiles ÔøΩ when one profile runs
     ``jarvis update``, every profile is now current.
     """
     homes = []
-    # Default profile home (Docker-aware ó uses /opt/data in Docker)
+    # Default profile home (Docker-aware ÔøΩ uses /opt/data in Docker)
     from jarvis_cli.constants import get_default_jarvis_root
 
     default_home = get_default_jarvis_root()
@@ -6943,8 +6943,8 @@ def _run_install_with_heartbeat(
         while not done.wait(heartbeat_interval_seconds):
             elapsed = int(_time.time() - start)
             print(
-                f"  Ö still installing dependencies ({elapsed}s elapsed)"
-                " ó compiling Rust/C extensions can take several minutes",
+                f"  ÔøΩ still installing dependencies ({elapsed}s elapsed)"
+                " ÔøΩ compiling Rust/C extensions can take several minutes",
                 flush=True,
             )
 
@@ -6979,7 +6979,7 @@ def _jarvis_exe_shims(scripts_dir: Path) -> list[Path]:
     """Entry-point shims that uv may try to rewrite during ``pip install -e .``.
 
     On Windows these are .exe launchers generated by setuptools/uv. On POSIX
-    they're regular Python scripts which can be replaced atomically ó no
+    they're regular Python scripts which can be replaced atomically ÔøΩ no
     self-replacement hazard exists outside Windows.
     """
     if not _is_windows():
@@ -6995,7 +6995,7 @@ def _detect_concurrent_jarvis_instances(
 ) -> list[tuple[int, str]]:
     """Find other live processes whose .exe is one of our entry-point shims.
 
-    Windows blocks DELETE/REPLACE on a running .exe ó and even RENAME on the
+    Windows blocks DELETE/REPLACE on a running .exe ÔøΩ and even RENAME on the
     same .exe when another process opened it without ``FILE_SHARE_DELETE``.
     The Jarvis Desktop Electron app spawns ``jarvis.EXE`` as a backend child,
     so during ``jarvis update`` the user-invoked process and the desktop's
@@ -7008,7 +7008,7 @@ def _detect_concurrent_jarvis_instances(
     ``jarvis update`` invocation never reports itself.
 
     Returns an empty list off-Windows, on missing psutil, or when no other
-    instances exist. Never raises ó process enumeration is best-effort.
+    instances exist. Never raises ÔøΩ process enumeration is best-effort.
     """
     if not _is_windows():
         return []
@@ -7092,7 +7092,7 @@ def _quarantine_running_jarvis_exe(
     the next jarvis invocation by ``_cleanup_quarantined_exes``.
 
     Rename can still fail when *another* process has opened the .exe without
-    ``FILE_SHARE_DELETE`` ó typically AV real-time scanners with transient
+    ``FILE_SHARE_DELETE`` ÔøΩ typically AV real-time scanners with transient
     handles (recovers in <1s), or the Jarvis Desktop backend child process
     (won't recover until the user closes it). We mitigate:
 
@@ -7109,7 +7109,7 @@ def _quarantine_running_jarvis_exe(
 
     Returns the list of (original, quarantined) pairs so the caller can roll
     back if the install itself fails before uv writes a replacement. Pairs
-    where we used ``MOVEFILE_DELAY_UNTIL_REBOOT`` are NOT returned ó they
+    where we used ``MOVEFILE_DELAY_UNTIL_REBOOT`` are NOT returned ÔøΩ they
     are already deferred and roll-back is meaningless.
     """
     moved: list[tuple[Path, Path]] = []
@@ -7166,7 +7166,7 @@ def _quarantine_running_jarvis_exe(
             continue
 
         # Truly couldn't budge the .exe. Print an actionable warning and let
-        # uv try its luck ó sometimes uv's own retry handling pulls through.
+        # uv try its luck ÔøΩ sometimes uv's own retry handling pulls through.
         print(
             f"  ? Could not quarantine {shim.name} ({last_exc.__class__.__name__}: "
             f"another process is holding it open)."
@@ -7186,7 +7186,7 @@ def _schedule_replace_on_reboot(shim: Path, quarantine_target: Path) -> bool:
     MOVEFILE_DELAY_UNTIL_REBOOT``. The OS persists the rename in
     ``HKLM\\System\\CurrentControlSet\\Control\\Session Manager\\
     PendingFileRenameOperations`` and applies it before any user-mode code
-    runs on next boot ó at which point no process can hold the .exe.
+    runs on next boot ÔøΩ at which point no process can hold the .exe.
 
     Returns ``True`` if the schedule call succeeded, ``False`` otherwise
     (non-Windows, ctypes failure, lack of privilege, etc.). Never raises.
@@ -7242,7 +7242,7 @@ def _cleanup_quarantined_exes(scripts_dir: Path | None = None) -> None:
             try:
                 stale.unlink()
             except OSError:
-                pass  # still locked or in use ó try again next run
+                pass  # still locked or in use ÔøΩ try again next run
     except OSError:
         pass
 
@@ -7253,13 +7253,13 @@ def _refresh_active_lazy_features() -> None:
     When pyproject.toml's ``[all]`` extra was slimmed down (May 2026), most
     optional backends moved to ``tools/lazy_deps.py`` and only install on
     first use. ``jarvis update`` runs ``uv pip install -e .[all]`` which
-    leaves those packages untouched ó so if we bump a pin in
+    leaves those packages untouched ÔøΩ so if we bump a pin in
     :data:`LAZY_DEPS` (CVE response, transitive bug fix), users who already
     activated the backend keep the stale version forever.
 
     This function asks lazy_deps which features the user has previously
     activated and reinstalls them under the current pins. Features the
-    user never enabled stay quiet ó no churn for cold backends.
+    user never enabled stay quiet ÔøΩ no churn for cold backends.
 
     Never raises. A failure here must not block the rest of the update.
     """
@@ -7295,7 +7295,7 @@ def _refresh_active_lazy_features() -> None:
     skipped = [(f, s) for f, s in results.items() if s.startswith("skipped:")]
 
     if refreshed:
-        print(f"  ?ë {len(refreshed)} refreshed: {', '.join(refreshed)}")
+        print(f"  ?ÔøΩ {len(refreshed)} refreshed: {', '.join(refreshed)}")
     if current:
         print(f"  ? {len(current)} already current")
     if skipped:
@@ -7499,7 +7499,7 @@ class _UpdateOutputStream:
       terminal disconnects.
     * Writes to the original stream that fail with ``BrokenPipeError`` /
       ``OSError`` / ``ValueError`` (closed file) no longer cascade into
-      process exit ó the update keeps going, only the on-screen output
+      process exit ÔøΩ the update keeps going, only the on-screen output
       stops.
 
     Combined with ``SIGHUP -> SIG_IGN`` installed by
@@ -7513,7 +7513,7 @@ class _UpdateOutputStream:
         self._original_broken = False
 
     def write(self, data):
-        # Mirror to the log file first ó it's the most reliable destination.
+        # Mirror to the log file first ÔøΩ it's the most reliable destination.
         if self._log is not None:
             try:
                 self._log.write(data)
@@ -7581,7 +7581,7 @@ def _install_hangup_protection(gateway_mode: bool = False):
        ``BrokenPipeError`` when the terminal vanishes.
 
     ``SIGINT`` (Ctrl-C) and ``SIGTERM`` (systemd shutdown) are
-    **intentionally left alone** ó those are legitimate cancellation
+    **intentionally left alone** ÔøΩ those are legitimate cancellation
     signals the user or OS sent on purpose.
 
     In gateway mode (``jarvis update --gateway``) the update is already
@@ -7608,7 +7608,7 @@ def _install_hangup_protection(gateway_mode: bool = False):
         try:
             _signal.signal(_signal.SIGHUP, _signal.SIG_IGN)
         except (ValueError, OSError):
-            # Called from a non-main thread ó not fatal.  The update still
+            # Called from a non-main thread ÔøΩ not fatal.  The update still
             # runs, just without hangup protection.
             pass
 
@@ -7685,7 +7685,7 @@ def _cmd_update_check():
 
     git_dir = PROJECT_ROOT / ".git"
     if not git_dir.exists():
-        print("? Not a git repository ó cannot check for updates.")
+        print("? Not a git repository ÔøΩ cannot check for updates.")
         sys.exit(1)
 
     git_cmd = ["git"]
@@ -7718,9 +7718,9 @@ def _cmd_update_check():
     if fetch_result.returncode != 0:
         stderr = fetch_result.stderr.strip()
         if "Could not resolve host" in stderr or "unable to access" in stderr:
-            print("? Network error ó cannot reach the remote repository.")
+            print("? Network error ÔøΩ cannot reach the remote repository.")
         elif "Authentication failed" in stderr or "could not read Username" in stderr:
-            print("? Authentication failed ó check your git credentials or SSH key.")
+            print("? Authentication failed ÔøΩ check your git credentials or SSH key.")
         else:
             print("? Failed to fetch.")
             if stderr:
@@ -7765,7 +7765,7 @@ def _ensure_fhs_path_guard() -> None:
     if sys.platform != "linux":
         return
     try:
-        if os.geteuid() != 0:  # windows-footgun: ok ó Linux FHS helper, guarded by sys.platform == "linux" above + AttributeError catch
+        if os.geteuid() != 0:  # windows-footgun: ok ÔøΩ Linux FHS helper, guarded by sys.platform == "linux" above + AttributeError catch
             return
     except AttributeError:
         return
@@ -7796,13 +7796,13 @@ def _ensure_fhs_path_guard() -> None:
             timeout=10,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
-        return  # no bash or probe hung ó don't block update on this
+        return  # no bash or probe hung ÔøΩ don't block update on this
     if probe.returncode == 0:
         return  # already on PATH, nothing to do
 
     path_line = 'export PATH="/usr/local/bin:$PATH"'
     path_comment = (
-        "# JARVIS ó ensure /usr/local/bin is on PATH " "(RHEL non-login shells)"
+        "# JARVIS ÔøΩ ensure /usr/local/bin is on PATH " "(RHEL non-login shells)"
     )
     wrote_any = False
     for candidate in (".bashrc", ".bash_profile"):
@@ -7842,7 +7842,7 @@ def _run_pre_update_backup(args) -> None:
     by default because the zip can add minutes to every update on large
     JARVIS_HOME directories.  The ``--backup`` flag on ``jarvis update``
     opts in for a single run; ``--no-backup`` forces it off when config
-    has it enabled.  Never raises ó a backup failure should not block the
+    has it enabled.  Never raises ÔøΩ a backup failure should not block the
     update itself.
     """
     # CLI flags win over config.  --no-backup beats --backup if both are set.
@@ -7868,7 +7868,7 @@ def _run_pre_update_backup(args) -> None:
     keep = updates_cfg.get("backup_keep", 5)
 
     if not enabled and not force_backup:
-        # Silent by default ó the backup is off, most users don't need to
+        # Silent by default ÔøΩ the backup is off, most users don't need to
         # hear about it on every update.  They can opt in via --backup
         # or by flipping the config knob.
         return
@@ -7886,7 +7886,7 @@ def _run_pre_update_backup(args) -> None:
     t0 = _time.monotonic()
     try:
         out_path = create_pre_update_backup(keep=int(keep))
-    except Exception as exc:  # defensive ó helper already swallows, but just in case
+    except Exception as exc:  # defensive ÔøΩ helper already swallows, but just in case
         print(f"  ? Backup failed: {exc}")
         print("  Continuing with update.")
         print()
@@ -7983,7 +7983,7 @@ def _cmd_update_pip(args):
 
 
 def _cmd_update_impl(args, gateway_mode: bool):
-    """Body of ``cmd_update`` ó kept separate so the wrapper can always
+    """Body of ``cmd_update`` ÔøΩ kept separate so the wrapper can always
     restore stdio even on ``sys.exit``."""
     # In gateway mode, use file-based IPC for prompts instead of stdin
     gw_input_fn = (
@@ -8008,7 +8008,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 print(_format_concurrent_instances_message(concurrent, scripts_dir))
                 sys.exit(2)
 
-    # Pre-update backup ó runs before any git/file mutation so users can
+    # Pre-update backup ÔøΩ runs before any git/file mutation so users can
     # always roll back to the exact state they had before this update.
     _run_pre_update_backup(args)
 
@@ -8049,7 +8049,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             capture_output=True,
         )
 
-    # Build git command once ó reused for fork detection and the update itself.
+    # Build git command once ÔøΩ reused for fork detection and the update itself.
     git_cmd = ["git"]
     if sys.platform == "win32":
         git_cmd = ["git", "-c", "windows.appendAtomically=false"]
@@ -8081,13 +8081,13 @@ def _cmd_update_impl(args, gateway_mode: bool):
         if fetch_result.returncode != 0:
             stderr = fetch_result.stderr.strip()
             if "Could not resolve host" in stderr or "unable to access" in stderr:
-                print("? Network error ó cannot reach the remote repository.")
+                print("? Network error ÔøΩ cannot reach the remote repository.")
                 print(f"  {stderr.splitlines()[0]}" if stderr else "")
             elif (
                 "Authentication failed" in stderr or "could not read Username" in stderr
             ):
                 print(
-                    "? Authentication failed ó check your git credentials or SSH key."
+                    "? Authentication failed ÔøΩ check your git credentials or SSH key."
                 )
             else:
                 print(f"? Failed to fetch updates from origin.")
@@ -8115,7 +8115,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 if current_branch == "HEAD"
                 else f"branch '{current_branch}'"
             )
-            print(f"  ? Currently on {label} ó switching to main for update...")
+            print(f"  ? Currently on {label} ÔøΩ switching to main for update...")
             # Stash before checkout so uncommitted work isn't lost
             auto_stash_ref = _stash_local_changes_if_needed(git_cmd, PROJECT_ROOT)
             subprocess.run(
@@ -8200,7 +8200,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 text=True,
             )
             if pull_result.returncode != 0:
-                # ff-only failed ó local and remote have diverged (e.g. upstream
+                # ff-only failed ÔøΩ local and remote have diverged (e.g. upstream
                 # force-pushed or rebase).  Since local changes are already
                 # stashed, reset to match the remote exactly.
                 print(
@@ -8249,7 +8249,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                         text=True,
                     )
                     if rollback_result.returncode == 0:
-                        print("  ? Rollback complete ó your install is unchanged.")
+                        print("  ? Rollback complete ÔøΩ your install is unchanged.")
                         print("  Try ``jarvis update`` again later once a fix lands.")
                     else:
                         print("  ? Rollback failed. Recover manually with:")
@@ -8258,14 +8258,14 @@ def _cmd_update_impl(args, gateway_mode: bool):
                             print(f"    ({rollback_result.stderr.strip().splitlines()[0]})")
                 else:
                     print()
-                    print("  Could not capture pre-pull SHA ó recover manually with:")
+                    print("  Could not capture pre-pull SHA ÔøΩ recover manually with:")
                     print(f"    cd {PROJECT_ROOT} && git reflog && git reset --hard <prev-sha>")
                 sys.exit(1)
 
             update_succeeded = True
         finally:
             if auto_stash_ref is not None:
-                # Don't attempt stash restore if the code update itself failed ó
+                # Don't attempt stash restore if the code update itself failed ÔøΩ
                 # working tree is in an unknown state.
                 if not update_succeeded:
                     print(
@@ -8283,7 +8283,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
 
         _invalidate_update_cache()
 
-        # Clear stale .pyc bytecode cache ó prevents ImportError on gateway
+        # Clear stale .pyc bytecode cache ÔøΩ prevents ImportError on gateway
         # restart when updated source references names that didn't exist in
         # the old bytecode (e.g. get_jarvis_home added to jarvis_constants).
         removed = _clear_bytecode_cache(PROJECT_ROOT)
@@ -8362,7 +8362,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
 
             importlib.reload(_hc)
         except Exception:
-            pass  # non-fatal ó worst case a lazy import fails gracefully
+            pass  # non-fatal ÔøΩ worst case a lazy import fails gracefully
 
         # Sync bundled skills (copies new, updates changed, respects user deletions)
         try:
@@ -8375,7 +8375,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 print(f"  + {len(result['copied'])} new: {', '.join(result['copied'])}")
             if result.get("updated"):
                 print(
-                    f"  ?ë {len(result['updated'])} updated: {', '.join(result['updated'])}"
+                    f"  ?ÔøΩ {len(result['updated'])} updated: {', '.join(result['updated'])}"
                 )
             if result.get("user_modified"):
                 print(f"  ~ {len(result['user_modified'])} user-modified (kept)")
@@ -8414,7 +8414,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                             if copied:
                                 parts.append(f"+{copied} new")
                             if updated:
-                                parts.append(f"?ë{updated} updated")
+                                parts.append(f"?ÔøΩ{updated} updated")
                             if modified:
                                 parts.append(f"~{modified} user-modified")
                             status = ", ".join(parts) if parts else "up to date"
@@ -8477,7 +8477,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     .lower()
                 )
             elif not (sys.stdin.isatty() and sys.stdout.isatty()):
-                print("  ? Non-interactive session ó applying safe config migrations.")
+                print("  ? Non-interactive session ÔøΩ applying safe config migrations.")
                 response = "auto"
             else:
                 try:
@@ -8516,7 +8516,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         print("? Update complete!")
 
         # Curator first-run heads-up. Only prints when curator is enabled AND
-        # has never run ó i.e. the window where the ticker would otherwise
+        # has never run ÔøΩ i.e. the window where the ticker would otherwise
         # have fired against a fresh skill library. Kept silent on steady
         # state so we don't nag.
         try:
@@ -8524,7 +8524,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         except Exception as e:
             logger.debug("Curator first-run notice failed: %s", e)
 
-        # Most-recent curator run notice ó show-once per run. Surfaces the
+        # Most-recent curator run notice ÔøΩ show-once per run. Surfaces the
         # rename map (`old-name ? umbrella`) on the high-attention update
         # surface so users learn about consolidations without having to
         # check `jarvis curator status`. Self-stamps after printing so it
@@ -8570,8 +8570,8 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # update watcher would then poll for 30 minutes and send a spurious
         # timeout message.
         #
-        # Writing the marker here ó after git pull + pip install succeed but
-        # before we attempt the restart ó ensures the new gateway sees it
+        # Writing the marker here ÔøΩ after git pull + pip install succeed but
+        # before we attempt the restart ÔøΩ ensures the new gateway sees it
         # regardless of how we die.
         if gateway_mode:
             _exit_code_path = get_jarvis_home() / ".update_exit_code"
@@ -8800,7 +8800,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                             if _graceful_ok:
                                 # Gateway exited 75. ``Restart=always`` +
                                 # ``RestartForceExitStatus=75`` means systemd
-                                # WILL respawn the unit ó but only after
+                                # WILL respawn the unit ÔøΩ but only after
                                 # ``RestartSec`` (default 60s on our unit
                                 # file). That 60s wait is a crash-loop guard,
                                 # and is the right default when the gateway
@@ -8869,7 +8869,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                                 # RestartForceExitStatus=75).  Fall through
                                 # to systemctl start/restart.
                                 print(
-                                    f"  ? {svc_name} drained but didn't relaunch ó forcing restart"
+                                    f"  ? {svc_name} drained but didn't relaunch ÔøΩ forcing restart"
                                 )
 
                             # Fallback: blunt systemctl restart.  This is
@@ -8911,7 +8911,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                                 ):
                                     restarted_services.append(svc_name)
                                 else:
-                                    # Retry once ó transient startup failures
+                                    # Retry once ÔøΩ transient startup failures
                                     # (stale module cache, import race) often
                                     # resolve on the second attempt.  Again
                                     # clear any failed state first so the
@@ -9001,7 +9001,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 # Prefer a graceful SIGUSR1 drain so in-flight agent runs
                 # finish before the watcher respawns the gateway.  If the
                 # gateway doesn't support SIGUSR1 or doesn't exit within
-                # the drain budget, fall back to SIGTERM ó the watcher
+                # the drain budget, fall back to SIGTERM ÔøΩ the watcher
                 # still sees the exit and relaunches either way.
                 drained = _graceful_restart_via_sigusr1(
                     pid,
@@ -9018,7 +9018,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 # ~30s after the client disconnects.  If the new gateway
                 # connects before that window expires it receives a 409
                 # Conflict, which _handle_polling_conflict() recovers from
-                # via back-off retries ó but a brief wait here reduces the
+                # via back-off retries ÔøΩ but a brief wait here reduces the
                 # chance of hitting that path at all, especially on fast
                 # machines where the watcher loop restarts in < 1s.
                 # We wait up to 5s for the process to exit (the OS-level
@@ -9056,13 +9056,13 @@ def _cmd_update_impl(args, gateway_mode: bool):
                         )
 
             if not restarted_services and not killed_pids:
-                # No gateways were running ó nothing to do
+                # No gateways were running ÔøΩ nothing to do
                 pass
 
             # --- Post-restart survivor sweep -----------------------------
             # Issue #17648: some gateways ignore SIGTERM (stuck drain,
             # blocked I/O, PID dead but zombie).  The detached profile
-            # watchers wait 120s for the old PID to exit ó if it never
+            # watchers wait 120s for the old PID to exit ÔøΩ if it never
             # does, no respawn happens and the user keeps hitting
             # ImportError against a stale sys.modules.  Give the
             # graceful paths a brief window to complete, then SIGKILL
@@ -9077,19 +9077,19 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 )
                 # Scope to PIDs we already tried to kill during this
                 # update (killed_pids).  Anything new is a gateway that
-                # started AFTER our restart attempt ó respecting user
+                # started AFTER our restart attempt ÔøΩ respecting user
                 # intent, we don't kill those.
                 _stuck = [pid for pid in _surviving if pid in killed_pids]
                 if _stuck:
                     print()
                     print(
-                        f"  ? {len(_stuck)} gateway process(es) ignored SIGTERM ó force-killing"
+                        f"  ? {len(_stuck)} gateway process(es) ignored SIGTERM ÔøΩ force-killing"
                     )
                     from gateway.status import terminate_pid as _terminate_pid
                     for pid in _stuck:
                         try:
                             # Routes through taskkill /T /F on Windows,
-                            # SIGKILL on POSIX ó _signal.SIGKILL doesn't
+                            # SIGKILL on POSIX ÔøΩ _signal.SIGKILL doesn't
                             # exist on Windows so the old raw os.kill call
                             # used to crash the entire update path.
                             _terminate_pid(pid, force=True)
@@ -9133,7 +9133,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         except Exception as e:
             logger.debug("Legacy unit check during update failed: %s", e)
 
-        # Kill stale dashboard processes ó the dashboard has no service
+        # Kill stale dashboard processes ÔøΩ the dashboard has no service
         # manager, so leaving it alive after a code update produces a
         # silent frontend/backend mismatch.  We can't auto-restart it
         # (no saved launch args) but we can stop it, and a hint is
@@ -9230,7 +9230,7 @@ def _coalesce_session_name_args(argv: list) -> list:
 
 
 def cmd_profile(args):
-    """Profile management ó create, delete, list, switch, alias."""
+    """Profile management ÔøΩ create, delete, list, switch, alias."""
     from jarvis_cli.profiles import (
         list_profiles,
         create_profile,
@@ -9249,7 +9249,7 @@ def cmd_profile(args):
     action = getattr(args, "profile_action", None)
 
     if action is None:
-        # Bare `jarvis profile` ó show current profile status
+        # Bare `jarvis profile` ÔøΩ show current profile status
         profile_name = get_active_profile_name()
         dhh = display_jarvis_home()
         print(f"\nActive profile: {profile_name}")
@@ -9298,16 +9298,16 @@ def cmd_profile(args):
                 else "  "
             )
             name = p.name
-            model = (p.model or "ó")[:26]
+            model = (p.model or "ÔøΩ")[:26]
             gw = "running" if p.gateway_running else "stopped"
-            alias = p.name if p.alias_path else "ó"
+            alias = p.name if p.alias_path else "ÔøΩ"
             if p.is_default:
-                alias = "ó"
+                alias = "ÔøΩ"
             if p.distribution_name:
                 dist = f"{p.distribution_name}@{p.distribution_version or '?'}"
                 dist = dist[:30]
             else:
-                dist = "ó"
+                dist = "ÔøΩ"
             print(f"{marker}{name:<15} {model:<28} {gw:<12} {alias:<12} {dist}")
         print()
 
@@ -9366,7 +9366,7 @@ def cmd_profile(args):
                     pass  # Honcho plugin not installed or not configured
 
             # Seed bundled skills (skip if --clone-all already copied them, or
-            # if --no-skills was passed ó in which case seed_profile_skills()
+            # if --no-skills was passed ÔøΩ in which case seed_profile_skills()
             # honors the marker file and returns skipped_opt_out=True).
             if not clone_all:
                 result = seed_profile_skills(profile_dir)
@@ -9389,7 +9389,7 @@ def cmd_profile(args):
             if not no_alias:
                 collision = check_alias_collision(name)
                 if collision:
-                    print(f"\n? Cannot create alias '{name}' ó {collision}")
+                    print(f"\n? Cannot create alias '{name}' ÔøΩ {collision}")
                     print(
                         f"  Choose a custom alias:  jarvis profile alias {name} --name <custom>"
                     )
@@ -9793,7 +9793,7 @@ def cmd_profile(args):
                 tag = "required" if er.get("required", True) else "optional"
                 line = f"  {er['name']} ({tag})"
                 if er.get("description"):
-                    line += f" ó {er['description']}"
+                    line += f" ÔøΩ {er['description']}"
                 print(line)
                 if er.get("default") is not None:
                     print(f"      default: {er['default']}")
@@ -9815,13 +9815,13 @@ def _render_distribution_plan(plan) -> None:
     print(f"  Target:   {plan.target_dir}")
     if plan.existing:
         # Distinguish "updating an existing distribution" (well-understood
-        # semantics ó dist-owned overwritten, config preserved, user data
+        # semantics ÔøΩ dist-owned overwritten, config preserved, user data
         # untouched) from "overwriting a hand-built plain profile" (same
         # mechanics but the user didn't sign up for this when they created
         # the profile manually).
         existing_is_distribution = (plan.target_dir / MANIFEST_FILENAME).is_file()
         if existing_is_distribution:
-            print("  (profile exists ó will overwrite distribution-owned files only)")
+            print("  (profile exists ÔøΩ will overwrite distribution-owned files only)")
         else:
             print(
                 "  ? Profile exists but is NOT a distribution.  Installing here will\n"
@@ -9850,15 +9850,15 @@ def _render_distribution_plan(plan) -> None:
                                 break
                     except OSError:
                         pass
-            status = "? set" if already else ("needs setting" if er.required else "ó")
-            line = f"    ï {er.name} ({tag}, {status})"
+            status = "? set" if already else ("needs setting" if er.required else "ÔøΩ")
+            line = f"    ÔøΩ {er.name} ({tag}, {status})"
             if er.description:
-                line += f" ó {er.description}"
+                line += f" ÔøΩ {er.description}"
             print(line)
     if plan.has_cron:
         print(
             "\n  ? This distribution ships cron jobs.  They will NOT run "
-            "automatically ó review and enable manually."
+            "automatically ÔøΩ review and enable manually."
         )
 
 
@@ -10032,7 +10032,7 @@ _BUILTIN_SUBCOMMANDS = frozenset(
         "send", "sessions", "setup",
         "skills", "slack", "status", "tools", "uninstall", "update",
         "version", "webhook", "whatsapp", "chat", "secrets",
-        # Help-ish invocations ó plugin commands not being listed in
+        # Help-ish invocations ÔøΩ plugin commands not being listed in
         # top-level --help is an acceptable trade-off for skipping an
         # expensive eager import of every bundled plugin module.
         "help",
@@ -10073,7 +10073,7 @@ def _first_positional_argv() -> str | None:
     ``jarvis -m gpt5 --provider openai chat "msg"`` by skipping the
     values attached to known top-level flags.
 
-    Does NOT fully simulate argparse ó unknown ``--foo=bar`` / ``--foo
+    Does NOT fully simulate argparse ÔøΩ unknown ``--foo=bar`` / ``--foo
     bar`` flags degrade gracefully (``bar`` may be wrongly classified as
     a positional, which at worst forces a one-time plugin discovery).
     """
@@ -10087,7 +10087,7 @@ def _first_positional_argv() -> str | None:
                 return argv[i + 1]
             return None
         if tok.startswith("-"):
-            # ``--flag=value`` carries its value inline ó single token.
+            # ``--flag=value`` carries its value inline ÔøΩ single token.
             if "=" in tok:
                 i += 1
                 continue
@@ -10113,7 +10113,7 @@ def _plugin_cli_discovery_needed() -> bool:
         return False
     if first in _BUILTIN_SUBCOMMANDS:
         return False
-    # Unknown token ó could be a plugin subcommand, OR a chat prompt
+    # Unknown token ÔøΩ could be a plugin subcommand, OR a chat prompt
     # starting with a non-flag word. Either way we need discovery: if it
     # IS a plugin command, argparse needs the subparser; if it's a chat
     # prompt, argparse will route it via positional handling and the
@@ -10149,7 +10149,7 @@ def _prepare_agent_startup(args) -> None:
             exc_info=True,
         )
     try:
-        # MCP tool discovery ó no event loop running in CLI startup,
+        # MCP tool discovery ÔøΩ no event loop running in CLI startup,
         # so inline is safe.  Moved here from tools/model_tools.py module scope
         # to avoid freezing the gateway's event loop on its first message
         # via the same lazy import path (#16856).
@@ -10336,7 +10336,7 @@ def main():
     model_parser.set_defaults(func=cmd_model)
 
     # =========================================================================
-    # fallback command ó manage the fallback provider chain
+    # fallback command ÔøΩ manage the fallback provider chain
     # =========================================================================
     from jarvis_cli.fallback_cmd import cmd_fallback
 
@@ -10372,7 +10372,7 @@ def main():
     fallback_parser.set_defaults(func=cmd_fallback)
 
     # =========================================================================
-    # secrets command ó external secret managers (currently: Bitwarden)
+    # secrets command ÔøΩ external secret managers (currently: Bitwarden)
     # =========================================================================
     secrets_parser = subparsers.add_parser(
         "secrets",
@@ -10392,7 +10392,7 @@ def main():
         help="Bitwarden Secrets Manager integration",
     )
 
-    # Lazy import ó only pays for itself when this subcommand is actually used.
+    # Lazy import ÔøΩ only pays for itself when this subcommand is actually used.
     from jarvis_cli import secrets_cli as _secrets_cli
 
     _secrets_cli.register_cli(secrets_bw)
@@ -10625,7 +10625,7 @@ def main():
     )
 
     # =========================================================================
-    # proxy command ó local OpenAI-compatible proxy that attaches the user's
+    # proxy command ÔøΩ local OpenAI-compatible proxy that attaches the user's
     # OAuth-authenticated provider credentials to outbound requests. Lets
     # external apps (OpenViking, Karakeep, Open WebUI, ...) ride a logged-in
     # subscription without copy-pasting static API keys.
@@ -10678,7 +10678,7 @@ def main():
         from agent.lsp.cli import register_subparser as _lsp_register
         _lsp_register(subparsers)
     except Exception as _lsp_err:  # noqa: BLE001
-        # LSP is optional infrastructure ó never let a registration
+        # LSP is optional infrastructure ÔøΩ never let a registration
         # failure break the CLI overall.
         logger.debug("LSP CLI registration failed: %s", _lsp_err)
 
@@ -10711,7 +10711,7 @@ def main():
         action="store_true",
         help="(Default on existing installs.) Re-run the full wizard, "
         "showing current values as defaults. Kept for backwards "
-        "compatibility ó a bare 'jarvis setup' now does this.",
+        "compatibility ÔøΩ a bare 'jarvis setup' now does this.",
     )
     setup_parser.add_argument(
         "--quick",
@@ -10791,7 +10791,7 @@ def main():
     slack_parser.set_defaults(func=cmd_slack)
 
     # =========================================================================
-    # send command ó pipe shell-script output to any configured platform
+    # send command ÔøΩ pipe shell-script output to any configured platform
     # =========================================================================
     from jarvis_cli.send_cmd import register_send_subparser
     register_send_subparser(subparsers)
@@ -11021,7 +11021,7 @@ def main():
         action="store_true",
         default=False,
         help=(
-            "Skip the LLM entirely ó run --script on schedule and deliver "
+            "Skip the LLM entirely ÔøΩ run --script on schedule and deliver "
             "its stdout directly. Empty stdout = silent. Classic watchdog "
             "pattern (memory alerts, disk alerts, CI pings)."
         ),
@@ -11170,7 +11170,7 @@ def main():
     wh_sub.add_argument(
         "--deliver-only",
         action="store_true",
-        help="Skip the agent ó deliver the rendered prompt directly as the "
+        help="Skip the agent ÔøΩ deliver the rendered prompt directly as the "
         "message. Zero LLM cost. Requires --deliver to be a real target "
         "(not 'log').",
     )
@@ -11195,7 +11195,7 @@ def main():
     webhook_parser.set_defaults(func=cmd_webhook)
 
     # =========================================================================
-    # kanban command ó multi-profile collaboration board
+    # kanban command ÔøΩ multi-profile collaboration board
     # =========================================================================
     from jarvis_cli.kanban import build_parser as _build_kanban_parser
 
@@ -11203,7 +11203,7 @@ def main():
     kanban_parser.set_defaults(func=cmd_kanban)
 
     # =========================================================================
-    # hooks command ó shell-hook inspection and management
+    # hooks command ÔøΩ shell-hook inspection and management
     # =========================================================================
     hooks_parser = subparsers.add_parser(
         "hooks",
@@ -11313,7 +11313,7 @@ def main():
     # =========================================================================
     debug_parser = subparsers.add_parser(
         "debug",
-        help="Debug tools ó upload logs and system info for support",
+        help="Debug tools ÔøΩ upload logs and system info for support",
         description="Debug utilities for JARVIS. Use 'jarvis debug share' to "
         "upload a debug report (system info + recent logs) to a paste "
         "service and get a shareable URL.",
@@ -11404,7 +11404,7 @@ Examples:
     checkpoints_parser = subparsers.add_parser(
         "checkpoints",
         help="Inspect / prune / clear ~/.jarvis/checkpoints/",
-        description="Manage the filesystem checkpoint store ó the shadow git "
+        description="Manage the filesystem checkpoint store ÔøΩ the shadow git "
         "repo jarvis uses to snapshot working directories before "
         "write_file/patch/terminal calls. Lets you see how much "
         "space checkpoints occupy, force a prune, or wipe the base.",
@@ -11625,7 +11625,7 @@ Examples:
 
     skills_reset = skills_subparsers.add_parser(
         "reset",
-        help="Reset a bundled skill ó clears 'user-modified' tracking so updates work again",
+        help="Reset a bundled skill ÔøΩ clears 'user-modified' tracking so updates work again",
         description=(
             "Clear a bundled skill's entry from the sync manifest (~/.jarvis/skills/.bundled_manifest) "
             "so future 'jarvis update' runs stop marking it as user-modified. Pass --restore to also "
@@ -11685,7 +11685,7 @@ Examples:
     # config sub-action: interactive enable/disable
     skills_subparsers.add_parser(
         "config",
-        help="Interactive skill configuration ó enable/disable individual skills",
+        help="Interactive skill configuration ÔøΩ enable/disable individual skills",
     )
 
     def cmd_skills(args):
@@ -11703,7 +11703,7 @@ Examples:
     skills_parser.set_defaults(func=cmd_skills)
 
     # =========================================================================
-    # bundles command ó skill bundles (alias /<name> for multiple skills)
+    # bundles command ÔøΩ skill bundles (alias /<name> for multiple skills)
     # =========================================================================
     bundles_parser = subparsers.add_parser(
         "bundles",
@@ -11723,7 +11723,7 @@ Examples:
     # =========================================================================
     plugins_parser = subparsers.add_parser(
         "plugins",
-        help="Manage plugins ó install, update, remove, list",
+        help="Manage plugins ÔøΩ install, update, remove, list",
         description="Install plugins from Git repositories, update, remove, or list them.",
     )
     plugins_subparsers = plugins_parser.add_subparsers(dest="plugins_action")
@@ -11783,14 +11783,14 @@ Examples:
     plugins_parser.set_defaults(func=cmd_plugins)
 
     # =========================================================================
-    # Plugin CLI commands ó dynamically registered by memory/general plugins.
+    # Plugin CLI commands ÔøΩ dynamically registered by memory/general plugins.
     # Plugins provide a register_cli(subparser) function that builds their
     # own argparse tree.  No hardcoded plugin commands in main.py.
     #
     # Skipped when the invocation is already targeting a known built-in
-    # subcommand ó ``jarvis --help``, ``jarvis version``, ``jarvis logs``,
+    # subcommand ÔøΩ ``jarvis --help``, ``jarvis version``, ``jarvis logs``,
     # etc.  This avoids eagerly importing every bundled plugin module
-    # (google.cloud.pubsub_v1, aiohttp, grpc, PIL Ö) which costs
+    # (google.cloud.pubsub_v1, aiohttp, grpc, PIL ÔøΩ) which costs
     # 500-650ms on typical installs.
     # =========================================================================
     if _plugin_cli_discovery_needed():
@@ -11828,11 +11828,11 @@ Examples:
             logging.getLogger(__name__).debug("Plugin CLI discovery failed: %s", _exc)
 
     # =========================================================================
-    # curator command ó background skill maintenance
+    # curator command ÔøΩ background skill maintenance
     # =========================================================================
     curator_parser = subparsers.add_parser(
         "curator",
-        help="Background skill maintenance (curator) ó status, run, pause, pin",
+        help="Background skill maintenance (curator) ÔøΩ status, run, pause, pin",
         description=(
             "The curator is an auxiliary-model background task that "
             "periodically reviews agent-created skills, prunes stale ones, "
@@ -11914,7 +11914,7 @@ Examples:
             ]
             if not existing:
                 print(
-                    f"\n  Nothing to reset ó no memory files found in {display_jarvis_home()}/memories/\n"
+                    f"\n  Nothing to reset ÔøΩ no memory files found in {display_jarvis_home()}/memories/\n"
                 )
                 return
 
@@ -11922,7 +11922,7 @@ Examples:
             for f, desc in existing:
                 path = mem_dir / f
                 size = path.stat().st_size
-                print(f"    ? {f} ({desc}) ó {size:,} bytes")
+                print(f"    ? {f} ({desc}) ÔøΩ {size:,} bytes")
 
             if not getattr(args, "yes", False):
                 try:
@@ -12029,7 +12029,7 @@ Examples:
     tools_parser.set_defaults(func=cmd_tools)
 
     # =========================================================================
-    # computer-use command ó manage Computer Use (cua-driver) on macOS
+    # computer-use command ÔøΩ manage Computer Use (cua-driver) on macOS
     # =========================================================================
     computer_use_parser = subparsers.add_parser(
         "computer-use",
@@ -12098,7 +12098,7 @@ Examples:
 
     computer_use_parser.set_defaults(func=cmd_computer_use)
     # =========================================================================
-    # mcp command ó manage MCP server connections
+    # mcp command ÔøΩ manage MCP server connections
     # =========================================================================
     mcp_parser = subparsers.add_parser(
         "mcp",
@@ -12235,7 +12235,7 @@ Examples:
 
     sessions_browse = sessions_subparsers.add_parser(
         "browse",
-        help="Interactive session picker ó browse, search, and resume sessions",
+        help="Interactive session picker ÔøΩ browse, search, and resume sessions",
     )
     sessions_browse.add_argument(
         "--source", help="Filter by source (cli, telegram, discord, etc.)"
@@ -12255,7 +12255,7 @@ Examples:
         import json as _json
 
         try:
-            from jarvis_state import SessionDB
+            from jarvis_cli.session_state import SessionDB
 
             db = SessionDB()
         except Exception as e:
@@ -12290,7 +12290,7 @@ Examples:
                     else s.get("preview", "")[:48]
                 )
                 if has_titles:
-                    title = (s.get("title") or "ó")[:30]
+                    title = (s.get("title") or "ÔøΩ")[:30]
                     sid = s["id"]
                     print(f"{title:<32} {preview:<40} {last_active:<13} {sid}")
                 else:
@@ -12435,7 +12435,7 @@ Examples:
 
     def cmd_insights(args):
         try:
-            from jarvis_state import SessionDB
+            from jarvis_cli.session_state import SessionDB
             from agent.insights import InsightsEngine
 
             db = SessionDB()
@@ -12471,13 +12471,13 @@ Examples:
     claw_migrate.add_argument(
         "--dry-run",
         action="store_true",
-        help="Preview only ó stop after showing what would be migrated",
+        help="Preview only ÔøΩ stop after showing what would be migrated",
     )
     claw_migrate.add_argument(
         "--preset",
         choices=["user-data", "full"],
         default="full",
-        help="Migration preset (default: full). Neither preset imports secrets ó "
+        help="Migration preset (default: full). Neither preset imports secrets ÔøΩ "
         "pass --migrate-secrets to include API keys.",
     )
     claw_migrate.add_argument(
@@ -12677,7 +12677,7 @@ Examples:
     # =========================================================================
     profile_parser = subparsers.add_parser(
         "profile",
-        help="Manage profiles ó multiple isolated Jarvis instances",
+        help="Manage profiles ÔøΩ multiple isolated Jarvis instances",
     )
     profile_subparsers = profile_parser.add_subparsers(dest="profile_action")
 
@@ -12910,11 +12910,11 @@ Examples:
             "where npm may not be available. Pre-build with: npm --prefix desktop/web run build"
         ),
     )
-    # Lifecycle flags ó mutually exclusive with each other and with the
+    # Lifecycle flags ÔøΩ mutually exclusive with each other and with the
     # start-a-server flags above (if both are passed, --stop / --status win
     # because they exit before the server is started).  The dashboard has
     # no service manager and no PID file, so these scan the process table
-    # for `jarvis dashboard` cmdlines and SIGTERM them directly ó the same
+    # for `jarvis dashboard` cmdlines and SIGTERM them directly ÔøΩ the same
     # path `jarvis update` uses to clean up stale dashboards.
     dashboard_parser.add_argument(
         "--stop",
@@ -13041,7 +13041,7 @@ Examples:
             sys.stderr = _saved_stderr
         except SystemExit as exc:
             sys.stderr = _saved_stderr
-            # Help/version flags (exit code 0) already printed output ó
+            # Help/version flags (exit code 0) already printed output ÔøΩ
             # re-raise immediately to avoid a second parse_args printing
             # the same help text again (#10230).
             if exc.code == 0:

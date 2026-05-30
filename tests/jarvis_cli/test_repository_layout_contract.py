@@ -17,7 +17,6 @@ ROOT_FILE_ALLOWLIST = {
     "MANIFEST.in",
     "README.md",
     "cli.py",
-    "jarvis_state.py",
     "package-lock.json",
     "package.json",
     "pyproject.toml",
@@ -46,7 +45,6 @@ ROOT_DIR_ALLOWLIST = {
 }
 
 ROOT_PY_MODULES = {
-    "jarvis_state",
     "run_agent",
 }
 

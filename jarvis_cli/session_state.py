@@ -367,7 +367,7 @@ class SessionDB:
             # successful open racing past this failure would erase the
             # cause that another thread's /resume is about to format.
             # Tests that need to reset the state can call
-            # ``jarvis_state._set_last_init_error(None)`` explicitly.
+            # ``session_state._set_last_init_error(None)`` explicitly.
             _set_last_init_error(f"{type(exc).__name__}: {exc}")
             raise
 

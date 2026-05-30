@@ -23,7 +23,7 @@ def session_db(tmp_path):
     """Create a real SessionDB for testing."""
     os.environ["JARVIS_HOME"] = str(tmp_path / ".jarvis")
     os.makedirs(tmp_path / ".jarvis", exist_ok=True)
-    from jarvis_state import SessionDB
+    from jarvis_cli.session_state import SessionDB
     db = SessionDB(db_path=tmp_path / ".jarvis" / "test_sessions.db")
     yield db
     db.close()

@@ -3075,7 +3075,7 @@ class JarvisCLI:
         # Initialize SQLite session store early so /title works before first message
         self._session_db = None
         try:
-            from jarvis_state import SessionDB
+            from jarvis_cli.session_state import SessionDB
             self._session_db = SessionDB()
         except Exception as e:
             logger.warning("Failed to initialize SessionDB — session will NOT be indexed for search: %s", e)
@@ -4740,7 +4740,7 @@ class JarvisCLI:
         # Initialize SQLite session store for CLI sessions (if not already done in __init__)
         if self._session_db is None:
             try:
-                from jarvis_state import SessionDB
+                from jarvis_cli.session_state import SessionDB
                 self._session_db = SessionDB()
             except Exception as e:
                 logger.warning("SQLite session store not available — session will NOT be indexed: %s", e)
@@ -6311,7 +6311,7 @@ class JarvisCLI:
                 except Exception:
                     pass
                 if title and self._session_db:
-                    from jarvis_state import SessionDB
+                    from jarvis_cli.session_state import SessionDB
                     try:
                         sanitized = SessionDB.sanitize_title(title)
                     except ValueError as e:
@@ -6373,7 +6373,7 @@ class JarvisCLI:
         Returns:
             False to signal CLI exit, True to keep going.
         """
-        from jarvis_state import format_session_db_unavailable
+        from jarvis_cli.session_state import format_session_db_unavailable
 
         parts = cmd_original.split(maxsplit=1)
         if len(parts) < 2 or not parts[1].strip():
@@ -6423,7 +6423,7 @@ class JarvisCLI:
         # Make sure we have a SessionDB handle.
         if not self._session_db:
             try:
-                from jarvis_state import SessionDB
+                from jarvis_cli.session_state import SessionDB
                 self._session_db = SessionDB()
             except Exception:
                 pass
@@ -6519,7 +6519,7 @@ class JarvisCLI:
             return
 
         if not self._session_db:
-            from jarvis_state import format_session_db_unavailable
+            from jarvis_cli.session_state import format_session_db_unavailable
             _cprint(f"  {format_session_db_unavailable()}")
             return
 
@@ -6641,7 +6641,7 @@ class JarvisCLI:
         # Bare /sessions or /sessions list — show recent sessions inline.
         if not arg or sub in {"list", "ls", "browse"}:
             if not self._session_db:
-                from jarvis_state import format_session_db_unavailable
+                from jarvis_cli.session_state import format_session_db_unavailable
                 _cprint(f"  {format_session_db_unavailable()}")
                 return
             if not self._show_recent_sessions(reason="sessions"):
@@ -6663,7 +6663,7 @@ class JarvisCLI:
             return
 
         if not self._session_db:
-            from jarvis_state import format_session_db_unavailable
+            from jarvis_cli.session_state import format_session_db_unavailable
             _cprint(f"  {format_session_db_unavailable()}")
             return
 
@@ -8176,7 +8176,7 @@ class JarvisCLI:
                     if self._session_db:
                         # Sanitize the title early so feedback matches what gets stored
                         try:
-                            from jarvis_state import SessionDB
+                            from jarvis_cli.session_state import SessionDB
                             new_title = SessionDB.sanitize_title(raw_title)
                         except ValueError as e:
                             _cprint(f"  {e}")
@@ -8202,7 +8202,7 @@ class JarvisCLI:
                                 self._pending_title = new_title
                                 _cprint(f"  Session title queued: {new_title} (will be saved on first message)")
                     else:
-                        from jarvis_state import format_session_db_unavailable
+                        from jarvis_cli.session_state import format_session_db_unavailable
                         _cprint(f"  {format_session_db_unavailable()}")
                 else:
                     _cprint("  Usage: /title <your session title>")
@@ -8217,7 +8217,7 @@ class JarvisCLI:
                 else:
                     _cprint("  No title set. Usage: /title <your session title>")
             else:
-                from jarvis_state import format_session_db_unavailable
+                from jarvis_cli.session_state import format_session_db_unavailable
                 _cprint(f"  {format_session_db_unavailable()}")
         elif canonical == "handoff":
             if not self._handle_handoff_command(cmd_original):
@@ -9834,7 +9834,7 @@ class JarvisCLI:
                 i += 1
 
         try:
-            from jarvis_state import SessionDB
+            from jarvis_cli.session_state import SessionDB
             from agent.insights import InsightsEngine
 
             db = SessionDB()

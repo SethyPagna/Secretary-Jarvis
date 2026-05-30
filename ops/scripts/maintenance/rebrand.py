@@ -9,7 +9,6 @@ REPLACEMENTS = [
     (r"\bJarvisAgent\b", "JarvisAgent"),
     (r"\bjarvis-agent\b", "jarvis-agent"),
     (r"\bjarvis_cli\b", "jarvis_cli"),
-    (r"\bjarvis_state\b", "jarvis_state"),
     (r"\bget_jarvis_home\b", "get_jarvis_home"),
     (r"\bset_jarvis_home_override\b", "set_jarvis_home_override"),
     (r"\breset_jarvis_home_override\b", "reset_jarvis_home_override"),

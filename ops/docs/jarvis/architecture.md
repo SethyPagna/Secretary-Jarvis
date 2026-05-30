@@ -47,7 +47,7 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 ┌───────────────────┐              ┌──────────────────────┐
 │ Session Storage   │              │ Tool Backends         │
 │ (SQLite + FTS5)   │              │ Terminal (7 backends) │
-│ jarvis_state.py   │              │ Browser (5 backends)  │
+│ session_state.py   │              │ Browser (5 backends)  │
 │ gateway/session.py│              │ Web (4 backends)      │
 └───────────────────┘              │ MCP (dynamic)         │
                                    │ File, Vision, etc.    │
@@ -62,7 +62,7 @@ jarvis-agent/
 ├── cli.py                    # JarvisDesktopRuntime — interactive terminal UI (large file)
 ├── tools/model_tools.py            # Tool discovery, schema collection, dispatch
 ├── tools/toolsets.py               # Tool groupings and platform presets
-├── jarvis_state.py           # SQLite session/state database with FTS5
+├── session_state.py           # SQLite session/state database with FTS5
 ├── jarvis_cli/constants.py       # JARVIS_HOME, profile-aware paths
 ├── tools/batch_runner.py           # Batch trajectory generation
 │
@@ -499,7 +499,7 @@ The fallback system also covers auxiliary tasks independently — vision, compre
 ### Session Persistence
 
 After each turn:
-- Messages are saved to the session store (SQLite via `jarvis_state.py`)
+- Messages are saved to the session store (SQLite via `session_state.py`)
 - Memory changes are flushed to `MEMORY.md` / `USER.md`
 - The session can be resumed later via `/resume` or `jarvis chat --resume`
 
