@@ -39,6 +39,7 @@ a = Analysis(
     binaries=[],
     datas=data_files,
     hiddenimports=[
+        "appdirs",
         "av",
         "ctranslate2",
         "en_core_web_sm",

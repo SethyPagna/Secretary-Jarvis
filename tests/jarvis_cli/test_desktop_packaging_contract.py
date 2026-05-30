@@ -69,6 +69,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("fastapi", spec)
         self.assertIn("uvicorn", spec)
         self.assertIn("pydantic", spec)
+        self.assertIn("appdirs", spec)
         self.assertIn("console=True", spec)
 
     def test_package_json_exposes_build_with_smoke_default(self) -> None:
