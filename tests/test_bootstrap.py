@@ -240,7 +240,7 @@ class TestEntryPointsImportBootstrap:
     # import jarvis_cli.bootstrap before doing any file I/O or stdout writes.
     ENTRY_POINTS = [
         "jarvis_cli/main.py",   # jarvis CLI (console_script)
-        "run_agent.py",          # jarvis-agent (console_script)
+        "agent/runtime.py",          # jarvis-agent (console_script)
         "acp_adapter/entry.py",  # jarvis-acp (console_script)
         "gateway/run.py",        # gateway
         "tools/batch_runner.py",       # batch mode

@@ -665,7 +665,7 @@ def build_anthropic_client(
 
     ``drop_context_1m_beta=True`` strips ``context-1m-2025-08-07`` from the
     client-level ``anthropic-beta`` header. Used by the reactive OAuth retry
-    path in ``run_agent.py`` when a subscription rejects the beta; leave at
+    path in ``agent/runtime.py`` when a subscription rejects the beta; leave at
     its default on fresh clients so 1M-capable subscriptions keep the
     capability.
 

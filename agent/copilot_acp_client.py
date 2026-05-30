@@ -391,7 +391,7 @@ class CopilotACPClient:
             tools=tools,
             tool_choice=tool_choice,
         )
-        # Normalise timeout: run_agent.py may pass an httpx.Timeout object
+        # Normalise timeout: agent/runtime.py may pass an httpx.Timeout object
         # (used natively by the OpenAI SDK) rather than a plain float.
         if timeout is None:
             _effective_timeout = _DEFAULT_TIMEOUT_SECONDS

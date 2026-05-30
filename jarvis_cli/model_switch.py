@@ -1641,7 +1641,7 @@ def list_authenticated_providers(
             # active model. Jarvis's own writer (main.py::_save_custom_provider)
             # stores every configured model as a dict under ``models:``;
             # downstream readers (agent/models_dev.py, gateway/run.py,
-            # run_agent.py, jarvis_cli/config.py) already consume that dict.
+            # agent/runtime.py, jarvis_cli/config.py) already consume that dict.
             default_model = (entry.get("model") or "").strip()
             if default_model and default_model not in groups[group_key]["models"]:
                 groups[group_key]["models"].append(default_model)

@@ -224,14 +224,14 @@ class TestBuildChildProgressCallback:
 
 
 # =========================================================================
-# Integration: thinking callback in run_agent.py
+# Integration: thinking callback in agent/runtime.py
 # =========================================================================
 
 class TestThinkingCallback:
     """Tests for the _thinking callback in AIAgent conversation loop."""
 
     def _simulate_thinking_callback(self, content, callback, delegate_depth=1):
-        """Simulate the exact code path from run_agent.py for the thinking callback.
+        """Simulate the exact code path from agent/runtime.py for the thinking callback.
         
         delegate_depth: simulates self._delegate_depth.
             0 = main agent (should NOT fire), >=1 = subagent (should fire).

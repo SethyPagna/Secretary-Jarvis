@@ -159,7 +159,7 @@ class TestEphemeralMaxOutputTokens:
     def _make_agent(self):
         """Return a minimal AIAgent with api_mode='anthropic_messages' and
         a stubbed context_compressor, bypassing full __init__ cost."""
-        from run_agent import AIAgent
+        from agent.runtime import AIAgent
         agent = object.__new__(AIAgent)
         # Minimal attributes used by _build_api_kwargs
         agent.api_mode = "anthropic_messages"
@@ -228,7 +228,7 @@ class TestContextNotHalvedOnOutputCapError:
     """
 
     def _make_agent_with_compressor(self, context_length=200_000):
-        from run_agent import AIAgent
+        from agent.runtime import AIAgent
         from agent.context_compressor import ContextCompressor
 
         agent = object.__new__(AIAgent)
@@ -268,7 +268,7 @@ class TestContextNotHalvedOnOutputCapError:
             "- input_tokens: 180000 = available_tokens: 20000"
         )
 
-        # Simulate the handler logic from run_agent.py
+        # Simulate the handler logic from agent/runtime.py
         agent = self._make_agent_with_compressor(context_length=200_000)
         old_ctx = agent.context_compressor.context_length
 

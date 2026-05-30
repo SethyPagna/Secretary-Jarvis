@@ -2,7 +2,7 @@
 
 Covers:
   agent/model_metadata.py — query_ollama_num_ctx()
-  run_agent.py — _ollama_num_ctx detection + extra_body injection
+  agent/runtime.py — _ollama_num_ctx detection + extra_body injection
 """
 
 from unittest.mock import patch, MagicMock

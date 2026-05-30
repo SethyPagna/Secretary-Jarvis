@@ -23,7 +23,7 @@ For captures / actions with `capture_after=True`:
         "text_summary": "<text used for fallback string content>",
       }
 
-  run_agent.py's tool-message builder inspects `_multimodal` and emits a
+  agent/runtime.py's tool-message builder inspects `_multimodal` and emits a
   list-shaped `content` for OpenAI-compatible providers. The Anthropic
   adapter splices the base64 image into a `tool_result` block (see
   `agent/anthropic_adapter.py`). Every provider that supports multi-part
@@ -213,7 +213,7 @@ def handle_computer_use(args: Dict[str, Any], **kwargs) -> Any:
     """Main entry point — dispatched by tools.registry.
 
     Returns either a JSON string (text-only) or a dict marked `_multimodal`
-    (image + summary) which run_agent.py wraps into the tool message.
+    (image + summary) which agent/runtime.py wraps into the tool message.
     """
     action = (args.get("action") or "").strip().lower()
     if not action:

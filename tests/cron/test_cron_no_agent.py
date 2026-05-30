@@ -273,7 +273,7 @@ def test_run_job_no_agent_never_invokes_aiagent(jarvis_env):
         prompt=None, schedule="every 5m", script="alert.sh", no_agent=True, deliver="local"
     )
 
-    with patch("run_agent.AIAgent") as ai_mock:
+    with patch("agent.runtime.AIAgent") as ai_mock:
         from cron.scheduler import run_job
 
         run_job(job)

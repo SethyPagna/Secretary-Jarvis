@@ -269,7 +269,7 @@ class TestPersistence:
         )
         db = SessionDB(tmp_path / "state.db")
 
-        with patch("run_agent.AIAgent", side_effect=fake_agent):
+        with patch("agent.runtime.AIAgent", side_effect=fake_agent):
             manager = SessionManager(db=db)
             manager.create_session(cwd="/work")
 
@@ -545,7 +545,7 @@ class TestPersistence:
         )
         db = SessionDB(tmp_path / "state.db")
 
-        with patch("run_agent.AIAgent", side_effect=fake_agent):
+        with patch("agent.runtime.AIAgent", side_effect=fake_agent):
             manager = SessionManager(db=db)
             state = manager.create_session(cwd="/work")
             manager.save_session(state.session_id)
@@ -585,7 +585,7 @@ class TestPersistence:
         )
         db = SessionDB(tmp_path / "state.db")
 
-        with patch("run_agent.AIAgent", side_effect=fake_agent):
+        with patch("agent.runtime.AIAgent", side_effect=fake_agent):
             manager = SessionManager(db=db)
             state = manager.create_session(cwd="/work")
 

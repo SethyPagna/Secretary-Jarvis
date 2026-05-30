@@ -655,7 +655,7 @@ if _config_path.exists():
                         os.environ[_env_var] = json.dumps(_val)
                     else:
                         os.environ[_env_var] = str(_val)
-        # Compression config is read directly from config.yaml by run_agent.py
+        # Compression config is read directly from config.yaml by agent/runtime.py
         # and auxiliary_client.py — no env var bridging needed.
         # Auxiliary model/direct-endpoint overrides (vision, web_extract).
         # Each task has provider/model/base_url/api_key; bridge non-default values to env vars.
@@ -3244,7 +3244,7 @@ class GatewayRunner:
                 # Pass the agent's own conversation transcript so memory
                 # providers' ``on_session_end`` hooks see the real messages
                 # instead of the empty default (#15165). ``_session_messages``
-                # is set on ``AIAgent`` (run_agent.py:1518) and refreshed at
+                # is set on ``AIAgent`` (agent/runtime.py:1518) and refreshed at
                 # the end of every ``run_conversation`` turn via
                 # ``_persist_session``; on an agent built through
                 # ``object.__new__`` (test stubs) the attribute may be
@@ -8071,7 +8071,7 @@ class GatewayRunner:
                     elif isinstance(_model_cfg, dict):
                         _hyg_model = _model_cfg.get("default") or _model_cfg.get("model") or _hyg_model
                         # Read explicit context_length override from model config
-                        # (same as run_agent.py lines 995-1005)
+                        # (same as agent/runtime.py lines 995-1005)
                         _raw_ctx = _model_cfg.get("context_length")
                         if _raw_ctx is not None:
                             try:
@@ -8112,7 +8112,7 @@ class GatewayRunner:
                     pass
 
                 # Check custom_providers per-model context_length
-                # (same fallback as run_agent.py lines 1171-1189).
+                # (same fallback as agent/runtime.py lines 1171-1189).
                 # Must run after runtime resolution so _hyg_base_url is set.
                 if _hyg_config_context_length is None and _hyg_base_url:
                     try:
@@ -8201,7 +8201,7 @@ class GatewayRunner:
                     _hyg_meta = self._thread_metadata_for_source(source, self._reply_anchor_for_event(event))
 
                     try:
-                        from run_agent import AIAgent
+                        from agent.runtime import AIAgent
 
                         _hyg_model, _hyg_runtime = self._resolve_session_agent_runtime(
                             source=source,
@@ -8619,7 +8619,7 @@ class GatewayRunner:
             _err_str_for_classify = str(agent_result.get("error", "")).lower()
             # Use specific multi-word phrases (not bare "exceed" or "token")
             # to avoid false positives on transient errors like "rate limit
-            # exceeded" or "invalid auth token". Matches run_agent.py's
+            # exceeded" or "invalid auth token". Matches agent/runtime.py's
             # own context-length classifier.
             is_context_overflow_failure = agent_failed_early and (
                 bool(agent_result.get("compression_exhausted"))
@@ -9359,7 +9359,7 @@ class GatewayRunner:
         title = None
         # Pull token totals from the SQLite session DB rather than the
         # in-memory SessionStore.  The agent's per-turn token deltas are
-        # persisted into sessions_db (run_agent.py), not into SessionEntry,
+        # persisted into sessions_db (agent/runtime.py), not into SessionEntry,
         # so session_entry.total_tokens is always 0.  SessionDB is the
         # single source of truth; reading it here keeps /status accurate
         # without duplicating token writes into two stores.
@@ -11357,7 +11357,7 @@ class GatewayRunner:
         media_types: Optional[List[str]] = None,
     ) -> None:
         """Execute a background agent task and deliver the result to the chat."""
-        from run_agent import AIAgent
+        from agent.runtime import AIAgent
 
         media_urls = media_urls or []
         media_types = media_types or []
@@ -11869,7 +11869,7 @@ class GatewayRunner:
         focus_topic = (event.get_command_args() or "").strip() or None
 
         try:
-            from run_agent import AIAgent
+            from agent.runtime import AIAgent
             from agent.manual_compression_feedback import summarize_manual_compression
             from agent.model_metadata import estimate_request_tokens_rough
 
@@ -15431,7 +15431,7 @@ class GatewayRunner:
                 event_message_id=event_message_id,
             )
 
-        from run_agent import AIAgent
+        from agent.runtime import AIAgent
         import queue
 
         def _run_still_current() -> bool:

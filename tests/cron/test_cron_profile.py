@@ -201,7 +201,7 @@ class TestRunJobProfileContext:
 
         fake_mod = type(sys)("run_agent")
         fake_mod.AIAgent = FakeAgent
-        monkeypatch.setitem(sys.modules, "run_agent", fake_mod)
+        monkeypatch.setitem(sys.modules, "agent.runtime", fake_mod)
 
         from jarvis_cli import runtime_provider as runtime_provider
 

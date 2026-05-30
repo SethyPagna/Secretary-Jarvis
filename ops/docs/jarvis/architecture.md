@@ -26,7 +26,7 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
            │              │                       │
            ▼              ▼                       ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     AIAgent (run_agent.py)                          │
+│                     AIAgent (agent/runtime.py)                          │
 │                                                                     │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
 │  │ Prompt       │  │ Provider     │  │ Tool         │               │
@@ -58,7 +58,7 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 
 ```text
 jarvis-agent/
-├── run_agent.py              # AIAgent — core conversation loop (large file)
+├── agent/runtime.py              # AIAgent — core conversation loop (large file)
 ├── cli.py                    # JarvisDesktopRuntime — interactive terminal UI (large file)
 ├── tools/model_tools.py            # Tool discovery, schema collection, dispatch
 ├── tools/toolsets.py               # Tool groupings and platform presets
@@ -194,7 +194,7 @@ If you are new to the codebase:
 
 ### Agent Loop
 
-The synchronous orchestration engine (`AIAgent` in `run_agent.py`). Handles provider selection, prompt construction, tool execution, retries, fallback, callbacks, compression, and persistence. Supports three API modes for different provider backends.
+The synchronous orchestration engine (`AIAgent` in `agent/runtime.py`). Handles provider selection, prompt construction, tool execution, retries, fallback, callbacks, compression, and persistence. Supports three API modes for different provider backends.
 
 → [Agent Loop Internals](./agent-loop.md)
 
@@ -276,7 +276,7 @@ tools/*.py  (each calls registry.register() at import time)
        ↑
 tools/model_tools.py  (imports tools/registry + triggers tool discovery)
        ↑
-run_agent.py, cli.py, tools/batch_runner.py, environments/
+agent/runtime.py, cli.py, tools/batch_runner.py, environments/
 ```
 
 This chain means tool registration happens at import time, before any agent instance is created. Any `tools/*.py` file with a top-level `registry.register()` call is auto-discovered — no manual import list needed.
@@ -291,7 +291,7 @@ description: "Detailed walkthrough of AIAgent execution, API modes, tools, callb
 
 # Agent Loop Internals
 
-The core orchestration engine is `run_agent.py`'s `AIAgent` class — a large file (15k+ lines) that handles everything from prompt assembly to tool dispatch to provider failover.
+The core orchestration engine is `agent/runtime.py`'s `AIAgent` class — a large file (15k+ lines) that handles everything from prompt assembly to tool dispatch to provider failover.
 
 ## Core Responsibilities
 
@@ -434,7 +434,7 @@ for each tool_call in response.tool_calls:
 
 ### Agent-Level Tools
 
-Some tools are intercepted by `run_agent.py` *before* reaching `handle_function_call()`:
+Some tools are intercepted by `agent/runtime.py` *before* reaching `handle_function_call()`:
 
 | Tool | Why intercepted |
 |------|--------------------|
@@ -507,7 +507,7 @@ After each turn:
 
 | File | Purpose |
 |------|---------|
-| `run_agent.py` | AIAgent class — the complete agent loop |
+| `agent/runtime.py` | AIAgent class — the complete agent loop |
 | `agent/prompt_builder.py` | System prompt assembly from memory, skills, context files, personality |
 | `agent/context_engine.py` | ContextEngine ABC — pluggable context management |
 | `agent/context_compressor.py` | Default engine — lossy summarization algorithm |
@@ -922,7 +922,7 @@ When the model returns a `tool_call`, the flow is:
 ```
 Model response with tool_call
     ↓
-run_agent.py agent loop
+agent/runtime.py agent loop
     ↓
 model_tools.handle_function_call(name, args, task_id, user_task)
     ↓

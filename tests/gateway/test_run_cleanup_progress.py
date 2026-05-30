@@ -162,9 +162,9 @@ def _install_fakes(monkeypatch, agent_cls, *, cleanup_on: bool):
     fake_dotenv.load_dotenv = lambda *a, **k: None
     monkeypatch.setitem(sys.modules, "dotenv", fake_dotenv)
 
-    fake_run_agent = types.ModuleType("run_agent")
+    fake_run_agent = types.ModuleType("agent.runtime")
     fake_run_agent.AIAgent = agent_cls
-    monkeypatch.setitem(sys.modules, "run_agent", fake_run_agent)
+    monkeypatch.setitem(sys.modules, "agent.runtime", fake_run_agent)
     import tools.terminal_tool  # noqa: F401 — register tool emoji
 
     gateway_run = importlib.import_module("gateway.run")

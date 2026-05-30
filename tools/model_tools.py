@@ -5,7 +5,7 @@ Model Tools Module
 Thin orchestration layer over the tool registry. Each tool file in tools/
 self-registers its schema, handler, and metadata via tools.registry.register().
 This module triggers discovery (by importing all tool modules), then provides
-the public API that run_agent.py, cli.py, tools/batch_runner.py, and the RL
+the public API that agent/runtime.py, cli.py, tools/batch_runner.py, and the RL
 environments consume.
 
 Public API (signatures preserved from the original 2,400-line version):
@@ -488,7 +488,7 @@ def _compute_tool_definitions(
 # handle_function_call  (the main dispatcher)
 # =============================================================================
 
-# Tools whose execution is intercepted by the agent loop (run_agent.py)
+# Tools whose execution is intercepted by the agent loop (agent/runtime.py)
 # because they need agent-level state (TodoStore, MemoryStore, etc.).
 # The registry still holds their schemas; dispatch just returns a stub error
 # so if something slips through, the LLM sees a sensible message.

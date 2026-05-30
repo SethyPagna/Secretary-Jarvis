@@ -3,7 +3,7 @@
 Pure format-conversion and normalization logic for the OpenAI Responses API
 (used by OpenAI Codex, xAI, GitHub Models, and other Responses-compatible endpoints).
 
-Extracted from run_agent.py to isolate Responses API-specific logic from the
+Extracted from agent/runtime.py to isolate Responses API-specific logic from the
 core agent loop. All functions are stateless — they operate on the data passed
 in and return transformed results.
 """
@@ -1036,7 +1036,7 @@ def _normalize_codex_response(response: Any) -> tuple[Any, str]:
     # Detection: leaked tokens always contain ``to=functions.<name>`` and
     # the assistant message has no real tool calls. Treat it as incomplete
     # so the existing Codex-incomplete continuation path (3 retries,
-    # handled in run_agent.py) gets a chance to re-elicit a proper
+    # handled in agent/runtime.py) gets a chance to re-elicit a proper
     # ``function_call`` item. The existing loop already handles message
     # append, dedup, and retry budget.
     leaked_tool_call_text = False

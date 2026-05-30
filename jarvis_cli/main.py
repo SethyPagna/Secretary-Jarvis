@@ -5664,7 +5664,7 @@ _UPDATE_CRITICAL_FILES = (
     "jarvis_cli/config.py",
     "jarvis_cli/__init__.py",
     "cli.py",
-    "run_agent.py",
+    "agent/runtime.py",
     "tools/model_tools.py",
     "tools/toolsets.py",
     "jarvis_cli/constants.py",

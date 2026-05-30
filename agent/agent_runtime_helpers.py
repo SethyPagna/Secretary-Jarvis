@@ -1,4 +1,4 @@
-"""Assorted AIAgent runtime helpers — moved out of run_agent.py for clarity.
+"""Assorted AIAgent runtime helpers — moved out of agent/runtime.py for clarity.
 
 Each function takes the parent ``AIAgent`` as its first argument
 (``agent``) except for the static helpers (``sanitize_tool_call_arguments``,
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 def _ra():
     """Lazy ``run_agent`` reference for test-patch routing."""
-    import run_agent
+    import agent.runtime as run_agent
     return run_agent
 
 
@@ -1264,8 +1264,8 @@ def create_openai_client(agent, client_kwargs: dict, *, reason: str, shared: boo
     # OpenAI client is closed (rebuild, teardown, credential rotation),
     # the paired ``httpx.Client`` closes with it, and the next call
     # constructs a fresh one — no stale closed transport can be reused.
-    # Tests in ``tests/run_agent/test_create_openai_client_reuse.py`` and
-    # ``tests/run_agent/test_sequential_chats_live.py`` pin this invariant.
+    # Tests in ``tests/agent_runtime/test_create_openai_client_reuse.py`` and
+    # ``tests/agent_runtime/test_sequential_chats_live.py`` pin this invariant.
     if "http_client" not in client_kwargs:
         keepalive_http = agent._build_keepalive_http_client(client_kwargs.get("base_url", ""))
         if keepalive_http is not None:

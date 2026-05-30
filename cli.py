@@ -195,7 +195,7 @@ def _strip_reasoning_tags(text: str) -> str:
     Covers the variants emitted by reasoning models today: ``<think>``,
     ``<thinking>``, ``<reasoning>``, ``<REASONING_SCRATCHPAD>``, and
     ``<thought>`` (Gemma 4).  Must stay in sync with
-    ``run_agent.py::_strip_think_blocks`` and the stream consumer's
+    ``agent/runtime.py::_strip_think_blocks`` and the stream consumer's
     ``_OPEN_THINK_TAGS`` / ``_CLOSE_THINK_TAGS`` tuples.
 
     Also strips tool-call XML blocks some open models leak into visible
@@ -620,7 +620,7 @@ def load_cli_config() -> Dict[str, Any]:
     
     # Apply auxiliary model/direct-endpoint overrides to environment variables.
     # Vision and web_extract each have their own provider/model/base_url/api_key tuple.
-    # Compression config is read directly from config.yaml by run_agent.py and
+    # Compression config is read directly from config.yaml by agent/runtime.py and
     # auxiliary_client.py — no env var bridging needed.
     # Only set env vars for non-empty / non-default values so auto-detection
     # still works.
@@ -778,7 +778,7 @@ import fire
 # Import agent and tool systems lazily. Bare interactive startup only needs the
 # prompt; the full agent/tool registry is initialized on first use.
 def AIAgent(*args, **kwargs):
-    from run_agent import AIAgent as _AIAgent
+    from agent.runtime import AIAgent as _AIAgent
 
     return _AIAgent(*args, **kwargs)
 
@@ -9596,7 +9596,7 @@ class JarvisCLI:
                 )
                 self.conversation_history = compressed
                 # _compress_context ends the old session and creates a new child
-                # session on the agent (run_agent.py::_compress_context). Sync the
+                # session on the agent (agent/runtime.py::_compress_context). Sync the
                 # CLI's session_id so /status, /resume, exit summary, and title
                 # generation all point at the live continuation session, not the
                 # ended parent. Without this, subsequent end_session() calls target
@@ -11350,7 +11350,7 @@ class JarvisCLI:
         # rich-text editors (Google Docs, Word, etc.).  Lone surrogates are invalid
         # UTF-8 and crash JSON serialization in the OpenAI SDK.
         if isinstance(message, str):
-            from run_agent import _sanitize_surrogates
+            from agent.runtime import _sanitize_surrogates
             message = _sanitize_surrogates(message)
 
         # Add user message to history
@@ -13058,7 +13058,7 @@ class JarvisCLI:
                 event.app.invalidate()
             if pasted_text:
                 # Sanitize surrogate characters (e.g. from Word/Google Docs paste) before writing
-                from run_agent import _sanitize_surrogates
+                from agent.runtime import _sanitize_surrogates
                 pasted_text = _sanitize_surrogates(pasted_text)
                 line_count = pasted_text.count('\n')
                 buf = event.current_buffer

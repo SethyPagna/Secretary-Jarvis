@@ -68,10 +68,10 @@ def _ra():
     """Lazy ``run_agent`` reference.
 
     Used to honor test patches like
-    ``patch("run_agent.cleanup_vm")`` / ``patch("run_agent.cleanup_browser")``
+    ``patch("agent.runtime.cleanup_vm")`` / ``patch("agent.runtime.cleanup_browser")``
     that target symbols imported into ``run_agent``'s namespace.
     """
-    import run_agent
+    import agent.runtime as run_agent
     return run_agent
 
 

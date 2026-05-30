@@ -230,7 +230,7 @@ def _run_agent(
     from jarvis_cli.models import detect_provider_for_model
     from jarvis_cli.runtime_provider import resolve_runtime_provider
     from jarvis_cli.tools_config import _get_platform_tools
-    from run_agent import AIAgent
+    from agent.runtime import AIAgent
 
     cfg = load_config()
 

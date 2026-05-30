@@ -973,7 +973,7 @@ class TestSessionConfiguration:
         )
         manager = SessionManager(db=SessionDB(tmp_path / "state.db"))
 
-        with patch("run_agent.AIAgent", side_effect=fake_agent):
+        with patch("agent.runtime.AIAgent", side_effect=fake_agent):
             acp_agent = JarvisACPAgent(session_manager=manager)
             state = manager.create_session(cwd="/tmp")
             result = await acp_agent.set_session_model(
@@ -1545,7 +1545,7 @@ class TestSlashCommands:
         )
         manager = SessionManager(db=SessionDB(tmp_path / "state.db"))
 
-        with patch("run_agent.AIAgent", side_effect=fake_agent):
+        with patch("agent.runtime.AIAgent", side_effect=fake_agent):
             acp_agent = JarvisACPAgent(session_manager=manager)
             state = manager.create_session(cwd="/tmp")
             result = acp_agent._cmd_model("anthropic:claude-sonnet-4-6", state)

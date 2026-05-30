@@ -442,9 +442,9 @@ class TestVprintForceParameter:
         assert "normal message" in captured.out
 
     def test_error_messages_use_force_in_run_agent(self):
-        """Verify that critical error _vprint calls in run_agent.py
+        """Verify that critical error _vprint calls in agent/runtime.py
         include force=True."""
-        with open("run_agent.py", "r") as f:
+        with open("agent/runtime.py", "r") as f:
             source = f.read()
 
         tree = ast.parse(source)

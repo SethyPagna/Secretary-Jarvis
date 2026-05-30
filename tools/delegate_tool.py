@@ -898,7 +898,7 @@ def _build_child_agent(
     routing subagents to a different provider:model pair (e.g. cheap/fast
     model on OpenRouter while the parent runs on JARVIS Managed).
     """
-    from run_agent import AIAgent
+    from agent.runtime import AIAgent
     import uuid as _uuid
 
     # ── Role resolution ─────────────────────────────────────────────────
@@ -1045,7 +1045,7 @@ def _build_child_agent(
 
     # When override_provider is set (e.g. delegation.provider: minimax-cn),
     # the subagent must use direct API calls — not the parent's ACP transport.
-    # Inheriting acp_command unconditionally causes run_agent.py to initialize
+    # Inheriting acp_command unconditionally causes agent/runtime.py to initialize
     # CopilotACPClient, bypassing override credentials entirely (issue #16816).
     if override_provider and not override_acp_command:
         effective_acp_command = None
@@ -1053,7 +1053,7 @@ def _build_child_agent(
 
     if override_acp_command:
         # If explicitly forcing an ACP transport override, the provider MUST be copilot-acp
-        # so run_agent.py initializes the CopilotACPClient.
+        # so agent/runtime.py initializes the CopilotACPClient.
         effective_provider = "copilot-acp"
         effective_api_mode = "chat_completions"
 

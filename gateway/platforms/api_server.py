@@ -873,7 +873,7 @@ class APIServerAdapter(BasePlatformAdapter):
         providers (e.g. Honcho) can scope their per-chat state correctly
         — matching the semantics of the native gateway's ``session_key``.
         """
-        from run_agent import AIAgent
+        from agent.runtime import AIAgent
         from gateway.run import _resolve_runtime_agent_kwargs, _resolve_gateway_model, _load_gateway_config, GatewayRunner
         from jarvis_cli.tools_config import _get_platform_tools
 

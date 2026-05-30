@@ -96,7 +96,7 @@ class GatewayStreamConsumer:
 
     # Reasoning/thinking tags that models emit inline in content.
     # Must stay in sync with cli.py _OPEN_TAGS/_CLOSE_TAGS and
-    # run_agent.py _strip_think_blocks() tag variants.
+    # agent/runtime.py _strip_think_blocks() tag variants.
     _OPEN_THINK_TAGS = (
         "<REASONING_SCRATCHPAD>", "<think>", "<reasoning>",
         "<THINKING>", "<thinking>", "<thought>",
@@ -287,7 +287,7 @@ class GatewayStreamConsumer:
     # content.  The CLI's _stream_delta suppresses these via a state
     # machine; we do the same here so gateway users never see raw
     # reasoning tags.  The agent also strips them from the final
-    # response (run_agent.py _strip_think_blocks), but the stream
+    # response (agent/runtime.py _strip_think_blocks), but the stream
     # consumer sends intermediate edits before that stripping happens.
 
     def _filter_and_accumulate(self, text: str) -> None:

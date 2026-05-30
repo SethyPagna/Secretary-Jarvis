@@ -75,7 +75,7 @@ flowchart TB
         end
 
         store["Session store<br/>per chat"]
-        agent["AIAgent<br/>run_agent.py"]
+        agent["AIAgent<br/>agent/runtime.py"]
         cron["Cron scheduler<br/>ticks every 60s"]
     end
 

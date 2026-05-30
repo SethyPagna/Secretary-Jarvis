@@ -1,6 +1,6 @@
 """The agent conversation loop — extracted from ``run_agent.AIAgent``.
 
-This is the biggest single chunk pulled out of ``run_agent.py``: the
+This is the biggest single chunk pulled out of ``agent/runtime.py``: the
 roughly 3,900-line :func:`run_conversation` body that drives one user
 turn through the agent (model call, tool dispatch, retries, fallbacks,
 compression, post-turn hooks, background memory/skill review nudges).
@@ -123,7 +123,7 @@ def _ra():
     ``run_agent.handle_function_call`` / ``run_agent._set_interrupt`` /
     ``run_agent.OpenAI`` and have those patches reach this code path.
     """
-    import run_agent
+    import agent.runtime as run_agent
     return run_agent
 
 

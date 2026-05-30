@@ -809,9 +809,9 @@ class TestNoAutoActivation:
     def test_compressor_default_ignores_plugin(self):
         """When context.engine is 'compressor', a plugin-registered engine should NOT
         be used — only explicit config triggers plugin engines."""
-        # This tests the run_agent.py logic indirectly by checking that the
+        # This tests the agent/runtime.py logic indirectly by checking that the
         # code path for default config doesn't call get_plugin_context_engine.
-        import run_agent as ra_module
+        import agent.runtime as ra_module
         source = open(ra_module.__file__).read()
         # The old code had: "Even with default config, check if a plugin registered one"
         # The fix removes this. Verify it's gone.

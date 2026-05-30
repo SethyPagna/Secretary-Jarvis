@@ -200,7 +200,7 @@ class TestCodexBuildKwargs:
         # reasoning.encrypted_content back from xAI so we can replay it
         # across turns for cross-turn coherence — xAI explicitly relies
         # on this for their partnership integration.  See
-        # tests/run_agent/test_codex_xai_oauth_recovery.py for the
+        # tests/agent_runtime/test_codex_xai_oauth_recovery.py for the
         # full history.
         assert "reasoning.encrypted_content" in kw.get("include", [])
 

@@ -3228,7 +3228,7 @@ def get_custom_provider_context_length(
       * ``gateway.run._format_session_info`` (``/info`` display)
       * ``agent.model_metadata.get_model_context_length`` (when custom_providers is threaded through)
 
-    Before this helper existed, the lookup was duplicated in ``run_agent.py``'s
+    Before this helper existed, the lookup was duplicated in ``agent/runtime.py``'s
     startup path only; every other path (notably ``/model`` switch) fell back
     to the 128K default.  See #15779.
     """

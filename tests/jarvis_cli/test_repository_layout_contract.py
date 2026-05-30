@@ -21,7 +21,6 @@ ROOT_FILE_ALLOWLIST = {
     "package.json",
     "pyproject.toml",
     "run-jarvis.cmd",
-    "run_agent.py",
     "setup-jarvis.cmd",
     "setup.py",
     "stop-jarvis.cmd",
@@ -44,9 +43,7 @@ ROOT_DIR_ALLOWLIST = {
     "tools",
 }
 
-ROOT_PY_MODULES = {
-    "run_agent",
-}
+ROOT_PY_MODULES = set()
 
 APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
     "desktop/electron/main.js",

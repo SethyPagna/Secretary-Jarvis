@@ -49,11 +49,11 @@ def _ra():
     ``build_context_files_prompt``, ``build_jarvis_managed_subscription_prompt``,
     ``build_skills_system_prompt`` and ``get_toolset_for_tool`` are
     imported into ``run_agent``'s namespace.  Many tests
-    ``patch("run_agent.load_soul_md", ...)``; if we imported them
+    ``patch("agent.runtime.load_soul_md", ...)``; if we imported them
     directly here those patches would not reach us.  Looking them up
     through ``run_agent`` on every call preserves the patch contract.
     """
-    import run_agent
+    import agent.runtime as run_agent
     return run_agent
 
 

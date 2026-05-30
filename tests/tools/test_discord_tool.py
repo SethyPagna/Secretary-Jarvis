@@ -756,7 +756,7 @@ class TestConfigAllowlist:
         """Restore the ``tools`` logger level after cross-test pollution.
 
         ``AIAgent(quiet_mode=True)`` globally sets ``tools`` and
-        ``tools.*`` children to ``ERROR`` (see run_agent.py quiet_mode
+        ``tools.*`` children to ``ERROR`` (see agent/runtime.py quiet_mode
         block).  xdist workers are persistent, so a streaming test on the
         same worker will silence WARNING-level logs from
         ``tools.discord_tool`` for every test that follows.  Reset here so

@@ -2227,7 +2227,7 @@ def _extract_relevant_content(
 
     # Redact secrets from snapshot before sending to auxiliary LLM.
     # Without this, a page displaying env vars or API keys would leak
-    # secrets to the extraction model before run_agent.py's general
+    # secrets to the extraction model before agent/runtime.py's general
     # redaction layer ever sees the tool result.
     from agent.redact import redact_sensitive_text
     extraction_prompt = redact_sensitive_text(extraction_prompt)

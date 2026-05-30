@@ -1098,7 +1098,7 @@ def test_kanban_guidance_not_in_normal_prompt(monkeypatch, tmp_path):
     invalidate_check_fn_cache()
     _clear_tool_defs_cache()
 
-    from run_agent import AIAgent
+    from agent.runtime import AIAgent
     a = AIAgent(
         api_key="test",
         base_url="https://openrouter.ai/api/v1",
@@ -1126,7 +1126,7 @@ def test_kanban_guidance_in_worker_prompt(monkeypatch, tmp_path):
     invalidate_check_fn_cache()
     _clear_tool_defs_cache()
 
-    from run_agent import AIAgent
+    from agent.runtime import AIAgent
     a = AIAgent(
         api_key="test",
         base_url="https://openrouter.ai/api/v1",

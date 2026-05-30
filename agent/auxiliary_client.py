@@ -4509,7 +4509,7 @@ def _build_call_kwargs(
     if tools:
         # Defensive dedup: providers like Google Vertex, Azure, and Bedrock
         # reject requests with duplicate tool names (HTTP 400).  The upstream
-        # injection paths (run_agent.py) already dedup, but this guard
+        # injection paths (agent/runtime.py) already dedup, but this guard
         # converts a hard API failure into a warning if an upstream regression
         # reintroduces duplicates.  See: #18478
         _seen: set = set()

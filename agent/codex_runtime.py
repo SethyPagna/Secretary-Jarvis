@@ -382,7 +382,7 @@ def run_codex_create_stream_fallback(agent, api_kwargs: dict, client: Any = None
                 if not err_param and isinstance(event, dict):
                     err_param = event.get("param")
                 err_message = (err_message or "stream emitted error event").strip()
-                from run_agent import _StreamErrorEvent
+                from agent.runtime import _StreamErrorEvent
                 raise _StreamErrorEvent(err_message, code=err_code, param=err_param)
 
             # Collect output items and text deltas for backfill

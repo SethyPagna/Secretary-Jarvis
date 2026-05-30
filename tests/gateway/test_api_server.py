@@ -276,7 +276,7 @@ class TestAdapterInit:
             def __init__(self, **kwargs):
                 captured.update(kwargs)
 
-        monkeypatch.setattr("run_agent.AIAgent", FakeAgent)
+        monkeypatch.setattr("agent.runtime.AIAgent", FakeAgent)
         monkeypatch.setattr(
             "gateway.run._resolve_runtime_agent_kwargs",
             lambda: {

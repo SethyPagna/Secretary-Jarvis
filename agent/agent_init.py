@@ -3,7 +3,7 @@
 ``AIAgent.__init__`` is one of the longest methods in the codebase (60+
 parameters, ~1,400 lines of attribute initialization, provider
 auto-detection, credential resolution, context-engine bootstrap, etc.).
-Keeping it in ``run_agent.py`` bloats that file with code that's mostly
+Keeping it in ``agent/runtime.py`` bloats that file with code that's mostly
 "setup state, then forget".
 
 After this extraction the body lives here as ``init_agent(agent, ...)``
@@ -56,7 +56,7 @@ from tools.model_tools import check_toolset_requirements, get_tool_definitions
 from jarvis_cli.utils import base_url_host_matches
 
 # Use the same logger name as run_agent so tests patching ``run_agent.logger``
-# capture our warnings.  (run_agent.py also does
+# capture our warnings.  (agent/runtime.py also does
 # ``logger = logging.getLogger(__name__)``, which resolves to "run_agent"
 # from inside that module.)
 logger = logging.getLogger("run_agent")
@@ -67,7 +67,7 @@ def _ra():
     ``run_agent.OpenAI`` / ``run_agent.cleanup_vm`` / ... and have those
     patches reach this code path.
     """
-    import run_agent
+    import agent.runtime as run_agent
     return run_agent
 
 

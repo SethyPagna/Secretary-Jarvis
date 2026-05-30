@@ -367,7 +367,7 @@ class TestXiaomiAgentInit:
     def test_no_syntax_errors(self):
         """Importing run_agent with xiaomi should not raise."""
         import importlib
-        importlib.import_module("run_agent")
+        importlib.import_module("agent.runtime")
 
     def test_api_mode_is_chat_completions(self):
         from jarvis_cli.providers import JARVIS_OVERLAYS, TRANSPORT_TO_API_MODE

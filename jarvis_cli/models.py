@@ -2016,7 +2016,7 @@ def resolve_fast_mode_overrides(model_id: Optional[str]) -> dict[str, Any] | Non
     - Anthropic models: ``{"speed": "fast"}`` (Anthropic Fast Mode beta)
 
     The overrides are injected into the API request kwargs by
-    ``_build_api_kwargs`` in run_agent.py — each API path handles its own
+    ``_build_api_kwargs`` in agent/runtime.py — each API path handles its own
     keys (service_tier for OpenAI/Codex, speed for Anthropic Messages).
     """
     if not model_supports_fast_mode(model_id):

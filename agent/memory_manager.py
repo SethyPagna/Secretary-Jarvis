@@ -1,13 +1,13 @@
 """MemoryManager — orchestrates memory providers for the agent.
 
-Single integration point in run_agent.py. Replaces scattered per-backend
+Single integration point in agent/runtime.py. Replaces scattered per-backend
 code with one manager that delegates to registered providers.
 
 Only ONE external plugin provider is allowed at a time — attempting to
 register a second external provider is rejected with a warning.  This
 prevents tool schema bloat and conflicting memory backends.
 
-Usage in run_agent.py:
+Usage in agent/runtime.py:
     self._memory_manager = MemoryManager()
     # Only ONE of these:
     self._memory_manager.add_provider(plugin_provider)

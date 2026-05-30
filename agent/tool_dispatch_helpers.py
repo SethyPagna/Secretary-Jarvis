@@ -1,6 +1,6 @@
 """Tool-dispatch helpers — parallelism gating, multimodal envelopes, mutation tracking.
 
-Pure module-level utilities extracted from ``run_agent.py``:
+Pure module-level utilities extracted from ``agent/runtime.py``:
 
 * ``_is_destructive_command`` — terminal-command heuristic used to gate
   parallel batch dispatch.
@@ -17,7 +17,7 @@ Pure module-level utilities extracted from ``run_agent.py``:
   trajectory saving.
 
 All helpers are stateless.  ``run_agent`` re-exports each name so existing
-``from run_agent import ...`` imports in tests and other modules keep
+``from agent.runtime import ...`` imports in tests and other modules keep
 working unchanged.
 """
 

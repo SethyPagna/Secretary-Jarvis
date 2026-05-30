@@ -46,7 +46,7 @@ from rich.console import Console
 logger = logging.getLogger(__name__)
 import fire
 
-from run_agent import AIAgent
+from agent.runtime import AIAgent
 from tools.toolset_distributions import (
     list_distributions, 
     sample_toolsets_from_distribution,

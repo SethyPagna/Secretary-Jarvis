@@ -5,7 +5,7 @@ Three concerns, all tied to ``AIAgent`` boot-time / runtime IO setup:
 1. **Lazy OpenAI SDK import** — ``_load_openai_cls`` + ``_OpenAIProxy``
    defer the 240ms-ish ``from openai import OpenAI`` cost until first use,
    while preserving ``isinstance(client, OpenAI)`` checks and
-   ``patch("run_agent.OpenAI", ...)`` test patterns.
+   ``patch("agent.runtime.OpenAI", ...)`` test patterns.
 
 2. **Crash-resistant stdio** — ``_SafeWriter`` wraps stdout/stderr so
    ``OSError: Input/output error`` from broken pipes (systemd, Docker,
@@ -17,7 +17,7 @@ Three concerns, all tied to ``AIAgent`` boot-time / runtime IO setup:
    ``_get_proxy_for_base_url`` respects ``NO_PROXY`` for the given base URL.
 
 ``run_agent`` re-exports every name so existing
-``from run_agent import _get_proxy_from_env`` imports keep working
+``from agent.runtime import _get_proxy_from_env`` imports keep working
 unchanged.
 """
 

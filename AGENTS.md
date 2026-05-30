@@ -21,7 +21,7 @@ entry points you'll actually edit.
 
 ```
 jarvis-agent/
-├── run_agent.py          # AIAgent class — core conversation loop (~12k LOC)
+├── agent/runtime.py          # AIAgent class — core conversation loop (~12k LOC)
 ├── tools/model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
 ├── tools/toolsets.py           # Toolset definitions, JARVIS core tool list
 ├── cli.py                # JARVIS interactive shell orchestrator (~11k LOC)
@@ -71,16 +71,16 @@ tools/*.py  (each calls registry.register() at import time)
        ↑
 tools/model_tools.py  (imports tools/registry + triggers tool discovery)
        ↑
-run_agent.py, cli.py, tools/batch_runner.py, environments/
+agent/runtime.py, cli.py, tools/batch_runner.py, environments/
 ```
 
 ---
 
-## AIAgent Class (run_agent.py)
+## AIAgent Class (agent/runtime.py)
 
 The real `AIAgent.__init__` takes ~60 parameters (credentials, routing, callbacks,
 session context, budget, credential pool, etc.). The signature below is the
-minimum subset you'll usually touch — read `run_agent.py` for the full list.
+minimum subset you'll usually touch — read `agent/runtime.py` for the full list.
 
 ```python
 class AIAgent:
@@ -276,7 +276,7 @@ The registry handles schema collection, dispatch, availability checking, and err
 
 **State files**: If a tool stores persistent state (caches, logs, checkpoints), use `get_jarvis_home()` for the base directory — never `Path.home() / ".jarvis"`. This ensures each profile gets its own state.
 
-**Agent-level tools** (todo, memory): intercepted by `run_agent.py` before `handle_function_call()`. See `tools/todo_tool.py` for the pattern.
+**Agent-level tools** (todo, memory): intercepted by `agent/runtime.py` before `handle_function_call()`. See `tools/todo_tool.py` for the pattern.
 
 ---
 
@@ -476,7 +476,7 @@ can:
   plugin's argparse tree is wired into `jarvis` at startup so
   `jarvis <pluginname> <subcmd>` works with no change to `main.py`
 
-Hooks are invoked from `tools/model_tools.py` (pre/post tool) and `run_agent.py`
+Hooks are invoked from `tools/model_tools.py` (pre/post tool) and `agent/runtime.py`
 (lifecycle). **Discovery timing pitfall:** `discover_plugins()` only runs
 as a side effect of importing `tools/model_tools.py`. Code paths that read plugin
 state without importing `tools/model_tools.py` first must call `discover_plugins()`
@@ -501,7 +501,7 @@ provider (read from `memory.provider` in config.yaml), so disabled
 providers don't clutter `jarvis --help`.
 
 **Rule (Teknium, May 2026):** plugins MUST NOT modify core files
-(`run_agent.py`, `cli.py`, `gateway/run.py`, `jarvis_cli/main.py`, etc.).
+(`agent/runtime.py`, `cli.py`, `gateway/run.py`, `jarvis_cli/main.py`, etc.).
 If a plugin needs a capability the framework doesn't expose, expand the
 generic plugin surface (new hook, new ctx method) — never hardcode
 plugin-specific logic into core. PR #5295 removed 95 lines of hardcoded

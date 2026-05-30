@@ -39,9 +39,9 @@ class ContextEngine(ABC):
     def name(self) -> str:
         """Short identifier (e.g. 'compressor', 'lcm')."""
 
-    # -- Token state (read by run_agent.py for display/logging) ------------
+    # -- Token state (read by agent/runtime.py for display/logging) ------------
     #
-    # Engines MUST maintain these. run_agent.py reads them directly.
+    # Engines MUST maintain these. agent/runtime.py reads them directly.
 
     last_prompt_tokens: int = 0
     last_completion_tokens: int = 0
@@ -50,7 +50,7 @@ class ContextEngine(ABC):
     context_length: int = 0
     compression_count: int = 0
 
-    # -- Compaction parameters (read by run_agent.py for preflight) --------
+    # -- Compaction parameters (read by agent/runtime.py for preflight) --------
     #
     # These control the preflight compression check.  Subclasses may
     # override via __init__ or property; defaults are sensible for most
@@ -178,7 +178,7 @@ class ContextEngine(ABC):
     def get_status(self) -> Dict[str, Any]:
         """Return status dict for display/logging.
 
-        Default returns the standard fields run_agent.py expects.
+        Default returns the standard fields agent/runtime.py expects.
         """
         return {
             "last_prompt_tokens": self.last_prompt_tokens,

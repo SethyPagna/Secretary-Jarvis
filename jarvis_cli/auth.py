@@ -2085,7 +2085,7 @@ def get_qwen_auth_status() -> Dict[str, Any]:
 # Google Gemini OAuth (google-gemini-cli) — PKCE flow + Cloud Code Assist.
 #
 # Tokens live in ~/.jarvis/auth/google_oauth.json (managed by agent.google_oauth).
-# The `base_url` here is the marker "cloudcode-pa://google" that run_agent.py
+# The `base_url` here is the marker "cloudcode-pa://google" that agent/runtime.py
 # uses to construct a GeminiCloudCodeClient instead of the default OpenAI SDK.
 # Actual HTTP traffic goes to https://cloudcode-pa.googleapis.com/v1internal:*.
 # =============================================================================

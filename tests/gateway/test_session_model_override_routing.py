@@ -87,9 +87,9 @@ def test_run_agent_prefers_session_override_over_global_runtime(monkeypatch):
     monkeypatch.setattr(gateway_run, "load_dotenv", lambda *args, **kwargs: None)
     monkeypatch.setattr(gateway_run, "_resolve_runtime_agent_kwargs", _explode_runtime_resolution)
 
-    fake_run_agent = types.ModuleType("run_agent")
+    fake_run_agent = types.ModuleType("agent.runtime")
     fake_run_agent.AIAgent = _CapturingAgent
-    monkeypatch.setitem(sys.modules, "run_agent", fake_run_agent)
+    monkeypatch.setitem(sys.modules, "agent.runtime", fake_run_agent)
 
     _CapturingAgent.last_init = None
     runner = _make_runner()
@@ -131,9 +131,9 @@ async def test_background_task_prefers_session_override_over_global_runtime(monk
     monkeypatch.setattr(gateway_run, "_load_gateway_config", lambda: {})
     monkeypatch.setattr(gateway_run, "_resolve_runtime_agent_kwargs", _explode_runtime_resolution)
 
-    fake_run_agent = types.ModuleType("run_agent")
+    fake_run_agent = types.ModuleType("agent.runtime")
     fake_run_agent.AIAgent = _CapturingAgent
-    monkeypatch.setitem(sys.modules, "run_agent", fake_run_agent)
+    monkeypatch.setitem(sys.modules, "agent.runtime", fake_run_agent)
 
     _CapturingAgent.last_init = None
     runner = _make_runner()

@@ -515,7 +515,7 @@ class TestSequentialDispatchRouting:
     memory_manager.has_tool() and handle_tool_call().
 
     This is a regression test for a bug where _execute_tool_calls_sequential
-    in run_agent.py had its own inline dispatch chain that skipped
+    in agent/runtime.py had its own inline dispatch chain that skipped
     memory_manager.has_tool(), causing all memory provider tools to fall
     through to the registry and return "Unknown tool". The fix added
     has_tool() + handle_tool_call() to the sequential path.
@@ -925,13 +925,13 @@ class TestOnMemoryWriteBridge:
 
     def test_on_memory_write_remove_not_bridged(self):
         """The bridge intentionally skips 'remove' — only add/replace notify."""
-        # This tests the contract that run_agent.py checks:
+        # This tests the contract that agent/runtime.py checks:
         #   function_args.get("action") in ("add", "replace")
         mgr = MemoryManager()
         p = FakeMemoryProvider("ext")
         mgr.add_provider(p)
 
-        # Manager itself doesn't filter — run_agent.py does.
+        # Manager itself doesn't filter — agent/runtime.py does.
         # But providers should handle remove gracefully.
         mgr.on_memory_write("remove", "memory", "old fact")
         assert p.memory_writes == [("remove", "memory", "old fact")]
@@ -958,7 +958,7 @@ class TestOnMemoryWriteBridge:
             {"type": "function", "function": {"name": "web_search", "description": "Search", "parameters": {}}},
         ]
 
-        # Apply the same dedup logic from run_agent.py __init__
+        # Apply the same dedup logic from agent/runtime.py __init__
         _existing_names = {
             t.get("function", {}).get("name")
             for t in existing_tools

@@ -349,17 +349,17 @@ class TestOllamaCloudModelsDev:
 
 class TestOllamaCloudAgentInit:
     def test_agent_imports_without_error(self):
-        """Verify run_agent.py has no SyntaxError."""
+        """Verify agent/runtime.py has no SyntaxError."""
         import importlib
-        import run_agent
+        import agent.runtime as run_agent
         importlib.reload(run_agent)
 
     def test_ollama_cloud_agent_uses_chat_completions(self, monkeypatch):
         """Ollama Cloud falls through to chat_completions — no special elif needed."""
         monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
-        with patch("run_agent.OpenAI") as mock_openai:
+        with patch("agent.runtime.OpenAI") as mock_openai:
             mock_openai.return_value = MagicMock()
-            from run_agent import AIAgent
+            from agent.runtime import AIAgent
             agent = AIAgent(
                 model="qwen3.5:397b",
                 provider="ollama-cloud",

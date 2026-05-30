@@ -14,7 +14,7 @@ gmi = ProviderProfile(
     base_url="https://api.gmi-serving.com/v1",
     auth_type="api_key",
     # Attribution so GMI can identify traffic from JARVIS.
-    # The generic profile.default_headers fallback in run_agent.py and
+    # The generic profile.default_headers fallback in agent/runtime.py and
     # agent/auxiliary_client.py picks this up at client construction time.
     default_headers={"User-Agent": f"JarvisAgent/{_JARVIS_VERSION}"},
     default_aux_model="google/gemini-3.1-flash-lite-preview",
