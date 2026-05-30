@@ -8,10 +8,10 @@ page and backend can use it without hitting the GitHub API.
 
 Usage:
     # Local (uses gh CLI or GITHUB_TOKEN for auth)
-    python ops/scripts/build_skills_index.py
+    python ops/scripts/catalog/build_skills_index.py
 
     # CI (set GITHUB_TOKEN as secret)
-    GITHUB_TOKEN=ghp_... python ops/scripts/build_skills_index.py
+    GITHUB_TOKEN=ghp_... python ops/scripts/catalog/build_skills_index.py
 
 Output: docs/api/skills-index.json
 """
@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 # Allow importing from repo root
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, REPO_ROOT)
 
 # Ensure JARVIS_HOME is set (needed by tools/skills_hub.py imports)

@@ -5,8 +5,8 @@ Checks all dependencies, configuration, and bot permissions needed
 for Discord voice mode to work correctly.
 
 Usage:
-    python ops/scripts/discord-voice-doctor.py
-    .venv/bin/python ops/scripts/discord-voice-doctor.py
+    python ops/scripts/checks/discord-voice-doctor.py
+    .venv/bin/python ops/scripts/checks/discord-voice-doctor.py
 """
 
 import os

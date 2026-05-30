@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 
 function Resolve-DesktopPython {
     $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
@@ -56,9 +56,9 @@ function Test-NodeRuntimeScripts {
         "electron/main.js",
         "electron/preload.js",
         "web/eslint.config.js",
-        "ops/scripts/after-pack-icon.cjs",
-        "ops/scripts/whatsapp-bridge/allowlist.mjs",
-        "ops/scripts/whatsapp-bridge/bridge.mjs",
+        "ops/scripts/build/after-pack-icon.cjs",
+        "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
+        "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
         "optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
         "skills/creative/p5js/scripts/export-frames.js"
     )
@@ -98,7 +98,7 @@ try {
 
     if (-not $SkipDependencyPreflight) {
         Invoke-Checked "Desktop Python dependency preflight" {
-            powershell -ExecutionPolicy Bypass -File ops/scripts/check-desktop-python-deps.ps1 -Python $desktopPython
+            powershell -ExecutionPolicy Bypass -File ops/scripts/checks/check-desktop-python-deps.ps1 -Python $desktopPython
         }
     }
 

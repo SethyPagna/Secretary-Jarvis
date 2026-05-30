@@ -353,9 +353,9 @@ class TestManifestMatchesInRepoLists:
         return out
 
     def test_in_repo_lists_match_manifest(self):
-        """``ops/scripts/build_model_catalog.py`` output must match the committed file.
+        """``ops/scripts/catalog/build_model_catalog.py`` output must match the committed file.
 
-        If this fails, run ``python ops/scripts/build_model_catalog.py`` and
+        If this fails, run ``python ops/scripts/catalog/build_model_catalog.py`` and
         commit the regenerated ``docs/api/model-catalog.json``.
         """
         # Resolve the repo root from this test file's location.
@@ -380,6 +380,6 @@ class TestManifestMatchesInRepoLists:
         assert self._strip_volatile(actual) == self._strip_volatile(expected), (
             "docs/api/model-catalog.json is out of sync with "
             "_PROVIDER_MODELS['jarvis_managed'] / OPENROUTER_MODELS. "
-            "Run: python ops/scripts/build_model_catalog.py && "
+            "Run: python ops/scripts/catalog/build_model_catalog.py && "
             "git add docs/api/model-catalog.json"
         )

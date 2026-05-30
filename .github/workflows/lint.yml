@@ -102,7 +102,7 @@ jobs:
 
       - name: Generate diff summary
         run: |
-          python ops/scripts/lint_diff.py \
+          python ops/scripts/ci/lint_diff.py \
             --base-ruff .lint-reports/base/ruff.json \
             --head-ruff .lint-reports/head/ruff.json \
             --base-ty   .lint-reports/base/ty.json \
@@ -183,7 +183,7 @@ jobs:
     # Static guardrails on Windows-unsafe Python primitives — os.kill(pid, 0),
     # os.killpg, os.setsid, signal.SIGKILL without getattr fallback,
     # shebang scripts via subprocess, bare open() without encoding=, etc.
-    # See ops/scripts/check-windows-footguns.py for the full rule list.
+    # See ops/scripts/ci/check-windows-footguns.py for the full rule list.
     name: Windows footguns (blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -197,4 +197,4 @@ jobs:
           python-version: "3.11"
 
       - name: Run footgun checker
-        run: python ops/scripts/check-windows-footguns.py --all
+        run: python ops/scripts/ci/check-windows-footguns.py --all

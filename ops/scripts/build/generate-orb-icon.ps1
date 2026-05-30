@@ -20,7 +20,7 @@ namespace Win32 {
 "@
 }
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
 $resolvedPng = if ([IO.Path]::IsPathRooted($PngPath)) { $PngPath } else { Join-Path $RepoRoot $PngPath }
 $resolvedIco = if ([IO.Path]::IsPathRooted($IcoPath)) { $IcoPath } else { Join-Path $RepoRoot $IcoPath }
 

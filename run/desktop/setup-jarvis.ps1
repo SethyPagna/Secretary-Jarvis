@@ -29,7 +29,7 @@ function Invoke-PythonDependencyCheck {
     param([string]$Python)
 
     try {
-        & (Join-Path $RepoRoot "ops/scripts/check-desktop-python-deps.ps1") -Python $Python -Wheelhouse $Wheelhouse
+        & (Join-Path $RepoRoot "ops/scripts/checks/check-desktop-python-deps.ps1") -Python $Python -Wheelhouse $Wheelhouse
         return
     }
     catch {
@@ -51,7 +51,7 @@ function Invoke-PythonDependencyCheck {
         Invoke-Checked $Python -m pip install --timeout 30 --retries 1 --prefer-binary --no-build-isolation -e . pyinstaller
     }
 
-    & (Join-Path $RepoRoot "ops/scripts/check-desktop-python-deps.ps1") -Python $Python -Wheelhouse $Wheelhouse
+    & (Join-Path $RepoRoot "ops/scripts/checks/check-desktop-python-deps.ps1") -Python $Python -Wheelhouse $Wheelhouse
 }
 
 function Resolve-JarvisPython {
@@ -106,7 +106,7 @@ try {
     }
 
     if ($BuildDesktop) {
-        $buildArgs = @("-ExecutionPolicy", "Bypass", "-File", "ops/scripts/build-desktop.ps1")
+        $buildArgs = @("-ExecutionPolicy", "Bypass", "-File", "ops/scripts/build/build-desktop.ps1")
         if ($SkipInstaller) {
             $buildArgs += "-SkipInstaller"
         }

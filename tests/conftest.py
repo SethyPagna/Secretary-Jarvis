@@ -35,7 +35,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 # ── Per-file process isolation ──────────────────────────────────────────────
-# Tests run via ``ops/scripts/run_tests_parallel.py``, which spawns a fresh
+# Tests run via ``ops/scripts/ci/run_tests_parallel.py``, which spawns a fresh
 # ``python -m pytest <file>`` subprocess per test file. Cross-file state
 # leakage (module-level dicts, ContextVars, caches) is impossible: each
 # file gets a clean Python interpreter. Intra-file ordering is the test
@@ -47,7 +47,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # state clearing) and the brief experiment with subprocess-per-test
 # isolation (too slow at ~17k tests).
 #
-# See ``ops/scripts/run_tests_parallel.py`` for the runner.
+# See ``ops/scripts/ci/run_tests_parallel.py`` for the runner.
 
 
 # ── Credential env-var filter ──────────────────────────────────────────────
@@ -388,7 +388,7 @@ def _isolate_jarvis_home(_isolate_jarvis_home):
 # ── Module-level state reset — replaced by per-file process isolation ──────
 #
 # Each test FILE runs in a freshly-spawned ``python -m pytest <file>``
-# subprocess via ``ops/scripts/run_tests_parallel.py``, so module-level dicts /
+# subprocess via ``ops/scripts/ci/run_tests_parallel.py``, so module-level dicts /
 # sets / ContextVars from tests in one file cannot leak into tests in
 # another file. No manual per-module clearing needed.
 #

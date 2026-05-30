@@ -7,7 +7,7 @@ where terminals can collapse, intercept, or silently remap key combinations.
 
 Usage:
     # POSIX
-    python ops/scripts/keystroke_diagnostic.py
+    python ops/scripts/checks/keystroke_diagnostic.py
 
     # Windows (PowerShell / git-bash / cmd)
     python ops\\scripts\\keystroke_diagnostic.py

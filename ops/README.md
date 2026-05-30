@@ -3,8 +3,14 @@
 Operational files live here: packaging specs, desktop build scripts, smoke checks,
 and runtime helper processes used by the packaged app.
 
-- `scripts/` contains internal build, verification, icon, wheelhouse, renderer
-  smoke, voice/model diagnostics, maintenance, and WhatsApp bridge helpers.
+- `scripts/build/` contains desktop packaging, icon, wheelhouse, and runtime
+  staging helpers.
+- `scripts/checks/` contains production, dependency, voice, renderer, API-key,
+  and WhatsApp bridge smoke checks.
+- `scripts/ci/` contains CI-only lint and isolated test runners.
+- `scripts/catalog/` contains model and skill catalog refresh tools.
+- `scripts/release/` contains release and contributor audit automation.
+- `scripts/maintenance/` contains one-off local maintenance and migration tools.
 - `packaging/` contains PyInstaller and packaging constraints.
 - `acp_registry/` contains Agent Client Protocol registry metadata used by
   release automation.

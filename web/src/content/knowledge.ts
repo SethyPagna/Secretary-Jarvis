@@ -394,7 +394,7 @@ export const setupItems: KnowledgeItem[] = [
     detail:
       "A release is not ready until packaged backend smoke, renderer build, installer generation, and clean port/process shutdown checks pass.",
     badges: ["release"],
-    command: "powershell -ExecutionPolicy Bypass -File ops/scripts/build-desktop.ps1 -SmokePort 18765",
+    command: "powershell -ExecutionPolicy Bypass -File ops/scripts/build/build-desktop.ps1 -SmokePort 18765",
   },
 ];
 

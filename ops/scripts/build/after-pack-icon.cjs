@@ -11,7 +11,7 @@ module.exports = async function afterPack(context) {
     return;
   }
 
-  const repoRoot = path.resolve(__dirname, "..");
+  const repoRoot = path.resolve(__dirname, "..", "..", "..");
   const productFilename =
     context.packager?.appInfo?.productFilename ||
     context.packager?.appInfo?.productName ||

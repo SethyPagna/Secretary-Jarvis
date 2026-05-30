@@ -6,13 +6,13 @@ Downloads trajectories from multiple HuggingFace datasets, randomly samples them
 and runs trajectory compression to fit within a target token budget.
 
 Usage:
-    python ops/scripts/sample_and_compress.py
+    python ops/scripts/maintenance/sample_and_compress.py
     
     # Custom sample size
-    python ops/scripts/sample_and_compress.py --total_samples=5000
+    python ops/scripts/maintenance/sample_and_compress.py --total_samples=5000
     
     # Custom output name
-    python ops/scripts/sample_and_compress.py --output_name=compressed_16k
+    python ops/scripts/maintenance/sample_and_compress.py --output_name=compressed_16k
 """
 
 import json
@@ -266,7 +266,7 @@ def run_compression(input_dir: Path, output_dir: Path, config_path: str):
     """
     # Import the compressor
     import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
     from tools.trajectory_compressor import TrajectoryCompressor, CompressionConfig
     
     print(f"\n🗜️  Running trajectory compression...")
@@ -360,7 +360,7 @@ def main(
     print(f"   Seed: {seed}")
     
     # Setup paths
-    base_dir = Path(__file__).parent.parent
+    base_dir = Path(__file__).resolve().parents[3]
     sampled_dir = base_dir / "data" / f"{output_name}_raw"
     compressed_dir = base_dir / "data" / f"{output_name}_batches"
     final_output = base_dir / "data" / f"{output_name}.jsonl"

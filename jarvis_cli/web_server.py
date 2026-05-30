@@ -1401,7 +1401,7 @@ def _whatsapp_status_payload() -> dict[str, Any]:
         "session_path": str(session_path),
         "bridge_dir": str(bridge_dir),
         "qr_login_available": bridge_ready,
-        "start_command": "node ops/scripts/whatsapp-bridge/bridge.mjs",
+        "start_command": "node ops/scripts/checks/whatsapp-bridge/bridge.mjs",
     }
 
 

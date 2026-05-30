@@ -1456,7 +1456,7 @@ Jarvis ships with a large built-in skill library copied into `~/.jarvis/skills/`
 
 Jarvis also syncs bundled skills on `jarvis update`, but the sync manifest respects local deletions and user edits. If a skill listed here is missing from your profile's `~/.jarvis/skills/` tree, it is still shipped with Jarvis; restore it with `jarvis skills reset <name> --restore`.
 
-If a skill is missing from this list but present in the repo, refresh the desktop skill index with `ops/scripts/build_skills_index.py`.
+If a skill is missing from this list but present in the repo, refresh the desktop skill index with `ops/scripts/catalog/build_skills_index.py`.
 
 ## apple
 

@@ -590,7 +590,7 @@ See `jarvis_cli/skin_engine.py` for the full schema and existing skins as exampl
 Jarvis runs on Linux, macOS, and native Windows (plus WSL2). When writing code
 that touches the OS, assume *any* platform can hit your code path.
 
-> **Before you PR:** run `ops/scripts/check-windows-footguns.py` to catch the
+> **Before you PR:** run `ops/scripts/ci/check-windows-footguns.py` to catch the
 > common Windows-unsafe patterns in your diff. It's grep-based and cheap;
 > CI runs it on every PR too.
 

@@ -23,7 +23,7 @@ Why drop xdist entirely?
     the job.
 
 Usage:
-    python ops/scripts/run_tests_parallel.py [pytest_args...]
+    python ops/scripts/ci/run_tests_parallel.py [pytest_args...]
 
     Common pytest args pass through (e.g. ``-v``, ``-x``, ``--tb=long``,
     ``-k 'pattern'``, ``--lf``).
@@ -653,7 +653,7 @@ def main() -> int:
             print(f"error: --slice must be I/N (e.g. 1/4), got: {slice_raw!r}", file=sys.stderr)
             sys.exit(2)
 
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = Path(__file__).resolve().parents[3]
 
     # Resolve discovery roots: positional path args override --paths if any
     # were supplied, otherwise --paths (which itself defaults to 'tests').

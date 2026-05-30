@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
 Push-Location $RepoRoot
 
 try {
@@ -70,7 +70,7 @@ try {
         Write-Host ""
         Write-Host "No wheelhouse found at: $wheelhousePath"
         Write-Host "Prepare one on a connected machine:"
-        Write-Host "  powershell -ExecutionPolicy Bypass -File ops/scripts/prepare-desktop-wheelhouse.ps1 -Wheelhouse `"$wheelhousePath`""
+        Write-Host "  powershell -ExecutionPolicy Bypass -File ops/scripts/build/prepare-desktop-wheelhouse.ps1 -Wheelhouse `"$wheelhousePath`""
         Write-Host "Then copy that wheelhouse back here and run:"
         Write-Host "  $Python -m pip install --no-index --find-links `"$wheelhousePath`" --no-build-isolation -e . pyinstaller"
     }

@@ -8,12 +8,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class DesktopPackagingContractTests(unittest.TestCase):
     def test_build_script_smokes_packaged_backend_before_installer(self) -> None:
-        build_script = (ROOT / "ops" / "scripts" / "build-desktop.ps1").read_text(
+        build_script = (ROOT / "ops" / "scripts" / "build" / "build-desktop.ps1").read_text(
             encoding="utf-8",
         )
 
         self.assertIn("check-desktop-python-deps.ps1", build_script)
-        self.assertIn('Join-Path $PSScriptRoot "..\\.."', build_script)
+        self.assertIn('Join-Path $PSScriptRoot "..\\..\\.."', build_script)
         self.assertIn("[switch]$SkipSmoke", build_script)
         self.assertIn("smoke-desktop-backend.ps1", build_script)
         self.assertIn("$backendLaunch", build_script)
@@ -27,7 +27,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         )
 
     def test_build_script_handles_vite_direct_embedded_output(self) -> None:
-        build_script = (ROOT / "ops" / "scripts" / "build-desktop.ps1").read_text(
+        build_script = (ROOT / "ops" / "scripts" / "build" / "build-desktop.ps1").read_text(
             encoding="utf-8",
         )
         vite_config = (ROOT / "web" / "vite.config.ts").read_text(encoding="utf-8")
@@ -38,7 +38,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("web/dist", build_script)
 
     def test_smoke_script_starts_hidden_backend_and_shuts_down(self) -> None:
-        smoke_script = (ROOT / "ops" / "scripts" / "smoke-desktop-backend.ps1").read_text(
+        smoke_script = (ROOT / "ops" / "scripts" / "checks" / "smoke-desktop-backend.ps1").read_text(
             encoding="utf-8",
         )
 
@@ -53,7 +53,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("/api/status", smoke_script)
         self.assertIn("/api/shutdown", smoke_script)
         self.assertIn("Stop-Process", smoke_script)
-        self.assertIn('Join-Path $PSScriptRoot "..\\.."', smoke_script)
+        self.assertIn('Join-Path $PSScriptRoot "..\\..\\.."', smoke_script)
 
     def test_pyinstaller_spec_embeds_runtime_assets(self) -> None:
         spec = (ROOT / "ops" / "packaging" / "jarvis-backend.spec").read_text(
@@ -80,7 +80,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("build-desktop.ps1", package["scripts"]["desktop:build"])
         self.assertNotIn("SkipSmoke", package["scripts"]["desktop:build"])
         self.assertFalse(package["build"]["win"]["signAndEditExecutable"])
-        self.assertEqual(package["build"]["afterPack"], "ops/scripts/after-pack-icon.cjs")
+        self.assertEqual(package["build"]["afterPack"], "ops/scripts/build/after-pack-icon.cjs")
         self.assertNotIn("nsis", package["build"])
         self.assertIn("portable", package["build"]["win"]["target"])
         self.assertNotIn("nsis", package["build"]["win"]["target"])
@@ -93,7 +93,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         )
 
     def test_after_pack_hook_applies_orb_icon_without_win_code_sign(self) -> None:
-        hook = (ROOT / "ops" / "scripts" / "after-pack-icon.cjs").read_text(encoding="utf-8")
+        hook = (ROOT / "ops" / "scripts" / "build" / "after-pack-icon.cjs").read_text(encoding="utf-8")
 
         self.assertIn("rcedit-x64.exe", hook)
         self.assertIn("--set-icon", hook)
@@ -112,7 +112,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
             self.fail("Built desktop index still has absolute /assets paths")
 
     def test_desktop_python_dependency_check_reports_wheelhouse_recovery(self) -> None:
-        checker = (ROOT / "ops" / "scripts" / "check-desktop-python-deps.ps1").read_text(
+        checker = (ROOT / "ops" / "scripts" / "checks" / "check-desktop-python-deps.ps1").read_text(
             encoding="utf-8",
         )
 
@@ -125,10 +125,10 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("--no-index", checker)
         self.assertIn("--find-links", checker)
         self.assertIn("prepare-desktop-wheelhouse.ps1", checker)
-        self.assertIn('Join-Path $PSScriptRoot "..\\.."', checker)
+        self.assertIn('Join-Path $PSScriptRoot "..\\..\\.."', checker)
 
     def test_desktop_wheelhouse_script_downloads_backend_and_build_deps(self) -> None:
-        wheelhouse = (ROOT / "ops" / "scripts" / "prepare-desktop-wheelhouse.ps1").read_text(
+        wheelhouse = (ROOT / "ops" / "scripts" / "build" / "prepare-desktop-wheelhouse.ps1").read_text(
             encoding="utf-8",
         )
 
@@ -137,10 +137,10 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("pyinstaller", wheelhouse.lower())
         self.assertIn("--prefer-binary", wheelhouse)
         self.assertIn("wheelhouse", wheelhouse)
-        self.assertIn('Join-Path $PSScriptRoot "..\\.."', wheelhouse)
+        self.assertIn('Join-Path $PSScriptRoot "..\\..\\.."', wheelhouse)
 
     def test_production_check_runs_contracts_build_preflight_and_process_guard(self) -> None:
-        checker = (ROOT / "ops" / "scripts" / "check-production.ps1").read_text(
+        checker = (ROOT / "ops" / "scripts" / "checks" / "check-production.ps1").read_text(
             encoding="utf-8",
         )
 
@@ -150,7 +150,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("Test-NodeRuntimeScripts", checker)
         self.assertIn("electron/main.js", checker)
         self.assertIn("electron/preload.js", checker)
-        self.assertIn("ops/scripts/whatsapp-bridge/bridge.mjs", checker)
+        self.assertIn("ops/scripts/checks/whatsapp-bridge/bridge.mjs", checker)
         self.assertIn("skills/creative/p5js/scripts/export-frames.js", checker)
         self.assertIn("--check", checker)
         self.assertIn("npm.cmd --prefix web run build", checker)
@@ -161,7 +161,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("-Python $desktopPython", checker)
         self.assertIn("release/JARVIS 1.0.0.exe", checker)
         self.assertIn("Test-OwnedRuntimeProcesses", checker)
-        self.assertIn('Join-Path $PSScriptRoot "..\\.."', checker)
+        self.assertIn('Join-Path $PSScriptRoot "..\\..\\.."', checker)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 # `pytest` directly to guarantee your local run matches CI behavior.
 #
 # What this script enforces:
-#   * Per-file isolation via ops/scripts/run_tests_parallel.py — each test
+#   * Per-file isolation via ops/scripts/ci/run_tests_parallel.py — each test
 #     file runs in its own freshly-spawned `python -m pytest <file>`
 #     subprocess. No xdist, no shared workers, no module-level leakage
 #     between files.
@@ -75,4 +75,4 @@ exec env -i \
   PYTHONHASHSEED=0 \
   ${EXTRA_PYTHONPATH:+PYTHONPATH="$EXTRA_PYTHONPATH"} \
   ${EXTRA_PYTEST_PLUGINS:+PYTEST_PLUGINS="$EXTRA_PYTEST_PLUGINS"} \
-  "$PYTHON" "$REPO_ROOT/ops/scripts/run_tests_parallel.py" "$@"
+  "$PYTHON" "$REPO_ROOT/ops/scripts/ci/run_tests_parallel.py" "$@"
