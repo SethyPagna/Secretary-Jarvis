@@ -53,7 +53,9 @@ jarvis-agent/
 ├── skills/               # Built-in skills bundled with the repo
 ├── acp_adapter/          # ACP server (VS Code / Zed / JetBrains integration)
 ├── cron/                 # Scheduler — jobs.py, scheduler.py
-├── scripts/              # run_tests.sh, release.py, auxiliary scripts
+├── scripts/              # Public install/test entrypoints only
+├── run/                  # User-facing desktop setup/run/stop launchers
+├── ops/                  # Build, packaging, CI, release, checks, maintenance scripts
 └── tests/                # Pytest suite (~17k tests across ~900 files as of May 2026)
 ```
 
