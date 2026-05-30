@@ -9,7 +9,7 @@ from typing import Dict, Iterable, Optional, Set
 from jarvis_cli.auth import get_jarvis_managed_auth_status
 from jarvis_cli.config import get_env_value, load_config
 from tools.managed_tool_gateway import is_managed_tool_gateway_ready
-from utils import is_truthy_value
+from jarvis_cli.utils import is_truthy_value
 from tools.tool_backend_helpers import (
     fal_key_is_configured,
     has_direct_modal_credentials,

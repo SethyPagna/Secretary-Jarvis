@@ -48,7 +48,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 from jarvis_constants import get_jarvis_home
-from utils import env_var_enabled
+from jarvis_cli.utils import env_var_enabled
 from jarvis_cli.config import cfg_get
 
 

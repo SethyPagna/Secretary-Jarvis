@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Any, Callable
 from enum import Enum
 
 from jarvis_cli.config import get_jarvis_home
-from utils import is_truthy_value
+from jarvis_cli.utils import is_truthy_value
 
 logger = logging.getLogger(__name__)
 

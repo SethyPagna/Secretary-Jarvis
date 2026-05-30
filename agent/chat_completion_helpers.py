@@ -59,7 +59,7 @@ from agent.tool_guardrails import (
     toolguard_synthetic_result,
 )
 from tools.terminal_tool import is_persistent_env
-from utils import base_url_host_matches, base_url_hostname
+from jarvis_cli.utils import base_url_host_matches, base_url_hostname
 
 logger = logging.getLogger(__name__)
 

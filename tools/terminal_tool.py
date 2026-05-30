@@ -47,7 +47,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
-from utils import env_var_enabled
+from jarvis_cli.utils import env_var_enabled
 
 logger = logging.getLogger(__name__)
 

@@ -166,7 +166,7 @@ from jarvis_cli.browser_connect import (
     try_launch_chrome_debug,
 )
 from jarvis_cli.env_loader import load_jarvis_dotenv
-from utils import base_url_host_matches, is_truthy_value
+from jarvis_cli.utils import base_url_host_matches, is_truthy_value
 
 _jarvis_home = get_jarvis_home()
 _project_env = Path(__file__).parent / '.env'
@@ -2772,7 +2772,7 @@ def save_config_value(key_path: str, value: any) -> bool:
         
         # Save back atomically while preserving comments, ordering, quotes, and
         # readable Unicode in user-edited config.yaml.
-        from utils import atomic_roundtrip_yaml_update
+        from jarvis_cli.utils import atomic_roundtrip_yaml_update
         atomic_roundtrip_yaml_update(config_path, key_path, value)
         
         # Enforce owner-only permissions on config files (contain API keys)

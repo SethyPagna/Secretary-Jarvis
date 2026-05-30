@@ -29,7 +29,7 @@ from jarvis_cli.jarvis_managed_subscription import (
     get_jarvis_managed_subscription_features,
 )
 from tools.tool_backend_helpers import fal_key_is_configured, managed_jarvis_managed_tools_enabled
-from utils import base_url_hostname, is_truthy_value
+from jarvis_cli.utils import base_url_hostname, is_truthy_value
 
 logger = logging.getLogger(__name__)
 

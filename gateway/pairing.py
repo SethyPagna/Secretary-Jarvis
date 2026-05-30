@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Optional
 
 from jarvis_constants import get_jarvis_dir
-from utils import atomic_replace
+from jarvis_cli.utils import atomic_replace
 
 
 # Unambiguous alphabet -- excludes 0/O, 1/I to prevent confusion

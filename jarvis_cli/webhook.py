@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict
 
 from jarvis_constants import display_jarvis_home
-from utils import atomic_replace
+from jarvis_cli.utils import atomic_replace
 from jarvis_cli.config import cfg_get
 
 

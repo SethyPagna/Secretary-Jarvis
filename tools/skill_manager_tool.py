@@ -42,7 +42,7 @@ from pathlib import Path
 from jarvis_constants import get_jarvis_home, display_jarvis_home
 from typing import Dict, Any, Optional, Tuple
 
-from utils import atomic_replace, is_truthy_value
+from jarvis_cli.utils import atomic_replace, is_truthy_value
 from jarvis_cli.config import cfg_get
 
 logger = logging.getLogger(__name__)

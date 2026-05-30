@@ -67,7 +67,7 @@ from gateway.platforms.base import (
     cache_image_from_bytes,
 )
 from jarvis_constants import get_jarvis_home
-from utils import atomic_json_write
+from jarvis_cli.utils import atomic_json_write
 
 ILINK_BASE_URL = "https://ilinkai.weixin.qq.com"
 WEIXIN_CDN_BASE_URL = "https://novac2c.cdn.weixin.qq.com/c2c"

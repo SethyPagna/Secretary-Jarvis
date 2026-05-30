@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
-from utils import is_truthy_value
+from jarvis_cli.utils import is_truthy_value
 
 
 _DEFAULT_BROWSER_PROVIDER = "local"

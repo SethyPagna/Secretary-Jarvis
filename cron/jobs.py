@@ -22,7 +22,7 @@ from typing import Optional, Dict, List, Any, Union
 logger = logging.getLogger(__name__)
 
 from jarvis_cli.time_utils import now as _jarvis_now
-from utils import atomic_replace
+from jarvis_cli.utils import atomic_replace
 
 try:
     from croniter import croniter

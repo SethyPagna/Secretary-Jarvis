@@ -53,7 +53,7 @@ from pathlib import Path
 from typing import Any
 
 from jarvis_cli import __version__ as _JARVIS_VERSION
-from utils import atomic_replace
+from jarvis_cli.utils import atomic_replace
 
 logger = logging.getLogger(__name__)
 

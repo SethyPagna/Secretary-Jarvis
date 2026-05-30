@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from jarvis_constants import get_jarvis_home
 from typing import Any, Optional
-from utils import atomic_json_write
+from jarvis_cli.utils import atomic_json_write
 
 if sys.platform == "win32":
     import msvcrt

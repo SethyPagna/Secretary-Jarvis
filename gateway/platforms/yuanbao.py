@@ -1589,7 +1589,7 @@ class AutoSetHomeMiddleware(InboundMiddleware):
             if _should_set:
                 try:
                     from jarvis_constants import get_jarvis_home
-                    from utils import atomic_yaml_write
+                    from jarvis_cli.utils import atomic_yaml_write
                     import yaml
 
                     _home = get_jarvis_home()

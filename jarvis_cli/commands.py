@@ -20,7 +20,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from utils import is_truthy_value
+from jarvis_cli.utils import is_truthy_value
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,7 @@ import os
 import tempfile
 import time
 from typing import Any, Mapping, Optional
-from utils import atomic_replace
+from jarvis_cli.utils import atomic_replace
 
 logger = logging.getLogger(__name__)
 

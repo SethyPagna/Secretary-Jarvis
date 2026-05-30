@@ -731,7 +731,7 @@ def check_cronjob_requirements() -> bool:
     leave the tool disabled. Uses the shared ``env_var_enabled`` helper so
     every consumer of these flags agrees on the truthy set.
     """
-    from utils import env_var_enabled
+    from jarvis_cli.utils import env_var_enabled
 
     return (
         env_var_enabled("JARVIS_INTERACTIVE")

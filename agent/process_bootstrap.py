@@ -28,7 +28,7 @@ import sys
 import urllib.request
 from typing import Optional
 
-from utils import base_url_hostname, normalize_proxy_url
+from jarvis_cli.utils import base_url_hostname, normalize_proxy_url
 
 
 # Cached at module level so we only pay the OpenAI SDK import cost once

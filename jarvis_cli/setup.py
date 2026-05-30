@@ -24,7 +24,7 @@ from typing import Optional, Dict, Any
 
 from jarvis_cli.jarvis_managed_subscription import get_jarvis_managed_subscription_features
 from tools.tool_backend_helpers import managed_jarvis_managed_tools_enabled
-from utils import base_url_hostname
+from jarvis_cli.utils import base_url_hostname
 from jarvis_constants import get_optional_skills_dir
 
 logger = logging.getLogger(__name__)

@@ -33,7 +33,7 @@ from pathlib import Path
 from jarvis_constants import get_jarvis_home
 from typing import Dict, Any, List, Optional
 
-from utils import atomic_replace
+from jarvis_cli.utils import atomic_replace
 
 # fcntl is Unix-only; on Windows use msvcrt for file locking
 msvcrt = None

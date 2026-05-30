@@ -69,7 +69,7 @@ from jarvis_constants import display_jarvis_home as _dhh_fn
 from jarvis_logging import set_session_context
 from tools.schema_sanitizer import strip_pattern_and_format
 from tools.skill_provenance import set_current_write_origin
-from utils import base_url_host_matches, env_var_enabled
+from jarvis_cli.utils import base_url_host_matches, env_var_enabled
 
 logger = logging.getLogger(__name__)
 

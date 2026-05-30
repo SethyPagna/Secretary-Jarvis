@@ -53,7 +53,7 @@ from jarvis_cli.config import cfg_get
 from jarvis_cli.timeouts import get_provider_request_timeout
 from jarvis_constants import get_jarvis_home
 from tools.model_tools import check_toolset_requirements, get_tool_definitions
-from utils import base_url_host_matches
+from jarvis_cli.utils import base_url_host_matches
 
 # Use the same logger name as run_agent so tests patching ``run_agent.logger``
 # capture our warnings.  (run_agent.py also does

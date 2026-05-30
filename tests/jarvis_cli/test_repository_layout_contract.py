@@ -28,7 +28,6 @@ ROOT_FILE_ALLOWLIST = {
     "setup-jarvis.cmd",
     "setup.py",
     "stop-jarvis.cmd",
-    "utils.py",
     "uv.lock",
 }
 
@@ -53,7 +52,6 @@ ROOT_PY_MODULES = {
     "jarvis_logging",
     "jarvis_state",
     "run_agent",
-    "utils",
 }
 
 APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {

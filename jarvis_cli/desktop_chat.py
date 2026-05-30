@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
-from utils import atomic_replace
+from jarvis_cli.utils import atomic_replace
 
 
 DeltaCallback = Callable[[str], None]

@@ -141,7 +141,7 @@ from gateway.platforms.base import (
 )
 from gateway.status import acquire_scoped_lock, release_scoped_lock
 from jarvis_constants import get_jarvis_home
-from utils import atomic_json_write
+from jarvis_cli.utils import atomic_json_write
 
 logger = logging.getLogger(__name__)
 

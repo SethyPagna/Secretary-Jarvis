@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from jarvis_cli.config import get_jarvis_home
-from utils import atomic_json_write
+from jarvis_cli.utils import atomic_json_write
 
 logger = logging.getLogger(__name__)
 

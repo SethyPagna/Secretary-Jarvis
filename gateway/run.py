@@ -549,7 +549,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Resolve Jarvis home directory (respects JARVIS_HOME override)
 from jarvis_constants import get_jarvis_home
-from utils import atomic_json_write, atomic_yaml_write, base_url_host_matches, is_truthy_value
+from jarvis_cli.utils import atomic_json_write, atomic_yaml_write, base_url_host_matches, is_truthy_value
 _jarvis_home = get_jarvis_home()
 
 # Load environment variables from ~/.jarvis/.env first.

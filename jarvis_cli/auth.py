@@ -49,7 +49,7 @@ import yaml
 
 from jarvis_cli.config import get_jarvis_home, get_config_path, read_raw_config
 from jarvis_constants import OPENROUTER_BASE_URL, secure_parent_dir
-from utils import atomic_replace, atomic_yaml_write, is_truthy_value
+from jarvis_cli.utils import atomic_replace, atomic_yaml_write, is_truthy_value
 
 logger = logging.getLogger(__name__)
 
