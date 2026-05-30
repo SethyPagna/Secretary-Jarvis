@@ -53,9 +53,7 @@ jarvis-agent/
 ├── capabilities/optional-skills/  # Heavier/niche skills shipped but NOT active by default
 ├── acp_adapter/          # ACP server (VS Code / Zed / JetBrains integration)
 ├── cron/                 # Scheduler — jobs.py, scheduler.py
-├── scripts/              # Public install/test entrypoints only
-├── run/                  # User-facing desktop setup/run/stop launchers
-├── ops/                  # Build, packaging, CI, release, checks, maintenance scripts
+├── ops/                  # Build, packaging, docs, public scripts, desktop run launchers
 └── tests/                # Pytest suite (~17k tests across ~900 files as of May 2026)
 ```
 
