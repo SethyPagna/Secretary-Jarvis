@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from plugins.spotify import jarvis_cli.terminal as client as spotify_mod
+from plugins.spotify import client as spotify_mod
 from plugins.spotify import tools as spotify_tool
 
 

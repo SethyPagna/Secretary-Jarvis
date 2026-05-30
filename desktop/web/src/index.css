@@ -124,6 +124,83 @@ code, kbd, pre, samp, .font-mono, .font-mono-ui {
   overflow: hidden;
 }
 
+.jarvis-boot {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #e8f6ff;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(151, 239, 255, 0.28), transparent 18rem),
+    radial-gradient(circle at 72% 30%, rgba(164, 106, 255, 0.18), transparent 22rem),
+    linear-gradient(135deg, #080b10, #101827 52%, #17162a);
+}
+
+.jarvis-boot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.26;
+  background-image:
+    radial-gradient(circle, rgba(232, 246, 255, 0.7) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(0, 212, 255, 0.5) 0 1px, transparent 1.3px);
+  background-position:
+    0 0,
+    34px 21px;
+  background-size:
+    88px 88px,
+    131px 131px;
+}
+
+.jarvis-boot__card {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  min-width: min(25rem, calc(100vw - 3rem));
+  padding: 2rem;
+  border: 1px solid rgba(232, 246, 255, 0.16);
+  border-radius: 1.2rem;
+  background: rgba(8, 11, 16, 0.56);
+  box-shadow: 0 2rem 6rem rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(24px);
+}
+
+.jarvis-boot__orb {
+  width: 4.75rem;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 30%, #ffffff 0 8%, #aaf7ff 17%, #4cc9d9 44%, #132534 76%);
+  box-shadow:
+    0 0 1rem rgba(170, 247, 255, 0.8),
+    0 0 4rem rgba(0, 212, 255, 0.38);
+  animation: jarvis-boot-pulse 1.35s ease-in-out infinite alternate;
+}
+
+.jarvis-boot__label {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.jarvis-boot__detail {
+  margin: 0;
+  color: rgba(232, 246, 255, 0.72);
+  font-size: 0.95rem;
+}
+
+@keyframes jarvis-boot-pulse {
+  from {
+    transform: scale(0.96);
+    filter: saturate(0.9);
+  }
+  to {
+    transform: scale(1.04);
+    filter: saturate(1.25);
+  }
+}
+
 /* The JARVIS desktop layout bumps `small` and `code` to readable
    dashboard sizes. Keep in sync. */
 small { font-size: 1.0625rem; }

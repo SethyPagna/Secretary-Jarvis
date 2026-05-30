@@ -103,11 +103,16 @@ class DesktopPackagingContractTests(unittest.TestCase):
 
     def test_vite_build_uses_relative_asset_paths_for_file_fallback(self) -> None:
         vite_config = (ROOT / "desktop" / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
+        source_index = (ROOT / "desktop" / "web" / "index.html").read_text(
+            encoding="utf-8",
+        )
         built_index = (ROOT / "src" / "jarvis_cli" / "web_dist" / "index.html").read_text(
             encoding="utf-8",
         )
 
         self.assertIn('base: "./"', vite_config)
+        self.assertIn("jarvis-boot", source_index)
+        self.assertIn("Starting local models, voice, skills, and workspace services", source_index)
         if 'src="/assets/' in built_index or 'href="/assets/' in built_index:
             self.fail("Built desktop index still has absolute /assets paths")
 

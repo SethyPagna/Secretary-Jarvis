@@ -88,6 +88,8 @@ class ElectronShellContractTests(unittest.TestCase):
         source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
         self.assertIn("DESKTOP_WARMUP_ENDPOINTS", source)
+        self.assertIn("startupShellHtml", source)
+        self.assertIn("loadStartupShell", source)
         self.assertIn("warmBackendServices", source)
         self.assertIn("maybeStartLocalRuntime()", source)
         self.assertIn("/api/runtime/readiness", source)
@@ -95,6 +97,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("/api/souls/team", source)
         self.assertIn("/api/skills", source)
         self.assertIn("backendReady", source)
+        self.assertLess(source.index("createMainWindow()"), source.index("await waitForBackend()"))
         self.assertLess(source.index("await waitForBackend()"), source.index("void warmBackendServices()"))
 
     def test_preload_exposes_limited_desktop_bridge(self) -> None:

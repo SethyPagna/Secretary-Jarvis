@@ -409,6 +409,78 @@ function createTray() {
   tray.on('click', () => showMainWindow())
 }
 
+function startupShellHtml() {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS</title>
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #080b10; }
+    body {
+      display: grid;
+      place-items: center;
+      color: #e8f6ff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(151, 239, 255, 0.28), transparent 18rem),
+        radial-gradient(circle at 72% 30%, rgba(164, 106, 255, 0.18), transparent 22rem),
+        linear-gradient(135deg, #080b10, #101827 52%, #17162a);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      opacity: 0.26;
+      background-image:
+        radial-gradient(circle, rgba(232, 246, 255, 0.7) 0 1px, transparent 1.4px),
+        radial-gradient(circle, rgba(0, 212, 255, 0.5) 0 1px, transparent 1.3px);
+      background-position: 0 0, 34px 21px;
+      background-size: 88px 88px, 131px 131px;
+    }
+    main {
+      position: relative;
+      display: grid;
+      gap: 1rem;
+      min-width: min(25rem, calc(100vw - 3rem));
+      padding: 2rem;
+      border: 1px solid rgba(232, 246, 255, 0.16);
+      border-radius: 1.2rem;
+      background: rgba(8, 11, 16, 0.56);
+      box-shadow: 0 2rem 6rem rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(24px);
+    }
+    .orb {
+      width: 4.75rem;
+      aspect-ratio: 1;
+      border-radius: 999px;
+      background: radial-gradient(circle at 35% 30%, #ffffff 0 8%, #aaf7ff 17%, #4cc9d9 44%, #132534 76%);
+      box-shadow: 0 0 1rem rgba(170, 247, 255, 0.8), 0 0 4rem rgba(0, 212, 255, 0.38);
+      animation: pulse 1.35s ease-in-out infinite alternate;
+    }
+    h1 { margin: 0; font-size: 1.65rem; letter-spacing: 0.16em; }
+    p { margin: 0; color: rgba(232, 246, 255, 0.72); font-size: 0.95rem; }
+    @keyframes pulse {
+      from { transform: scale(0.96); filter: saturate(0.9); }
+      to { transform: scale(1.04); filter: saturate(1.25); }
+    }
+  </style>
+</head>
+<body>
+  <main role="status" aria-live="polite">
+    <div class="orb" aria-hidden="true"></div>
+    <h1>JARVIS</h1>
+    <p>Starting local models, voice, skills, and workspace services...</p>
+  </main>
+</body>
+</html>`
+}
+
+async function loadStartupShell(window) {
+  await window.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(startupShellHtml())}`)
+}
+
 async function loadRenderer(window) {
   if (process.env.JARVIS_RENDERER_URL) {
     await window.loadURL(process.env.JARVIS_RENDERER_URL)
@@ -482,8 +554,8 @@ function createMainWindow() {
     runAppShutdown()
   })
 
-  loadRenderer(mainWindow).catch((error) => {
-    console.error('[jarvis-desktop] failed to load renderer', error)
+  loadStartupShell(mainWindow).catch((error) => {
+    console.error('[jarvis-desktop] failed to load startup shell', error)
   })
 }
 
@@ -618,6 +690,16 @@ app.whenReady().then(async () => {
     appendDesktopLog('[jarvis-desktop] backend preflight failed; opening offline-capable shell')
   }
 
+  createMainWindow()
+  createTray()
+
+  if (process.env.JARVIS_RENDERER_URL) {
+    loadRenderer(mainWindow).catch((error) => {
+      console.error('[jarvis-desktop] failed to load renderer', error)
+    })
+    return
+  }
+
   let backendReady = false
   try {
     await waitForBackend()
@@ -628,8 +710,9 @@ app.whenReady().then(async () => {
     appendDesktopLog('[jarvis-desktop] backend readiness check failed', error.stack || String(error))
   }
 
-  createMainWindow()
-  createTray()
+  loadRenderer(mainWindow).catch((error) => {
+    console.error('[jarvis-desktop] failed to load renderer', error)
+  })
 
   if (backendReady) {
     void warmBackendServices()

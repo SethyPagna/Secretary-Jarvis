@@ -7953,7 +7953,7 @@ class JarvisCLI:
             tokens = ["status"]
 
         try:
-            from jarvis_cli.curator import jarvis_cli.terminal as cli_main
+            from jarvis_cli.curator import cli_main
             cli_main(tokens)
         except SystemExit:
             # argparse calls sys.exit() on --help or errors; swallow so we
