@@ -50,7 +50,6 @@ ROOT_DIR_ALLOWLIST = {
     "ops",
     "plugins",
     "providers",
-    "run",
     "scripts",
     "skills",
     "tests",

@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ============================================================================
 # JARVIS Setup Script
 # ============================================================================
@@ -6,7 +6,7 @@
 # Uses uv for desktop/server setup and Python's stdlib venv + pip on Termux.
 #
 # Usage:
-#   ./run/desktop/setup-jarvis.sh
+#   ./ops/run/desktop/setup-jarvis.sh
 #
 # This script:
 # 1. Detects desktop/server vs Android/Termux setup path
@@ -27,7 +27,8 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+cd "$REPO_ROOT"
 
 # Prevent uv from discovering config files (uv.toml, pyproject.toml) from the
 # wrong user's home directory when running under sudo -u <user>.  See #21269.
@@ -56,18 +57,18 @@ get_command_link_display_dir() {
 }
 
 echo ""
-echo -e "${CYAN}⚕ JARVIS Setup${NC}"
+echo -e "${CYAN}âš• JARVIS Setup${NC}"
 echo ""
 
 # ============================================================================
 # Install / locate uv
 # ============================================================================
 
-echo -e "${CYAN}→${NC} Checking for uv..."
+echo -e "${CYAN}â†’${NC} Checking for uv..."
 
 UV_CMD=""
 if is_termux; then
-    echo -e "${CYAN}→${NC} Termux detected — using Python's stdlib venv + pip instead of uv"
+    echo -e "${CYAN}â†’${NC} Termux detected â€” using Python's stdlib venv + pip instead of uv"
 else
     if command -v uv &> /dev/null; then
         UV_CMD="uv"
@@ -79,20 +80,20 @@ else
 
     if [ -n "$UV_CMD" ]; then
         UV_VERSION=$($UV_CMD --version 2>/dev/null)
-        echo -e "${GREEN}✓${NC} uv found ($UV_VERSION)"
+        echo -e "${GREEN}âœ“${NC} uv found ($UV_VERSION)"
     else
-        echo -e "${CYAN}→${NC} Installing uv..."
+        echo -e "${CYAN}â†’${NC} Installing uv..."
         # Capture installer output so a failure shows the user WHY
         # (network, glibc mismatch on old distros, missing curl, disk
-        # full, etc.) instead of "✗ Failed to install uv" with zero
+        # full, etc.) instead of "âœ— Failed to install uv" with zero
         # diagnostic.  Two-stage to avoid `curl | sh` masking curl
         # failures (sh exits 0 on empty stdin under no pipefail).
         _uv_log="$(mktemp 2>/dev/null || echo "/tmp/jarvis-uv-install.$$.log")"
         _uv_installer="$(mktemp 2>/dev/null || echo "/tmp/jarvis-uv-installer.$$.sh")"
         if ! curl -LsSf https://astral.sh/uv/install.sh -o "$_uv_installer" 2>"$_uv_log"; then
-            echo -e "${RED}✗${NC} Failed to download uv installer."
+            echo -e "${RED}âœ—${NC} Failed to download uv installer."
             sed 's/^/    /' "$_uv_log" >&2
-            echo -e "${CYAN}→${NC} Install manually: https://docs.astral.sh/uv/"
+            echo -e "${CYAN}â†’${NC} Install manually: https://docs.astral.sh/uv/"
             rm -f "$_uv_log" "$_uv_installer"
             exit 1
         fi
@@ -107,19 +108,19 @@ else
             if [ -n "$UV_CMD" ]; then
                 rm -f "$_uv_log"
                 UV_VERSION=$($UV_CMD --version 2>/dev/null)
-                echo -e "${GREEN}✓${NC} uv installed ($UV_VERSION)"
+                echo -e "${GREEN}âœ“${NC} uv installed ($UV_VERSION)"
             else
-                echo -e "${RED}✗${NC} uv installer reported success but binary not found. Add ~/.local/bin to PATH and retry."
-                echo -e "${CYAN}→${NC} Installer output:"
+                echo -e "${RED}âœ—${NC} uv installer reported success but binary not found. Add ~/.local/bin to PATH and retry."
+                echo -e "${CYAN}â†’${NC} Installer output:"
                 sed 's/^/    /' "$_uv_log" >&2
                 rm -f "$_uv_log"
                 exit 1
             fi
         else
-            echo -e "${RED}✗${NC} Failed to install uv."
-            echo -e "${CYAN}→${NC} Installer output:"
+            echo -e "${RED}âœ—${NC} Failed to install uv."
+            echo -e "${CYAN}â†’${NC} Installer output:"
             sed 's/^/    /' "$_uv_log" >&2
-            echo -e "${CYAN}→${NC} Install manually: https://docs.astral.sh/uv/"
+            echo -e "${CYAN}â†’${NC} Install manually: https://docs.astral.sh/uv/"
             rm -f "$_uv_log" "$_uv_installer"
             exit 1
         fi
@@ -130,21 +131,21 @@ fi
 # Python check (uv can provision it automatically)
 # ============================================================================
 
-echo -e "${CYAN}→${NC} Checking Python $PYTHON_VERSION..."
+echo -e "${CYAN}â†’${NC} Checking Python $PYTHON_VERSION..."
 
 if is_termux; then
     if command -v python >/dev/null 2>&1; then
         PYTHON_PATH="$(command -v python)"
         if "$PYTHON_PATH" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then
             PYTHON_FOUND_VERSION=$($PYTHON_PATH --version 2>/dev/null)
-            echo -e "${GREEN}✓${NC} $PYTHON_FOUND_VERSION found"
+            echo -e "${GREEN}âœ“${NC} $PYTHON_FOUND_VERSION found"
         else
-            echo -e "${RED}✗${NC} Termux Python must be 3.11+"
+            echo -e "${RED}âœ—${NC} Termux Python must be 3.11+"
             echo "    Run: pkg install python"
             exit 1
         fi
     else
-        echo -e "${RED}✗${NC} Python not found in Termux"
+        echo -e "${RED}âœ—${NC} Python not found in Termux"
         echo "    Run: pkg install python"
         exit 1
     fi
@@ -152,13 +153,13 @@ else
     if $UV_CMD python find "$PYTHON_VERSION" &> /dev/null; then
         PYTHON_PATH=$($UV_CMD python find "$PYTHON_VERSION")
         PYTHON_FOUND_VERSION=$($PYTHON_PATH --version 2>/dev/null)
-        echo -e "${GREEN}✓${NC} $PYTHON_FOUND_VERSION found"
+        echo -e "${GREEN}âœ“${NC} $PYTHON_FOUND_VERSION found"
     else
-        echo -e "${CYAN}→${NC} Python $PYTHON_VERSION not found, installing via uv..."
+        echo -e "${CYAN}â†’${NC} Python $PYTHON_VERSION not found, installing via uv..."
         $UV_CMD python install "$PYTHON_VERSION"
         PYTHON_PATH=$($UV_CMD python find "$PYTHON_VERSION")
         PYTHON_FOUND_VERSION=$($PYTHON_PATH --version 2>/dev/null)
-        echo -e "${GREEN}✓${NC} $PYTHON_FOUND_VERSION installed"
+        echo -e "${GREEN}âœ“${NC} $PYTHON_FOUND_VERSION installed"
     fi
 fi
 
@@ -166,49 +167,49 @@ fi
 # Virtual environment
 # ============================================================================
 
-echo -e "${CYAN}→${NC} Setting up virtual environment..."
+echo -e "${CYAN}â†’${NC} Setting up virtual environment..."
 
 if [ -d "venv" ]; then
-    echo -e "${CYAN}→${NC} Removing old venv..."
+    echo -e "${CYAN}â†’${NC} Removing old venv..."
     rm -rf venv
 fi
 
 if is_termux; then
     "$PYTHON_PATH" -m venv venv
-    echo -e "${GREEN}✓${NC} venv created with stdlib venv"
+    echo -e "${GREEN}âœ“${NC} venv created with stdlib venv"
 else
     $UV_CMD venv venv --python "$PYTHON_VERSION"
-    echo -e "${GREEN}✓${NC} venv created (Python $PYTHON_VERSION)"
+    echo -e "${GREEN}âœ“${NC} venv created (Python $PYTHON_VERSION)"
 fi
 
-export VIRTUAL_ENV="$SCRIPT_DIR/venv"
-SETUP_PYTHON="$SCRIPT_DIR/venv/bin/python"
+export VIRTUAL_ENV="$REPO_ROOT/venv"
+SETUP_PYTHON="$REPO_ROOT/venv/bin/python"
 
 # ============================================================================
 # Dependencies
 # ============================================================================
 
-echo -e "${CYAN}→${NC} Installing dependencies..."
+echo -e "${CYAN}â†’${NC} Installing dependencies..."
 
 if is_termux; then
     export ANDROID_API_LEVEL="$(getprop ro.build.version.sdk 2>/dev/null || printf '%s' "${ANDROID_API_LEVEL:-}")"
-    echo -e "${CYAN}→${NC} Termux detected — installing the tested Android bundle"
+    echo -e "${CYAN}â†’${NC} Termux detected â€” installing the tested Android bundle"
     "$SETUP_PYTHON" -m pip install --upgrade pip setuptools wheel
     if [ -f "ops/packaging/constraints/termux.txt" ]; then
         "$SETUP_PYTHON" -m pip install -e ".[termux]" -c ops/packaging/constraints/termux.txt || {
-            echo -e "${YELLOW}⚠${NC} Termux bundle install failed, falling back to base install..."
+            echo -e "${YELLOW}âš ${NC} Termux bundle install failed, falling back to base install..."
             "$SETUP_PYTHON" -m pip install -e "." -c ops/packaging/constraints/termux.txt
         }
     else
         "$SETUP_PYTHON" -m pip install -e ".[termux]" || "$SETUP_PYTHON" -m pip install -e "."
     fi
-    echo -e "${GREEN}✓${NC} Dependencies installed"
+    echo -e "${GREEN}âœ“${NC} Dependencies installed"
 else
     # Prefer uv sync with lockfile (hash-verified installs) when available,
     # fall back to pip install for compatibility or when lockfile is stale.
     #
     # Multi-tier pip fallback. Goal: ONE compromised PyPI package
-    # (mistralai 2.4.6 in May 2026 → quarantined) shouldn't silently demote
+    # (mistralai 2.4.6 in May 2026 â†’ quarantined) shouldn't silently demote
     # a fresh setup to "core only". Edit _BROKEN_EXTRAS when a transitive
     # breaks; users keep voice / honcho / google / slack / matrix etc. even
     # if mistral can't resolve.
@@ -235,13 +236,13 @@ else
 
     if [ -f "uv.lock" ]; then
         # Hash-verified install (preferred). The lockfile records SHA256
-        # hashes for every transitive — a compromised transitive would have
+        # hashes for every transitive â€” a compromised transitive would have
         # a different hash and be REJECTED by uv. This is the only path
         # that protects against transitive-package supply-chain attacks
         # (the direct deps in pyproject.toml are exact-pinned, but
         # `uv pip install` re-resolves transitives fresh from PyPI).
-        echo -e "${CYAN}→${NC} Using uv.lock for hash-verified installation..."
-        echo -e "${CYAN}→${NC} (first run on a fresh venv can take 1-5 minutes; uv prints progress below)"
+        echo -e "${CYAN}â†’${NC} Using uv.lock for hash-verified installation..."
+        echo -e "${CYAN}â†’${NC} (first run on a fresh venv can take 1-5 minutes; uv prints progress below)"
         # Critical flag choice: `--extra all`, NOT `--all-extras`. The
         # latter installs every [project.optional-dependencies] key,
         # bypassing the curated [all] extra and pulling backends like
@@ -251,18 +252,18 @@ else
         # at first use.
         # Also: stream stderr through directly so the user sees uv's
         # progress UI instead of staring at a frozen prompt.
-        if UV_PROJECT_ENVIRONMENT="$SCRIPT_DIR/venv" $UV_CMD sync --extra all --locked; then
-            echo -e "${GREEN}✓${NC} Dependencies installed (hash-verified via uv.lock)"
+        if UV_PROJECT_ENVIRONMENT="$REPO_ROOT/venv" $UV_CMD sync --extra all --locked; then
+            echo -e "${GREEN}âœ“${NC} Dependencies installed (hash-verified via uv.lock)"
         else
-            echo -e "${YELLOW}⚠${NC} Lockfile sync failed (see uv output above)."
-            echo -e "${YELLOW}⚠${NC} Falling back to PyPI resolve — transitives will NOT be hash-verified."
+            echo -e "${YELLOW}âš ${NC} Lockfile sync failed (see uv output above)."
+            echo -e "${YELLOW}âš ${NC} Falling back to PyPI resolve â€” transitives will NOT be hash-verified."
             _try_install
-            echo -e "${GREEN}✓${NC} Dependencies installed (transitives re-resolved, not hash-verified)"
+            echo -e "${GREEN}âœ“${NC} Dependencies installed (transitives re-resolved, not hash-verified)"
         fi
     else
-        echo -e "${YELLOW}⚠${NC} uv.lock not found — installing without hash verification of transitives."
+        echo -e "${YELLOW}âš ${NC} uv.lock not found â€” installing without hash verification of transitives."
         _try_install
-        echo -e "${GREEN}✓${NC} Dependencies installed (transitives re-resolved, not hash-verified)"
+        echo -e "${GREEN}âœ“${NC} Dependencies installed (transitives re-resolved, not hash-verified)"
     fi
 fi
 
@@ -271,12 +272,12 @@ fi
 # Optional: ripgrep (for faster file search)
 # ============================================================================
 
-echo -e "${CYAN}→${NC} Checking ripgrep (optional, for faster search)..."
+echo -e "${CYAN}â†’${NC} Checking ripgrep (optional, for faster search)..."
 
 if command -v rg &> /dev/null; then
-    echo -e "${GREEN}✓${NC} ripgrep found"
+    echo -e "${GREEN}âœ“${NC} ripgrep found"
 else
-    echo -e "${YELLOW}⚠${NC} ripgrep not found (file search will use grep fallback)"
+    echo -e "${YELLOW}âš ${NC} ripgrep not found (file search will use grep fallback)"
     read -p "Install ripgrep for faster search? [Y/n] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
@@ -301,15 +302,15 @@ else
 
             # Try cargo (no sudo needed)
             if [ "$INSTALLED" = false ] && command -v cargo &> /dev/null; then
-                echo -e "${CYAN}→${NC} Trying cargo install (no sudo required)..."
+                echo -e "${CYAN}â†’${NC} Trying cargo install (no sudo required)..."
                 cargo install ripgrep && INSTALLED=true
             fi
         fi
 
         if [ "$INSTALLED" = true ]; then
-            echo -e "${GREEN}✓${NC} ripgrep installed"
+            echo -e "${GREEN}âœ“${NC} ripgrep installed"
         else
-            echo -e "${YELLOW}⚠${NC} Auto-install failed. Install options:"
+            echo -e "${YELLOW}âš ${NC} Auto-install failed. Install options:"
             if is_termux; then
                 echo "    pkg install ripgrep          # Termux / Android"
             else
@@ -329,28 +330,28 @@ fi
 if [ ! -f ".env" ]; then
     if [ -f "ops/config/env/.env.example" ]; then
         cp ops/config/env/.env.example .env
-        echo -e "${GREEN}✓${NC} Created .env from template"
+        echo -e "${GREEN}âœ“${NC} Created .env from template"
     fi
 else
-    echo -e "${GREEN}✓${NC} .env exists"
+    echo -e "${GREEN}âœ“${NC} .env exists"
 fi
 
 # ============================================================================
-# PATH setup — symlink jarvis into a user-facing bin dir
+# PATH setup â€” symlink jarvis into a user-facing bin dir
 # ============================================================================
 
-echo -e "${CYAN}→${NC} Setting up jarvis command..."
+echo -e "${CYAN}â†’${NC} Setting up jarvis command..."
 
-JARVIS_BIN="$SCRIPT_DIR/venv/bin/jarvis"
+JARVIS_BIN="$REPO_ROOT/venv/bin/jarvis"
 COMMAND_LINK_DIR="$(get_command_link_dir)"
 COMMAND_LINK_DISPLAY_DIR="$(get_command_link_display_dir)"
 mkdir -p "$COMMAND_LINK_DIR"
 ln -sf "$JARVIS_BIN" "$COMMAND_LINK_DIR/jarvis"
-echo -e "${GREEN}✓${NC} Symlinked jarvis → $COMMAND_LINK_DISPLAY_DIR/jarvis"
+echo -e "${GREEN}âœ“${NC} Symlinked jarvis â†’ $COMMAND_LINK_DISPLAY_DIR/jarvis"
 
 if is_termux; then
     export PATH="$COMMAND_LINK_DIR:$PATH"
-    echo -e "${GREEN}✓${NC} $COMMAND_LINK_DISPLAY_DIR is already on PATH in Termux"
+    echo -e "${GREEN}âœ“${NC} $COMMAND_LINK_DISPLAY_DIR is already on PATH in Termux"
 else
     # Determine the appropriate shell config file
     SHELL_CONFIG=""
@@ -377,14 +378,14 @@ else
         if ! echo "$PATH" | tr ':' '\n' | grep -q "^$HOME/.local/bin$"; then
             if ! grep -q '\.local/bin' "$SHELL_CONFIG" 2>/dev/null; then
                 echo "" >> "$SHELL_CONFIG"
-                echo "# JARVIS — ensure ~/.local/bin is on PATH" >> "$SHELL_CONFIG"
+                echo "# JARVIS â€” ensure ~/.local/bin is on PATH" >> "$SHELL_CONFIG"
                 echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_CONFIG"
-                echo -e "${GREEN}✓${NC} Added ~/.local/bin to PATH in $SHELL_CONFIG"
+                echo -e "${GREEN}âœ“${NC} Added ~/.local/bin to PATH in $SHELL_CONFIG"
             else
-                echo -e "${GREEN}✓${NC} ~/.local/bin already in $SHELL_CONFIG"
+                echo -e "${GREEN}âœ“${NC} ~/.local/bin already in $SHELL_CONFIG"
             fi
         else
-            echo -e "${GREEN}✓${NC} ~/.local/bin already on PATH"
+            echo -e "${GREEN}âœ“${NC} ~/.local/bin already on PATH"
         fi
     fi
 fi
@@ -398,13 +399,13 @@ mkdir -p "$JARVIS_SKILLS_DIR"
 
 echo ""
 echo "Syncing bundled skills to ~/.jarvis/skills/ ..."
-if "$SCRIPT_DIR/venv/bin/python" "$SCRIPT_DIR/tools/skills_sync.py" 2>/dev/null; then
-    echo -e "${GREEN}✓${NC} Skills synced"
+if "$REPO_ROOT/venv/bin/python" "$REPO_ROOT/tools/skills_sync.py" 2>/dev/null; then
+    echo -e "${GREEN}âœ“${NC} Skills synced"
 else
     # Fallback: copy if sync script fails (missing deps, etc.)
-    if [ -d "$SCRIPT_DIR/skills" ]; then
-        cp -rn "$SCRIPT_DIR/skills/"* "$JARVIS_SKILLS_DIR/" 2>/dev/null || true
-        echo -e "${GREEN}✓${NC} Skills copied"
+    if [ -d "$REPO_ROOT/skills" ]; then
+        cp -rn "$REPO_ROOT/skills/"* "$JARVIS_SKILLS_DIR/" 2>/dev/null || true
+        echo -e "${GREEN}âœ“${NC} Skills copied"
     fi
 fi
 
@@ -413,7 +414,7 @@ fi
 # ============================================================================
 
 echo ""
-echo -e "${GREEN}✓ Setup complete!${NC}"
+echo -e "${GREEN}âœ“ Setup complete!${NC}"
 echo ""
 echo "Next steps:"
 echo ""
@@ -452,5 +453,5 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
     echo ""
     # Run directly with venv Python (no activation needed)
-    "$SCRIPT_DIR/venv/bin/python" -m jarvis_cli.main setup
+    "$REPO_ROOT/venv/bin/python" -m jarvis_cli.main setup
 fi

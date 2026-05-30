@@ -334,7 +334,7 @@ Themes:
 Development/runtime:
 
 - The desktop app no longer starts or packages Docker services.
-- `run/desktop/run-jarvis.ps1` starts Electron plus the embedded Python backend and points `JARVIS_MODELS_DIR` at the sibling `models/` folder by default. The root `run-jarvis.cmd` remains the simple user-facing launcher.
+- `ops/run/desktop/run-jarvis.ps1` starts Electron plus the embedded Python backend and points `JARVIS_MODELS_DIR` at the sibling `models/` folder by default. The root `run-jarvis.cmd` remains the simple user-facing launcher.
 - Native `llama-server` is the first local LLM helper, vLLM is the second local serving target, and Ollama remains the last local fallback when already configured by the user.
 - Local voice uses the installed Python/backend stack: faster-whisper for STT, Kokoro or OmniVoice when their runtimes are available, and system TTS as the guaranteed offline fallback.
 - Model folders are editable in the Models page; the default preset is `C:\Users\user\Downloads\Secretary Jarvis\models` in this workspace layout.
