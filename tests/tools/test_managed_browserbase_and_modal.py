@@ -11,8 +11,8 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-TOOLS_DIR = REPO_ROOT / "tools"
-PLUGINS_DIR = REPO_ROOT / "plugins"
+TOOLS_DIR = REPO_ROOT / "src" / "tools"
+PLUGINS_DIR = REPO_ROOT / "src" / "plugins"
 
 
 def _load_tool_module(module_name: str, filename: str):

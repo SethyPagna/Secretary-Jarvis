@@ -7,6 +7,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+WEB_ROOT = ROOT / "desktop" / "web"
+SRC_ROOT = ROOT / "src"
 
 
 class JarvisRebrandContractTests(unittest.TestCase):
@@ -72,7 +74,7 @@ class JarvisRebrandContractTests(unittest.TestCase):
         self.assertNotIn("tts-premium", metadata["provides-extras"])
 
     def test_frontend_lock_preserves_canonical_third_party_parser_package_names(self) -> None:
-        package_lock = (ROOT / "web" / "package-lock.json").read_text(encoding="utf-8")
+        package_lock = (WEB_ROOT / "package-lock.json").read_text(encoding="utf-8")
 
         self.assertIn('"hermes-parser": "^0.25.1"', package_lock)
         self.assertIn('"node_modules/hermes-parser"', package_lock)
@@ -107,7 +109,7 @@ class JarvisRebrandContractTests(unittest.TestCase):
                     os.environ["JARVIS_HOME"] = previous_jarvis
 
     def test_default_soul_seed_is_jarvis_identity(self) -> None:
-        soul_path = ROOT / "jarvis_cli" / "data" / "default_SOUL.md"
+        soul_path = SRC_ROOT / "jarvis_cli" / "data" / "default_SOUL.md"
 
         content = soul_path.read_text(encoding="utf-8")
         self.assertIn("JARVIS", content)

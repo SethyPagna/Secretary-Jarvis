@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+SRC_ROOT = ROOT / "src"
 
 
 class LocalVoicePackagingContractTests(unittest.TestCase):
@@ -23,7 +24,7 @@ class LocalVoicePackagingContractTests(unittest.TestCase):
         self.assertIn("llama.cpp first, vLLM second, Ollama last", blueprint)
 
     def test_autoconfig_discovers_kokoro_and_omnivoice_assets(self) -> None:
-        source = (ROOT / "jarvis_cli" / "runtime_autoconfig.py").read_text(
+        source = (SRC_ROOT / "jarvis_cli" / "runtime_autoconfig.py").read_text(
             encoding="utf-8",
         )
 
@@ -36,7 +37,7 @@ class LocalVoicePackagingContractTests(unittest.TestCase):
         self.assertNotIn("elevenlabs", source.lower())
 
     def test_runtime_smoke_uses_local_voice_or_system_only(self) -> None:
-        source = (ROOT / "jarvis_cli" / "runtime_smoke.py").read_text(
+        source = (SRC_ROOT / "jarvis_cli" / "runtime_smoke.py").read_text(
             encoding="utf-8",
         )
 
@@ -53,10 +54,10 @@ class LocalVoicePackagingContractTests(unittest.TestCase):
         self.assertIn("desktop:pack", scripts)
         self.assertIn("pyinstaller", scripts["desktop:build"].lower())
         self.assertIn("electron-builder", scripts["desktop:pack"])
-        self.assertTrue((ROOT / "packaging" / "jarvis-backend.spec").exists())
-        self.assertTrue((ROOT / "scripts" / "build-desktop.ps1").exists())
+        self.assertTrue((ROOT / "ops" / "packaging" / "jarvis-backend.spec").exists())
+        self.assertTrue((ROOT / "ops" / "scripts" / "build" / "build-desktop.ps1").exists())
 
-        electron_main = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+        electron_main = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
         self.assertIn("app.isPackaged", electron_main)
         self.assertIn("backend", electron_main)
         self.assertIn("jarvis-backend", electron_main)

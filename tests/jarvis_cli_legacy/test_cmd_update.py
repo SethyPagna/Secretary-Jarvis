@@ -146,8 +146,8 @@ class TestCmdUpdateBranchFallback:
         ]
         if len(npm_calls) > 1:
             assert npm_calls[1:] == [
-                (["/usr/bin/npm", "ci", "--silent"], PROJECT_ROOT / "web"),
-                (["/usr/bin/npm", "run", "build"], PROJECT_ROOT / "web"),
+                (["/usr/bin/npm", "ci", "--silent"], PROJECT_ROOT.parent / "desktop" / "web"),
+                (["/usr/bin/npm", "run", "build"], PROJECT_ROOT.parent / "desktop" / "web"),
             ]
 
         # Regression for #18840: repo root install must stream output

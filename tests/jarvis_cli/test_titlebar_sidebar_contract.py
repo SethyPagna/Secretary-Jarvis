@@ -3,11 +3,12 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+WEB_ROOT = ROOT / "desktop" / "web"
 
 
 class TitlebarSidebarContractTests(unittest.TestCase):
     def test_title_bar_receives_sidebar_collapsed_state(self) -> None:
-        title_bar = (ROOT / "web" / "src" / "components" / "DesktopTitleBar.tsx").read_text(
+        title_bar = (WEB_ROOT / "src" / "components" / "DesktopTitleBar.tsx").read_text(
             encoding="utf-8",
         )
 
@@ -16,7 +17,7 @@ class TitlebarSidebarContractTests(unittest.TestCase):
         self.assertIn("Restore sidebar", title_bar)
 
     def test_app_collapses_desktop_sidebar_to_icon_rail(self) -> None:
-        app = (ROOT / "web" / "src" / "App.tsx").read_text(encoding="utf-8")
+        app = (WEB_ROOT / "src" / "App.tsx").read_text(encoding="utf-8")
 
         self.assertIn("const [sidebarCollapsed, setSidebarCollapsed] = useState(false)", app)
         self.assertIn("setSidebarCollapsed((collapsed) => !collapsed)", app)

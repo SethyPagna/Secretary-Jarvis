@@ -2,11 +2,13 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+WEB_ROOT = ROOT / "desktop" / "web"
+SRC_ROOT = ROOT / "src"
 
 
 class DesktopHomeContractTests(unittest.TestCase):
     def test_app_routes_to_unified_home_and_desktop_nav(self) -> None:
-        source = (ROOT / "web" / "src" / "App.tsx").read_text(encoding="utf-8")
+        source = (WEB_ROOT / "src" / "App.tsx").read_text(encoding="utf-8")
 
         self.assertIn('const HomePage = lazy(() => import("@/pages/HomePage"))', source)
         self.assertIn("<Suspense", source)
@@ -18,7 +20,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn("RootRedirect", source)
 
     def test_title_bar_uses_electron_preload_bridge(self) -> None:
-        source = (ROOT / "web" / "src" / "components" / "DesktopTitleBar.tsx").read_text(
+        source = (WEB_ROOT / "src" / "components" / "DesktopTitleBar.tsx").read_text(
             encoding="utf-8",
         )
 
@@ -29,7 +31,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("close", source)
 
     def test_title_bar_notification_button_opens_drawer(self) -> None:
-        source = (ROOT / "web" / "src" / "components" / "DesktopTitleBar.tsx").read_text(
+        source = (WEB_ROOT / "src" / "components" / "DesktopTitleBar.tsx").read_text(
             encoding="utf-8",
         )
 
@@ -40,7 +42,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("Notification centre", source)
 
     def test_home_page_unifies_orb_stats_terminal_and_voice(self) -> None:
-        source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+        source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
 
@@ -53,7 +55,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("api.getRuntimeSmokeTest", source)
 
     def test_home_quick_actions_are_stateful_not_placeholders(self) -> None:
-        source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+        source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
 
@@ -71,13 +73,13 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn('<QuickAction label="Stats" icon={Gauge} />', source)
 
     def test_home_terminal_uses_desktop_native_command_endpoint(self) -> None:
-        source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+        source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
-        api_source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(
+        api_source = (WEB_ROOT / "src" / "lib" / "api.ts").read_text(
             encoding="utf-8",
         )
-        server_source = (ROOT / "jarvis_cli" / "web_server.py").read_text(
+        server_source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(
             encoding="utf-8",
         )
 
@@ -90,7 +92,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn("PTY handoff is queued", source)
 
     def test_api_client_exposes_runtime_endpoints_for_home(self) -> None:
-        source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
+        source = (WEB_ROOT / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
 
         self.assertIn("getRuntimeStats", source)
         self.assertIn('"/api/stats"', source)
@@ -100,7 +102,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn('"/api/runtime/smoke-test"', source)
 
     def test_home_voice_records_transcribes_and_dispatches_to_live_terminal(self) -> None:
-        source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+        source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
 
@@ -116,7 +118,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn("await navigator.mediaDevices?.getUserMedia({ audio: true });\n      setListening(true);", source)
 
     def test_home_voice_output_synthesizes_live_assistant_output(self) -> None:
-        home_source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+        home_source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
 
@@ -127,13 +129,13 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn("awaitingVoiceResponseRef", home_source)
 
     def test_home_uses_desktop_agent_stream_for_plain_language(self) -> None:
-        home_source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+        home_source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
-        api_source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(
+        api_source = (WEB_ROOT / "src" / "lib" / "api.ts").read_text(
             encoding="utf-8",
         )
-        server_source = (ROOT / "jarvis_cli" / "web_server.py").read_text(
+        server_source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(
             encoding="utf-8",
         )
 
@@ -144,7 +146,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("run_desktop_chat_turn", server_source)
 
     def test_api_client_exposes_voice_stt_and_tts_endpoints(self) -> None:
-        source = (ROOT / "web" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
+        source = (WEB_ROOT / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
 
         self.assertIn("transcribeVoice", source)
         self.assertIn('"/api/voice/transcribe"', source)
@@ -154,7 +156,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("VoiceSynthesisResponse", source)
 
     def test_web_server_exposes_raw_voice_transcription_and_synthesis(self) -> None:
-        source = (ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
+        source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
 
         self.assertIn('@app.post("/api/voice/transcribe")', source)
         self.assertIn("await request.body()", source)
@@ -163,10 +165,10 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("synthesize_desktop_speech", source)
 
     def test_orb_and_home_use_unframed_cosmic_scene(self) -> None:
-        orb_source = (ROOT / "web" / "src" / "components" / "JarvisOrb.tsx").read_text(
+        orb_source = (WEB_ROOT / "src" / "components" / "JarvisOrb.tsx").read_text(
             encoding="utf-8",
         )
-        home_source = (ROOT / "web" / "src" / "pages" / "HomePage.tsx").read_text(
+        home_source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
         )
 

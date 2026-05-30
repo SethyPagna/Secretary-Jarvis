@@ -73,7 +73,7 @@ def _process_exists(pid: int) -> bool:
             except Exception:
                 return True
         try:
-            os.kill(pid, 0)
+            os.kill(pid, 0)  # windows-footgun: ok - this branch is unreachable on Windows.
             return True
         except OSError:
             return False

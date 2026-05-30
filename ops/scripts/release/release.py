@@ -31,7 +31,7 @@ from datetime import datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-VERSION_FILE = REPO_ROOT / "jarvis_cli" / "__init__.py"
+VERSION_FILE = REPO_ROOT / "src" / "jarvis_cli" / "__init__.py"
 PYPROJECT_FILE = REPO_ROOT / "pyproject.toml"
 
 # ACP Registry manifest must stay version-locked with pyproject.toml.

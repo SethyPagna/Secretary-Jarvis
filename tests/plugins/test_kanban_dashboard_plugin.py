@@ -1,4 +1,4 @@
-"""Tests for the Kanban dashboard plugin backend (src/plugins/kanban/dashboard/plugin_api.py).
+﻿"""Tests for the Kanban dashboard plugin backend (src/plugins/kanban/dashboard/plugin_api.py).
 
 The plugin mounts as /api/src/plugins/kanban/ inside the dashboard's FastAPI app,
 but here we attach its router to a bare FastAPI instance so we can test the
@@ -28,7 +28,7 @@ from jarvis_cli import kanban_db as kb
 def _load_plugin_router():
     """Dynamically load src/plugins/kanban/dashboard/plugin_api.py and return its router."""
     repo_root = Path(__file__).resolve().parents[2]
-    plugin_file = repo_root / "plugins" / "kanban" / "dashboard" / "plugin_api.py"
+    plugin_file = repo_root / "src" / "plugins" / "kanban" / "dashboard" / "plugin_api.py"
     assert plugin_file.exists(), f"plugin file missing: {plugin_file}"
 
     spec = importlib.util.spec_from_file_location(
@@ -201,7 +201,7 @@ def test_dashboard_select_filters_use_sdk_value_change_handler():
     """
 
     repo_root = Path(__file__).resolve().parents[2]
-    bundle = repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
+    bundle = repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
     js = bundle.read_text()
 
     assert "function selectChangeHandler(setter)" in js
@@ -221,7 +221,7 @@ def test_dashboard_client_side_filtering_includes_tenant_filter():
     """
 
     repo_root = Path(__file__).resolve().parents[2]
-    bundle = repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
+    bundle = repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
     js = bundle.read_text()
 
     assert "if (tenantFilter && t.tenant !== tenantFilter) return false;" in js
@@ -237,7 +237,7 @@ def test_dashboard_initial_board_uses_backend_current_when_unpinned():
     """
 
     repo_root = Path(__file__).resolve().parents[2]
-    bundle = repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
+    bundle = repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
     js = bundle.read_text()
 
     assert 'useState(() => readSelectedBoard() || null)' in js
@@ -283,7 +283,7 @@ def test_task_detail_404_on_unknown(client):
 
 
 # ---------------------------------------------------------------------------
-# PATCH /tasks/:id — status transitions
+# PATCH /tasks/:id â€” status transitions
 # ---------------------------------------------------------------------------
 
 
@@ -382,7 +382,7 @@ def test_patch_drag_drop_move_todo_to_ready(client):
     )
     assert r.status_code == 200
 
-    # Now child auto-promoted by recompute_ready — already ready.
+    # Now child auto-promoted by recompute_ready â€” already ready.
     child_after = client.get(f"/api/src/plugins/kanban/tasks/{child['id']}").json()["task"]
     assert child_after["status"] == "ready"
 
@@ -462,7 +462,7 @@ def test_patch_status_running_rejected(client):
     """Dashboard PATCH cannot transition a task directly to 'running'.
 
     The only legitimate path into 'running' is through the dispatcher's
-    ``claim_task`` — which atomically creates a ``task_runs`` row,
+    ``claim_task`` â€” which atomically creates a ``task_runs`` row,
     claim_lock, expiry, and worker-PID metadata. Allowing a direct set
     creates orphaned 'running' tasks with no run row or claim, which
     violate the board's run-history invariants. See issue #19535.
@@ -474,7 +474,7 @@ def test_patch_status_running_rejected(client):
     )
     assert r.status_code == 400
     assert "running" in r.json()["detail"]
-    # Task's status should still be its pre-request value — the direct-set
+    # Task's status should still be its pre-request value â€” the direct-set
     # was rejected before any mutation.
     board = client.get("/api/src/plugins/kanban/board").json()
     statuses = {
@@ -619,7 +619,7 @@ def test_triage_task_not_promoted_to_ready(client):
         "/api/src/plugins/kanban/tasks",
         json={"title": "must stay put", "triage": True},
     )
-    # Run the dispatcher — it should NOT promote the triage task.
+    # Run the dispatcher â€” it should NOT promote the triage task.
     client.post("/api/src/plugins/kanban/dispatch?dry_run=false&max=4")
     r = client.get("/api/src/plugins/kanban/board")
     triage = next(c for c in r.json()["columns"] if c["name"] == "triage")
@@ -754,20 +754,20 @@ def test_ws_events_rejects_when_token_required(tmp_path, monkeypatch):
     app.include_router(_load_plugin_router(), prefix="/api/src/plugins/kanban")
     c = TestClient(app)
 
-    # No token → policy violation close.
+    # No token â†’ policy violation close.
     from starlette.websockets import WebSocketDisconnect
     with pytest.raises(WebSocketDisconnect) as exc:
         with c.websocket_connect("/api/src/plugins/kanban/events"):
             pass
     assert exc.value.code == 1008
 
-    # Wrong token → policy violation close.
+    # Wrong token â†’ policy violation close.
     with pytest.raises(WebSocketDisconnect) as exc:
         with c.websocket_connect("/api/src/plugins/kanban/events?token=nope"):
             pass
     assert exc.value.code == 1008
 
-    # Correct token → accepted (connect then close cleanly from our side).
+    # Correct token â†’ accepted (connect then close cleanly from our side).
     with c.websocket_connect(
         "/api/src/plugins/kanban/events?token=secret-xyz"
     ) as ws:
@@ -844,7 +844,7 @@ def test_ws_events_swallows_cancellation_on_shutdown(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     kb.init_db()
 
-    # Short-circuit the token check — this test is about the cancellation
+    # Short-circuit the token check â€” this test is about the cancellation
     # path, not auth.
     import plugins.kanban.dashboard.plugin_api as pa
     monkeypatch.setattr(pa, "_check_ws_token", lambda t: True)
@@ -969,7 +969,7 @@ def test_bulk_status_running_rejected(client):
 def test_dashboard_done_actions_prompt_for_completion_summary():
     repo_root = Path(__file__).resolve().parents[2]
     bundle = (
-        repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
+        repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
     ).read_text()
 
     assert "withCompletionSummary" in bundle
@@ -987,10 +987,10 @@ def test_dashboard_surfaces_ready_blocked_error_inline():
     """
     repo_root = Path(__file__).resolve().parents[2]
     bundle = (
-        repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
+        repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
     ).read_text()
 
-    # Helper that strips ``"409: {\"detail\":\"…\"}"`` down to the
+    # Helper that strips ``"409: {\"detail\":\"â€¦\"}"`` down to the
     # human-readable message before it lands in any banner.
     assert "function parseApiErrorMessage(err)" in bundle
     assert "parsed.detail" in bundle
@@ -1015,7 +1015,7 @@ def test_dashboard_dependency_selects_use_value_change_handler():
     """
     repo_root = Path(__file__).resolve().parents[2]
     bundle = (
-        repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
+        repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js"
     ).read_text()
 
     parent_select = (
@@ -1040,7 +1040,7 @@ def test_bulk_archive(client):
                     json={"ids": [a["id"], b["id"]], "archive": True})
     assert r.status_code == 200
     assert all(r["ok"] for r in r.json()["results"])
-    # Default board (archived hidden) — both gone.
+    # Default board (archived hidden) â€” both gone.
     board = client.get("/api/src/plugins/kanban/board").json()
     ids = {t["id"] for col in board["columns"] for t in col["tasks"]}
     assert a["id"] not in ids
@@ -1348,7 +1348,7 @@ def test_create_task_includes_warning_when_no_dispatcher(client, monkeypatch):
     # Force the dispatcher probe to report "not running".
     monkeypatch.setattr(
         "jarvis_cli.kanban._check_dispatcher_presence",
-        lambda: (False, "No gateway is running — start `jarvis gateway start`."),
+        lambda: (False, "No gateway is running â€” start `jarvis gateway start`."),
     )
     r = client.post(
         "/api/src/plugins/kanban/tasks",
@@ -1390,7 +1390,7 @@ def test_create_task_no_warning_on_triage(client, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# _task_dict — outer try/except fallback when task_age raises
+# _task_dict â€” outer try/except fallback when task_age raises
 #
 # Background: kanban_db.task_age was hardened in 061a1830 to return None for
 # corrupt timestamp values via _safe_int. The companion fix added a belt-and-
@@ -1425,7 +1425,7 @@ def test_board_endpoint_survives_task_age_exception(client, monkeypatch):
     )
     assert create.status_code == 200, create.text
 
-    # Force task_age to raise an exception type _safe_int does NOT handle —
+    # Force task_age to raise an exception type _safe_int does NOT handle â€”
     # simulates a future regression where someone re-introduces an unguarded
     # operation in task_age. ValueError on '%s' would be absorbed by _safe_int
     # and never reach the outer try/except, so it would not exercise the
@@ -1438,7 +1438,7 @@ def test_board_endpoint_survives_task_age_exception(client, monkeypatch):
     assert r.status_code == 200, r.text
 
     payload = r.json()
-    # /board returns columns as a list of {name, tasks} — not a dict — so
+    # /board returns columns as a list of {name, tasks} â€” not a dict â€” so
     # flatten across all columns to find our seeded task.
     tasks = [t for col in payload["columns"] for t in col["tasks"]]
     assert len(tasks) == 1, f"expected exactly the seeded task, got {tasks!r}"
@@ -1449,7 +1449,7 @@ def test_board_endpoint_survives_task_age_exception(client, monkeypatch):
 
 
 def test_single_task_endpoint_survives_task_age_exception(client, monkeypatch):
-    """GET /tasks/:id also calls _task_dict — same fallback should kick in.
+    """GET /tasks/:id also calls _task_dict â€” same fallback should kick in.
 
     This is the "drawer view" path: the user clicks one card and we serialize
     just that task. A corrupt timestamp on a single task should not block the
@@ -1506,7 +1506,7 @@ def with_home_channels(monkeypatch):
     monkeypatch.setenv("DISCORD_BOT_TOKEN", "disc_fake")
     monkeypatch.setenv("DISCORD_HOME_CHANNEL", "9999999")
     monkeypatch.setenv("DISCORD_HOME_CHANNEL_NAME", "Main Discord")
-    # Slack has a token but NO home — should be excluded from the list.
+    # Slack has a token but NO home â€” should be excluded from the list.
     monkeypatch.setenv("SLACK_BOT_TOKEN", "slack_fake")
 
 
@@ -1517,7 +1517,7 @@ def test_home_channels_lists_only_platforms_with_home(client, with_home_channels
     assert r.status_code == 200
     platforms = {h["platform"] for h in r.json()["home_channels"]}
     assert platforms == {"telegram", "discord"}, (
-        f"slack has a token but no home — must not appear. got {platforms}"
+        f"slack has a token but no home â€” must not appear. got {platforms}"
     )
     for h in r.json()["home_channels"]:
         assert h["subscribed"] is False
@@ -1662,7 +1662,7 @@ def test_home_subscribe_multiple_platforms_independent(client, with_home_channel
 
 def test_home_channels_empty_when_no_homes_configured(client, monkeypatch):
     """Zero platforms with a home -> empty list (UI hides the section)."""
-    # No BOT_TOKEN env vars set → load_gateway_config().platforms is empty.
+    # No BOT_TOKEN env vars set â†’ load_gateway_config().platforms is empty.
     for var in [
         "TELEGRAM_BOT_TOKEN", "TELEGRAM_HOME_CHANNEL",
         "DISCORD_BOT_TOKEN", "DISCORD_HOME_CHANNEL",
@@ -1683,7 +1683,7 @@ def test_board_surfaces_warnings_field_for_hallucinated_completions(client):
     a ``warnings`` object on the /board payload so the UI can badge
     them without fetching per-task events. The warnings summary is
     keyed by diagnostic kind (``hallucinated_cards``) rather than the
-    raw event kind — see jarvis_cli.kanban_diagnostics for the rule
+    raw event kind â€” see jarvis_cli.kanban_diagnostics for the rule
     that produces it.
     """
     conn = kb.connect()
@@ -1719,7 +1719,7 @@ def test_board_surfaces_warnings_field_for_hallucinated_completions(client):
 
 def test_board_warnings_cleared_after_clean_completion(client):
     """A completed or edited event after a hallucination event clears
-    the warning badge — we don't mark tasks permanently."""
+    the warning badge â€” we don't mark tasks permanently."""
     conn = kb.connect()
     try:
         parent = kb.create_task(conn, title="parent", assignee="alice")
@@ -1733,7 +1733,7 @@ def test_board_warnings_cleared_after_clean_completion(client):
                 created_cards=[real, "t_phantom11"],
             )
 
-        # Second attempt drops the bad id — succeeds.
+        # Second attempt drops the bad id â€” succeeds.
         ok = kb.complete_task(
             conn, parent,
             summary="retry without phantom",
@@ -1944,7 +1944,7 @@ def test_diagnostics_endpoint_severity_filter(client):
     conn = kb.connect()
     try:
         # A warning-severity diagnostic (prose phantom) on one task.
-        # Phantom id must be valid hex — the prose scanner regex
+        # Phantom id must be valid hex â€” the prose scanner regex
         # requires ``t_[a-f0-9]{8,}``.
         p1 = kb.create_task(conn, title="prose", assignee="a")
         kb.complete_task(conn, p1, summary="mentioned t_deadbeef1234")
@@ -1959,7 +1959,7 @@ def test_diagnostics_endpoint_severity_filter(client):
     finally:
         conn.close()
 
-    # warning filter is at-or-above → both the warning AND the error pass.
+    # warning filter is at-or-above â†’ both the warning AND the error pass.
     r = client.get("/api/src/plugins/kanban/diagnostics?severity=warning")
     assert r.status_code == 200
     data = r.json()
@@ -1967,7 +1967,7 @@ def test_diagnostics_endpoint_severity_filter(client):
     task_ids = {row["task_id"] for row in data["diagnostics"]}
     assert task_ids == {p1, p2}
 
-    # error filter is at-or-above → only the error passes (warning is below).
+    # error filter is at-or-above â†’ only the error passes (warning is below).
     r = client.get("/api/src/plugins/kanban/diagnostics?severity=error")
     data = r.json()
     assert data["count"] == 1
@@ -2003,7 +2003,7 @@ def test_board_exposes_diagnostics_list_and_summary(client):
 
 
 # ---------------------------------------------------------------------------
-# POST /tasks/:id/specify — triage specifier endpoint
+# POST /tasks/:id/specify â€” triage specifier endpoint
 # ---------------------------------------------------------------------------
 
 
@@ -2060,9 +2060,9 @@ def test_specify_happy_path(client, monkeypatch):
 
 def test_specify_non_triage_returns_ok_false_not_http_error(client, monkeypatch):
     """The endpoint intentionally returns ``{ok: false, reason: ...}`` for
-    "task not in triage" rather than a 4xx — the dashboard renders the
+    "task not in triage" rather than a 4xx â€” the dashboard renders the
     reason inline so the user can fix it without a page reload."""
-    # Create a normal (ready) task — not in triage.
+    # Create a normal (ready) task â€” not in triage.
     t = client.post("/api/src/plugins/kanban/tasks", json={"title": "x"}).json()["task"]
 
     _patch_specifier_response(monkeypatch, content="unused")
@@ -2098,7 +2098,7 @@ def test_specify_no_aux_client_surfaces_reason(client, monkeypatch):
     assert body["ok"] is False
     assert "auxiliary client" in body["reason"]
 
-    # Task must stay in triage — nothing was touched.
+    # Task must stay in triage â€” nothing was touched.
     detail = client.get(f"/api/src/plugins/kanban/tasks/{t['id']}").json()["task"]
     assert detail["status"] == "triage"
 
@@ -2120,7 +2120,7 @@ def test_board_endpoint_accepts_explicit_board_default_param(client):
     ).json()["task"]
     assert t["status"] == "ready"
 
-    # Request with explicit board=default — must succeed and include the task.
+    # Request with explicit board=default â€” must succeed and include the task.
     r = client.get("/api/src/plugins/kanban/board?board=default")
     assert r.status_code == 200
     data = r.json()
@@ -2136,7 +2136,7 @@ def test_board_endpoint_accepts_explicit_board_default_param(client):
 def test_dashboard_requests_default_board_explicitly():
     """Dashboard REST calls must include board=default instead of relying on server current board."""
     repo_root = Path(__file__).resolve().parents[2]
-    dist = (repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
+    dist = (repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
 
     assert "SDK.fetchJSON(withBoard(`${API}/config`, board))" in dist
     assert "SDK.fetchJSON(withBoard(`${API}/boards`, board))" in dist
@@ -2147,7 +2147,7 @@ def test_dashboard_search_includes_body_and_result():
     """Client-side search must match body, result, latest_summary, and summary
     so full card contents are findable."""
     repo_root = Path(__file__).resolve().parents[2]
-    dist = (repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
+    dist = (repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
 
     assert "t.body || \"\"" in dist
     assert "t.result || \"\"" in dist
@@ -2157,11 +2157,11 @@ def test_dashboard_search_includes_body_and_result():
 def test_dashboard_bulk_actions_include_reclaim_first():
     """Bulk action bar must expose reclaim_first checkbox and expanded status buttons."""
     repo_root = Path(__file__).resolve().parents[2]
-    dist = (repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
+    dist = (repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
 
     assert "reclaim_first: reclaimFirst" in dist
     assert "jarvis-kanban-bulk-reclaim-first" in dist
-    assert '"→ todo"' in dist
+    assert '"â†’ todo"' in dist
     assert '"Block"' in dist
     assert '"Unblock"' in dist
 
@@ -2169,7 +2169,7 @@ def test_dashboard_bulk_actions_include_reclaim_first():
 def test_dashboard_shift_click_range_selection_exists():
     """Shift-click must trigger range selection via toggleRange."""
     repo_root = Path(__file__).resolve().parents[2]
-    dist = (repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
+    dist = (repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
 
     assert "function toggleRange" in dist or "const toggleRange =" in dist
     assert "props.toggleRange(t.id)" in dist or "props.toggleRange" in dist
@@ -2179,7 +2179,7 @@ def test_dashboard_shift_click_range_selection_exists():
 def test_dashboard_multi_move_bulk_exists():
     """Dragging a selected card with other selections must use /tasks/bulk."""
     repo_root = Path(__file__).resolve().parents[2]
-    dist = (repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
+    dist = (repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
 
     assert "onMoveSelected" in dist
     assert "props.onMoveSelected" in dist
@@ -2189,8 +2189,8 @@ def test_dashboard_multi_move_bulk_exists():
 def test_dashboard_failed_card_highlight_class_exists():
     """Partial bulk failures must highlight failing cards."""
     repo_root = Path(__file__).resolve().parents[2]
-    js = (repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
-    css = (repo_root / "plugins" / "kanban" / "dashboard" / "dist" / "style.css").read_text()
+    js = (repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js").read_text()
+    css = (repo_root / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "style.css").read_text()
 
     assert "jarvis-kanban-card--failed" in js
     assert "jarvis-kanban-card--failed" in css

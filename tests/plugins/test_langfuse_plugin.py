@@ -1,4 +1,4 @@
-"""Tests for the bundled observability/langfuse plugin."""
+﻿"""Tests for the bundled observability/langfuse plugin."""
 from __future__ import annotations
 
 import importlib
@@ -12,7 +12,7 @@ import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PLUGIN_DIR = REPO_ROOT / "plugins" / "observability" / "langfuse"
+PLUGIN_DIR = REPO_ROOT / "src" / "plugins" / "observability" / "langfuse"
 
 
 # ---------------------------------------------------------------------------
@@ -60,10 +60,10 @@ class TestDiscovery:
         manager = plugins_mod.PluginManager()
         manager.discover_and_load()
 
-        # observability/langfuse appears in the plugin registry …
+        # observability/langfuse appears in the plugin registry â€¦
         loaded = manager._plugins.get("observability/langfuse")
         assert loaded is not None, "plugin not discovered"
-        # … but is not loaded (opt-in default → no config.yaml means nothing enabled)
+        # â€¦ but is not loaded (opt-in default â†’ no config.yaml means nothing enabled)
         assert loaded.enabled is False
         assert "not enabled" in (loaded.error or "").lower()
 
@@ -92,7 +92,7 @@ class TestRuntimeGate:
         assert langfuse_plugin._get_langfuse() is None
 
     def test_get_langfuse_caches_failure_no_config_load(self, monkeypatch):
-        """A miss must be cached — no per-hook config.yaml reads, no env re-reads."""
+        """A miss must be cached â€” no per-hook config.yaml reads, no env re-reads."""
         for k in (
             "JARVIS_LANGFUSE_PUBLIC_KEY", "JARVIS_LANGFUSE_SECRET_KEY",
             "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY",
@@ -104,7 +104,7 @@ class TestRuntimeGate:
         # Prime the cache with one call.
         assert langfuse_plugin._get_langfuse() is None
 
-        # Now block os.environ.get — a correctly-cached plugin must not
+        # Now block os.environ.get â€” a correctly-cached plugin must not
         # touch env again.
         import os
         called = {"n": 0}
@@ -121,7 +121,7 @@ class TestRuntimeGate:
             assert langfuse_plugin._get_langfuse() is None
 
         assert called["n"] == 0, (
-            f"_get_langfuse() re-read env {called['n']} times after cache miss — "
+            f"_get_langfuse() re-read env {called['n']} times after cache miss â€” "
             "it should short-circuit via _INIT_FAILED"
         )
 
@@ -141,7 +141,7 @@ class TestRuntimeGate:
             langfuse_plugin._get_langfuse()
 
         assert "jarvis_cli.config" not in sys.modules, (
-            "langfuse plugin imported jarvis_cli.config — regression toward "
+            "langfuse plugin imported jarvis_cli.config â€” regression toward "
             "the rejected per-hook load_config() design"
         )
 
@@ -244,7 +244,7 @@ class TestPlaceholderKeyDetection:
 
     def test_redact_key_preview_long_value_truncated(self, monkeypatch):
         """If an operator pasted a real secret into the wrong env var the
-        preview must NOT echo it in full — only the leading 6 chars."""
+        preview must NOT echo it in full â€” only the leading 6 chars."""
         self._clear_env(monkeypatch)
         plugin = self._fresh_plugin()
         result = plugin._redact_key_preview("sk-lf-abcdefghijklmnop")
@@ -282,7 +282,7 @@ class TestPlaceholderKeyDetection:
     # These tests pass `monkeypatch` to _fresh_plugin() so the helper can
     # stub out `Langfuse` (the optional SDK).  Without that, every call
     # short-circuits at `if Langfuse is None` before reaching the
-    # placeholder validator — masking the very behaviour we're testing.
+    # placeholder validator â€” masking the very behaviour we're testing.
 
     def test_placeholder_public_key_warns_and_skips(self, monkeypatch, caplog):
         self._clear_env(monkeypatch)
@@ -298,7 +298,7 @@ class TestPlaceholderKeyDetection:
         # The valid secret value must NOT appear (the var NAME does, in
         # the "or unset ..." hint, but the value preview shouldn't).
         assert "'sk-lf-" not in text
-        # Never constructed the SDK client — short-circuited before that.
+        # Never constructed the SDK client â€” short-circuited before that.
         assert _FakeLangfuse.instances == []
 
     def test_placeholder_secret_key_warns_and_skips(self, monkeypatch, caplog):
@@ -336,7 +336,7 @@ class TestPlaceholderKeyDetection:
     def test_repeated_calls_do_not_re_warn(self, monkeypatch, caplog):
         """The cached ``_INIT_FAILED`` sentinel must short-circuit
         subsequent calls so each hook invocation isn't a fresh log
-        line — otherwise a busy gateway will spam the operator's
+        line â€” otherwise a busy gateway will spam the operator's
         terminal."""
         self._clear_env(monkeypatch)
         monkeypatch.setenv("JARVIS_LANGFUSE_PUBLIC_KEY", "placeholder")
@@ -385,13 +385,13 @@ class TestPlaceholderKeyDetection:
             assert plugin._get_langfuse() is None
         # Warning names the canonical user-facing env var (the bare
         # LANGFUSE_PUBLIC_KEY is a backwards-compat alias for the
-        # JARVIS_-prefixed one — operators set the JARVIS_-prefixed one).
+        # JARVIS_-prefixed one â€” operators set the JARVIS_-prefixed one).
         assert "JARVIS_LANGFUSE_PUBLIC_KEY" in caplog.text
         assert "'placeholder'" in caplog.text
 
     def test_missing_credentials_still_skip_silently(self, monkeypatch, caplog):
         """Missing-creds is the documented opt-out path (operator hasn't
-        configured the plugin yet) — it must remain SILENT.  Regression
+        configured the plugin yet) â€” it must remain SILENT.  Regression
         guard against the placeholder validator accidentally running on
         empty values and re-introducing log noise for unconfigured
         installs."""
@@ -405,7 +405,7 @@ class TestPlaceholderKeyDetection:
 
     def test_sdk_not_installed_still_skips_silently(self, monkeypatch, caplog):
         """If the langfuse SDK isn't installed at all, the placeholder
-        check should never run — there's nothing the operator can do
+        check should never run â€” there's nothing the operator can do
         about a credential mismatch when the package is missing, and
         re-warning here would dilute the actually-actionable SDK-missing
         signal upstream.  The ``Langfuse is None`` guard at the top of
@@ -414,7 +414,7 @@ class TestPlaceholderKeyDetection:
         self._clear_env(monkeypatch)
         monkeypatch.setenv("JARVIS_LANGFUSE_PUBLIC_KEY", "placeholder")
         monkeypatch.setenv("JARVIS_LANGFUSE_SECRET_KEY", "placeholder")
-        # NO monkeypatch on Langfuse here — falls back to whatever the
+        # NO monkeypatch on Langfuse here â€” falls back to whatever the
         # plugin imported at module load (None if SDK absent).
         plugin = self._fresh_plugin()
         monkeypatch.setattr(plugin, "Langfuse", None, raising=False)
@@ -425,11 +425,11 @@ class TestPlaceholderKeyDetection:
         assert warnings == []
 
     def test_valid_prefixes_do_not_trigger_placeholder_warning(self, monkeypatch, caplog):
-        """Real Langfuse keys (``pk-lf-…`` / ``sk-lf-…``) must pass the
+        """Real Langfuse keys (``pk-lf-â€¦`` / ``sk-lf-â€¦``) must pass the
         guard and proceed to SDK init.  We stub the SDK constructor with
         a recording fake so the assertion can confirm BOTH that the
         placeholder warning didn't fire AND that the client was actually
-        constructed — the latter is the success signal the bug report
+        constructed â€” the latter is the success signal the bug report
         wanted."""
         self._clear_env(monkeypatch)
         monkeypatch.setenv("JARVIS_LANGFUSE_PUBLIC_KEY", "pk-lf-real-public-xyz")
@@ -703,4 +703,3 @@ class TestToolObservationKeying:
         assert ended["obs"] is obs
         assert ended["output"] == {"status": "done"}
         assert not state.tools
-

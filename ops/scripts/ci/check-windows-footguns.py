@@ -566,14 +566,14 @@ def main(argv: list[str]) -> int:
     if args.all:
         # Scan main Python packages + scripts
         roots = [
-            REPO_ROOT / "jarvis_cli",
-            REPO_ROOT / "gateway",
-            REPO_ROOT / "tools",
-            REPO_ROOT / "cron",
-            REPO_ROOT / "agent",
-            REPO_ROOT / "plugins",
+            REPO_ROOT / "src" / "jarvis_cli",
+            REPO_ROOT / "src" / "gateway",
+            REPO_ROOT / "src" / "tools",
+            REPO_ROOT / "src" / "cron",
+            REPO_ROOT / "src" / "agent",
+            REPO_ROOT / "src" / "plugins",
             REPO_ROOT / "ops" / "scripts" / "public",
-            REPO_ROOT / "acp_adapter",
+            REPO_ROOT / "src" / "acp_adapter",
             REPO_ROOT / "ops" / "config" / "acp_registry",
         ]
         roots = [r for r in roots if r.exists()]

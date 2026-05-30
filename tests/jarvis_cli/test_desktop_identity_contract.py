@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+SRC_ROOT = ROOT / "src"
 
 VISIBLE_PRODUCT_FILES = [
     ROOT / "README.md",
@@ -16,10 +17,10 @@ VISIBLE_PRODUCT_FILES = [
     ROOT / "ops" / "scripts" / "public" / "install.sh",
     ROOT / "ops" / "scripts" / "public" / "jarvis-gateway",
     ROOT / "ops" / "docs" / "plans" / "jarvis-already-has-routines.md",
-    ROOT / "jarvis_cli" / "data" / "default_SOUL.md",
-    ROOT / "jarvis_cli" / "default_soul.py",
-    ROOT / "jarvis_cli" / "data" / "souls" / "soul_manifest.json",
-    ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md",
+    SRC_ROOT / "jarvis_cli" / "data" / "default_SOUL.md",
+    SRC_ROOT / "jarvis_cli" / "default_soul.py",
+    SRC_ROOT / "jarvis_cli" / "data" / "souls" / "soul_manifest.json",
+    SRC_ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md",
 ]
 
 _OLD_PREFIX = "Her" + "mes"
@@ -49,8 +50,8 @@ class DesktopIdentityContractTests(unittest.TestCase):
                     self.assertNotIn(banned, text)
 
     def test_autonomous_agent_skill_is_rebranded_to_jarvis(self) -> None:
-        legacy_path = ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / f"{_OLD_PREFIX.lower()}-agent" / "SKILL.md"
-        current_path = ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md"
+        legacy_path = SRC_ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / f"{_OLD_PREFIX.lower()}-agent" / "SKILL.md"
+        current_path = SRC_ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md"
 
         self.assertFalse(legacy_path.exists())
         self.assertTrue(current_path.exists())
@@ -62,7 +63,7 @@ class DesktopIdentityContractTests(unittest.TestCase):
         self.assertNotIn("runs in your terminal", text)
 
     def test_detailed_soul_templates_exist_for_core_modes(self) -> None:
-        soul_dir = ROOT / "jarvis_cli" / "data" / "souls"
+        soul_dir = SRC_ROOT / "jarvis_cli" / "data" / "souls"
         expected_core = {
             "default_SOUL.md",
             "coding_SOUL.md",
@@ -99,7 +100,7 @@ class DesktopIdentityContractTests(unittest.TestCase):
                     self.assertNotIn(banned, text)
 
     def test_soul_manifest_declares_jarvis_as_delegating_assistant(self) -> None:
-        manifest_path = ROOT / "jarvis_cli" / "data" / "souls" / "soul_manifest.json"
+        manifest_path = SRC_ROOT / "jarvis_cli" / "data" / "souls" / "soul_manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["primary"], "jarvis")

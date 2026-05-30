@@ -1,4 +1,4 @@
-"""Tests for the disk-cleanup plugin.
+﻿"""Tests for the disk-cleanup plugin.
 
 Covers the bundled plugin at ``src/plugins/disk-cleanup/``:
 
@@ -37,7 +37,7 @@ def _isolate_env(tmp_path, monkeypatch):
 def _load_lib():
     """Import the plugin's library module directly from the repo path."""
     repo_root = Path(__file__).resolve().parents[2]
-    lib_path = repo_root / "plugins" / "disk-cleanup" / "disk_cleanup.py"
+    lib_path = repo_root / "src" / "plugins" / "disk-cleanup" / "disk_cleanup.py"
     spec = importlib.util.spec_from_file_location(
         "disk_cleanup_under_test", lib_path
     )
@@ -49,7 +49,7 @@ def _load_lib():
 def _load_plugin_init():
     """Import the plugin's __init__.py (which depends on the library)."""
     repo_root = Path(__file__).resolve().parents[2]
-    plugin_dir = repo_root / "plugins" / "disk-cleanup"
+    plugin_dir = repo_root / "src" / "plugins" / "disk-cleanup"
     # Use the PluginManager's module naming convention so relative imports work.
     spec = importlib.util.spec_from_file_location(
         "jarvis_plugins.disk_cleanup",
@@ -226,7 +226,7 @@ class TestDryRun:
         dg.track(str(test_f), "test", silent=True)
         dg.track(str(big), "other", silent=True)
         auto, prompt = dg.dry_run()
-        # test → auto, other → neither (doesn't hit any rule)
+        # test â†’ auto, other â†’ neither (doesn't hit any rule)
         assert any(i["path"] == str(test_f) for i in auto)
 
 
@@ -307,7 +307,7 @@ class TestOnSessionEndHook:
 
     def test_noop_when_no_test_tracked(self, _isolate_env):
         pi = _load_plugin_init()
-        # Nothing tracked → on_session_end should not raise.
+        # Nothing tracked â†’ on_session_end should not raise.
         pi._on_session_end(session_id="empty", completed=True, interrupted=False)
 
 
@@ -377,11 +377,11 @@ class TestBundledDiscovery:
         from jarvis_cli import plugins as pmod
         mgr = pmod.PluginManager()
         mgr.discover_and_load()
-        # Discovered — appears in the registry
+        # Discovered â€” appears in the registry
         assert "disk-cleanup" in mgr._plugins
         loaded = mgr._plugins["disk-cleanup"]
         assert loaded.manifest.source == "bundled"
-        # But NOT enabled — no hooks or commands registered
+        # But NOT enabled â€” no hooks or commands registered
         assert not loaded.enabled
         assert loaded.error and "not enabled" in loaded.error
 
@@ -416,7 +416,7 @@ class TestBundledDiscovery:
 
     def test_memory_and_context_engine_subdirs_skipped(self, _isolate_env):
         """Bundled scan must NOT pick up src/plugins/memory or src/plugins/context_engine
-        as top-level plugins — they have their own discovery paths."""
+        as top-level plugins â€” they have their own discovery paths."""
         self._write_enabled_config(
             _isolate_env, ["memory", "context_engine", "disk-cleanup"]
         )

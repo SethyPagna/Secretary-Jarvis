@@ -1,4 +1,4 @@
-"""Tests for the model-providers plugin discovery system.
+﻿"""Tests for the model-providers plugin discovery system.
 
 Verifies that:
  1. All bundled providers at src/plugins/model-providers/<name>/ are discovered
@@ -35,7 +35,7 @@ def _clear_provider_caches():
 
 def test_bundled_plugins_discovered():
     """Every src/plugins/model-providers/<name>/ should contain a plugin.yaml + __init__.py."""
-    plugins_dir = REPO_ROOT / "plugins" / "model-providers"
+    plugins_dir = REPO_ROOT / "src" / "plugins" / "model-providers"
     assert plugins_dir.is_dir(), f"Missing {plugins_dir}"
 
     child_dirs = [c for c in plugins_dir.iterdir() if c.is_dir()]
@@ -127,7 +127,7 @@ def test_general_plugin_manager_skips_model_provider_kind(tmp_path, monkeypatch)
         "version: 0.0.1\n"
     )
     (user_plugin / "__init__.py").write_text(
-        # Intentionally broken import — if the general loader tries to
+        # Intentionally broken import â€” if the general loader tries to
         # import this module, the test will fail with ImportError.
         "raise AssertionError('model-provider plugins must not be imported by PluginManager')\n"
     )
