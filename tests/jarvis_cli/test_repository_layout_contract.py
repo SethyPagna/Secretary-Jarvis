@@ -42,7 +42,6 @@ ROOT_FILE_ALLOWLIST = {
 ROOT_DIR_ALLOWLIST = {
     ".github",
     "acp_adapter",
-    "acp_registry",
     "agent",
     "assets",
     "cron",

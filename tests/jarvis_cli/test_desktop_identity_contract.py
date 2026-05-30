@@ -10,7 +10,7 @@ VISIBLE_PRODUCT_FILES = [
     ROOT / "pyproject.toml",
     ROOT / "docs" / "JARVIS_MASTER_BLUEPRINT.md",
     ROOT / "docs" / "jarvis" / "index.md",
-    ROOT / "acp_registry" / "agent.json",
+    ROOT / "ops" / "acp_registry" / "agent.json",
     ROOT / "scripts" / "install.cmd",
     ROOT / "scripts" / "install.ps1",
     ROOT / "scripts" / "install.sh",
