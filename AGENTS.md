@@ -49,8 +49,8 @@ jarvis-agent/
 │   ├── image_gen/        # Image-generation providers
 │   └── <others>/         # disk-cleanup, example-dashboard, google_meet, platforms,
 │                         #   spotify, strike-freedom-cockpit, ...
+├── capabilities/skills/   # Built-in skills bundled with the repo
 ├── capabilities/optional-skills/  # Heavier/niche skills shipped but NOT active by default
-├── skills/               # Built-in skills bundled with the repo
 ├── acp_adapter/          # ACP server (VS Code / Zed / JetBrains integration)
 ├── cron/                 # Scheduler — jobs.py, scheduler.py
 ├── scripts/              # Public install/test entrypoints only
@@ -562,8 +562,8 @@ companion repo, not in this tree.
 
 Two parallel surfaces:
 
-- **`skills/`** — built-in skills shipped and loadable by default.
-  Organized by category directories (e.g. `skills/github/`, `skills/mlops/`).
+- **`capabilities/skills/`** — built-in skills shipped and loadable by default.
+  Organized by category directories (e.g. `capabilities/skills/github/`, `capabilities/skills/mlops/`).
 - **`capabilities/optional-skills/`** — heavier or niche skills shipped with the repo but
   NOT active by default. Installed explicitly via
   `jarvis skills install official/<category>/<skill>`. Adapter lives in
@@ -602,7 +602,7 @@ violate them.
    ```python
    import re, pathlib
    m = re.search(r'^description: (.*)$',
-                 pathlib.Path('skills/<cat>/<name>/SKILL.md').read_text(),
+                 pathlib.Path('capabilities/skills/<cat>/<name>/SKILL.md').read_text(),
                  re.MULTILINE)
    assert len(m.group(1)) <= 60, len(m.group(1))
    ```

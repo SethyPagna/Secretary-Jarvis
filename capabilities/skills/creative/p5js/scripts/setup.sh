@@ -1,6 +1,6 @@
 #!/bin/bash
 # p5.js Skill — Dependency Verification
-# Run: bash skills/creative/p5js/scripts/setup.sh
+# Run: bash capabilities/skills/creative/p5js/scripts/setup.sh
 
 set -euo pipefail
 

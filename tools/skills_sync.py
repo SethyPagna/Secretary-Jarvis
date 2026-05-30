@@ -2,7 +2,7 @@
 """
 Skills Sync -- Manifest-based seeding and updating of bundled skills.
 
-Copies bundled skills from the repo's skills/ directory into ~/.jarvis/skills/
+Copies bundled skills from the repo's capabilities/skills/ directory into ~/.jarvis/skills/
 and uses a manifest to track which skills have been synced and their origin hash.
 
 Manifest format (v2): each line is "skill_name:origin_hash" where origin_hash
@@ -46,7 +46,7 @@ def _get_bundled_dir() -> Path:
     then a wheel-installed data dir, then falls back to the relative
     path from this source file.
     """
-    return get_bundled_skills_dir(Path(__file__).parent.parent / "skills")
+    return get_bundled_skills_dir(Path(__file__).parent.parent / "capabilities" / "skills")
 
 
 def _read_manifest() -> Dict[str, str]:

@@ -49,7 +49,6 @@ ROOT_DIR_ALLOWLIST = {
     "ops",
     "plugins",
     "providers",
-    "skills",
     "tests",
     "tools",
 }
@@ -75,7 +74,7 @@ APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
     "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
     "ops/scripts/checks/whatsapp-bridge/allowlist.test.mjs",
     "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
-    "skills/creative/p5js/scripts/export-frames.js",
+    "capabilities/skills/creative/p5js/scripts/export-frames.js",
     "desktop/web/config/eslint.config.js",
 }
 
@@ -169,8 +168,8 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         self.assertFalse((ROOT / "locales").exists())
 
     def test_gitignore_keeps_skill_assets_trackable(self) -> None:
-        self.assertFalse(_is_git_ignored("skills/creative/p5js/references/export-pipeline.md"))
-        self.assertFalse(_is_git_ignored("skills/creative/p5js/scripts/export-frames.js"))
+        self.assertFalse(_is_git_ignored("capabilities/skills/creative/p5js/references/export-pipeline.md"))
+        self.assertFalse(_is_git_ignored("capabilities/skills/creative/p5js/scripts/export-frames.js"))
         self.assertFalse(_is_git_ignored("capabilities/optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md"))
         self.assertFalse(_is_git_ignored("plugins/jarvis-achievements/dashboard/dist/index.js"))
 
@@ -187,8 +186,8 @@ class RepositoryLayoutContractTests(unittest.TestCase):
     def test_skill_and_plugin_assets_referenced_by_manifests_are_tracked(self) -> None:
         tracked = {path.as_posix() for path in _tracked_paths()}
 
-        self.assertIn("skills/creative/p5js/references/export-pipeline.md", tracked)
-        self.assertIn("skills/creative/p5js/scripts/export-frames.js", tracked)
+        self.assertIn("capabilities/skills/creative/p5js/references/export-pipeline.md", tracked)
+        self.assertIn("capabilities/skills/creative/p5js/scripts/export-frames.js", tracked)
         self.assertIn("capabilities/optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md", tracked)
         self.assertIn("plugins/jarvis-achievements/dashboard/dist/index.js", tracked)
         self.assertIn("plugins/jarvis-achievements/dashboard/dist/style.css", tracked)

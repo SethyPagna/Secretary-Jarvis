@@ -85,7 +85,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("portable", package["build"]["win"]["target"])
         self.assertNotIn("nsis", package["build"]["win"]["target"])
         self.assertIn({"from": "desktop/assets", "to": "assets"}, package["build"]["extraResources"])
-        self.assertIn({"from": "skills", "to": "skills"}, package["build"]["extraResources"])
+        self.assertIn({"from": "capabilities/skills", "to": "skills"}, package["build"]["extraResources"])
         self.assertIn({"from": "capabilities/optional-skills", "to": "optional-skills"}, package["build"]["extraResources"])
         self.assertNotIn(
             {"from": "docker-compose.local-models.yml", "to": "docker-compose.local-models.yml"},
@@ -151,7 +151,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("desktop/electron/main.js", checker)
         self.assertIn("desktop/electron/preload.js", checker)
         self.assertIn("ops/scripts/checks/whatsapp-bridge/bridge.mjs", checker)
-        self.assertIn("skills/creative/p5js/scripts/export-frames.js", checker)
+        self.assertIn("capabilities/skills/creative/p5js/scripts/export-frames.js", checker)
         self.assertIn("--check", checker)
         self.assertIn("npm.cmd --prefix desktop/web run build", checker)
         self.assertIn("Resolve-DesktopPython", checker)

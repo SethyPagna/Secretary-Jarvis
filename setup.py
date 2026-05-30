@@ -27,7 +27,7 @@ def _data_file_tree(
 
 setup(
     data_files=[
-        *_data_file_tree("skills"),
+        *_data_file_tree("capabilities/skills", "skills"),
         *_data_file_tree("capabilities/optional-skills", "optional-skills"),
     ]
 )

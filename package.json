@@ -54,7 +54,7 @@
         "to": "assets"
       },
       {
-        "from": "skills",
+        "from": "capabilities/skills",
         "to": "skills"
       },
       {

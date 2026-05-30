@@ -718,14 +718,14 @@ Taps are stored in `~/.jarvis/.hub/taps.json` (created on demand).
 
 ## Bundled skill updates (`jarvis skills reset`)
 
-Jarvis ships with a set of bundled skills in `skills/` inside the repo. On install and on every `jarvis update`, a sync pass copies those into `~/.jarvis/skills/` and records a manifest at `~/.jarvis/skills/.bundled_manifest` mapping each skill name to the content hash at the time it was synced (the **origin hash**).
+Jarvis ships with a set of bundled skills in `capabilities/skills/` inside the repo. On install and on every `jarvis update`, a sync pass copies those into `~/.jarvis/skills/` and records a manifest at `~/.jarvis/skills/.bundled_manifest` mapping each skill name to the content hash at the time it was synced (the **origin hash**).
 
 On each sync, Jarvis recomputes the hash of your local copy and compares it to the origin hash:
 
 - **Unchanged** → safe to pull upstream changes, copy the new bundled version in, record the new origin hash.
 - **Changed** → treated as **user-modified** and skipped forever, so your edits never get stomped.
 
-The protection is good, but it has one sharp edge. If you edit a bundled skill and then later want to abandon your changes and go back to the bundled version by just copy-pasting from `~/.jarvis/jarvis-agent/skills/`, the manifest still holds the *old* origin hash from whenever the last successful sync ran. Your fresh copy-paste contents (current bundled hash) won't match that stale origin hash, so sync keeps flagging it as user-modified.
+The protection is good, but it has one sharp edge. If you edit a bundled skill and then later want to abandon your changes and go back to the bundled version by just copy-pasting from `~/.jarvis/jarvis-agent/capabilities/skills/`, the manifest still holds the *old* origin hash from whenever the last successful sync ran. Your fresh copy-paste contents (current bundled hash) won't match that stale origin hash, so sync keeps flagging it as user-modified.
 
 `jarvis skills reset` is the escape hatch:
 
@@ -1092,10 +1092,10 @@ Make it a **Tool** when:
 
 ## Skill Directory Structure
 
-Bundled skills live in `skills/` organized by category. Official optional skills use the same structure in `capabilities/optional-skills/`:
+Bundled skills live in `capabilities/skills/` organized by category. Official optional skills use the same structure in `capabilities/optional-skills/`:
 
 ```text
-skills/
+capabilities/skills/
 ├── research/
 │   └── arxiv/
 │       ├── SKILL.md              # Required: main instructions
@@ -1224,7 +1224,7 @@ terminal:
     - ANOTHER_VAR
 ```
 
-See `skills/apple/` for examples of macOS-only skills.
+See `capabilities/skills/apple/` for examples of macOS-only skills.
 
 ## Secure Setup on Load
 
@@ -1324,7 +1324,7 @@ When loaded, Jarvis checks if these files exist. Missing files trigger `setup_ne
 Use `required_environment_variables` for simple API keys and tokens (strings stored in `~/.jarvis/.env`). Use `required_credential_files` for OAuth token files, client secrets, service account JSON, certificates, or any credential that's a file on disk.
 :::
 
-See the `skills/productivity/google-workspace/SKILL.md` for a complete example using both.
+See the `capabilities/skills/productivity/google-workspace/SKILL.md` for a complete example using both.
 
 ## Skill Guidelines
 
@@ -1393,7 +1393,7 @@ jarvis chat --toolsets skills -q "Use the X skill to do Y"
 
 ## Where Should the Skill Live?
 
-Bundled skills (in `skills/`) ship with every Jarvis install. They should be **broadly useful to most users**:
+Bundled skills (in `capabilities/skills/`) ship with every Jarvis install. They should be **broadly useful to most users**:
 
 - Document handling, web research, common dev workflows, system administration
 - Used regularly by a wide range of people

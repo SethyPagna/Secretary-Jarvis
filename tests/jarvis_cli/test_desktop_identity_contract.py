@@ -11,15 +11,15 @@ VISIBLE_PRODUCT_FILES = [
     ROOT / "ops" / "docs" / "JARVIS_MASTER_BLUEPRINT.md",
     ROOT / "ops" / "docs" / "jarvis" / "index.md",
     ROOT / "ops" / "config" / "acp_registry" / "agent.json",
-    ROOT / "scripts" / "install.cmd",
-    ROOT / "scripts" / "install.ps1",
-    ROOT / "scripts" / "install.sh",
-    ROOT / "scripts" / "jarvis-gateway",
+    ROOT / "ops" / "scripts" / "public" / "install.cmd",
+    ROOT / "ops" / "scripts" / "public" / "install.ps1",
+    ROOT / "ops" / "scripts" / "public" / "install.sh",
+    ROOT / "ops" / "scripts" / "public" / "jarvis-gateway",
     ROOT / "ops" / "docs" / "plans" / "jarvis-already-has-routines.md",
     ROOT / "jarvis_cli" / "data" / "default_SOUL.md",
     ROOT / "jarvis_cli" / "default_soul.py",
     ROOT / "jarvis_cli" / "data" / "souls" / "soul_manifest.json",
-    ROOT / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md",
+    ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md",
 ]
 
 _OLD_PREFIX = "Her" + "mes"
@@ -49,8 +49,8 @@ class DesktopIdentityContractTests(unittest.TestCase):
                     self.assertNotIn(banned, text)
 
     def test_autonomous_agent_skill_is_rebranded_to_jarvis(self) -> None:
-        legacy_path = ROOT / "skills" / "autonomous-ai-agents" / f"{_OLD_PREFIX.lower()}-agent" / "SKILL.md"
-        current_path = ROOT / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md"
+        legacy_path = ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / f"{_OLD_PREFIX.lower()}-agent" / "SKILL.md"
+        current_path = ROOT / "capabilities" / "skills" / "autonomous-ai-agents" / "jarvis-agent" / "SKILL.md"
 
         self.assertFalse(legacy_path.exists())
         self.assertTrue(current_path.exists())
@@ -143,7 +143,7 @@ class DesktopIdentityContractTests(unittest.TestCase):
 
     def test_skill_markdown_uses_jarvis_project_branding(self) -> None:
         skill_markdown = [
-            *ROOT.glob("skills/**/*.md"),
+            *ROOT.glob("capabilities/skills/**/*.md"),
             *ROOT.glob("capabilities/optional-skills/**/*.md"),
         ]
 

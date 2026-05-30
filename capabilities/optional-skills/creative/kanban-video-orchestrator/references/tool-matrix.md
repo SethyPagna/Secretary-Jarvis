@@ -7,7 +7,7 @@ called from the terminal toolset; they don't appear in `always_load`.
 
 ## Jarvis skills relevant to video production
 
-### Visual / rendering skills (`jarvis-agent/skills/creative/`)
+### Visual / rendering skills (`jarvis-agent/capabilities/skills/creative/`)
 
 | Skill | What it does | Best fit for |
 |-------|--------------|--------------|
@@ -23,7 +23,7 @@ called from the terminal toolset; they don't appear in `always_load`.
 | `baoyu-infographic` | Infographic generation | Renderer for data-driven explainer scenes |
 | `meme-generation` *(optional)* | Generate meme images by overlaying text on templates | Generator for satirical/social content; meme-style stills |
 
-### Design / pre-production skills (`jarvis-agent/skills/creative/`)
+### Design / pre-production skills (`jarvis-agent/capabilities/skills/creative/`)
 
 | Skill | What it does | Best fit for |
 |-------|--------------|--------------|
@@ -38,7 +38,7 @@ called from the terminal toolset; they don't appear in `always_load`.
 | `creative-ideation` | Constraint-driven project ideation | Director / cinematographer when the brief is wide-open and needs framing |
 | `humanizer` | Strip AI-isms from text, add real voice | Writer / copywriter post-process to avoid AI-tells in scripts and VO copy |
 
-### Audio / media skills (`jarvis-agent/skills/creative/` + `skills/media/`)
+### Audio / media skills (`jarvis-agent/capabilities/skills/creative/` + `capabilities/skills/media/`)
 
 | Skill | What it does | Best fit for |
 |-------|--------------|--------------|
@@ -50,7 +50,7 @@ called from the terminal toolset; they don't appear in `always_load`.
 | `gif-search` | Find existing GIFs | Editor / concept artist sourcing references |
 | `gifs` | GIF tooling | Masterer producing GIF deliverables |
 
-### Kanban infrastructure (`jarvis-agent/skills/devops/`)
+### Kanban infrastructure (`jarvis-agent/capabilities/skills/devops/`)
 
 | Skill | What it does | When to load |
 |-------|--------------|--------------|

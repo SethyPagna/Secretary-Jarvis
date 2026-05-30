@@ -37,7 +37,7 @@ A modern browser. That's it for basic use.
 For headless export: Node.js, Puppeteer, ffmpeg.
 
 ```bash
-bash skills/creative/p5js/scripts/setup.sh
+bash capabilities/skills/creative/p5js/scripts/setup.sh
 ```
 
 ## File Structure

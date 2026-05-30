@@ -60,7 +60,7 @@ function Test-NodeRuntimeScripts {
         "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
         "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
         "capabilities/optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
-        "skills/creative/p5js/scripts/export-frames.js"
+        "capabilities/skills/creative/p5js/scripts/export-frames.js"
     )
 
     foreach ($script in $runtimeScripts) {

@@ -133,7 +133,7 @@ jarvis-agent/
 ├── cron/                     # Scheduler (jobs.py, scheduler.py)
 ├── plugins/memory/           # Memory provider plugins
 ├── plugins/context_engine/   # Context engine plugins
-├── skills/                   # Bundled skills (always available)
+├── capabilities/skills/      # Bundled skills (always available)
 ├── capabilities/optional-skills/  # Official optional skills (install explicitly)
 └── tests/                    # Pytest suite (~3,000+ tests)
 ```
