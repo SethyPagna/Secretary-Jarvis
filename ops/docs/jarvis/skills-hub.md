@@ -428,7 +428,7 @@ Jarvis currently integrates with these skills ecosystems and discovery sources:
 These are maintained in the Jarvis repository itself and install with builtin trust.
 
 - Catalog: [Official Optional Skills Catalog](../../reference/optional-skills-catalog)
-- Source in repo: `optional-skills/`
+- Source in repo: `capabilities/optional-skills/`
 - Example:
 
 ```bash
@@ -583,7 +583,7 @@ Important behavior:
 | Level | Source | Policy |
 |-------|--------|--------|
 | `builtin` | Ships with Jarvis | Always trusted |
-| `official` | `optional-skills/` in the repo | Builtin trust, no third-party warning |
+| `official` | `capabilities/optional-skills/` in the repo | Builtin trust, no third-party warning |
 | `trusted` | Trusted registries/repos such as `openai/skills`, `anthropics/skills`, `huggingface/skills` | More permissive policy than community sources |
 | `community` | Everything else (`skills.sh`, well-known endpoints, custom GitHub repos, most marketplaces) | Non-dangerous findings can be overridden with `--force`; `dangerous` verdicts stay blocked |
 
@@ -1092,7 +1092,7 @@ Make it a **Tool** when:
 
 ## Skill Directory Structure
 
-Bundled skills live in `skills/` organized by category. Official optional skills use the same structure in `optional-skills/`:
+Bundled skills live in `skills/` organized by category. Official optional skills use the same structure in `capabilities/optional-skills/`:
 
 ```text
 skills/
@@ -1398,7 +1398,7 @@ Bundled skills (in `skills/`) ship with every Jarvis install. They should be **b
 - Document handling, web research, common dev workflows, system administration
 - Used regularly by a wide range of people
 
-If your skill is official and useful but not universally needed (e.g., a paid service integration, a heavyweight dependency), put it in **`optional-skills/`** — it ships with the repo, is discoverable via `jarvis skills browse` (labeled "official"), and installs with builtin trust.
+If your skill is official and useful but not universally needed (e.g., a paid service integration, a heavyweight dependency), put it in **`capabilities/optional-skills/`** — it ships with the repo, is discoverable via `jarvis skills browse` (labeled "official"), and installs with builtin trust.
 
 If your skill is specialized, community-contributed, or niche, it's better suited for a **Skills Hub** — upload it to a registry and share it via `jarvis skills install`.
 
@@ -1431,7 +1431,7 @@ All hub-installed skills go through a security scanner that checks for:
 
 Trust levels:
 - `builtin` — ships with Jarvis (always trusted)
-- `official` — from `optional-skills/` in the repo (builtin trust, no third-party warning)
+- `official` — from `capabilities/optional-skills/` in the repo (builtin trust, no third-party warning)
 - `trusted` — from openai/skills, anthropics/skills, huggingface/skills
 - `community` — non-dangerous findings can be overridden with `--force`; `dangerous` verdicts remain blocked
 
@@ -1656,7 +1656,7 @@ description: "Official optional skills shipped with jarvis-agent — install via
 
 # Optional Skills Catalog
 
-Optional skills ship with jarvis-agent under `optional-skills/` but are **not active by default**. Install them explicitly:
+Optional skills ship with jarvis-agent under `capabilities/optional-skills/` but are **not active by default**. Install them explicitly:
 
 ```bash
 jarvis skills install official/<category>/<skill>
@@ -1849,7 +1849,7 @@ jarvis skills uninstall <skill-name>
 
 To add a new optional skill to the repository:
 
-1. Create a directory under `optional-skills/<category>/<skill-name>/`
+1. Create a directory under `capabilities/optional-skills/<category>/<skill-name>/`
 2. Add a `SKILL.md` with standard frontmatter (name, description, version, author)
 3. Include any supporting files in `references/`, `templates/`, or `scripts/` subdirectories
 4. Submit a pull request — the skill will appear in this catalog and get its own docs page once merged

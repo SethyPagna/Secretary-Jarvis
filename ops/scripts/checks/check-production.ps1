@@ -59,7 +59,7 @@ function Test-NodeRuntimeScripts {
         "ops/scripts/build/after-pack-icon.cjs",
         "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
         "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
-        "optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
+        "capabilities/optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
         "skills/creative/p5js/scripts/export-frames.js"
     )
 

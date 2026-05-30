@@ -41,11 +41,11 @@ ROOT_DIR_ALLOWLIST = {
     ".github",
     "acp_adapter",
     "agent",
+    "capabilities",
     "cron",
     "desktop",
     "gateway",
     "jarvis_cli",
-    "optional-skills",
     "ops",
     "plugins",
     "providers",
@@ -71,7 +71,7 @@ ROOT_PY_MODULES = {
 APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
     "desktop/electron/main.js",
     "desktop/electron/preload.js",
-    "optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
+    "capabilities/optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
     "ops/scripts/build/after-pack-icon.cjs",
     "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
     "ops/scripts/checks/whatsapp-bridge/allowlist.test.mjs",
@@ -172,7 +172,7 @@ class RepositoryLayoutContractTests(unittest.TestCase):
     def test_gitignore_keeps_skill_assets_trackable(self) -> None:
         self.assertFalse(_is_git_ignored("skills/creative/p5js/references/export-pipeline.md"))
         self.assertFalse(_is_git_ignored("skills/creative/p5js/scripts/export-frames.js"))
-        self.assertFalse(_is_git_ignored("optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md"))
+        self.assertFalse(_is_git_ignored("capabilities/optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md"))
         self.assertFalse(_is_git_ignored("plugins/jarvis-achievements/dashboard/dist/index.js"))
 
     def test_gitignore_still_ignores_generated_dependency_and_release_dirs(self) -> None:
@@ -190,7 +190,7 @@ class RepositoryLayoutContractTests(unittest.TestCase):
 
         self.assertIn("skills/creative/p5js/references/export-pipeline.md", tracked)
         self.assertIn("skills/creative/p5js/scripts/export-frames.js", tracked)
-        self.assertIn("optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md", tracked)
+        self.assertIn("capabilities/optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md", tracked)
         self.assertIn("plugins/jarvis-achievements/dashboard/dist/index.js", tracked)
         self.assertIn("plugins/jarvis-achievements/dashboard/dist/style.css", tracked)
 

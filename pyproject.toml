@@ -164,7 +164,7 @@ google = [
 ]
 youtube = [
   # Required by skills/media/youtube-content and
-  # optional-skills/productivity/memento-flashcards (youtube_quiz.py).
+  # capabilities/optional-skills/productivity/memento-flashcards (youtube_quiz.py).
   # Without this declaration uv sync omits the package and both skills fail
   # at first invocation with ModuleNotFoundError (issue #22243).
   "youtube-transcript-api==1.2.4",
@@ -261,6 +261,6 @@ select = ["PLW1514"]
 "tests/**" = ["PLW1514"]
 # Skills and plugins are partially user-authored — their own conventions.
 "skills/**" = ["PLW1514"]
-"optional-skills/**" = ["PLW1514"]
+"capabilities/optional-skills/**" = ["PLW1514"]
 "plugins/**" = ["PLW1514"]
 

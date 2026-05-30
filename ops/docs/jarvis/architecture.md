@@ -134,7 +134,7 @@ jarvis-agent/
 ├── plugins/memory/           # Memory provider plugins
 ├── plugins/context_engine/   # Context engine plugins
 ├── skills/                   # Bundled skills (always available)
-├── optional-skills/          # Official optional skills (install explicitly)
+├── capabilities/optional-skills/  # Official optional skills (install explicitly)
 └── tests/                    # Pytest suite (~3,000+ tests)
 ```
 

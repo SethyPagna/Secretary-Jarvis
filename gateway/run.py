@@ -1133,7 +1133,7 @@ def _check_unavailable_skill(command_name: str) -> str | None:
         # Check optional skills (shipped with repo but not installed)
         from jarvis_constants import get_optional_skills_dir
         repo_root = Path(__file__).resolve().parent.parent
-        optional_dir = get_optional_skills_dir(repo_root / "optional-skills")
+        optional_dir = get_optional_skills_dir(repo_root / "capabilities" / "optional-skills")
         if optional_dir.exists():
             for skill_md in optional_dir.rglob("SKILL.md"):
                 if is_excluded_skill_path(skill_md):

@@ -58,7 +58,7 @@
         "to": "skills"
       },
       {
-        "from": "optional-skills",
+        "from": "capabilities/optional-skills",
         "to": "optional-skills"
       },
       {

@@ -86,7 +86,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertNotIn("nsis", package["build"]["win"]["target"])
         self.assertIn({"from": "desktop/assets", "to": "assets"}, package["build"]["extraResources"])
         self.assertIn({"from": "skills", "to": "skills"}, package["build"]["extraResources"])
-        self.assertIn({"from": "optional-skills", "to": "optional-skills"}, package["build"]["extraResources"])
+        self.assertIn({"from": "capabilities/optional-skills", "to": "optional-skills"}, package["build"]["extraResources"])
         self.assertNotIn(
             {"from": "docker-compose.local-models.yml", "to": "docker-compose.local-models.yml"},
             package["build"]["extraResources"],

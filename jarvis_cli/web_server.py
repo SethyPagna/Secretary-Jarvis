@@ -1034,7 +1034,7 @@ def _skill_asset_count() -> int:
     roots = [
         get_jarvis_home() / "skills",
         Path(__file__).resolve().parents[1] / "skills",
-        Path(__file__).resolve().parents[1] / "optional-skills",
+        Path(__file__).resolve().parents[1] / "capabilities" / "optional-skills",
     ]
     for root in resource_roots:
         roots.extend([root / "skills", root / "optional-skills"])
@@ -1074,7 +1074,7 @@ def _bundled_skill_catalog(*, include_disabled: bool = True) -> list[dict[str, A
     config = load_config()
     disabled = get_disabled_skills(config)
     repo_root = Path(__file__).resolve().parents[1]
-    roots = [repo_root / "skills", repo_root / "optional-skills"]
+    roots = [repo_root / "skills", repo_root / "capabilities" / "optional-skills"]
     resource_root = Path(os.environ.get("JARVIS_RESOURCE_ROOT", "")).expanduser()
     if str(resource_root) not in {"", "."}:
         roots.extend([resource_root / "skills", resource_root / "optional-skills"])
