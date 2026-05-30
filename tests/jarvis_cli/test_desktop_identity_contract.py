@@ -62,16 +62,9 @@ class DesktopIdentityContractTests(unittest.TestCase):
         self.assertIn("local-first", text)
         self.assertNotIn("runs in your terminal", text)
 
-    def test_detailed_soul_templates_exist_for_core_modes(self) -> None:
+    def test_detailed_soul_templates_exist_for_jarvis_team(self) -> None:
         soul_dir = SRC_ROOT / "jarvis_cli" / "data" / "souls"
-        expected_core = {
-            "default_SOUL.md",
-            "coding_SOUL.md",
-            "creative_SOUL.md",
-            "research_SOUL.md",
-            "work_SOUL.md",
-        }
-        expected_delegates = {
+        expected = {
             "jarvis_SOUL.md",
             "friday_SOUL.md",
             "argus_SOUL.md",
@@ -81,10 +74,18 @@ class DesktopIdentityContractTests(unittest.TestCase):
             "muse_SOUL.md",
             "sentinel_SOUL.md",
         }
-        expected = expected_core | expected_delegates
+        removed_legacy_modes = {
+            "default_SOUL.md",
+            "coding_SOUL.md",
+            "creative_SOUL.md",
+            "research_SOUL.md",
+            "work_SOUL.md",
+        }
 
         self.assertTrue(soul_dir.is_dir())
-        self.assertTrue(expected.issubset({path.name for path in soul_dir.glob("*_SOUL.md")}))
+        bundled_souls = {path.name for path in soul_dir.glob("*_SOUL.md")}
+        self.assertTrue(expected.issubset(bundled_souls))
+        self.assertTrue(removed_legacy_modes.isdisjoint(bundled_souls))
 
         for filename in sorted(expected):
             path = soul_dir / filename

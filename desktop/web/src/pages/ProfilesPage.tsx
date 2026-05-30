@@ -370,7 +370,7 @@ export default function ProfilesPage() {
       <div className="flex flex-col gap-3">
         <H2 variant="sm" className="flex items-center gap-2 text-muted-foreground">
           <Users className="h-4 w-4" />
-          JARVIS Team ({teamSouls.length})
+          JARVIS Staff ({teamSouls.length})
         </H2>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -395,7 +395,7 @@ export default function ProfilesPage() {
                 </p>
                 {soul.delegates?.length ? (
                   <div className="mt-3 truncate text-xs text-text-tertiary">
-                    Delegates: {soul.delegates.join(", ")}
+                    Manages: {soul.delegates.join(", ")}
                   </div>
                 ) : null}
               </CardContent>
@@ -411,7 +411,7 @@ export default function ProfilesPage() {
           className="flex items-center gap-2 text-muted-foreground"
         >
           <Users className="h-4 w-4" />
-          {t.profiles.allProfiles} ({profiles.length})
+          User workspaces ({profiles.length})
         </H2>
 
         {profiles.length === 0 && (
