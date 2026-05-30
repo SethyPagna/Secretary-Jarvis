@@ -327,8 +327,8 @@ fi
 # ============================================================================
 
 if [ ! -f ".env" ]; then
-    if [ -f ".env.example" ]; then
-        cp .env.example .env
+    if [ -f "ops/config/env/.env.example" ]; then
+        cp ops/config/env/.env.example .env
         echo -e "${GREEN}✓${NC} Created .env from template"
     fi
 else

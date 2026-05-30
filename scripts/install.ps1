@@ -1428,7 +1428,7 @@ function Copy-ConfigTemplates {
     # Create .env
     $envPath = "$JarvisHome\.env"
     if (-not (Test-Path $envPath)) {
-        $examplePath = "$InstallDir\.env.example"
+        $examplePath = "$InstallDir\ops\config\env\.env.example"
         if (Test-Path $examplePath) {
             Copy-Item $examplePath $envPath
             Write-Success "Created ~/.jarvis/.env from template"

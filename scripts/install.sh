@@ -1426,8 +1426,8 @@ copy_config_templates() {
 
     # Create .env at ~/.jarvis/.env (top level, easy to find)
     if [ ! -f "$JARVIS_HOME/.env" ]; then
-        if [ -f "$INSTALL_DIR/.env.example" ]; then
-            cp "$INSTALL_DIR/.env.example" "$JARVIS_HOME/.env"
+        if [ -f "$INSTALL_DIR/ops/config/env/.env.example" ]; then
+            cp "$INSTALL_DIR/ops/config/env/.env.example" "$JARVIS_HOME/.env"
             log_success "Created ~/.jarvis/.env from template"
         else
             touch "$JARVIS_HOME/.env"
@@ -2058,5 +2058,4 @@ elif [ "$POSTINSTALL_MODE" = true ]; then
 else
     main
 fi
-
 

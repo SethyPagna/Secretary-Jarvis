@@ -144,4 +144,4 @@ installed in the active Python environment or available from a local wheelhouse.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Project licensing is tracked in package metadata.

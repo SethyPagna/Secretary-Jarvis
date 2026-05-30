@@ -106,11 +106,9 @@ EXCLUDED_SUFFIXES = {
     ".min.css",
 }
 
-# Files we never scan (self-referential — this script mentions the
-# patterns it detects — and the CONTRIBUTING docs that list them).
+# Files we never scan (self-referential: this script mentions the patterns it detects).
 EXCLUDED_FILES = {
     "ops/scripts/ci/check-windows-footguns.py",
-    "CONTRIBUTING.md",
 }
 
 

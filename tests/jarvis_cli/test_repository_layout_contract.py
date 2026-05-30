@@ -11,11 +11,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 ROOT_FILE_ALLOWLIST = {
-    ".env.example",
     ".gitattributes",
     ".gitignore",
     "AGENTS.md",
-    "LICENSE",
     "MANIFEST.in",
     "README.md",
     "cli.py",
@@ -145,7 +143,9 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         }
 
         self.assertLessEqual(tracked_root_files, ROOT_FILE_ALLOWLIST)
+        self.assertNotIn(".env.example", tracked_root_files)
         self.assertNotIn("CONTRIBUTING.md", tracked_root_files)
+        self.assertNotIn("LICENSE", tracked_root_files)
         self.assertNotIn("SECURITY.md", tracked_root_files)
         self.assertNotIn("tsconfig.base.json", tracked_root_files)
 
@@ -169,9 +169,8 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         for module_name in ROOT_PY_MODULES:
             self.assertTrue((ROOT / f"{module_name}.py").is_file(), module_name)
 
-    def test_policy_and_locale_assets_live_under_package_or_metadata_dirs(self) -> None:
-        self.assertTrue((ROOT / ".github" / "CONTRIBUTING.md").is_file())
-        self.assertTrue((ROOT / ".github" / "SECURITY.md").is_file())
+    def test_config_and_locale_assets_live_under_package_or_metadata_dirs(self) -> None:
+        self.assertTrue((ROOT / "ops" / "config" / "env" / ".env.example").is_file())
         self.assertTrue((ROOT / "jarvis_cli" / "data" / "locales" / "en.yaml").is_file())
         self.assertFalse((ROOT / "locales").exists())
 

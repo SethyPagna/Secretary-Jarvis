@@ -657,10 +657,10 @@ violate them.
    stdlib + pytest + `unittest.mock`. No live network calls. Run via
    `scripts/run_tests.sh tests/skills/test_<skill>_skill.py -q`.
 
-8. **`.env.example` additions are isolated to a clearly delimited
-   block.** Don't touch the surrounding file — contributor-supplied
-   `.env.example` versions are usually stale and edits outside the
-   skill's own block must be dropped during salvage.
+8. **Environment-template additions belong in `ops/config/env/.env.example`
+   and stay isolated to a clearly delimited block.** Don't touch the
+   surrounding file — contributor-supplied env-template versions are usually
+   stale and edits outside the skill's own block must be dropped during salvage.
 
 The full salvage / modernization checklist for external skill PRs
 lives in the `jarvis-agent-dev` skill at
