@@ -2,8 +2,8 @@
 # Kill all running Modal apps (sandboxes, deployments, etc.)
 #
 # Usage:
-#   bash scripts/kill_modal.sh          # Stop jarvis-agent sandboxes
-#   bash scripts/kill_modal.sh --all    # Stop ALL Modal apps
+#   bash ops/scripts/kill_modal.sh          # Stop jarvis-agent sandboxes
+#   bash ops/scripts/kill_modal.sh --all    # Stop ALL Modal apps
 
 set -uo pipefail
 

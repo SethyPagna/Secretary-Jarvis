@@ -7,16 +7,16 @@ cheap, fast, catches regressions in a codebase that runs on three OSes.
 
 Usage:
     # Scan staged changes (default when run from a git checkout)
-    python scripts/check-windows-footguns.py
+    python ops/scripts/check-windows-footguns.py
 
     # Scan the full tree (full-repo audit)
-    python scripts/check-windows-footguns.py --all
+    python ops/scripts/check-windows-footguns.py --all
 
     # Scan a specific file or directory
-    python scripts/check-windows-footguns.py path/to/file.py path/to/dir/
+    python ops/scripts/check-windows-footguns.py path/to/file.py path/to/dir/
 
     # Scan only modified files vs. main
-    python scripts/check-windows-footguns.py --diff main
+    python ops/scripts/check-windows-footguns.py --diff main
 
 Exit status:
     0 — no Windows footguns found (or all matches suppressed)
@@ -37,7 +37,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 SUPPRESS_MARKER = re.compile(r"#\s*windows-footgun\s*:\s*ok\b", re.IGNORECASE)
 
@@ -109,7 +109,7 @@ EXCLUDED_SUFFIXES = {
 # Files we never scan (self-referential — this script mentions the
 # patterns it detects — and the CONTRIBUTING docs that list them).
 EXCLUDED_FILES = {
-    "scripts/check-windows-footguns.py",
+    "ops/scripts/check-windows-footguns.py",
     "CONTRIBUTING.md",
 }
 

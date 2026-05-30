@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = Path(__file__).resolve().parents[2]
     destination = repo_root / "runtime" / "llama.cpp"
     executable = shutil.which("llama-server")
     if not executable:

@@ -1,4 +1,4 @@
-"""Verify scripts/run_tests_parallel.py kills test-spawned grandchildren.
+"""Verify ops/scripts/run_tests_parallel.py kills test-spawned grandchildren.
 
 Setup
 -----
@@ -70,12 +70,12 @@ def test_grandchild_leak_is_killed_by_runner(tmp_path: Path) -> None:
 
     1. Materialize a probe file that spawns a long-lived grandchild and
        writes its PID to disk before exiting.
-    2. Invoke ``scripts/run_tests_parallel.py`` against the probe file.
+    2. Invoke ``ops/scripts/run_tests_parallel.py`` against the probe file.
     3. Wait for the grandchild PID to vanish (poll for ~5s).
     4. Assert the runner exited cleanly AND the grandchild is dead.
     """
     repo_root = Path(__file__).resolve().parent.parent
-    runner = repo_root / "scripts" / "run_tests_parallel.py"
+    runner = repo_root / "ops" / "scripts" / "run_tests_parallel.py"
     assert runner.exists(), f"runner missing at {runner}"
 
     # Probe lives in a temp dir, NOT under tests/, so the regular suite

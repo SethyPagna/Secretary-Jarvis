@@ -231,7 +231,7 @@ markers = [
 ]
 # pytest-timeout: per-test 30s hard cap with signal method.
 # This is the fallback inside each per-file pytest subprocess (see
-# scripts/run_tests_parallel.py). Per-file isolation gives every test
+# ops/scripts/run_tests_parallel.py). Per-file isolation gives every test
 # file a fresh Python interpreter; pytest-timeout catches Python-level
 # hangs within a file.
 addopts = "-m 'not integration' --timeout=30 --timeout-method=signal"

@@ -12,7 +12,7 @@ manifest in sync — not a source of truth.
 
 Usage::
 
-    python scripts/build_model_catalog.py
+    python ops/scripts/build_model_catalog.py
 
 Output: ``docs/api/model-catalog.json``
 """
@@ -24,7 +24,7 @@ import os
 import sys
 from datetime import datetime, timezone
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, REPO_ROOT)
 
 # Ensure JARVIS_HOME is set for imports that touch it at module level.

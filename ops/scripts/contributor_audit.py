@@ -6,13 +6,13 @@ descriptions to find any contributors missing from the release notes.
 
 Usage:
     # Basic audit since a tag
-    python scripts/contributor_audit.py --since-tag v2026.4.8
+    python ops/scripts/contributor_audit.py --since-tag v2026.4.8
 
     # Audit with a custom endpoint
-    python scripts/contributor_audit.py --since-tag v2026.4.8 --until v2026.4.13
+    python ops/scripts/contributor_audit.py --since-tag v2026.4.8 --until v2026.4.13
 
     # Compare against a release notes file
-    python scripts/contributor_audit.py --since-tag v2026.4.8 --release-file RELEASE_v0.9.0.md
+    python ops/scripts/contributor_audit.py --since-tag v2026.4.8 --release-file RELEASE_v0.9.0.md
 """
 
 import argparse
@@ -32,7 +32,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from release import AUTHOR_MAP, resolve_author  # noqa: E402
 
-REPO_ROOT = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
 
 # ---------------------------------------------------------------------------
 # AI assistants, bots, and machine accounts to exclude from contributor lists
@@ -431,7 +431,7 @@ def main():
         if new_unknowns:
             print()
             print(f"=== STRICT MODE FAILURE: {len(new_unknowns)} new unmapped email(s) ===")
-            print("Add these to AUTHOR_MAP in scripts/release.py before merging:")
+            print("Add these to AUTHOR_MAP in ops/scripts/release.py before merging:")
             print()
             for email, name in sorted(new_unknowns.items()):
                 print(f'    "{email}": "<github-username>",')

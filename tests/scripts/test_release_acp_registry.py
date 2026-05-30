@@ -1,4 +1,4 @@
-"""Tests for the ACP Registry version-lockstep bump in scripts/release.py.
+"""Tests for the ACP Registry version-lockstep bump in ops/scripts/release.py.
 
 The official ACP Registry manifest must match ``pyproject.toml`` exactly —
 ``tests/acp/test_registry_manifest.py`` enforces this at lint time, and the
@@ -16,10 +16,10 @@ from pathlib import Path
 
 
 def _load_release_module(monkeypatch, tmp_root: Path):
-    """Import scripts/release.py with REPO_ROOT pinned to a temp tree."""
+    """Import ops/scripts/release.py with REPO_ROOT pinned to a temp tree."""
     spec = importlib.util.spec_from_file_location(
         "_release_under_test",
-        Path(__file__).resolve().parents[2] / "scripts" / "release.py",
+        Path(__file__).resolve().parents[2] / "ops" / "scripts" / "release.py",
     )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)

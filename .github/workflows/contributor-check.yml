@@ -47,7 +47,7 @@ jobs:
               continue  # GitHub noreply emails auto-resolve
             fi
 
-            if ! grep -qF "\"${email}\"" scripts/release.py 2>/dev/null; then
+            if ! grep -qF "\"${email}\"" ops/scripts/release.py 2>/dev/null; then
               AUTHOR=$(git log --author="$email" --format='%an' -1)
               MISSING="${MISSING}\n  ${email} (${AUTHOR})"
             fi
@@ -58,7 +58,7 @@ jobs:
             echo "⚠️  New contributor email(s) not in AUTHOR_MAP:"
             echo -e "$MISSING"
             echo ""
-            echo "Please add mappings to scripts/release.py AUTHOR_MAP:"
+            echo "Please add mappings to ops/scripts/release.py AUTHOR_MAP:"
             echo -e "$MISSING" | while read -r line; do
               email=$(echo "$line" | sed 's/^ *//' | cut -d' ' -f1)
               [ -z "$email" ] && continue

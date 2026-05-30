@@ -66,7 +66,7 @@ jobs:
           uv pip install -e ".[all,dev]"
 
       - name: Run tests (slice ${{ matrix.slice }}/6)
-        # Per-file isolation via scripts/run_tests_parallel.py: discovers
+        # Per-file isolation via ops/scripts/run_tests_parallel.py: discovers
         # every test_*.py file under tests/ (excluding integration/ + e2e/),
         # then runs `python -m pytest <file>` in a freshly-spawned subprocess
         # with bounded parallelism. No xdist, no shared workers, no
@@ -91,7 +91,7 @@ jobs:
         # just not perfectly balanced.
         run: |
           source .venv/bin/activate
-          python scripts/run_tests_parallel.py --slice ${{ matrix.slice }}/6
+          python ops/scripts/run_tests_parallel.py --slice ${{ matrix.slice }}/6
         env:
           # Ensure tests don't accidentally call real APIs
           OPENROUTER_API_KEY: ""

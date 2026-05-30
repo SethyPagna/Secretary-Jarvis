@@ -14,7 +14,7 @@ Tag shape (sent in OpenAI-compatible ``extra_body['tags']``):
 
 The version is sourced live from ``jarvis_cli.__version__`` so it auto-aligns
 to whatever release is installed; the release script
-(``scripts/release.py``) regex-bumps that single string, and every Portal
+(``ops/scripts/release.py``) regex-bumps that single string, and every Portal
 request picks up the new tag on the next process start.
 
 Why one helper instead of inlining the literal at each site:
