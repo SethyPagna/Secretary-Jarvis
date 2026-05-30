@@ -71,6 +71,7 @@ class RuntimeStatsTests(unittest.TestCase):
         self.assertEqual(stats["active_skills"], 9)
         self.assertEqual(stats["gateway_connections"], 3)
         self.assertGreaterEqual(stats["souls_total"], 1)
+        self.assertEqual(stats["souls_online"], stats["souls_total"])
         self.assertEqual(stats["active_soul"], "jarvis")
         self.assertIn("hardware_status", stats)
         self.assertEqual(stats["uptime_seconds"], 65)

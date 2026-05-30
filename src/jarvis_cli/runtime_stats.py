@@ -300,6 +300,66 @@ def _windows_cpu_temperature() -> float | None:
     return _round(completed.stdout.strip().splitlines()[-1], digits=1)
 
 
+def _windows_hardware_monitor_temperatures() -> dict[str, Any]:
+    if platform.system().lower() != "windows":
+        return {}
+    command = [
+        "powershell",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        (
+            "$namespaces = @('root/LibreHardwareMonitor','root/OpenHardwareMonitor'); "
+            "$all = @(); "
+            "foreach ($ns in $namespaces) { "
+            "  $items = Get-CimInstance -Namespace $ns -ClassName Sensor -ErrorAction SilentlyContinue "
+            "    | Where-Object { $_.SensorType -eq 'Temperature' -and $_.Value -gt 0 -and $_.Value -lt 120 }; "
+            "  if ($items) { $all += $items | Select-Object @{n='Namespace';e={$ns}},Name,Identifier,Value } "
+            "} "
+            "$cpu = $all | Where-Object { $_.Name -match 'CPU|Package|Core|CCD|Tctl|Tdie' -or $_.Identifier -match '/cpu/' } "
+            "  | Sort-Object @{Expression={ if ($_.Name -match 'Package|Tctl|Tdie') { 0 } else { 1 } }},Name "
+            "  | Select-Object -First 1; "
+            "$gpu = $all | Where-Object { $_.Name -match 'GPU|Hot Spot|Memory Junction' -or $_.Identifier -match '/gpu/' } "
+            "  | Sort-Object @{Expression={ if ($_.Name -match '^GPU Core$|GPU Package') { 0 } else { 1 } }},Name "
+            "  | Select-Object -First 1; "
+            "[pscustomobject]@{ "
+            "  cpu_temp_c = if ($cpu) { [Math]::Round([double]$cpu.Value, 1) } else { $null }; "
+            "  gpu_temp_c = if ($gpu) { [Math]::Round([double]$gpu.Value, 1) } else { $null }; "
+            "  source = if ($cpu -or $gpu) { 'hardware-monitor-wmi' } else { $null } "
+            "} | ConvertTo-Json -Compress"
+        ),
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+        )
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        return {}
+    if completed.returncode != 0 or not completed.stdout.strip():
+        return {}
+    try:
+        payload = json.loads(completed.stdout.strip().splitlines()[-1])
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(payload, Mapping):
+        return {}
+    result: dict[str, Any] = {}
+    cpu_temp = _round(payload.get("cpu_temp_c"), digits=1)
+    gpu_temp = _round(payload.get("gpu_temp_c"), digits=1)
+    if cpu_temp is not None:
+        result["cpu_temp_c"] = cpu_temp
+    if gpu_temp is not None:
+        result["gpu_temp_c"] = gpu_temp
+    if result:
+        result["source"] = payload.get("source") or "hardware-monitor-wmi"
+    return result
+
+
 def _read_soul_status() -> dict[str, Any]:
     manifest_path = Path(__file__).with_name("data") / "souls" / "soul_manifest.json"
     try:
@@ -315,10 +375,16 @@ def _read_soul_status() -> dict[str, Any]:
         for item in souls
         if isinstance(item, Mapping) and item.get("id") and item.get("id") != active
     ]
+    ready_count = sum(
+        1
+        for item in souls
+        if isinstance(item, Mapping) and item.get("id") and item.get("ready", True) is not False
+    )
+    total = max(1, len(souls))
     return {
         "active": active,
-        "online": 1 if active else 0,
-        "total": max(1, len(souls)),
+        "online": max(1, min(total, ready_count or total)),
+        "total": total,
         "delegates": delegates[:12],
     }
 
@@ -371,6 +437,7 @@ def collect_runtime_stats(
     process_cpu_percent = None
     process_ram_mb = None
     cpu_temp_c = None
+    cpu_temp_source = "unavailable"
 
     if psutil_obj is None:
         warnings.append("psutil is not available")
@@ -394,11 +461,14 @@ def collect_runtime_stats(
         except Exception:
             warnings.append("Process stats could not be sampled.")
         cpu_temp_c = _cpu_temperature(psutil_obj)
+        if cpu_temp_c is not None:
+            cpu_temp_source = "psutil"
 
     cached_hardware = current_time < float(_HARDWARE_CACHE.get("expires_at") or 0)
     if cached_hardware:
         gpu_stats = dict(_HARDWARE_CACHE.get("gpu_stats") or {})
         cpu_temp_c = _HARDWARE_CACHE.get("cpu_temp_c")
+        cpu_temp_source = str(_HARDWARE_CACHE.get("cpu_temp_source") or "unavailable")
         warnings.extend(str(item) for item in (_HARDWARE_CACHE.get("warnings") or []))
     else:
         hardware_warnings: list[str] = []
@@ -409,13 +479,24 @@ def collect_runtime_stats(
             gpu_stats = _windows_gpu_stats()
             if not gpu_stats:
                 hardware_warnings.append("GPU usage/temperature provider is not available.")
+        hardware_monitor_temps = _windows_hardware_monitor_temperatures()
+        if hardware_monitor_temps:
+            if gpu_stats.get("gpu_temp_c") is None and hardware_monitor_temps.get("gpu_temp_c") is not None:
+                gpu_stats["gpu_temp_c"] = hardware_monitor_temps["gpu_temp_c"]
+                gpu_stats["gpu_temp_source"] = hardware_monitor_temps.get("source")
+            if cpu_temp_c is None and hardware_monitor_temps.get("cpu_temp_c") is not None:
+                cpu_temp_c = hardware_monitor_temps["cpu_temp_c"]
+                cpu_temp_source = str(hardware_monitor_temps.get("source") or "hardware-monitor-wmi")
         if cpu_temp_c is None:
             cpu_temp_c = _windows_cpu_temperature()
+            if cpu_temp_c is not None:
+                cpu_temp_source = "windows-wmi"
             if cpu_temp_c is None:
                 hardware_warnings.append("CPU temperature provider is not available.")
         warnings.extend(hardware_warnings)
         _HARDWARE_CACHE["gpu_stats"] = dict(gpu_stats)
         _HARDWARE_CACHE["cpu_temp_c"] = cpu_temp_c
+        _HARDWARE_CACHE["cpu_temp_source"] = cpu_temp_source
         _HARDWARE_CACHE["warnings"] = list(hardware_warnings)
         _HARDWARE_CACHE["expires_at"] = current_time + _HARDWARE_CACHE_TTL_SECONDS
     uptime_seconds = int(max(0, current_time - started_at)) if started_at else 0
@@ -449,8 +530,9 @@ def collect_runtime_stats(
         "cpu_temp_c": cpu_temp_c,
         "hardware_status": {
             "gpu_source": gpu_stats.get("gpu_source") or "unavailable",
-            "gpu_temp_source": "nvidia-smi" if gpu_stats.get("gpu_temp_c") is not None else "unavailable",
-            "cpu_temp_source": "psutil/wmi" if cpu_temp_c is not None else "unavailable",
+            "gpu_temp_source": gpu_stats.get("gpu_temp_source")
+            or ("nvidia-smi" if gpu_stats.get("gpu_temp_c") is not None else "unavailable"),
+            "cpu_temp_source": cpu_temp_source if cpu_temp_c is not None else "unavailable",
         },
         "tokens_input": tokens_input,
         "tokens_output": tokens_output,
