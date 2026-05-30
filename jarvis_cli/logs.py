@@ -191,7 +191,7 @@ def tail_log(
     # Resolve component to logger name prefixes
     component_prefixes = None
     if component:
-        from jarvis_logging import COMPONENT_PREFIXES
+        from jarvis_cli.logging_config import COMPONENT_PREFIXES
         component_lower = component.lower()
         if component_lower not in COMPONENT_PREFIXES:
             available = ", ".join(sorted(COMPONENT_PREFIXES))

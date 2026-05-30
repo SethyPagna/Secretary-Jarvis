@@ -276,7 +276,7 @@ from jarvis_cli.env_loader import load_jarvis_dotenv
 load_jarvis_dotenv(project_env=PROJECT_ROOT / ".env")
 
 # Bridge security.redact_secrets from config.yaml ? JARVIS_REDACT_SECRETS env
-# var BEFORE jarvis_logging imports agent.redact (which snapshots the flag at
+# var BEFORE jarvis_cli.logging_config imports agent.redact (which snapshots the flag at
 # module-import time). Without this, config.yaml's toggle is ignored because
 # the setup_logging() call below imports agent.redact, which reads the env var
 # exactly once. Env var in .env still wins — this is config.yaml fallback only.
@@ -300,7 +300,7 @@ except Exception:
 # Initialize centralized file logging early — all `jarvis` subcommands
 # (chat, setup, gateway, config, etc.) write to agent.log + errors.log.
 try:
-    from jarvis_logging import setup_logging as _setup_logging
+    from jarvis_cli.logging_config import setup_logging as _setup_logging
 
     _setup_logging(mode="cli")
 except Exception:

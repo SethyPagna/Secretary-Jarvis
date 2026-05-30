@@ -66,7 +66,7 @@ from agent.retry_utils import jittered_backoff
 from agent.trajectory import has_incomplete_scratchpad
 from agent.usage_pricing import estimate_usage_cost, normalize_usage
 from jarvis_constants import display_jarvis_home as _dhh_fn
-from jarvis_logging import set_session_context
+from jarvis_cli.logging_config import set_session_context
 from tools.schema_sanitizer import strip_pattern_and_format
 from tools.skill_provenance import set_current_write_origin
 from jarvis_cli.utils import base_url_host_matches, env_var_enabled
@@ -279,7 +279,7 @@ def run_conversation(
 
     # Tag all log records on this thread with the session ID so
     # ``jarvis logs --session <id>`` can filter a single conversation.
-    from jarvis_logging import set_session_context
+    from jarvis_cli.logging_config import set_session_context
     set_session_context(agent.session_id)
 
     # Bind the skill write-origin ContextVar for this thread so tool

@@ -27,7 +27,7 @@ jarvis-agent/
 ├── cli.py                # JARVIS interactive shell orchestrator (~11k LOC)
 ├── jarvis_state.py       # SessionDB — SQLite session store (FTS5 search)
 ├── jarvis_constants.py   # get_jarvis_home(), display_jarvis_home() — profile-aware paths
-├── jarvis_logging.py     # setup_logging() — agent.log / errors.log / gateway.log (profile-aware)
+├── jarvis_cli/logging_config.py     # setup_logging() — agent.log / errors.log / gateway.log (profile-aware)
 ├── tools/batch_runner.py       # Parallel batch processing
 ├── agent/                # Agent internals (provider adapters, memory, caching, compression, etc.)
 ├── jarvis_cli/           # CLI subcommands, setup wizard, plugins loader, skin engine

@@ -371,7 +371,7 @@ def get_config_path() -> Path:
     """Return the path to ``config.yaml`` under JARVIS_HOME.
 
     Replaces the ``get_jarvis_home() / "config.yaml"`` pattern repeated
-    in 7+ files (skill_utils.py, jarvis_logging.py, jarvis_cli/time_utils.py, etc.).
+    in 7+ files (skill_utils.py, jarvis_cli/logging_config.py, jarvis_cli/time_utils.py, etc.).
     """
     return get_jarvis_home() / "config.yaml"
 

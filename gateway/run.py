@@ -17878,7 +17878,7 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
     # Centralized logging — agent.log (INFO+), errors.log (WARNING+),
     # and gateway.log (INFO+, gateway-component records only).
     # Idempotent, so repeated calls from AIAgent.__init__ won't duplicate.
-    from jarvis_logging import setup_logging
+    from jarvis_cli.logging_config import setup_logging
     setup_logging(jarvis_home=_jarvis_home, mode="gateway")
 
     # Periodic process memory usage logging (gateway only) — emits a

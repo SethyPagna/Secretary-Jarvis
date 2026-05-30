@@ -680,7 +680,7 @@ CLI_CONFIG = load_cli_config()
 # Initialize centralized logging early — agent.log + errors.log in ~/.jarvis/logs/.
 # This ensures CLI sessions produce a log trail even before AIAgent is instantiated.
 try:
-    from jarvis_logging import setup_logging
+    from jarvis_cli.logging_config import setup_logging
     setup_logging(mode="cli")
 except Exception:
     pass  # Logging setup is best-effort — don't crash the CLI
@@ -9806,7 +9806,7 @@ class JarvisCLI:
             # above the file handler level filters records before they
             # reach handlers, so agent.log / errors.log lose visibility
             # into stream-retry events, credential rotations, etc.
-            # Console quietness is enforced by jarvis_logging not
+            # Console quietness is enforced by jarvis_cli.logging_config not
             # installing a console StreamHandler in non-verbose mode.
 
     def _show_insights(self, command: str = "/insights"):

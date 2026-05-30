@@ -18,7 +18,6 @@ ROOT_FILE_ALLOWLIST = {
     "README.md",
     "cli.py",
     "jarvis_constants.py",
-    "jarvis_logging.py",
     "jarvis_state.py",
     "package-lock.json",
     "package.json",
@@ -49,7 +48,6 @@ ROOT_DIR_ALLOWLIST = {
 
 ROOT_PY_MODULES = {
     "jarvis_constants",
-    "jarvis_logging",
     "jarvis_state",
     "run_agent",
 }

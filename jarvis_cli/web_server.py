@@ -3680,7 +3680,7 @@ async def get_logs(
         return {"file": file, "lines": []}
 
     try:
-        from jarvis_logging import COMPONENT_PREFIXES
+        from jarvis_cli.logging_config import COMPONENT_PREFIXES
     except ImportError:
         COMPONENT_PREFIXES = {}
 
