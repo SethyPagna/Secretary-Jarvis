@@ -197,6 +197,35 @@ class RepositoryLayoutContractTests(unittest.TestCase):
 
         self.assertEqual(tracked_js, APP_RUNTIME_JAVASCRIPT_ALLOWLIST)
 
+    def test_tracked_plugin_bundles_use_jarvis_runtime_bridge(self) -> None:
+        bundle_paths = [
+            ROOT / "plugins" / "jarvis-achievements" / "dashboard" / "dist" / "index.js",
+            ROOT / "plugins" / "jarvis-achievements" / "dashboard" / "dist" / "style.css",
+            ROOT / "plugins" / "kanban" / "dashboard" / "dist" / "index.js",
+        ]
+        bundle_text = "\n".join(path.read_text(encoding="utf-8") for path in bundle_paths)
+
+        for legacy_token in [
+            "__HERMES_PLUGIN_SDK__",
+            "__HERMES_PLUGINS__",
+            "__HERMES_SESSION_TOKEN__",
+            "X-Hermes-Session-Token",
+            "/api/plugins/hermes-achievements",
+            "Hermes",
+            "HERMES",
+            "hermes",
+            "Nous",
+            "nous",
+        ]:
+            self.assertNotIn(legacy_token, bundle_text)
+
+        self.assertIn("__JARVIS_PLUGIN_SDK__", bundle_text)
+        self.assertIn("__JARVIS_PLUGINS__", bundle_text)
+        self.assertIn("__JARVIS_SESSION_TOKEN__", bundle_text)
+        self.assertIn("X-Jarvis-Session-Token", bundle_text)
+        self.assertIn("/api/plugins/jarvis-achievements", bundle_text)
+        self.assertIn('register("jarvis-achievements"', bundle_text)
+
 
 if __name__ == "__main__":
     unittest.main()
