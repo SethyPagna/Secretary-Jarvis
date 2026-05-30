@@ -75,6 +75,18 @@ ROOT_PY_MODULES = {
     "utils",
 }
 
+APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
+    "electron/main.js",
+    "electron/preload.js",
+    "optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
+    "scripts/after-pack-icon.cjs",
+    "scripts/whatsapp-bridge/allowlist.mjs",
+    "scripts/whatsapp-bridge/allowlist.test.mjs",
+    "scripts/whatsapp-bridge/bridge.mjs",
+    "skills/creative/p5js/scripts/export-frames.js",
+    "web/eslint.config.js",
+}
+
 
 def _tracked_paths() -> list[Path]:
     result = subprocess.run(
@@ -158,6 +170,32 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         self.assertIn("optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md", tracked)
         self.assertIn("plugins/jarvis-achievements/dashboard/dist/index.js", tracked)
         self.assertIn("plugins/jarvis-achievements/dashboard/dist/style.css", tracked)
+
+    def test_tracked_paths_do_not_use_legacy_brand_names(self) -> None:
+        legacy_paths = [
+            path.as_posix()
+            for path in _tracked_paths()
+            if "hermes" in path.as_posix().lower()
+            or "nous" in path.as_posix().lower()
+        ]
+
+        self.assertEqual(legacy_paths, [])
+
+    def test_remaining_app_javascript_files_are_runtime_entrypoints(self) -> None:
+        tracked_js = {
+            path.as_posix()
+            for path in _tracked_paths()
+            if path.suffix in {".js", ".jsx", ".mjs", ".cjs"}
+            and path.parts[0] != "vendor"
+            and not (
+                len(path.parts) >= 4
+                and path.parts[0] == "plugins"
+                and path.parts[2] == "dashboard"
+                and path.parts[3] == "dist"
+            )
+        }
+
+        self.assertEqual(tracked_js, APP_RUNTIME_JAVASCRIPT_ALLOWLIST)
 
 
 if __name__ == "__main__":
