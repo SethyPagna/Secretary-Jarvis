@@ -216,7 +216,7 @@ def _get_session_db() -> Optional[Any]:
     non-standard launchers can still use the GoalManager.
     """
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         from jarvis_state import SessionDB
 
         home = str(get_jarvis_home())

@@ -49,7 +49,7 @@ _config_files: List[Dict[str, str]] | None = None
 
 
 def _resolve_jarvis_home() -> Path:
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
     return get_jarvis_home()
 
 
@@ -341,7 +341,7 @@ def iter_skills_files(
 # ---------------------------------------------------------------------------
 
 # The four cache subdirectories that should be mirrored into remote backends.
-# Each tuple is (new_subpath, old_name) matching jarvis_constants.get_jarvis_dir().
+# Each tuple is (new_subpath, old_name) matching jarvis_cli.constants.get_jarvis_dir().
 _CACHE_DIRS: list[tuple[str, str]] = [
     ("cache/documents", "document_cache"),
     ("cache/images", "image_cache"),
@@ -359,7 +359,7 @@ def get_cache_directory_mounts(
     ``container_path`` keys.  The host path is resolved via
     ``get_jarvis_dir()`` for backward compatibility with old directory layouts.
     """
-    from jarvis_constants import get_jarvis_dir
+    from jarvis_cli.constants import get_jarvis_dir
 
     mounts: List[Dict[str, str]] = []
     for new_subpath, old_name in _CACHE_DIRS:
@@ -410,7 +410,7 @@ def iter_cache_files(
     Used by Modal to upload files individually and resync before each command.
     Skips symlinks.  The container paths use the new ``cache/<subdir>`` layout.
     """
-    from jarvis_constants import get_jarvis_dir
+    from jarvis_cli.constants import get_jarvis_dir
 
     result: List[Dict[str, str]] = []
     for new_subpath, old_name in _CACHE_DIRS:

@@ -13,7 +13,7 @@ import sys
 import shlex
 from pathlib import Path
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 
 
 # ---------------------------------------------------------------------------

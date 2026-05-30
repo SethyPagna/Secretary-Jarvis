@@ -28,7 +28,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from jarvis_constants import get_jarvis_dir
+from jarvis_cli.constants import get_jarvis_dir
 from jarvis_cli.utils import atomic_replace
 
 

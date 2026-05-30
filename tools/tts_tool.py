@@ -52,7 +52,7 @@ from pathlib import Path
 from typing import Callable, Dict, Any, Optional
 from urllib.parse import urljoin
 
-from jarvis_constants import display_jarvis_home
+from jarvis_cli.constants import display_jarvis_home
 
 logger = logging.getLogger(__name__)
 def get_env_value(name, default=None):
@@ -178,7 +178,7 @@ GEMINI_TTS_CHANNELS = 1
 GEMINI_TTS_SAMPLE_WIDTH = 2  # 16-bit PCM (L16)
 
 def _get_default_output_dir() -> str:
-    from jarvis_constants import get_jarvis_dir
+    from jarvis_cli.constants import get_jarvis_dir
     return str(get_jarvis_dir("cache/audio", "audio_cache"))
 
 DEFAULT_OUTPUT_DIR = _get_default_output_dir()
@@ -1496,7 +1496,7 @@ def _get_piper_voices_dir() -> Path:
     Resolves to ``~/.jarvis/cache/piper-voices/`` under the active
     JARVIS_HOME so voice downloads follow profile boundaries.
     """
-    from jarvis_constants import get_jarvis_dir
+    from jarvis_cli.constants import get_jarvis_dir
     root = Path(get_jarvis_dir("cache/piper-voices", "piper_voices_cache"))
     root.mkdir(parents=True, exist_ok=True)
     return root

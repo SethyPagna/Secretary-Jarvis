@@ -226,7 +226,7 @@ def test_setup_gateway_in_container_shows_docker_guidance(monkeypatch, capsys):
     monkeypatch.setattr(gateway_mod, "_is_service_running", lambda: False)
 
     # Patch is_container at the import location in setup.py
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     monkeypatch.setattr(jarvis_constants, "is_container", lambda: True)
 
     setup_mod.setup_gateway({})

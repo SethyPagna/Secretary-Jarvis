@@ -8,7 +8,7 @@ import shlex
 import shutil
 import subprocess
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 
 
 DEFAULT_BROWSER_CDP_PORT = 9222

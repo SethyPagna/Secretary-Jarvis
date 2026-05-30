@@ -10,7 +10,7 @@ from typing import Optional
 def _jarvis_home_path() -> Path:
     """Resolve the active JARVIS_HOME (profile-aware) without circular imports."""
     try:
-        from jarvis_constants import get_jarvis_home  # local import to avoid cycles
+        from jarvis_cli.constants import get_jarvis_home  # local import to avoid cycles
         return get_jarvis_home()
     except Exception:
         return Path(os.path.expanduser("~/.jarvis"))
@@ -19,7 +19,7 @@ def _jarvis_home_path() -> Path:
 def _jarvis_root_path() -> Path:
     """Resolve the Jarvis root dir (always the parent of any profile, never per-profile)."""
     try:
-        from jarvis_constants import get_default_jarvis_root  # local import to avoid cycles
+        from jarvis_cli.constants import get_default_jarvis_root  # local import to avoid cycles
         return get_default_jarvis_root()
     except Exception:
         return Path(os.path.expanduser("~/.jarvis"))

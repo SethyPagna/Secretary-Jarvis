@@ -113,7 +113,7 @@ class FetchResult:
 
 def _jarvis_bin_dir() -> Path:
     """Where Jarvis stores its managed binaries.  Profile-aware."""
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     return get_jarvis_home() / "bin"
 

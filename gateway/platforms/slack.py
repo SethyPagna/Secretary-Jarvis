@@ -529,7 +529,7 @@ class SlackAdapter(BasePlatformAdapter):
         bot_tokens = [t.strip() for t in raw_token.split(",") if t.strip()]
 
         # Also load tokens from OAuth token file
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         tokens_file = get_jarvis_home() / "slack_tokens.json"
         if tokens_file.exists():
             try:

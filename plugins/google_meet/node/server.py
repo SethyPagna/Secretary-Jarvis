@@ -30,7 +30,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from plugins.google_meet.node import protocol as _proto
 
 

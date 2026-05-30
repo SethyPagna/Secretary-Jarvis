@@ -62,7 +62,7 @@ except ImportError:
 def _get_sessions_dir() -> Path:
     """Return the sessions directory using JARVIS_HOME."""
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         return get_jarvis_home() / "sessions"
     except ImportError:
         return Path(os.environ.get("JARVIS_HOME", Path.home() / ".jarvis")) / "sessions"
@@ -98,7 +98,7 @@ def _load_sessions_index() -> dict:
 def _load_channel_directory() -> dict:
     """Load the cached channel directory for available targets."""
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         directory_file = get_jarvis_home() / "channel_directory.json"
     except ImportError:
         directory_file = Path(
@@ -362,7 +362,7 @@ class EventBridge:
 
         # Check if state.db has changed
         try:
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             db_file = get_jarvis_home() / "state.db"
         except ImportError:
             db_file = Path(os.environ.get("JARVIS_HOME", Path.home() / ".jarvis")) / "state.db"

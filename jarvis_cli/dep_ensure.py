@@ -55,7 +55,7 @@ def _has_system_browser() -> bool:
 
 
 def _has_jarvis_agent_browser() -> bool:
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
     home = get_jarvis_home()
     if _IS_WINDOWS:
         # npm -g --prefix puts .cmd shims directly in the prefix dir on Windows
@@ -130,7 +130,7 @@ def ensure_dependency(
             return False
 
     if shell == "powershell":
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         ps_bin = shutil.which("powershell") or shutil.which("pwsh")
         if not ps_bin:
             if interactive:

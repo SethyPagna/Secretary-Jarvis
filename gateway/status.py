@@ -19,7 +19,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from typing import Any, Optional
 from jarvis_cli.utils import atomic_json_write
 

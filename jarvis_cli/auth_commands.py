@@ -29,7 +29,7 @@ from agent.credential_pool import (
 )
 import jarvis_cli.auth as auth_mod
 from jarvis_cli.auth import PROVIDER_REGISTRY
-from jarvis_constants import OPENROUTER_BASE_URL
+from jarvis_cli.constants import OPENROUTER_BASE_URL
 
 
 # Providers that support OAuth login in addition to API keys.

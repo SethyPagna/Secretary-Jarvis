@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 
 from plugins.google_meet import process_manager as pm
 from plugins.google_meet.meet_bot import _is_safe_meet_url

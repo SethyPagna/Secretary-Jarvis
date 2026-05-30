@@ -1078,7 +1078,7 @@ class QQAdapter(BasePlatformAdapter):
         Writes via ``tmp + rename`` so a partial write can't fool the reader.
         """
         try:
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             home = get_jarvis_home()
             response_path = home / ".update_response"
             tmp = response_path.with_suffix(".tmp")

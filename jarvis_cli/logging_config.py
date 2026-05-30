@@ -31,7 +31,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional, Sequence
 
-from jarvis_constants import get_config_path, get_jarvis_home
+from jarvis_cli.constants import get_config_path, get_jarvis_home
 
 # Sentinel to track whether setup_logging() has already run.  The function
 # is idempotent — calling it twice is safe but the second call is a no-op

@@ -91,7 +91,7 @@ def list_providers() -> list[ProviderProfile]:
 def _user_plugins_dir() -> Path | None:
     """Return ``$JARVIS_HOME/plugins/model-providers/`` if it exists."""
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
 
         d = get_jarvis_home() / "plugins" / "model-providers"
         return d if d.is_dir() else None

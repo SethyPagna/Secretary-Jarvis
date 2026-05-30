@@ -548,7 +548,7 @@ _ensure_ssl_certs()
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Resolve Jarvis home directory (respects JARVIS_HOME override)
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from jarvis_cli.utils import atomic_json_write, atomic_yaml_write, base_url_host_matches, is_truthy_value
 _jarvis_home = get_jarvis_home()
 
@@ -756,7 +756,7 @@ if _config_path.exists():
 
 # Apply IPv4 preference if configured (before any HTTP clients are created).
 try:
-    from jarvis_constants import apply_ipv4_preference
+    from jarvis_cli.constants import apply_ipv4_preference
     _network_cfg = (_cfg if '_cfg' in dir() else {}).get("network", {})
     if isinstance(_network_cfg, dict) and _network_cfg.get("force_ipv4"):
         apply_ipv4_preference(force=True)
@@ -1131,7 +1131,7 @@ def _check_unavailable_skill(command_name: str) -> str | None:
                     )
 
         # Check optional skills (shipped with repo but not installed)
-        from jarvis_constants import get_optional_skills_dir
+        from jarvis_cli.constants import get_optional_skills_dir
         repo_root = Path(__file__).resolve().parent.parent
         optional_dir = get_optional_skills_dir(repo_root / "capabilities" / "optional-skills")
         if optional_dir.exists():
@@ -2589,7 +2589,7 @@ class GatewayRunner:
         "minimal", "low", "medium", "high", "xhigh". Returns None to use
         default (medium).
         """
-        from jarvis_constants import parse_reasoning_effort
+        from jarvis_cli.constants import parse_reasoning_effort
         effort = ""
         try:
             import yaml as _y
@@ -9134,7 +9134,7 @@ class GatewayRunner:
 
     async def _handle_profile_command(self, event: MessageEvent) -> str:
         """Handle /profile — show active profile name and home directory."""
-        from jarvis_constants import display_jarvis_home
+        from jarvis_cli.constants import display_jarvis_home
         from jarvis_cli.profiles import get_active_profile_name
 
         display = display_jarvis_home()
@@ -10263,7 +10263,7 @@ class GatewayRunner:
 
     async def _handle_personality_command(self, event: MessageEvent) -> str:
         """Handle /personality command - list or set a personality."""
-        from jarvis_constants import display_jarvis_home
+        from jarvis_cli.constants import display_jarvis_home
 
         args = event.get_command_args().strip().lower()
         config_path = _jarvis_home / 'config.yaml'

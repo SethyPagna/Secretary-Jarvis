@@ -47,7 +47,7 @@ _PROFILE_DIRS = [
     # Per-profile HOME for subprocesses: isolates system tool configs (git,
     # ssh, gh, npm …) so credentials don't bleed between profiles.  In Docker
     # this also ensures tool configs land inside the persistent volume.
-    # See jarvis_constants.get_subprocess_home() and issue #4426.
+    # See jarvis_cli.constants.get_subprocess_home() and issue #4426.
     "home",
 ]
 
@@ -230,7 +230,7 @@ def _get_default_jarvis_home() -> Path:
     In Docker/custom deployments where JARVIS_HOME is outside ``~/.jarvis``
     (e.g. ``/opt/data``), returns JARVIS_HOME directly.
     """
-    from jarvis_constants import get_default_jarvis_root
+    from jarvis_cli.constants import get_default_jarvis_root
     return get_default_jarvis_root()
 
 def _get_active_profile_path() -> Path:
@@ -690,7 +690,7 @@ def create_profile(
     if clone_from is not None or clone_all or clone_config:
         if clone_from is None:
             # Default: clone from active profile
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             source_dir = get_jarvis_home()
         else:
             clone_from = normalize_profile_name(clone_from)
@@ -1102,7 +1102,7 @@ def get_active_profile_name() -> str:
     Returns the profile name if JARVIS_HOME points into ``~/.jarvis/profiles/<name>``.
     Returns ``"custom"`` if JARVIS_HOME is set to an unrecognized path.
     """
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
     jarvis_home = get_jarvis_home()
     resolved = jarvis_home.resolve()
 

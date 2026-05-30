@@ -16,7 +16,7 @@ import re
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from typing import Optional, Dict, List, Any, Union
 
 logger = logging.getLogger(__name__)

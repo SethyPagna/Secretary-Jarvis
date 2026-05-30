@@ -1175,7 +1175,7 @@ class TelegramAdapter(BasePlatformAdapter):
     def _persist_dm_topic_thread_id(self, chat_id: int, topic_name: str, thread_id: int) -> None:
         """Save a newly created thread_id back into config.yaml so it persists across restarts."""
         try:
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             config_path = get_jarvis_home() / "config.yaml"
             if not config_path.exists():
                 logger.warning("[%s] Config file not found at %s, cannot persist thread_id", self.name, config_path)
@@ -3230,7 +3230,7 @@ class TelegramAdapter(BasePlatformAdapter):
             pass  # non-fatal if edit fails
         # Write the response file
         try:
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             home = get_jarvis_home()
             response_path = home / ".update_response"
             tmp = response_path.with_suffix(".tmp")
@@ -5333,7 +5333,7 @@ class TelegramAdapter(BasePlatformAdapter):
         recognized without a gateway restart.
         """
         try:
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             config_path = get_jarvis_home() / "config.yaml"
             if not config_path.exists():
                 return

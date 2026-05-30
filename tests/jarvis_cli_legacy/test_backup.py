@@ -1435,9 +1435,9 @@ class TestRunPreUpdateBackup:
         monkeypatch.setenv("JARVIS_HOME", str(root))
         # Make Path.home() point at tmp_path for anything that uses it
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
-        # Bust caches for jarvis_cli.config + jarvis_constants so they pick up JARVIS_HOME
+        # Bust caches for jarvis_cli.config + jarvis_cli.constants so they pick up JARVIS_HOME
         for mod in list(__import__("sys").modules.keys()):
-            if mod.startswith("jarvis_cli.config") or mod == "jarvis_constants":
+            if mod.startswith("jarvis_cli.config") or mod == "jarvis_cli.constants":
                 del __import__("sys").modules[mod]
         return root
 

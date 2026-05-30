@@ -959,7 +959,7 @@ All storage paths **must** use the `jarvis_home` kwarg from `initialize()`, not 
 
 ```python
 # CORRECT — profile-scoped
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 data_dir = get_jarvis_home() / "my-provider"
 
 # WRONG — shared across all profiles
@@ -1435,7 +1435,7 @@ db.delete_session("sess_abc123")
 
 Default path: `~/.jarvis/state.db`
 
-This is derived from `jarvis_constants.get_jarvis_home()` which resolves to
+This is derived from `jarvis_cli.constants.get_jarvis_home()` which resolves to
 `~/.jarvis/` by default, or the value of `JARVIS_HOME` environment variable.
 
 The database file, WAL file (`state.db-wal`), and shared-memory file

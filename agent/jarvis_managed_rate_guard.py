@@ -29,7 +29,7 @@ _STATE_FILENAME = "jarvis_managed.json"
 def _state_path() -> str:
     """Return the path to the JARVIS Managed rate limit state file."""
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         base = get_jarvis_home()
     except ImportError:
         base = os.path.join(os.path.expanduser("~"), ".jarvis")

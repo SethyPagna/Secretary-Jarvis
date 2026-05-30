@@ -25,7 +25,7 @@ from typing import Optional, Dict, Any
 from jarvis_cli.jarvis_managed_subscription import get_jarvis_managed_subscription_features
 from tools.tool_backend_helpers import managed_jarvis_managed_tools_enabled
 from jarvis_cli.utils import base_url_hostname
-from jarvis_constants import get_optional_skills_dir
+from jarvis_cli.constants import get_optional_skills_dir
 
 logger = logging.getLogger(__name__)
 
@@ -572,7 +572,7 @@ def _print_setup_summary(config: dict, jarvis_home):
         print_warning(
             "Some tools are disabled. Run 'jarvis setup tools' to configure them,"
         )
-        from jarvis_constants import display_jarvis_home as _dhh
+        from jarvis_cli.constants import display_jarvis_home as _dhh
         print_warning(f"or edit {_dhh()}/.env directly to add the missing API keys.")
         print()
 
@@ -596,7 +596,7 @@ def _print_setup_summary(config: dict, jarvis_home):
     print()
 
     # Show file locations prominently
-    from jarvis_constants import display_jarvis_home as _dhh
+    from jarvis_cli.constants import display_jarvis_home as _dhh
     print(color(f"📁 All your files are in {_dhh()}/:", Colors.CYAN, Colors.BOLD))
     print()
     print(f"   {color('Settings:', Colors.YELLOW)}  {get_config_path()}")
@@ -1292,7 +1292,7 @@ def _setup_tts_provider(config: dict):
                     save_env_value("XAI_API_KEY", api_key)
                     print_success("xAI TTS API key saved")
                 else:
-                    from jarvis_constants import display_jarvis_home as _dhh
+                    from jarvis_cli.constants import display_jarvis_home as _dhh
                     print_warning(
                         "No xAI API key provided for TTS. Configure XAI_API_KEY "
                         f"via jarvis setup model or {_dhh()}/.env to use xAI TTS. "
@@ -2114,7 +2114,7 @@ def _write_slack_manifest_and_instruct():
     """
     try:
         from jarvis_cli.slack_cli import _build_full_manifest
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
 
         manifest = _build_full_manifest(
             bot_name="Jarvis",
@@ -2381,7 +2381,7 @@ def _setup_webhooks():
     save_env_value("WEBHOOK_ENABLED", "true")
     print()
     print_success("Webhooks enabled! Next steps:")
-    from jarvis_constants import display_jarvis_home as _dhh
+    from jarvis_cli.constants import display_jarvis_home as _dhh
     print_info(f"   1. Define webhook routes in {_dhh()}/config.yaml")
     print_info("   2. Point your service (GitHub, GitLab, etc.) at:")
     print_info("      http://your-server:8644/webhooks/<route-name>")
@@ -2613,7 +2613,7 @@ def setup_gateway(config: dict):
                     print_info("  Or as a boot-time service: sudo jarvis gateway install --system")
                 print_info("  Or run in foreground:  jarvis gateway")
         else:
-            from jarvis_constants import is_container
+            from jarvis_cli.constants import is_container
             if is_container():
                 print_info("Start the gateway to bring your bots online:")
                 print_info("   jarvis gateway run          # Run as container main process")

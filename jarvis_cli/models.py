@@ -1227,7 +1227,7 @@ def fetch_ai_gateway_models(
     if _ai_gateway_catalog_cache is not None and not force_refresh:
         return list(_ai_gateway_catalog_cache)
 
-    from jarvis_constants import AI_GATEWAY_BASE_URL
+    from jarvis_cli.constants import AI_GATEWAY_BASE_URL
 
     fallback = list(VERCEL_AI_GATEWAY_MODELS)
     preferred_ids = [mid for mid, _ in fallback]
@@ -1451,7 +1451,7 @@ def fetch_ai_gateway_pricing(
     ``prompt`` / ``completion``. This translates. Cache read/write field names
     already match.
     """
-    from jarvis_constants import AI_GATEWAY_BASE_URL
+    from jarvis_cli.constants import AI_GATEWAY_BASE_URL
 
     cache_key = AI_GATEWAY_BASE_URL.rstrip("/")
     if not force_refresh and cache_key in _pricing_cache:
@@ -3143,7 +3143,7 @@ def _fetch_ai_gateway_models(timeout: float = 5.0) -> Optional[list[str]]:
         return None
     base_url = os.getenv("AI_GATEWAY_BASE_URL", "").strip()
     if not base_url:
-        from jarvis_constants import AI_GATEWAY_BASE_URL
+        from jarvis_cli.constants import AI_GATEWAY_BASE_URL
         base_url = AI_GATEWAY_BASE_URL
 
     url = base_url.rstrip("/") + "/models"
@@ -3204,7 +3204,7 @@ def _strip_ollama_cloud_suffix(model_id: str) -> str:
 
 def _ollama_cloud_cache_path() -> Path:
     """Return the path for the Ollama Cloud model cache."""
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
     return get_jarvis_home() / "ollama_cloud_models_cache.json"
 
 

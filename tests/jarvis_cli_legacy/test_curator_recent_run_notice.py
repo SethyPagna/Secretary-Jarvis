@@ -27,7 +27,7 @@ def curator_env(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("JARVIS_HOME", str(home))
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     importlib.reload(jarvis_constants)
     from agent import curator
     importlib.reload(curator)

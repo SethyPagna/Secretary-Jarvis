@@ -900,7 +900,7 @@ class DiscordAdapter(BasePlatformAdapter):
         logger.info("[%s] Disconnected", self.name)
 
     def _command_sync_state_path(self) -> _Path:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
 
         directory = get_jarvis_home() / _DISCORD_COMMAND_SYNC_STATE_SUBDIR
         try:
@@ -5262,7 +5262,7 @@ def _define_discord_view_classes() -> None:
 
             # Write response file
             try:
-                from jarvis_constants import get_jarvis_home
+                from jarvis_cli.constants import get_jarvis_home
                 home = get_jarvis_home()
                 response_path = home / ".update_response"
                 tmp = response_path.with_suffix(".tmp")

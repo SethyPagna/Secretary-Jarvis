@@ -150,7 +150,7 @@ class TestGatewayPersonalityNone:
         (tmp_path / "config.yaml").write_text(yaml.dump({"agent": {"personalities": {}}}))
 
         with patch("gateway.run._jarvis_home", tmp_path), \
-             patch("jarvis_constants.display_jarvis_home", return_value="~/.jarvis/profiles/coder"):
+             patch("jarvis_cli.constants.display_jarvis_home", return_value="~/.jarvis/profiles/coder"):
             event = self._make_event("")
             result = await runner._handle_personality_command(event)
 

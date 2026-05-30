@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from jarvis_constants import get_default_jarvis_root, get_jarvis_home, display_jarvis_home
+from jarvis_cli.constants import get_default_jarvis_root, get_jarvis_home, display_jarvis_home
 
 logger = logging.getLogger(__name__)
 

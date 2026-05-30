@@ -72,7 +72,7 @@ def _resolve_home_dir() -> str:
     """Return a stable HOME for child ACP processes."""
 
     try:
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
 
         profile_home = get_subprocess_home()
         if profile_home:

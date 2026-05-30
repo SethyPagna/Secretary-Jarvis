@@ -30,7 +30,7 @@ from jarvis_cli.auth import (
     has_usable_secret,
 )
 from jarvis_cli.config import get_compatible_custom_providers, load_config
-from jarvis_constants import OPENROUTER_BASE_URL
+from jarvis_cli.constants import OPENROUTER_BASE_URL
 from jarvis_cli.utils import base_url_host_matches, base_url_hostname
 
 

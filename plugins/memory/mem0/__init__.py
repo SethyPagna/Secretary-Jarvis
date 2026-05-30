@@ -44,7 +44,7 @@ def _load_config() -> dict:
     individual keys.  This avoids a silent failure when the JSON file exists
     but is missing fields like ``api_key`` that the user set in ``.env``.
     """
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     config = {
         "api_key": os.environ.get("MEM0_API_KEY", ""),

@@ -202,9 +202,9 @@ class TestExecuteCode(unittest.TestCase):
 
     def test_repo_root_modules_are_importable(self):
         """Sandboxed scripts can import modules that live at the repo root."""
-        result = self._run('import jarvis_constants; print(jarvis_constants.__file__)')
+        result = self._run('import jarvis_cli.constants as jarvis_constants; print(jarvis_constants.__file__)')
         self.assertEqual(result["status"], "success")
-        self.assertIn("jarvis_constants.py", result["output"])
+        self.assertIn("jarvis_cli/constants.py", result["output"])
 
     def test_single_tool_call(self):
         """Script calls terminal and prints the result."""

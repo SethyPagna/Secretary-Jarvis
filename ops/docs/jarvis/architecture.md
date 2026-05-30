@@ -63,7 +63,7 @@ jarvis-agent/
 ├── tools/model_tools.py            # Tool discovery, schema collection, dispatch
 ├── tools/toolsets.py               # Tool groupings and platform presets
 ├── jarvis_state.py           # SQLite session/state database with FTS5
-├── jarvis_constants.py       # JARVIS_HOME, profile-aware paths
+├── jarvis_cli/constants.py       # JARVIS_HOME, profile-aware paths
 ├── tools/batch_runner.py           # Batch trajectory generation
 │
 ├── agent/                    # Agent internals

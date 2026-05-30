@@ -66,7 +66,7 @@ from gateway.platforms.base import (
     cache_document_from_bytes,
     cache_image_from_bytes,
 )
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from jarvis_cli.utils import atomic_json_write
 
 ILINK_BASE_URL = "https://ilinkai.weixin.qq.com"

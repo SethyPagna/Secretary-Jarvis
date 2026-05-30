@@ -48,7 +48,7 @@ import httpx
 import yaml
 
 from jarvis_cli.config import get_jarvis_home, get_config_path, read_raw_config
-from jarvis_constants import OPENROUTER_BASE_URL, secure_parent_dir
+from jarvis_cli.constants import OPENROUTER_BASE_URL, secure_parent_dir
 from jarvis_cli.utils import atomic_replace, atomic_yaml_write, is_truthy_value
 
 logger = logging.getLogger(__name__)
@@ -831,7 +831,7 @@ def _global_auth_file_path() -> Optional[Path]:
     See issue #18594 follow-up (credential_pool shadowing).
     """
     try:
-        from jarvis_constants import get_default_jarvis_root
+        from jarvis_cli.constants import get_default_jarvis_root
         global_root = get_default_jarvis_root()
     except Exception:
         return None
@@ -4087,7 +4087,7 @@ def _jarvis_managed_shared_auth_dir() -> Path:
     Honors ``JARVIS_SHARED_AUTH_DIR`` so tests can redirect it to a tmp
     path without touching the real user's home. Defaults to
     ``<jarvis-root>/shared/``, where ``<jarvis-root>`` is what
-    :func:`jarvis_constants.get_default_jarvis_root` returns — so
+    :func:`jarvis_cli.constants.get_default_jarvis_root` returns — so
     Linux/macOS classic installs land at ``~/.jarvis/shared/``, native
     Windows installs at ``%LOCALAPPDATA%\\jarvis\\shared\\``, and
     Docker / custom ``JARVIS_HOME`` deployments at
@@ -4097,7 +4097,7 @@ def _jarvis_managed_shared_auth_dir() -> Path:
     override = os.getenv("JARVIS_SHARED_AUTH_DIR", "").strip()
     if override:
         return Path(override).expanduser()
-    from jarvis_constants import get_default_jarvis_root
+    from jarvis_cli.constants import get_default_jarvis_root
     return get_default_jarvis_root() / "shared"
 
 
@@ -4110,7 +4110,7 @@ def _jarvis_managed_shared_store_path() -> Path:
     # so forgetting to set it fails loudly instead of writing to the real
     # shared store).
     if os.environ.get("PYTEST_CURRENT_TEST"):
-        from jarvis_constants import get_default_jarvis_root
+        from jarvis_cli.constants import get_default_jarvis_root
         real_home_shared = (
             get_default_jarvis_root() / "shared" / JARVIS_MANAGED_SHARED_STORE_FILENAME
         ).resolve(strict=False)
@@ -6298,7 +6298,7 @@ def _login_openai_codex(
     config_path = _update_config_for_provider("openai-codex", creds.get("base_url", DEFAULT_CODEX_BASE_URL))
     print()
     print("Login successful!")
-    from jarvis_constants import display_jarvis_home as _dhh
+    from jarvis_cli.constants import display_jarvis_home as _dhh
     print(f"  Auth state: {_dhh()}/auth.json")
     print(f"  Config updated: {config_path} (model.provider=openai-codex)")
 
@@ -6358,7 +6358,7 @@ def _login_xai_oauth(
     config_path = _update_config_for_provider("xai-oauth", creds.get("base_url", DEFAULT_XAI_OAUTH_BASE_URL))
     print()
     print("Login successful!")
-    from jarvis_constants import display_jarvis_home as _dhh
+    from jarvis_cli.constants import display_jarvis_home as _dhh
     print(f"  Auth state: {_dhh()}/auth.json")
     print(f"  Config updated: {config_path} (model.provider=xai-oauth)")
 

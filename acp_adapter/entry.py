@@ -29,7 +29,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 
 
 # Methods clients send as periodic liveness probes. They are not part of the

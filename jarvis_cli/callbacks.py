@@ -12,7 +12,7 @@ import getpass
 
 from jarvis_cli.banner import cprint, _DIM, _RST
 from jarvis_cli.config import save_env_value_secure
-from jarvis_constants import display_jarvis_home
+from jarvis_cli.constants import display_jarvis_home
 
 
 def clarify_callback(cli, question, choices):

@@ -39,7 +39,7 @@ class TestWriteDenyExactPaths:
         # ``~/.jarvis``) must be write-denied. The hermetic test conftest
         # points JARVIS_HOME at a tempdir — resolve via get_jarvis_home()
         # to match the denylist.
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         path = str(get_jarvis_home() / ".env")
         assert _is_write_denied(path) is True
 
@@ -62,7 +62,7 @@ class TestWriteDenyExactPaths:
         monkeypatch.setenv("JARVIS_HOME", str(profile_home))
 
         # Sanity check: JARVIS_HOME does point to the profile dir, not the root.
-        from jarvis_constants import get_jarvis_home, get_default_jarvis_root
+        from jarvis_cli.constants import get_jarvis_home, get_default_jarvis_root
         assert get_jarvis_home() == profile_home
         assert get_default_jarvis_root() == root
 

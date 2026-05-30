@@ -104,7 +104,7 @@ def _load_catalog_config() -> dict[str, Any]:
 
 def _cache_path() -> Path:
     """Return the disk cache path. Import lazily so tests can monkeypatch home."""
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
     return get_jarvis_home() / "cache" / "model_catalog.json"
 
 

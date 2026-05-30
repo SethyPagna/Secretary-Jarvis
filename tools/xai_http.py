@@ -30,7 +30,7 @@ def has_xai_credentials() -> bool:
     if os.environ.get("XAI_API_KEY", "").strip():
         return True
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
 
         auth_path = get_jarvis_home() / "auth.json"
         if not auth_path.exists():

@@ -10,7 +10,7 @@ import os
 import sys
 from pathlib import Path
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from plugins.memory.honcho.client import resolve_active_host, resolve_config_path, HOST
 from jarvis_cli.config import cfg_get
 

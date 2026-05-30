@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 from typing import Any, Optional
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from jarvis_cli.config import cfg_get
 
 logger = logging.getLogger(__name__)
@@ -254,7 +254,7 @@ def _prompt_plugin_env_vars(manifest: dict, console) -> None:
         return
 
     from jarvis_cli.config import get_env_value, save_env_value  # noqa: F811
-    from jarvis_constants import display_jarvis_home
+    from jarvis_cli.constants import display_jarvis_home
 
     # Normalise to list-of-dicts
     env_specs: list[dict] = []

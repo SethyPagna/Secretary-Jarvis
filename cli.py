@@ -158,7 +158,7 @@ _COMMAND_SPINNER_FRAMES = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧
 
 # Load .env from ~/.jarvis/.env first, then project root as dev fallback.
 # User-managed env files should override stale shell exports on restart.
-from jarvis_constants import get_jarvis_home, display_jarvis_home
+from jarvis_cli.constants import get_jarvis_home, display_jarvis_home
 from jarvis_cli.browser_connect import (
     DEFAULT_BROWSER_CDP_URL,
     is_browser_debug_ready,
@@ -308,7 +308,7 @@ def _load_prefill_messages(file_path: str) -> List[Dict[str, Any]]:
 
 def _parse_reasoning_config(effort: str) -> dict | None:
     """Parse a reasoning effort level into an OpenRouter reasoning config dict."""
-    from jarvis_constants import parse_reasoning_effort
+    from jarvis_cli.constants import parse_reasoning_effort
     result = parse_reasoning_effort(effort)
     if effort and effort.strip() and result is None:
         logger.warning("Unknown reasoning_effort '%s', using default (medium)", effort)
@@ -1250,7 +1250,7 @@ def _run_state_db_auto_maintenance(session_db) -> None:
         return
     try:
         from jarvis_cli.config import load_config as _load_full_config
-        from jarvis_constants import get_jarvis_home as _get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home as _get_jarvis_home
         _jarvis_home_maint = _get_jarvis_home()
 
         # One-time prune of empty TUI ghost sessions.
@@ -2097,7 +2097,7 @@ _IMAGE_EXTENSIONS = frozenset({
 })
 
 
-from jarvis_constants import is_termux as _is_termux_environment
+from jarvis_cli.constants import is_termux as _is_termux_environment
 
 
 def _termux_example_image_path(filename: str = "cat.png") -> str:
@@ -5390,7 +5390,7 @@ class JarvisCLI:
             create_quick_snapshot, list_quick_snapshots,
             restore_quick_snapshot, prune_quick_snapshots,
         )
-        from jarvis_constants import display_jarvis_home
+        from jarvis_cli.constants import display_jarvis_home
 
         parts = command.split()
         subcmd = parts[1].lower() if len(parts) > 1 else "list"
@@ -6060,7 +6060,7 @@ class JarvisCLI:
     
     def _handle_profile_command(self):
         """Display active profile name and home directory."""
-        from jarvis_constants import display_jarvis_home
+        from jarvis_cli.constants import display_jarvis_home
         from jarvis_cli.profiles import get_active_profile_name
 
         display = display_jarvis_home()
@@ -14375,7 +14375,7 @@ class JarvisCLI:
                 # and SQLite history. Ported from google-gemini/gemini-cli#19332.
                 if getattr(self, '_delete_session_on_exit', False):
                     try:
-                        from jarvis_constants import get_jarvis_home as _ghh
+                        from jarvis_cli.constants import get_jarvis_home as _ghh
                         _sessions_dir = _ghh() / "sessions"
                         _sid = self.agent.session_id
                         if self._session_db.delete_session(_sid, sessions_dir=_sessions_dir):

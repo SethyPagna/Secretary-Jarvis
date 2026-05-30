@@ -57,7 +57,7 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from typing import Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)

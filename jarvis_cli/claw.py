@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 from jarvis_cli.config import get_jarvis_home, get_config_path, load_config, save_config
-from jarvis_constants import get_optional_skills_dir
+from jarvis_cli.constants import get_optional_skills_dir
 from jarvis_cli.setup import (
     Colors,
     color,

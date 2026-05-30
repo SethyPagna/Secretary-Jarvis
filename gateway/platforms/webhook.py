@@ -292,7 +292,7 @@ class WebhookAdapter(BasePlatformAdapter):
 
     def _reload_dynamic_routes(self) -> None:
         """Reload agent-created subscriptions from disk if the file changed."""
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         jarvis_home = get_jarvis_home()
         subs_path = jarvis_home / _DYNAMIC_ROUTES_FILENAME
         if not subs_path.exists():

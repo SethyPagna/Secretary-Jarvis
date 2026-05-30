@@ -26,7 +26,7 @@ jarvis-agent/
 ├── tools/toolsets.py           # Toolset definitions, JARVIS core tool list
 ├── cli.py                # JARVIS interactive shell orchestrator (~11k LOC)
 ├── jarvis_state.py       # SessionDB — SQLite session store (FTS5 search)
-├── jarvis_constants.py   # get_jarvis_home(), display_jarvis_home() — profile-aware paths
+├── jarvis_cli/constants.py   # get_jarvis_home(), display_jarvis_home() — profile-aware paths
 ├── jarvis_cli/logging_config.py     # setup_logging() — agent.log / errors.log / gateway.log (profile-aware)
 ├── tools/batch_runner.py       # Parallel batch processing
 ├── agent/                # Agent internals (provider adapters, memory, caching, compression, etc.)
@@ -871,22 +871,22 @@ automatically scope to the active profile.
 
 ### Rules for profile-safe code
 
-1. **Use `get_jarvis_home()` for all JARVIS_HOME paths.** Import from `jarvis_constants`.
+1. **Use `get_jarvis_home()` for all JARVIS_HOME paths.** Import from `jarvis_cli.constants`.
    NEVER hardcode `~/.jarvis` or `Path.home() / ".jarvis"` in code that reads/writes state.
    ```python
    # GOOD
-   from jarvis_constants import get_jarvis_home
+   from jarvis_cli.constants import get_jarvis_home
    config_path = get_jarvis_home() / "config.yaml"
 
    # BAD — breaks profiles
    config_path = Path.home() / ".jarvis" / "config.yaml"
    ```
 
-2. **Use `display_jarvis_home()` for user-facing messages.** Import from `jarvis_constants`.
+2. **Use `display_jarvis_home()` for user-facing messages.** Import from `jarvis_cli.constants`.
    This returns `~/.jarvis` for default or `~/.jarvis/profiles/<name>` for profiles.
    ```python
    # GOOD
-   from jarvis_constants import display_jarvis_home
+   from jarvis_cli.constants import display_jarvis_home
    print(f"Config saved to {display_jarvis_home()}/config.yaml")
 
    # BAD — shows wrong path for profiles
@@ -919,7 +919,7 @@ automatically scope to the active profile.
 ## Known Pitfalls
 
 ### DO NOT hardcode `~/.jarvis` paths
-Use `get_jarvis_home()` from `jarvis_constants` for code paths. Use `display_jarvis_home()`
+Use `get_jarvis_home()` from `jarvis_cli.constants` for code paths. Use `display_jarvis_home()`
 for user-facing print/log messages. Hardcoding `~/.jarvis` breaks profiles — each profile
 has its own `JARVIS_HOME` directory. This was the source of 5 bugs fixed in PR #3575.
 

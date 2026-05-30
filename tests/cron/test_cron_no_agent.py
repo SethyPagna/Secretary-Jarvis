@@ -30,7 +30,7 @@ def jarvis_env(tmp_path, monkeypatch):
 
     # Reload modules that cache get_jarvis_home() at import time.
     import importlib
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     importlib.reload(jarvis_constants)
     import cron.jobs
     importlib.reload(cron.jobs)

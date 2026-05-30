@@ -24,7 +24,7 @@ from jarvis_cli.config import (
     get_jarvis_home,  # noqa: F401 — used by test mocks
 )
 from jarvis_cli.colors import Colors, color
-from jarvis_constants import display_jarvis_home
+from jarvis_cli.constants import display_jarvis_home
 from tools.mcp_tool import _ENV_VAR_PATTERN
 
 logger = logging.getLogger(__name__)

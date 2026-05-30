@@ -11,7 +11,7 @@ from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from tools.tool_backend_helpers import managed_jarvis_managed_tools_enabled
 
 _DEFAULT_TOOL_GATEWAY_DOMAIN = "jarvis.local"

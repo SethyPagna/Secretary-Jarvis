@@ -26,7 +26,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from jarvis_constants import get_bundled_skills_dir, get_jarvis_home
+from jarvis_cli.constants import get_bundled_skills_dir, get_jarvis_home
 from agent.skill_utils import is_excluded_skill_path
 from typing import Dict, List, Tuple
 from jarvis_cli.utils import atomic_replace

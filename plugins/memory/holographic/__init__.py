@@ -95,7 +95,7 @@ FACT_FEEDBACK_SCHEMA = {
 # ---------------------------------------------------------------------------
 
 def _load_plugin_config() -> dict:
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
     config_path = get_jarvis_home() / "config.yaml"
     if not config_path.exists():
         return {}
@@ -146,7 +146,7 @@ class HolographicMemoryProvider(MemoryProvider):
             pass
 
     def get_config_schema(self):
-        from jarvis_constants import display_jarvis_home
+        from jarvis_cli.constants import display_jarvis_home
         _default_db = f"{display_jarvis_home()}/memory_store.db"
         return [
             {"key": "db_path", "description": "SQLite database path", "default": _default_db},
@@ -156,7 +156,7 @@ class HolographicMemoryProvider(MemoryProvider):
         ]
 
     def initialize(self, session_id: str, **kwargs) -> None:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         _jarvis_home = str(get_jarvis_home())
         _default_db = _jarvis_home + "/memory_store.db"
         db_path = self._config.get("db_path", _default_db)

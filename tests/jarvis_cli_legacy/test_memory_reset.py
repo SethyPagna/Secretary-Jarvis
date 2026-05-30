@@ -39,7 +39,7 @@ def _run_memory_reset(target="all", yes=False, monkeypatch=None, confirm_input="
 
     Simulates what happens when `jarvis memory reset` is run.
     """
-    from jarvis_constants import get_jarvis_home, display_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home, display_jarvis_home
 
     mem_dir = get_jarvis_home() / "memories"
     files_to_reset = []

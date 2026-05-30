@@ -20,11 +20,11 @@ import pytest
 # ---------------------------------------------------------------------------
 
 class TestGetSubprocessHome:
-    """Unit tests for jarvis_constants.get_subprocess_home()."""
+    """Unit tests for jarvis_cli.constants.get_subprocess_home()."""
 
     def test_returns_none_when_jarvis_home_unset(self, monkeypatch):
         monkeypatch.delenv("JARVIS_HOME", raising=False)
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
         assert get_subprocess_home() is None
 
     def test_returns_none_when_home_dir_missing(self, tmp_path, monkeypatch):
@@ -32,7 +32,7 @@ class TestGetSubprocessHome:
         jarvis_home.mkdir()
         monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
         # No home/ subdirectory created
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
         assert get_subprocess_home() is None
 
     def test_returns_path_when_home_dir_exists(self, tmp_path, monkeypatch):
@@ -41,7 +41,7 @@ class TestGetSubprocessHome:
         profile_home = jarvis_home / "home"
         profile_home.mkdir()
         monkeypatch.setenv("JARVIS_HOME", str(jarvis_home))
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
         assert get_subprocess_home() == str(profile_home)
 
     def test_returns_profile_specific_path(self, tmp_path, monkeypatch):
@@ -51,7 +51,7 @@ class TestGetSubprocessHome:
         profile_home = profile_dir / "home"
         profile_home.mkdir()
         monkeypatch.setenv("JARVIS_HOME", str(profile_dir))
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
         assert get_subprocess_home() == str(profile_home)
 
     def test_two_profiles_get_different_homes(self, tmp_path, monkeypatch):
@@ -61,7 +61,7 @@ class TestGetSubprocessHome:
             p.mkdir(parents=True)
             (p / "home").mkdir()
 
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
 
         monkeypatch.setenv("JARVIS_HOME", str(base / "alpha"))
         home_a = get_subprocess_home()
@@ -82,7 +82,7 @@ class TestGetSubprocessHome:
         profile.mkdir()
         monkeypatch.setenv("JARVIS_HOME", str(root))
 
-        from jarvis_constants import (
+        from jarvis_cli.constants import (
             get_jarvis_home,
             reset_jarvis_home_override,
             set_jarvis_home_override,
@@ -167,7 +167,7 @@ class TestMakeRunEnvHomeInjection:
         monkeypatch.setenv("HOME", "/root")
         monkeypatch.setenv("PATH", "/usr/bin:/bin")
 
-        from jarvis_constants import reset_jarvis_home_override, set_jarvis_home_override
+        from jarvis_cli.constants import reset_jarvis_home_override, set_jarvis_home_override
         from tools.environments.local import _make_run_env
 
         token = set_jarvis_home_override(profile)
@@ -219,7 +219,7 @@ class TestSanitizeSubprocessEnvHomeInjection:
         monkeypatch.setenv("JARVIS_HOME", str(root))
 
         base_env = {"HOME": "/root", "PATH": "/usr/bin"}
-        from jarvis_constants import reset_jarvis_home_override, set_jarvis_home_override
+        from jarvis_cli.constants import reset_jarvis_home_override, set_jarvis_home_override
         from tools.environments.local import _sanitize_subprocess_env
 
         token = set_jarvis_home_override(profile)
@@ -273,7 +273,7 @@ class TestPythonProcessUnchanged:
         original_home = os.environ.get("HOME")
         original_path_home = str(Path.home())
 
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
         sub_home = get_subprocess_home()
 
         # Subprocess home is set but Python HOME stays the same

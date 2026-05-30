@@ -206,7 +206,7 @@ def _remove_claude_code(provider: str, removed) -> RemovalResult:
 
 def _remove_jarvis_pkce(provider: str, removed) -> RemovalResult:
     """~/.jarvis/.anthropic_oauth.json is ours — delete it outright."""
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     result = RemovalResult()
     oauth_file = get_jarvis_home() / ".anthropic_oauth.json"

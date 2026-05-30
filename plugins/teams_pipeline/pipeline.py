@@ -17,7 +17,7 @@ from typing import Any, Awaitable, Callable, Optional
 import httpx
 
 from agent.auxiliary_client import async_call_llm, extract_content_or_reasoning
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from plugins.teams_pipeline.meetings import (
     TeamsMeetingArtifactNotFoundError,
     download_recording_artifact,

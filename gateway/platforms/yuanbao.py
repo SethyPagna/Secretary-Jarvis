@@ -1588,7 +1588,7 @@ class AutoSetHomeMiddleware(InboundMiddleware):
                 adapter._auto_sethome_done = True  # DM seen — no further upgrades needed
             if _should_set:
                 try:
-                    from jarvis_constants import get_jarvis_home
+                    from jarvis_cli.constants import get_jarvis_home
                     from jarvis_cli.utils import atomic_yaml_write
                     import yaml
 

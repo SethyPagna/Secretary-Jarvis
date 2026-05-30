@@ -310,7 +310,7 @@ class TestSysPathOrdering:
         from cron.scheduler import _jarvis_now
         assert callable(_jarvis_now)
 
-    def test_jarvis_constants_importable(self):
-        """jarvis_constants should be importable from cron context."""
-        from jarvis_constants import get_jarvis_home
+    def test_constants_importable(self):
+        """jarvis_cli.constants should be importable from cron context."""
+        from jarvis_cli.constants import get_jarvis_home
         assert callable(get_jarvis_home)

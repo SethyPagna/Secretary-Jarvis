@@ -11,7 +11,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from typing import Dict, List, Optional
 
 from rich.console import Console

@@ -322,7 +322,7 @@ class TestBuildSessionContextPrompt:
         )
         ctx = build_session_context(source, config)
 
-        with patch("jarvis_constants.display_jarvis_home", return_value="~/.jarvis/profiles/coder"):
+        with patch("jarvis_cli.constants.display_jarvis_home", return_value="~/.jarvis/profiles/coder"):
             prompt = build_session_context_prompt(ctx)
 
         assert "~/.jarvis/profiles/coder/cron/output/" in prompt

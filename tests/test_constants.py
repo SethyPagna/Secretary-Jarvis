@@ -1,4 +1,4 @@
-"""Tests for jarvis_constants module."""
+"""Tests for jarvis_cli.constants module."""
 
 import os
 from pathlib import Path
@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 import pytest
 
-import jarvis_constants
-from jarvis_constants import (
+import jarvis_cli.constants as jarvis_constants
+from jarvis_cli.constants import (
     VALID_REASONING_EFFORTS,
     get_default_jarvis_root,
     is_container,

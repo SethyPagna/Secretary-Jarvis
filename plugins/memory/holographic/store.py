@@ -105,7 +105,7 @@ class MemoryStore:
         hrr_dim: int = 1024,
     ) -> None:
         if db_path is None:
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             db_path = str(get_jarvis_home() / "memory_store.db")
         self.db_path = Path(db_path).expanduser()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)

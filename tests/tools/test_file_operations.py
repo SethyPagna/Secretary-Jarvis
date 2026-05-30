@@ -72,7 +72,7 @@ class TestIsWriteDenied:
     )
     def test_jarvis_control_files_and_mcp_tokens_denied(self, path):
         """Jarvis control files and mcp-tokens entries must be write-denied."""
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         jarvis_home = get_jarvis_home()
         full_path = str(jarvis_home / path)
         assert _is_write_denied(full_path) is True
@@ -87,7 +87,7 @@ class TestIsWriteDenied:
     )
     def test_jarvis_control_files_traversal_denied(self, path):
         """Path traversal attempts to control files must be blocked by realpath."""
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         jarvis_home = get_jarvis_home()
         full_path = str(jarvis_home / path)
         assert _is_write_denied(full_path) is True

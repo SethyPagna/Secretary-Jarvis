@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 except Exception:  # pragma: no cover — plugin may load before constants resolves
     import os
 

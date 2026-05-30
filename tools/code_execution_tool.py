@@ -1215,7 +1215,7 @@ def execute_code(
 
         # Per-profile HOME isolation: redirect system tool configs into
         # {JARVIS_HOME}/home/ when that directory exists.
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
         _profile_home = get_subprocess_home()
         if _profile_home:
             child_env["HOME"] = _profile_home

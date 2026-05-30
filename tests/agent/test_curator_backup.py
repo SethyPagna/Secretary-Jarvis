@@ -23,7 +23,7 @@ def backup_env(monkeypatch, tmp_path):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
     # Reload so get_jarvis_home picks up the env var fresh.
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     importlib.reload(jarvis_constants)
     from agent import curator_backup
     importlib.reload(curator_backup)
@@ -337,7 +337,7 @@ def _write_cron_jobs(home: Path, jobs: list) -> Path:
 
 def _reload_cron_jobs(home: Path):
     """Reload cron.jobs so its module-level JARVIS_DIR picks up the tmp HOME."""
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     importlib.reload(jarvis_constants)
     if "cron.jobs" in sys.modules:
         import cron.jobs as _cj

@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from jarvis_constants import get_config_path, get_skills_dir, is_termux
+from jarvis_cli.constants import get_config_path, get_skills_dir, is_termux
 
 logger = logging.getLogger(__name__)
 
@@ -290,7 +290,7 @@ def get_external_skills_dirs() -> List[Path]:
     if not isinstance(raw_dirs, list):
         return []
 
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     jarvis_home = get_jarvis_home()
     local_skills = get_skills_dir().resolve()

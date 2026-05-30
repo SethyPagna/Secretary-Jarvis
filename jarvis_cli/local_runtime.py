@@ -323,7 +323,7 @@ def _plan_summary(plan: dict[str, Any]) -> dict[str, Any]:
 
 def _runtime_log_path() -> Path:
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
 
         log_dir = get_jarvis_home() / "logs"
     except Exception:

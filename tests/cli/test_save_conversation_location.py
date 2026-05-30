@@ -27,7 +27,7 @@ def jarvis_home(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.setenv("JARVIS_HOME", str(home))
     # Clear any cached jarvis_home computation
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     if hasattr(jarvis_constants, "_jarvis_home_cache"):
         jarvis_constants._jarvis_home_cache = None
     return home
@@ -51,7 +51,7 @@ def test_save_conversation_writes_under_jarvis_home(jarvis_home, tmp_path, monke
     monkeypatch.chdir(work)
 
     # Import fresh to pick up the JARVIS_HOME fixture
-    for mod in [m for m in sys.modules if m.startswith("cli") or m == "jarvis_constants"]:
+    for mod in [m for m in sys.modules if m.startswith("cli") or m == "jarvis_cli.constants"]:
         sys.modules.pop(mod, None)
 
     import cli  # noqa: F401  (module under test)
@@ -89,7 +89,7 @@ def test_save_conversation_writes_under_jarvis_home(jarvis_home, tmp_path, monke
 
 
 def test_save_conversation_empty_history_does_nothing(jarvis_home, capsys):
-    for mod in [m for m in sys.modules if m.startswith("cli") or m == "jarvis_constants"]:
+    for mod in [m for m in sys.modules if m.startswith("cli") or m == "jarvis_cli.constants"]:
         sys.modules.pop(mod, None)
     import cli
 

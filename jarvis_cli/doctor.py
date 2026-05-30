@@ -13,7 +13,7 @@ from pathlib import Path
 
 from jarvis_cli.config import get_project_root, get_jarvis_home, get_env_path
 from jarvis_cli.env_loader import load_jarvis_dotenv
-from jarvis_constants import display_jarvis_home
+from jarvis_cli.constants import display_jarvis_home
 
 PROJECT_ROOT = get_project_root()
 JARVIS_HOME = get_jarvis_home()
@@ -26,7 +26,7 @@ load_jarvis_dotenv(jarvis_home=_env_path.parent, project_env=PROJECT_ROOT / ".en
 from jarvis_cli.colors import Colors, color
 from jarvis_cli.models import _JARVIS_USER_AGENT
 from jarvis_cli.vercel_auth import describe_vercel_auth
-from jarvis_constants import OPENROUTER_MODELS_URL
+from jarvis_cli.constants import OPENROUTER_MODELS_URL
 from jarvis_cli.utils import base_url_host_matches
 
 
@@ -57,7 +57,7 @@ _PROVIDER_ENV_HINTS = (
 )
 
 
-from jarvis_constants import is_termux as _is_termux
+from jarvis_cli.constants import is_termux as _is_termux
 
 
 def _python_install_cmd() -> str:

@@ -8,8 +8,8 @@ import pytest
 
 
 def _reload_constants():
-    """Reload jarvis_constants to get a fresh apply_ipv4_preference."""
-    import jarvis_constants
+    """Reload jarvis_cli.constants to get a fresh apply_ipv4_preference."""
+    import jarvis_cli.constants as jarvis_constants
     importlib.reload(jarvis_constants)
     return jarvis_constants
 
@@ -27,14 +27,14 @@ class TestApplyIPv4Preference:
 
     def test_noop_when_force_false(self):
         """No patch when force=False."""
-        from jarvis_constants import apply_ipv4_preference
+        from jarvis_cli.constants import apply_ipv4_preference
         original = socket.getaddrinfo
         apply_ipv4_preference(force=False)
         assert socket.getaddrinfo is original
 
     def test_patches_getaddrinfo_when_forced(self):
         """Patches socket.getaddrinfo when force=True."""
-        from jarvis_constants import apply_ipv4_preference
+        from jarvis_cli.constants import apply_ipv4_preference
         original = socket.getaddrinfo
         apply_ipv4_preference(force=True)
         assert socket.getaddrinfo is not original
@@ -42,7 +42,7 @@ class TestApplyIPv4Preference:
 
     def test_double_patch_is_safe(self):
         """Calling apply twice doesn't double-wrap."""
-        from jarvis_constants import apply_ipv4_preference
+        from jarvis_cli.constants import apply_ipv4_preference
         apply_ipv4_preference(force=True)
         first_patch = socket.getaddrinfo
         apply_ipv4_preference(force=True)
@@ -50,7 +50,7 @@ class TestApplyIPv4Preference:
 
     def test_af_unspec_becomes_af_inet(self):
         """AF_UNSPEC (default) calls get rewritten to AF_INET."""
-        from jarvis_constants import apply_ipv4_preference
+        from jarvis_cli.constants import apply_ipv4_preference
 
         calls = []
         original = socket.getaddrinfo
@@ -68,7 +68,7 @@ class TestApplyIPv4Preference:
 
     def test_explicit_family_preserved(self):
         """Explicit AF_INET6 requests are not intercepted."""
-        from jarvis_constants import apply_ipv4_preference
+        from jarvis_cli.constants import apply_ipv4_preference
 
         calls = []
         original = socket.getaddrinfo
@@ -85,7 +85,7 @@ class TestApplyIPv4Preference:
 
     def test_fallback_on_gaierror(self):
         """Falls back to AF_UNSPEC if AF_INET resolution fails."""
-        from jarvis_constants import apply_ipv4_preference
+        from jarvis_cli.constants import apply_ipv4_preference
 
         call_families = []
 

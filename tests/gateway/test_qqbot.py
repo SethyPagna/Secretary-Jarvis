@@ -1633,7 +1633,7 @@ class TestDefaultInteractionDispatch:
         jarvis_home = tmp_path / "jarvis_home"
         jarvis_home.mkdir()
         monkeypatch.setattr(
-            "jarvis_constants.get_jarvis_home",
+            "jarvis_cli.constants.get_jarvis_home",
             lambda: jarvis_home,
         )
 
@@ -1654,7 +1654,7 @@ class TestDefaultInteractionDispatch:
         jarvis_home = tmp_path / "jarvis_home"
         jarvis_home.mkdir()
         monkeypatch.setattr(
-            "jarvis_constants.get_jarvis_home",
+            "jarvis_cli.constants.get_jarvis_home",
             lambda: jarvis_home,
         )
         from gateway.platforms.qqbot.keyboards import parse_interaction_event

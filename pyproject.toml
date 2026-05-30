@@ -209,7 +209,7 @@ jarvis-desktop-backend = "jarvis_cli.desktop_entry:main"
 jarvis-acp = "acp_adapter.entry:main"
 
 [tool.setuptools]
-py-modules = ["run_agent", "jarvis_constants", "jarvis_state"]
+py-modules = ["run_agent", "jarvis_state"]
 
 [tool.setuptools.package-data]
 jarvis_cli = ["data/**/*", "web_dist/**/*", "scripts/install.sh", "scripts/install.ps1"]

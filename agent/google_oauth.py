@@ -59,7 +59,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from jarvis_constants import get_jarvis_home, secure_parent_dir
+from jarvis_cli.constants import get_jarvis_home, secure_parent_dir
 
 logger = logging.getLogger(__name__)
 

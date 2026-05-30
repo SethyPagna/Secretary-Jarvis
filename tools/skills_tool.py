@@ -69,7 +69,7 @@ Usage:
 import json
 import logging
 
-from jarvis_constants import get_jarvis_home, display_jarvis_home
+from jarvis_cli.constants import get_jarvis_home, display_jarvis_home
 import os
 import re
 from enum import Enum

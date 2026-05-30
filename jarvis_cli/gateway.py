@@ -32,7 +32,7 @@ from jarvis_cli.config import (
     save_env_value,
 )
 # display_jarvis_home is imported lazily at call sites to avoid ImportError
-# when jarvis_constants is cached from a pre-update version during `jarvis update`.
+# when jarvis_cli.constants is cached from a pre-update version during `jarvis update`.
 from jarvis_cli.setup import (
     print_header, print_info, print_success, print_warning, print_error,
     prompt, prompt_choice, prompt_yes_no,
@@ -978,7 +978,7 @@ def get_gateway_runtime_snapshot(system: bool = False) -> GatewayRuntimeSnapshot
             gateway_pids=gateway_pids,
         )
 
-    from jarvis_constants import is_container
+    from jarvis_cli.constants import is_container
 
     if is_linux() and is_container():
         return GatewayRuntimeSnapshot(
@@ -1172,7 +1172,7 @@ def is_linux() -> bool:
     return sys.platform.startswith('linux')
 
 
-from jarvis_constants import is_container, is_termux, is_wsl
+from jarvis_cli.constants import is_container, is_termux, is_wsl
 
 
 def _wsl_systemd_operational() -> bool:
@@ -1267,7 +1267,7 @@ def _profile_suffix() -> str:
     """
     import hashlib
     import re
-    from jarvis_constants import get_default_jarvis_root
+    from jarvis_cli.constants import get_default_jarvis_root
     home = get_jarvis_home().resolve()
     default = get_default_jarvis_root().resolve()
     if home == default:
@@ -1297,7 +1297,7 @@ def _profile_arg(jarvis_home: str | None = None) -> str:
             service definition for a different user (e.g. system service).
     """
     import re
-    from jarvis_constants import get_default_jarvis_root
+    from jarvis_cli.constants import get_default_jarvis_root
     home = Path(jarvis_home or str(get_jarvis_home())).resolve()
     default = get_default_jarvis_root().resolve()
     if home == default:
@@ -2921,7 +2921,7 @@ def launchd_install(force: bool = False):
     print()
     print("Next steps:")
     print("  jarvis gateway status             # Check status")
-    from jarvis_constants import display_jarvis_home as _dhh
+    from jarvis_cli.constants import display_jarvis_home as _dhh
     print(f"  tail -f {_dhh()}/logs/gateway.log  # View logs")
 
 def launchd_uninstall():
@@ -3235,7 +3235,7 @@ def run_gateway(verbose: int = 0, quiet: bool = False, replace: bool = False):
         if os.environ.get("JARVIS_GATEWAY_EXIT_DIAG", "1") != "1":
             return
         try:
-            from jarvis_constants import get_jarvis_home as _ghh
+            from jarvis_cli.constants import get_jarvis_home as _ghh
             log_dir = _ghh() / "logs"
             log_dir.mkdir(parents=True, exist_ok=True)
             ts = _dt.now(_tz.utc).isoformat()
@@ -4989,7 +4989,7 @@ def gateway_setup():
                 print_info("  For persistence:   tmux new -s jarvis 'jarvis gateway run'")
                 print_info("  To enable systemd: add systemd=true to /etc/wsl.conf, then 'wsl --shutdown'")
             elif is_termux():
-                from jarvis_constants import display_jarvis_home as _dhh
+                from jarvis_cli.constants import display_jarvis_home as _dhh
                 print_info("  Termux does not use systemd/launchd services.")
                 print_info("  Run in foreground: jarvis gateway run")
                 print_info(f"  Or start it manually in the background (best effort): nohup jarvis gateway run >{_dhh()}/logs/gateway.log 2>&1 &")

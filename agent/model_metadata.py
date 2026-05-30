@@ -18,7 +18,7 @@ import yaml
 
 from jarvis_cli.utils import base_url_host_matches, base_url_hostname
 
-from jarvis_constants import OPENROUTER_MODELS_URL
+from jarvis_cli.constants import OPENROUTER_MODELS_URL
 
 logger = logging.getLogger(__name__)
 
@@ -814,7 +814,7 @@ def _resolve_endpoint_context_length(
 
 def _get_context_cache_path() -> Path:
     """Return path to the persistent context length cache file."""
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
     return get_jarvis_home() / "context_length_cache.yaml"
 
 

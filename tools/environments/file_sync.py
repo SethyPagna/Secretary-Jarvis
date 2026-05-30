@@ -24,7 +24,7 @@ except ImportError:
 from pathlib import Path
 from typing import Callable
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from tools.environments.base import _file_mtime_key
 
 logger = logging.getLogger(__name__)

@@ -29,7 +29,7 @@ _IS_WINDOWS = platform.system() == "Windows"
 from pathlib import Path
 from typing import Dict, Optional, Any
 
-from jarvis_constants import get_jarvis_dir
+from jarvis_cli.constants import get_jarvis_dir
 
 logger = logging.getLogger(__name__)
 

@@ -73,9 +73,9 @@ logger = logging.getLogger("gateway.platforms.google_chat_user_oauth")
 # Use the project's JARVIS_HOME helper so the token follows the user's
 # profile (e.g. tests can override via JARVIS_HOME=/tmp/...).
 try:
-    from jarvis_constants import display_jarvis_home, get_jarvis_home
+    from jarvis_cli.constants import display_jarvis_home, get_jarvis_home
 except (ModuleNotFoundError, ImportError):
-    # Fallback for environments where jarvis_constants isn't importable
+    # Fallback for environments where jarvis_cli.constants is not importable
     # (mirrors the same fallback used by the google-workspace skill's
     # _jarvis_home.py shim).
     def get_jarvis_home() -> Path:

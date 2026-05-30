@@ -11,7 +11,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 
 from jarvis_cli.colors import Colors, color
 
@@ -362,7 +362,7 @@ def _is_windows() -> bool:
 def _is_default_jarvis_home(jarvis_home: Path) -> bool:
     """Return True when ``jarvis_home`` points at the default (non-profile) root."""
     try:
-        from jarvis_constants import get_default_jarvis_root
+        from jarvis_cli.constants import get_default_jarvis_root
         return jarvis_home.resolve() == get_default_jarvis_root().resolve()
     except Exception:
         return False

@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from jarvis_constants import display_jarvis_home
+from jarvis_cli.constants import display_jarvis_home
 
 logger = logging.getLogger(__name__)
 
@@ -264,7 +264,7 @@ def _validate_cron_script_path(script: Optional[str]) -> Optional[str]:
     if not script or not script.strip():
         return None  # empty/None = clearing the field, always OK
 
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     raw = script.strip()
 

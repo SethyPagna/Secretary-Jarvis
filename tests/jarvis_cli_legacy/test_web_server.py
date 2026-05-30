@@ -109,7 +109,7 @@ class TestWebServerEndpoints:
             pytest.skip("fastapi/starlette not installed")
 
         import jarvis_state
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         from jarvis_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
         monkeypatch.setattr(jarvis_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")
@@ -562,7 +562,7 @@ class TestNewEndpoints:
             pytest.skip("fastapi/starlette not installed")
 
         import jarvis_state
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         from jarvis_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
         monkeypatch.setattr(jarvis_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")
@@ -594,7 +594,7 @@ class TestNewEndpoints:
     # --- Profiles ---
 
     def test_profiles_list_includes_default(self):
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         get_jarvis_home().mkdir(parents=True, exist_ok=True)
 
         resp = self.client.get("/api/profiles")
@@ -603,7 +603,7 @@ class TestNewEndpoints:
         assert "default" in names
 
     def test_profiles_list_falls_back_when_profile_listing_fails(self, monkeypatch):
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         import jarvis_cli.profiles as profiles_mod
 
         jarvis_home = get_jarvis_home()
@@ -658,7 +658,7 @@ class TestNewEndpoints:
         assert "test-prof-2" not in names
 
     def test_profile_setup_command_uses_named_profile_wrapper(self):
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
 
         (get_jarvis_home() / "profiles" / "coder").mkdir(parents=True)
 
@@ -668,7 +668,7 @@ class TestNewEndpoints:
         assert resp.json()["command"] == "coder setup"
 
     def test_profile_setup_command_uses_jarvis_for_default_profile(self):
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
 
         get_jarvis_home().mkdir(parents=True, exist_ok=True)
 
@@ -695,7 +695,7 @@ class TestNewEndpoints:
         assert wrapper_path.read_text() == '#!/bin/sh\nexec jarvis -p writer "$@"\n'
 
     def test_profiles_create_with_clone_from_default_copies_default_skills(self, monkeypatch):
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         import jarvis_cli.profiles as profiles_mod
 
         monkeypatch.setattr(profiles_mod, "create_wrapper_script", lambda name: None)
@@ -715,7 +715,7 @@ class TestNewEndpoints:
         assert profiles["cloned"]["skill_count"] == 1
 
     def test_profiles_create_without_clone_seeds_bundled_skills(self, monkeypatch):
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         import jarvis_cli.profiles as profiles_mod
 
         monkeypatch.setattr(profiles_mod, "create_wrapper_script", lambda name: None)
@@ -740,7 +740,7 @@ class TestNewEndpoints:
         assert profiles["fresh"]["skill_count"] == 1
 
     def test_profile_open_terminal_uses_macos_terminal(self, monkeypatch):
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         import jarvis_cli.web_server as web_server
 
         (get_jarvis_home() / "profiles" / "coder").mkdir(parents=True)
@@ -756,7 +756,7 @@ class TestNewEndpoints:
         assert "coder setup" in " ".join(calls[0])
 
     def test_profile_open_terminal_uses_windows_cmd(self, monkeypatch):
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         import jarvis_cli.web_server as web_server
 
         (get_jarvis_home() / "profiles" / "coder").mkdir(parents=True)
@@ -1838,7 +1838,7 @@ class TestPluginAPIAuth:
             pytest.skip("fastapi/starlette not installed")
 
         import jarvis_state
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         from jarvis_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
         monkeypatch.setattr(jarvis_state, "DEFAULT_DB_PATH", get_jarvis_home() / "state.db")

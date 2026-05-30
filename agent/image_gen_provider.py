@@ -164,7 +164,7 @@ def resolve_aspect_ratio(value: Optional[str]) -> str:
 
 def _images_cache_dir() -> Path:
     """Return ``$JARVIS_HOME/cache/images/``, creating parents as needed."""
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     path = get_jarvis_home() / "cache" / "images"
     path.mkdir(parents=True, exist_ok=True)

@@ -140,7 +140,7 @@ from gateway.platforms.base import (
     cache_image_from_bytes,
 )
 from gateway.status import acquire_scoped_lock, release_scoped_lock
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from jarvis_cli.utils import atomic_json_write
 
 logger = logging.getLogger(__name__)

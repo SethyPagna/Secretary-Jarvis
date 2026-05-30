@@ -180,7 +180,7 @@ def describe_profile(
 
     try:
         if canon == "default":
-            from jarvis_constants import get_jarvis_home  # type: ignore
+            from jarvis_cli.constants import get_jarvis_home  # type: ignore
             profile_dir = Path(get_jarvis_home())
         else:
             profile_dir = profiles_mod.get_profile_dir(canon)

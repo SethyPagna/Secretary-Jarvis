@@ -53,9 +53,9 @@ def fresh_home(tmp_path, monkeypatch):
         "JARVIS_KANBAN_BOARD",
     ):
         monkeypatch.delenv(var, raising=False)
-    # Also reset jarvis_constants cache so get_default_jarvis_root() re-reads.
+    # Also reset jarvis_cli.constants cache so get_default_jarvis_root() re-reads.
     try:
-        import jarvis_constants
+        import jarvis_cli.constants as jarvis_constants
         jarvis_constants._cached_default_jarvis_root = None  # type: ignore[attr-defined]
     except Exception:
         pass

@@ -41,7 +41,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from agent.memory_provider import MemoryProvider
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from tools.registry import tool_error
 from jarvis_cli.config import cfg_get
 

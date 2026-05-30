@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Dict
 
-from jarvis_constants import display_jarvis_home
+from jarvis_cli.constants import display_jarvis_home
 from jarvis_cli.utils import atomic_replace
 from jarvis_cli.config import cfg_get
 
@@ -26,7 +26,7 @@ _SUBSCRIPTIONS_FILENAME = "webhook_subscriptions.json"
 
 
 def _jarvis_home() -> Path:
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
     return get_jarvis_home()
 
 

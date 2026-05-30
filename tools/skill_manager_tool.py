@@ -39,7 +39,7 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
-from jarvis_constants import get_jarvis_home, display_jarvis_home
+from jarvis_cli.constants import get_jarvis_home, display_jarvis_home
 from typing import Dict, Any, Optional, Tuple
 
 from jarvis_cli.utils import atomic_replace, is_truthy_value

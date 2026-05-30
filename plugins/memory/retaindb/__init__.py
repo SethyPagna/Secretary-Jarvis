@@ -505,7 +505,7 @@ class RetainDBMemoryProvider(MemoryProvider):
         self._user_id = kwargs.get("user_id", "default") or "default"
         self._agent_id = kwargs.get("agent_id", "jarvis") or "jarvis"
 
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         jarvis_home_path = get_jarvis_home()
         db_path = jarvis_home_path / "retaindb_queue.db"
         self._queue = _WriteQueue(self._client, db_path)

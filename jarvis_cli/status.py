@@ -19,7 +19,7 @@ from jarvis_cli.models import provider_label
 from jarvis_cli.jarvis_managed_subscription import get_jarvis_managed_subscription_features
 from jarvis_cli.runtime_provider import resolve_requested_provider
 from jarvis_cli.vercel_auth import describe_vercel_auth
-from jarvis_constants import OPENROUTER_MODELS_URL
+from jarvis_cli.constants import OPENROUTER_MODELS_URL
 from tools.tool_backend_helpers import managed_jarvis_managed_tools_enabled
 
 def check_mark(ok: bool) -> str:
@@ -84,7 +84,7 @@ def _effective_provider_label() -> str:
     return provider_label(effective)
 
 
-from jarvis_constants import is_termux as _is_termux
+from jarvis_cli.constants import is_termux as _is_termux
 
 
 def show_status(args):

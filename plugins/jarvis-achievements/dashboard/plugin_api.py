@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 try:
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 except ImportError:
     import os as _os
     def get_jarvis_home() -> Path:  # type: ignore[misc]

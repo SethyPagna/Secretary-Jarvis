@@ -22,7 +22,7 @@ import pytest
 def fresh_constants(monkeypatch, tmp_path):
     """Import jarvis_constants fresh and reset the one-shot warn flag."""
     import importlib
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     importlib.reload(jarvis_constants)
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.delenv("JARVIS_HOME", raising=False)

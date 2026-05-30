@@ -1282,7 +1282,7 @@ class LineAdapter(BasePlatformAdapter):
             return web.Response(status=404, text="not found")
 
         try:
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             jarvis_home = Path(get_jarvis_home()).resolve()
         except Exception:
             jarvis_home = Path.home().joinpath(".jarvis").resolve()

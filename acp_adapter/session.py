@@ -8,7 +8,7 @@ history.
 """
 from __future__ import annotations
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 
 import copy
 import json
@@ -45,7 +45,7 @@ def _translate_acp_cwd(cwd: str) -> str:
     sessions all agree on the usable workspace. Native Linux/macOS keeps the
     original cwd unchanged.
     """
-    from jarvis_constants import is_wsl
+    from jarvis_cli.constants import is_wsl
 
     if not is_wsl():
         return cwd

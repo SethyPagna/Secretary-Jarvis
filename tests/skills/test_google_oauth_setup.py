@@ -259,7 +259,7 @@ class TestExchangeAuthCode:
 
 
 class TestJarvisConstantsFallback:
-    """Tests for _jarvis_home.py fallback when jarvis_constants is unavailable."""
+    """Tests for _jarvis_home.py fallback when jarvis_cli.constants is unavailable."""
 
     HELPER_PATH = (
         Path(__file__).resolve().parents[2]
@@ -267,8 +267,8 @@ class TestJarvisConstantsFallback:
     )
 
     def _load_helper(self, monkeypatch):
-        """Load _jarvis_home.py with jarvis_constants blocked."""
-        monkeypatch.setitem(sys.modules, "jarvis_constants", None)
+        """Load _jarvis_home.py with jarvis_cli.constants blocked."""
+        monkeypatch.setitem(sys.modules, "jarvis_cli.constants", None)
         spec = importlib.util.spec_from_file_location("_jarvis_home_test", self.HELPER_PATH)
         module = importlib.util.module_from_spec(spec)
         assert spec.loader is not None
@@ -276,13 +276,13 @@ class TestJarvisConstantsFallback:
         return module
 
     def test_fallback_uses_jarvis_home_env_var(self, monkeypatch, tmp_path):
-        """When jarvis_constants is missing, JARVIS_HOME comes from env var."""
+        """When jarvis_cli.constants is missing, JARVIS_HOME comes from env var."""
         monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "custom-jarvis"))
         module = self._load_helper(monkeypatch)
         assert module.get_jarvis_home() == tmp_path / "custom-jarvis"
 
     def test_fallback_defaults_to_dot_jarvis(self, monkeypatch):
-        """When jarvis_constants is missing and JARVIS_HOME unset, default to ~/.jarvis."""
+        """When jarvis_cli.constants is missing and JARVIS_HOME unset, default to ~/.jarvis."""
         monkeypatch.delenv("JARVIS_HOME", raising=False)
         module = self._load_helper(monkeypatch)
         assert module.get_jarvis_home() == Path.home() / ".jarvis"
@@ -311,14 +311,14 @@ class TestJarvisConstantsFallback:
         module = self._load_helper(monkeypatch)
         assert module.display_jarvis_home() == "/opt/jarvis-custom"
 
-    def test_delegates_to_jarvis_constants_when_available(self):
-        """When jarvis_constants IS importable, _jarvis_home delegates to it."""
+    def test_delegates_to_constants_when_available(self):
+        """When jarvis_cli.constants IS importable, _jarvis_home delegates to it."""
         spec = importlib.util.spec_from_file_location(
             "_jarvis_home_happy", self.HELPER_PATH
         )
         module = importlib.util.module_from_spec(spec)
         assert spec.loader is not None
         spec.loader.exec_module(module)
-        import jarvis_constants
-        assert module.get_jarvis_home is jarvis_constants.get_jarvis_home
-        assert module.display_jarvis_home is jarvis_constants.display_jarvis_home
+        import jarvis_cli.constants as constants
+        assert module.get_jarvis_home is constants.get_jarvis_home
+        assert module.display_jarvis_home is constants.display_jarvis_home

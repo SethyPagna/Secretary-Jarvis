@@ -30,7 +30,7 @@ def _isolate_jarvis_home(tmp_path, monkeypatch):
     """Redirect JARVIS_HOME to a temp directory."""
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
     try:
-        import jarvis_constants
+        import jarvis_cli.constants as jarvis_constants
         monkeypatch.setattr(jarvis_constants, "get_jarvis_home", lambda: tmp_path)
     except (ImportError, AttributeError):
         pass

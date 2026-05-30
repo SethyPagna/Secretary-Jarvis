@@ -1916,7 +1916,7 @@ def update_profile_description(profile_name: str, payload: DescribeBody):
         from jarvis_cli import profiles as profiles_mod
         canon = profiles_mod.normalize_profile_name(profile_name)
         if canon == "default":
-            from jarvis_constants import get_jarvis_home  # type: ignore
+            from jarvis_cli.constants import get_jarvis_home  # type: ignore
             from pathlib import Path as _Path
             profile_dir = _Path(get_jarvis_home())
         else:

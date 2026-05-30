@@ -46,7 +46,7 @@ def jarvis_home(tmp_path, monkeypatch):
     home.mkdir()
     monkeypatch.setenv("JARVIS_HOME", str(home))
     # Some modules cache get_jarvis_home; clear if needed.
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     if hasattr(jarvis_constants, "_JARVIS_HOME_CACHE"):
         jarvis_constants._JARVIS_HOME_CACHE = None  # type: ignore[attr-defined]
     return home

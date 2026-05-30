@@ -41,7 +41,7 @@ _MEMORY_PLUGINS_DIR = Path(__file__).parent
 def _get_user_plugins_dir() -> Optional[Path]:
     """Return ``$JARVIS_HOME/plugins/`` or None if unavailable."""
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         d = get_jarvis_home() / "plugins"
         return d if d.is_dir() else None
     except Exception:

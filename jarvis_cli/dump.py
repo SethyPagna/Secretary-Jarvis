@@ -15,7 +15,7 @@ from pathlib import Path
 
 from jarvis_cli.config import get_jarvis_home, get_env_path, get_project_root, load_config
 from jarvis_cli.env_loader import load_jarvis_dotenv
-from jarvis_constants import display_jarvis_home
+from jarvis_cli.constants import display_jarvis_home
 from agent.skill_utils import is_excluded_skill_path
 
 

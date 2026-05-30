@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Sequence
 
-from jarvis_constants import get_jarvis_home, display_jarvis_home
+from jarvis_cli.constants import get_jarvis_home, display_jarvis_home
 
 # Known log files (name → filename)
 LOG_FILES = {

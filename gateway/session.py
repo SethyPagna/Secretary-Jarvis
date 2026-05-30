@@ -394,7 +394,7 @@ def build_session_context_prompt(
     lines.append("")
     lines.append("**Delivery options for scheduled tasks:**")
 
-    from jarvis_constants import display_jarvis_home
+    from jarvis_cli.constants import display_jarvis_home
 
     # Origin delivery
     if context.source.platform == Platform.LOCAL:

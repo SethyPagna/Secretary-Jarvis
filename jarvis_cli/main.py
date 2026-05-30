@@ -225,7 +225,7 @@ def _apply_profile_override() -> None:
     # 2. If no flag, check active_profile in the jarvis root
     if profile_name is None:
         try:
-            from jarvis_constants import get_default_jarvis_root
+            from jarvis_cli.constants import get_default_jarvis_root
 
             active_path = get_default_jarvis_root() / "active_profile"
             if active_path.exists():
@@ -309,7 +309,7 @@ except Exception:
 # Apply IPv4 preference early, before any HTTP clients are created.
 try:
     from jarvis_cli.config import load_config as _load_config_early
-    from jarvis_constants import apply_ipv4_preference as _apply_ipv4
+    from jarvis_cli.constants import apply_ipv4_preference as _apply_ipv4
 
     _early_cfg = _load_config_early()
     _net = _early_cfg.get("network", {})
@@ -2254,7 +2254,7 @@ def _prompt_provider_choice(choices, *, default=0):
 
 def _model_flow_openrouter(config, current_model=""):
     """OpenRouter provider: ensure API key, then pick model."""
-    from jarvis_constants import OPENROUTER_BASE_URL
+    from jarvis_cli.constants import OPENROUTER_BASE_URL
     from jarvis_cli.auth import (
         ProviderConfig,
         _prompt_model_selection,
@@ -2315,7 +2315,7 @@ def _model_flow_openrouter(config, current_model=""):
 
 def _model_flow_ai_gateway(config, current_model=""):
     """Vercel AI Gateway provider: ensure API key, then pick model with pricing."""
-    from jarvis_constants import AI_GATEWAY_BASE_URL
+    from jarvis_cli.constants import AI_GATEWAY_BASE_URL
     from jarvis_cli.auth import (
         PROVIDER_REGISTRY,
         _prompt_model_selection,
@@ -5215,7 +5215,7 @@ def _run_anthropic_oauth_flow(save_env_value):
         ):
             use_anthropic_claude_code_credentials(save_fn=save_env_value)
             print("  ? Claude Code credentials linked.")
-            from jarvis_constants import display_jarvis_home as _dhh_fn
+            from jarvis_cli.constants import display_jarvis_home as _dhh_fn
 
             print(
                 f"    Jarvis will use Claude's credential store directly instead of copying a setup-token into {_dhh_fn()}/.env."
@@ -5667,7 +5667,7 @@ _UPDATE_CRITICAL_FILES = (
     "run_agent.py",
     "tools/model_tools.py",
     "tools/toolsets.py",
-    "jarvis_constants.py",
+    "jarvis_cli/constants.py",
 )
 
 
@@ -5740,7 +5740,7 @@ def _gateway_prompt(prompt_text: str, default: str = "", timeout: float = 300.0)
     """
     import json as _json
     import uuid as _uuid
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     home = get_jarvis_home()
     prompt_path = home / ".update_prompt.json"
@@ -6720,7 +6720,7 @@ def _count_commits_between(git_cmd: list[str], cwd: Path, base: str, head: str) 
 
 def _should_skip_upstream_prompt() -> bool:
     """Check if user previously declined to add upstream."""
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     return (get_jarvis_home() / SKIP_UPSTREAM_PROMPT_FILE).exists()
 
@@ -6728,7 +6728,7 @@ def _should_skip_upstream_prompt() -> bool:
 def _mark_skip_upstream_prompt():
     """Create marker file to skip future upstream prompts."""
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
 
         (get_jarvis_home() / SKIP_UPSTREAM_PROMPT_FILE).touch()
     except Exception:
@@ -6875,7 +6875,7 @@ def _invalidate_update_cache():
     """
     homes = []
     # Default profile home (Docker-aware — uses /opt/data in Docker)
-    from jarvis_constants import get_default_jarvis_root
+    from jarvis_cli.constants import get_default_jarvis_root
 
     default_home = get_default_jarvis_root()
     homes.append(default_home)
@@ -7914,7 +7914,7 @@ def _run_pre_update_backup(args) -> None:
 
     # Render path using display_jarvis_home so the user sees ~/.jarvis/...
     try:
-        from jarvis_constants import get_jarvis_home, display_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home, display_jarvis_home
 
         home = get_jarvis_home()
         try:
@@ -8353,12 +8353,12 @@ def _cmd_update_impl(args, gateway_mode: bool):
         print("? Code updated!")
 
         # After git pull, source files on disk are newer than cached Python
-        # modules in this process.  Reload jarvis_constants so that any lazy
+        # modules in this process.  Reload jarvis_cli.constants so that any lazy
         # import executed below (skills sync, gateway restart) sees new
         # attributes like display_jarvis_home() added since the last release.
         try:
             import importlib
-            import jarvis_constants as _hc
+            import jarvis_cli.constants as _hc
 
             importlib.reload(_hc)
         except Exception:
@@ -8684,7 +8684,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # systemd units without SIGUSR1 wiring this wait just times out
             # and we fall back to ``systemctl restart`` (the old behaviour).
             try:
-                from jarvis_constants import (
+                from jarvis_cli.constants import (
                     DEFAULT_GATEWAY_RESTART_DRAIN_TIMEOUT as _DEFAULT_DRAIN,
                 )
             except Exception:
@@ -9244,7 +9244,7 @@ def cmd_profile(args):
         _is_wrapper_dir_in_path,
         _get_wrapper_dir,
     )
-    from jarvis_constants import display_jarvis_home
+    from jarvis_cli.constants import display_jarvis_home
 
     action = getattr(args, "profile_action", None)
 
@@ -9475,7 +9475,7 @@ def cmd_profile(args):
         if name and not text_value and not auto_flag:
             try:
                 if _profiles_mod.normalize_profile_name(name) == "default":
-                    from jarvis_constants import get_jarvis_home as _hh
+                    from jarvis_cli.constants import get_jarvis_home as _hh
                     profile_dir = Path(_hh())
                 else:
                     profile_dir = _profiles_mod.get_profile_dir(name)
@@ -9498,7 +9498,7 @@ def cmd_profile(args):
         if text_value:
             try:
                 if _profiles_mod.normalize_profile_name(name) == "default":
-                    from jarvis_constants import get_jarvis_home as _hh
+                    from jarvis_cli.constants import get_jarvis_home as _hh
                     profile_dir = Path(_hh())
                 else:
                     profile_dir = _profiles_mod.get_profile_dir(name)
@@ -11898,7 +11898,7 @@ Examples:
             print("\n  ? Memory provider: built-in only")
             print("  Saved to config.yaml\n")
         elif sub == "reset":
-            from jarvis_constants import get_jarvis_home, display_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home, display_jarvis_home
 
             mem_dir = get_jarvis_home() / "memories"
             target = getattr(args, "target", "all")

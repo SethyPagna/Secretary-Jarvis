@@ -115,7 +115,7 @@ class TestGatewayRunnerRegistration:
             "dotenv",
             "jarvis_cli.env_loader",
             "jarvis_cli.config",
-            "jarvis_constants",
+            "jarvis_cli.constants",
         ]
         _orig = {}
         for mod in stubs:

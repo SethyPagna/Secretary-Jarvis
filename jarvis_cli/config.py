@@ -221,7 +221,7 @@ def detect_install_method(project_root: Optional[Path] = None) -> str:
     managed = get_managed_system()
     if managed:
         return managed.lower().replace(" ", "-")
-    from jarvis_constants import is_container
+    from jarvis_cli.constants import is_container
     if is_container():
         return "docker"
     if project_root is None:
@@ -318,7 +318,7 @@ def get_container_exec_info() -> Optional[dict]:
     if os.environ.get("JARVIS_DEV") == "1":
         return None
 
-    from jarvis_constants import is_container
+    from jarvis_cli.constants import is_container
     if is_container():
         return None
 
@@ -353,8 +353,8 @@ def get_container_exec_info() -> Optional[dict]:
 # Config paths
 # =============================================================================
 
-# Re-export from jarvis_constants — canonical definition lives there.
-from jarvis_constants import get_jarvis_home  # noqa: F811,E402
+# Re-export from jarvis_cli.constants — canonical definition lives there.
+from jarvis_cli.constants import get_jarvis_home  # noqa: F811,E402
 from jarvis_cli.utils import atomic_replace
 
 def get_config_path() -> Path:

@@ -203,7 +203,7 @@ class VideoGenProvider(abc.ABC):
 
 def _videos_cache_dir() -> Path:
     """Return ``$JARVIS_HOME/cache/videos/``, creating parents as needed."""
-    from jarvis_constants import get_jarvis_home
+    from jarvis_cli.constants import get_jarvis_home
 
     path = get_jarvis_home() / "cache" / "videos"
     path.mkdir(parents=True, exist_ok=True)

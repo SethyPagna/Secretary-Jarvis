@@ -478,7 +478,7 @@ class SupermemoryMemoryProvider(MemoryProvider):
         _save_supermemory_config(sanitized, jarvis_home)
 
     def initialize(self, session_id: str, **kwargs) -> None:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         self._jarvis_home = kwargs.get("jarvis_home") or str(get_jarvis_home())
         self._session_id = session_id
         self._turn_count = 0

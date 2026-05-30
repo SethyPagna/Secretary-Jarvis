@@ -48,7 +48,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
-from jarvis_constants import secure_parent_dir
+from jarvis_cli.constants import secure_parent_dir
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ def _get_token_dir() -> Path:
     Layout: ``JARVIS_HOME/mcp-tokens/``
     """
     try:
-        from jarvis_constants import get_jarvis_home
+        from jarvis_cli.constants import get_jarvis_home
         base = Path(get_jarvis_home())
     except ImportError:
         base = Path(os.environ.get("JARVIS_HOME", str(Path.home() / ".jarvis")))

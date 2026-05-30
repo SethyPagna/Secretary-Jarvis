@@ -131,7 +131,7 @@ def slack_manifest_command(args) -> int:
         if isinstance(write_target, bool) and write_target:
             # --write with no value → default location
             try:
-                from jarvis_constants import get_jarvis_home
+                from jarvis_cli.constants import get_jarvis_home
 
                 target = Path(get_jarvis_home()) / "slack-manifest.json"
             except Exception:

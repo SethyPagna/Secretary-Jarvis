@@ -192,7 +192,7 @@ def kanban_home() -> Path:
     override = os.environ.get("JARVIS_KANBAN_HOME", "").strip()
     if override:
         return Path(override).expanduser()
-    from jarvis_constants import get_default_jarvis_root
+    from jarvis_cli.constants import get_default_jarvis_root
     return get_default_jarvis_root()
 
 
@@ -5297,7 +5297,7 @@ def _default_spawn(
     # (fallback_providers, toolsets, agent settings, etc.) instead of the root
     # config.  Without this, `env = dict(os.environ)` copies only the parent's
     # env, and when the child process starts `jarvis -p <name>` the
-    # _apply_profile_override() runs *before* jarvis_constants is imported.
+    # _apply_profile_override() runs *before* jarvis_cli.constants is imported.
     # If JARVIS_HOME is absent from the child's env, get_jarvis_home() falls
     # back to Path.home() / ".jarvis" (the DEFAULT profile root), ignoring the
     # profile-specific config entirely.  Fixes profile-scoped fallback_providers
@@ -6104,7 +6104,7 @@ def list_profiles_on_disk() -> list[str]:
     path).
     """
     try:
-        from jarvis_constants import get_default_jarvis_root
+        from jarvis_cli.constants import get_default_jarvis_root
         default_root = get_default_jarvis_root()
         profiles_dir = default_root / "profiles"
     except Exception:

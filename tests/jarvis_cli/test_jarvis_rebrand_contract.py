@@ -90,7 +90,7 @@ class JarvisRebrandContractTests(unittest.TestCase):
         self.assertTrue(jarvis_cli.__version__)
 
     def test_jarvis_home_uses_jarvis_env_var_and_default(self) -> None:
-        constants = importlib.import_module("jarvis_constants")
+        constants = importlib.import_module("jarvis_cli.constants")
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             previous_jarvis = os.environ.get("JARVIS_HOME")

@@ -522,7 +522,7 @@ class GoogleChatAdapter(BasePlatformAdapter):
         # made the in-memory version of this heuristic flaky for
         # multi-restart sessions).
         try:
-            from jarvis_constants import get_jarvis_home as _get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home as _get_jarvis_home
             _jarvis_home = _get_jarvis_home()
         except (ModuleNotFoundError, ImportError):
             _jarvis_home = _Path.home() / ".jarvis"

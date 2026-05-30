@@ -19,7 +19,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import urlparse
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from typing import Any, Dict, List, Optional, Tuple
 from jarvis_cli.utils import base_url_host_matches, normalize_proxy_env_vars
 

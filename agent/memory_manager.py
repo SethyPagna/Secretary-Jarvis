@@ -597,7 +597,7 @@ class MemoryManager:
         ``get_jarvis_home()`` themselves.
         """
         if "jarvis_home" not in kwargs:
-            from jarvis_constants import get_jarvis_home
+            from jarvis_cli.constants import get_jarvis_home
             kwargs["jarvis_home"] = str(get_jarvis_home())
         for provider in self._providers:
             try:

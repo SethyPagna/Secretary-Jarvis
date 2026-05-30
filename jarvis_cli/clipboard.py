@@ -19,7 +19,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from jarvis_constants import is_wsl as _is_wsl
+from jarvis_cli.constants import is_wsl as _is_wsl
 
 logger = logging.getLogger(__name__)
 _PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"

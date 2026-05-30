@@ -52,7 +52,7 @@ def test_stamp_file_takes_precedence(tmp_path):
 def test_docker_detected_via_dockerenv(tmp_path):
     with patch("jarvis_cli.config.get_managed_system", return_value=None), \
          patch("jarvis_cli.config.get_jarvis_home", return_value=tmp_path), \
-         patch("jarvis_constants.is_container", return_value=True):
+         patch("jarvis_cli.constants.is_container", return_value=True):
         from jarvis_cli.config import detect_install_method
         assert detect_install_method(project_root=tmp_path) == "docker"
 

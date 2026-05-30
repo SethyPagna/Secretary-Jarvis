@@ -36,7 +36,7 @@ from typing import List, Optional
 # the module) fail with ModuleNotFoundError for jarvis_time et al.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 from jarvis_cli._subprocess_compat import windows_hide_flags
 from jarvis_cli.config import load_config, _expand_env_vars
 from jarvis_cli.time_utils import now as _jarvis_now
@@ -173,7 +173,7 @@ def _job_profile_context(job_id: str, profile: Optional[str]):
     env_snapshot = os.environ.copy()
 
     from jarvis_cli.profiles import normalize_profile_name, resolve_profile_env
-    from jarvis_constants import reset_jarvis_home_override, set_jarvis_home_override
+    from jarvis_cli.constants import reset_jarvis_home_override, set_jarvis_home_override
 
     normalized_profile = normalize_profile_name(raw_profile)
     try:
@@ -879,7 +879,7 @@ def _run_job_script(script_path: str) -> tuple[bool, str]:
     run_env = os.environ.copy()
     run_env["JARVIS_HOME"] = str(_get_jarvis_home())
     try:
-        from jarvis_constants import get_subprocess_home
+        from jarvis_cli.constants import get_subprocess_home
 
         profile_home = get_subprocess_home()
         if profile_home:
@@ -1435,7 +1435,7 @@ def _run_job_impl(job: dict) -> tuple[bool, str, str, Optional[str]]:
 
         # Apply IPv4 preference if configured.
         try:
-            from jarvis_constants import apply_ipv4_preference
+            from jarvis_cli.constants import apply_ipv4_preference
             _net_cfg = _cfg.get("network", {})
             if isinstance(_net_cfg, dict) and _net_cfg.get("force_ipv4"):
                 apply_ipv4_preference(force=True)
@@ -1443,7 +1443,7 @@ def _run_job_impl(job: dict) -> tuple[bool, str, str, Optional[str]]:
             pass
 
         # Reasoning config from config.yaml
-        from jarvis_constants import parse_reasoning_effort
+        from jarvis_cli.constants import parse_reasoning_effort
         effort = str(_cfg.get("agent", {}).get("reasoning_effort", "")).strip()
         reasoning_config = parse_reasoning_effort(effort)
 

@@ -34,7 +34,7 @@ import threading
 import time
 import urllib.request
 
-from jarvis_constants import get_jarvis_home
+from jarvis_cli.constants import get_jarvis_home
 
 logger = logging.getLogger(__name__)
 

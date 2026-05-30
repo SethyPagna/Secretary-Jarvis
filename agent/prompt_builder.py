@@ -12,7 +12,7 @@ import threading
 from collections import OrderedDict
 from pathlib import Path
 
-from jarvis_constants import get_jarvis_home, get_skills_dir, is_wsl
+from jarvis_cli.constants import get_jarvis_home, get_skills_dir, is_wsl
 from typing import Optional
 
 from agent.skill_utils import (

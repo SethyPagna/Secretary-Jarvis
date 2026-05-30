@@ -68,7 +68,7 @@ def curator_status_env(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
     import importlib
-    import jarvis_constants
+    import jarvis_cli.constants as jarvis_constants
     importlib.reload(jarvis_constants)
     from tools import skill_usage
     importlib.reload(skill_usage)
