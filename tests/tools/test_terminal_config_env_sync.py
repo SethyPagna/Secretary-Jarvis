@@ -4,10 +4,10 @@ terminal_tool._get_env_config() reads ALL terminal settings from os.environ
 (TERMINAL_*).  config.yaml values therefore have to be bridged into env vars
 at startup, by THREE separate code paths:
 
-  1. jarvis_cli/terminal.py            -> ``env_mappings`` dict (CLI / TUI startup)
-  2. gateway/run.py    -> ``_terminal_env_map`` dict (gateway / messaging
+  1. src/jarvis_cli/terminal.py            -> ``env_mappings`` dict (CLI / TUI startup)
+  2. src/gateway/run.py    -> ``_terminal_env_map`` dict (gateway / messaging
                           platforms)
-  3. jarvis_cli/config.py:save_config_value
+  3. src/jarvis_cli/config.py:save_config_value
                        -> ``_config_to_env_sync`` dict (one-shot when the
                           user runs ``jarvis config set …``)
 
@@ -20,7 +20,7 @@ This test guards against future drift by extracting all three maps via source
 inspection and asserting they all bridge the same set of writable
 ``terminal.*`` keys.  Source inspection (rather than importing the live
 dicts) keeps the test independent of the user's ~/.jarvis/config.yaml and
-mirrors the pattern used in tests/jarvis_cli/test_config_drift.py.
+mirrors the pattern used in tests/src/jarvis_cli/test_config_drift.py.
 """
 
 import ast
@@ -78,8 +78,8 @@ def _cli_env_map_keys() -> set[str]:
 
 
 def _gateway_env_map_keys() -> set[str]:
-    """terminal config keys bridged by gateway/run.py at module load."""
-    # gateway/run.py builds the dict at module top-level (not inside a
+    """terminal config keys bridged by src/gateway/run.py at module load."""
+    # src/gateway/run.py builds the dict at module top-level (not inside a
     # function), so inspect the whole module source.
     import gateway.run as gr
     source = inspect.getsource(gr)
@@ -97,13 +97,13 @@ def _save_config_env_sync_keys() -> set[str]:
     return {k.split(".", 1)[1] for k in keys if k.startswith("terminal.")}
 
 
-# Keys present in jarvis_cli/terminal.py env_mappings but intentionally absent from
-# gateway/run.py or set_config_value.  Each entry must be justified.
+# Keys present in src/jarvis_cli/terminal.py env_mappings but intentionally absent from
+# src/gateway/run.py or set_config_value.  Each entry must be justified.
 _CLI_ONLY_OK = frozenset({
-    # `env_type` is a legacy YAML key alias for `backend` that jarvis_cli/terminal.py
+    # `env_type` is a legacy YAML key alias for `backend` that src/jarvis_cli/terminal.py
     # accepts for backwards-compat with older cli-config.yaml.  The
     # gateway path normalizes on the canonical `backend` key, which is
-    # also in the map and handles the same bridging.  See jarvis_cli/terminal.py ~line 515.
+    # also in the map and handles the same bridging.  See src/jarvis_cli/terminal.py ~line 515.
     "env_type",
     # sudo_password is not a terminal-backend option — it's a credential
     # used across backends, bridged to $SUDO_PASSWORD (not TERMINAL_*).
@@ -123,7 +123,7 @@ def _terminal_tool_env_var_names() -> set[str]:
 
 
 def test_cli_and_gateway_env_maps_agree():
-    """jarvis_cli.terminal.py and gateway/run.py must bridge the same set of terminal keys.
+    """jarvis_cli.terminal.py and src/gateway/run.py must bridge the same set of terminal keys.
 
     Both feed the same downstream consumer (terminal_tool).  Drift between
     them means a config.yaml setting that "works in CLI mode but not gateway
@@ -132,9 +132,9 @@ def test_cli_and_gateway_env_maps_agree():
     cli_keys = _cli_env_map_keys() - _CLI_ONLY_OK
     gw_keys = _gateway_env_map_keys()
 
-    # Normalize the legacy `env_type` alias: jarvis_cli/terminal.py accepts both `env_type`
+    # Normalize the legacy `env_type` alias: src/jarvis_cli/terminal.py accepts both `env_type`
     # and `backend` as source keys for TERMINAL_ENV; gateway only accepts
-    # `backend`.  Since jarvis_cli/terminal.py copies `backend` → `env_type` before the
+    # `backend`.  Since src/jarvis_cli/terminal.py copies `backend` → `env_type` before the
     # lookup, they're equivalent.  Remove `backend` from the gateway side
     # to avoid a spurious "backend missing from cli" failure.
     gw_keys = gw_keys - {"backend"}
@@ -143,13 +143,13 @@ def test_cli_and_gateway_env_maps_agree():
     missing_in_cli = gw_keys - cli_keys
 
     assert not missing_in_gateway, (
-        f"Keys in jarvis_cli/terminal.py env_mappings but missing from gateway/run.py "
+        f"Keys in src/jarvis_cli/terminal.py env_mappings but missing from src/gateway/run.py "
         f"_terminal_env_map: {sorted(missing_in_gateway)}.  Add them to "
         f"both maps (same bug class as docker_run_as_host_user shipping "
         f"wired in cli but not gateway in April 2026)."
     )
     assert not missing_in_cli, (
-        f"Keys in gateway/run.py _terminal_env_map but missing from jarvis_cli/terminal.py "
+        f"Keys in src/gateway/run.py _terminal_env_map but missing from src/jarvis_cli/terminal.py "
         f"env_mappings: {sorted(missing_in_cli)}.  Add them to both maps."
     )
 
@@ -180,7 +180,7 @@ def test_save_config_set_supports_critical_bridged_keys():
     assert not missing, (
         f"`jarvis config set terminal.X` doesn't sync these load-bearing "
         f"keys to .env: {sorted(missing)}.  Add them to _config_to_env_sync "
-        f"in jarvis_cli/config.py:set_config_value."
+        f"in src/jarvis_cli/config.py:set_config_value."
     )
 
 
@@ -188,7 +188,7 @@ def test_docker_run_as_host_user_is_bridged_everywhere():
     """Explicit pin for the bug we just fixed.
 
     docker_run_as_host_user was added to terminal_tool._get_env_config and
-    DockerEnvironment but NOT to jarvis_cli/terminal.py's env_mappings or gateway/run.py's
+    DockerEnvironment but NOT to src/jarvis_cli/terminal.py's env_mappings or src/gateway/run.py's
     _terminal_env_map, so ``terminal.docker_run_as_host_user: true`` in
     config.yaml had no effect at runtime.  This guard makes the regression
     impossible to reintroduce silently.
@@ -201,7 +201,7 @@ def test_docker_run_as_host_user_is_bridged_everywhere():
 
 def test_docker_mount_cwd_to_workspace_is_bridged_everywhere():
     """Same regression class — docker_mount_cwd_to_workspace was missing from
-    gateway/run.py's _terminal_env_map until the docker_run_as_host_user
+    src/gateway/run.py's _terminal_env_map until the docker_run_as_host_user
     audit caught it.
     """
     assert "docker_mount_cwd_to_workspace" in _cli_env_map_keys()

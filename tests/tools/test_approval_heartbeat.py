@@ -8,7 +8,7 @@ watchdog (``agent.gateway_timeout``, default 1800s) would kill the agent
 while the user was still choosing whether to approve.
 
 The fix polls the event in short slices and fires ``touch_activity_if_due``
-between slices, mirroring ``_wait_for_process`` in ``tools/environments/base.py``.
+between slices, mirroring ``_wait_for_process`` in ``src/tools/environments/base.py``.
 """
 
 import os

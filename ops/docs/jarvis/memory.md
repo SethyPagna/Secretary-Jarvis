@@ -302,7 +302,7 @@ jarvis memory setup        # select "honcho" — runs the Honcho-specific post-s
 
 The legacy `jarvis honcho setup` command still works (it now redirects to `jarvis memory setup`), but is only registered after Honcho is selected as the active memory provider.
 
-**Config:** `$JARVIS_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$JARVIS_HOME/honcho.json` > `~/.jarvis/honcho.json` > `~/.honcho/config.json`. See the [config reference](https://github.com/jarvis-ai/jarvis-agent/blob/main/plugins/memory/honcho/README.md) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/jarvis).
+**Config:** `$JARVIS_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$JARVIS_HOME/honcho.json` > `~/.jarvis/honcho.json` > `~/.honcho/config.json`. See the [config reference](https://github.com/jarvis-ai/jarvis-agent/blob/main/src/plugins/memory/honcho/README.md) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/jarvis).
 
 <details>
 <summary>Full config reference</summary>
@@ -489,7 +489,7 @@ See the [Honcho page](./honcho.md#observation-directional-vs-unified) for the fu
 
 </details>
 
-See the [config reference](https://github.com/jarvis-ai/jarvis-agent/blob/main/plugins/memory/honcho/README.md) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/jarvis).
+See the [config reference](https://github.com/jarvis-ai/jarvis-agent/blob/main/src/plugins/memory/honcho/README.md) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/jarvis).
 
 
 ---
@@ -600,7 +600,7 @@ The setup wizard installs dependencies automatically and only installs what's ne
 | `retain_assistant_prefix` | `Assistant` | Label used before assistant turns in auto-retained transcripts |
 | `recall_tags` | — | Tags to filter on recall |
 
-See [plugin README](https://github.com/SethyPagna/Secretary-Jarvis/blob/main/plugins/memory/hindsight/README.md) for the full configuration reference.
+See [plugin README](https://github.com/SethyPagna/Secretary-Jarvis/blob/main/src/plugins/memory/hindsight/README.md) for the full configuration reference.
 
 ---
 
@@ -800,7 +800,7 @@ Memory providers are one of two **provider plugin** types. The other is [Context
 
 ## Directory Structure
 
-Each memory provider lives in `plugins/memory/<name>/`:
+Each memory provider lives in `src/plugins/memory/<name>/`:
 
 ```
 plugins/memory/my-provider/
@@ -811,7 +811,7 @@ plugins/memory/my-provider/
 
 ## The MemoryProvider ABC
 
-Your plugin implements the `MemoryProvider` abstract base class from `agent/memory_provider.py`:
+Your plugin implements the `MemoryProvider` abstract base class from `src/agent/memory_provider.py`:
 
 ```python
 from agent.memory_provider import MemoryProvider
@@ -968,7 +968,7 @@ data_dir = Path("~/.jarvis/my-provider").expanduser()
 
 ## Testing
 
-See `tests/agent/test_memory_plugin_e2e.py` for the complete E2E testing pattern using a real SQLite provider.
+See `tests/src/agent/test_memory_plugin_e2e.py` for the complete E2E testing pattern using a real SQLite provider.
 
 ```python
 from agent.memory_manager import MemoryManager
@@ -992,7 +992,7 @@ Memory provider plugins can register their own CLI subcommand tree (e.g. `jarvis
 
 ### How it works
 
-1. Add a `jarvis_cli/terminal.py` file to your plugin directory
+1. Add a `src/jarvis_cli/terminal.py` file to your plugin directory
 2. Define a `register_cli(subparser)` function that builds the argparse tree
 3. The memory plugin system discovers it at startup via `discover_plugin_cli_commands()`
 4. Your commands appear under `jarvis <provider-name> <subcommand>`
@@ -1002,7 +1002,7 @@ Memory provider plugins can register their own CLI subcommand tree (e.g. `jarvis
 ### Example
 
 ```python
-# plugins/memory/my-provider/jarvis_cli/terminal.py
+# src/plugins/memory/my-provider/src/jarvis_cli/terminal.py
 
 def my_command(args):
     """Handler dispatched by argparse."""
@@ -1027,7 +1027,7 @@ def register_cli(subparser) -> None:
 
 ### Reference implementation
 
-See `plugins/memory/honcho/jarvis_cli/terminal.py` for a full example with 13 subcommands, cross-profile management (`--target-profile`), and config read/write.
+See `src/plugins/memory/honcho/src/jarvis_cli/terminal.py` for a full example with 13 subcommands, cross-profile management (`--target-profile`), and config read/write.
 
 ### Directory structure with CLI
 
@@ -1035,7 +1035,7 @@ See `plugins/memory/honcho/jarvis_cli/terminal.py` for a full example with 13 su
 plugins/memory/my-provider/
 ├── __init__.py      # MemoryProvider implementation + register()
 ├── plugin.yaml      # Metadata
-├── jarvis_cli/terminal.py           # register_cli(subparser) — CLI commands
+├── src/jarvis_cli/terminal.py           # register_cli(subparser) — CLI commands
 └── README.md        # Setup instructions
 ```
 

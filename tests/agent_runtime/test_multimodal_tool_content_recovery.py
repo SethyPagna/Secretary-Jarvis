@@ -3,7 +3,7 @@
 Covers the full chain for providers that reject list-type content in
 ``role: "tool"`` messages (Xiaomi MiMo's 400 "text is not set", etc.):
 
-  1. agent/error_classifier.py: 400 with the right wording classifies as
+  1. src/agent/error_classifier.py: 400 with the right wording classifies as
      ``FailoverReason.multimodal_tool_content_unsupported``.
   2. run_agent._try_strip_image_parts_from_tool_messages downgrades tool
      messages whose ``content`` is a list-with-image to a string text

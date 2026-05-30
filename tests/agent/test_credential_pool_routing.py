@@ -71,7 +71,7 @@ class TestGatewayTurnRoutePool:
 # ---------------------------------------------------------------------------
 
 class TestEagerFallbackWithPool:
-    """Test the eager fallback guard in agent/runtime.py's error handling loop."""
+    """Test the eager fallback guard in src/agent/runtime.py's error handling loop."""
 
     def _make_agent(self, has_pool=True, pool_has_creds=True, has_fallback=True):
         """Create a minimal AIAgent mock with the fields needed."""
@@ -97,7 +97,7 @@ class TestEagerFallbackWithPool:
         """429 with active pool should NOT trigger eager fallback."""
         agent = self._make_agent(has_pool=True, pool_has_creds=True, has_fallback=True)
 
-        # Simulate the check from agent/runtime.py lines 7180-7191
+        # Simulate the check from src/agent/runtime.py lines 7180-7191
         is_rate_limited = True
         if is_rate_limited and agent._fallback_index < len(agent._fallback_chain):
             pool = agent._credential_pool

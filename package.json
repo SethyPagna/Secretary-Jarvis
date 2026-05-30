@@ -41,7 +41,7 @@
     },
     "files": [
       "desktop/electron/**/*",
-      "jarvis_cli/web_dist/**/*",
+      "src/jarvis_cli/web_dist/**/*",
       "package.json"
     ],
     "extraResources": [
@@ -54,11 +54,11 @@
         "to": "assets"
       },
       {
-        "from": "capabilities/skills",
+        "from": "src/capabilities/skills",
         "to": "skills"
       },
       {
-        "from": "capabilities/optional-skills",
+        "from": "src/capabilities/optional-skills",
         "to": "optional-skills"
       },
       {

@@ -1,4 +1,4 @@
-"""Tests for tools/skills_tool.py — skill discovery and viewing."""
+"""Tests for src/tools/skills_tool.py — skill discovery and viewing."""
 
 import json
 import os

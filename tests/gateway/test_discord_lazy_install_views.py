@@ -1,7 +1,7 @@
 """Regression: Discord UI view classes must be defined after lazy-install.
 
 When discord.py is NOT installed at module load time, the
-``if DISCORD_AVAILABLE:`` guard at the bottom of gateway/platforms/discord.py
+``if DISCORD_AVAILABLE:`` guard at the bottom of src/gateway/platforms/discord.py
 evaluates to False and is skipped — leaving ExecApprovalView and its four
 siblings undefined in the module globals.
 

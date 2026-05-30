@@ -1,4 +1,4 @@
-"""Tests for agent/curator_backup.py — snapshot + rollback of the skills tree."""
+"""Tests for src/agent/curator_backup.py — snapshot + rollback of the skills tree."""
 
 from __future__ import annotations
 
@@ -322,7 +322,7 @@ def test_dry_run_skips_snapshot(backup_env, monkeypatch):
 
 
 def _write_cron_jobs(home: Path, jobs: list) -> Path:
-    """Write a synthetic cron/jobs.json under JARVIS_HOME. Returns the path.
+    """Write a synthetic src/cron/jobs.json under JARVIS_HOME. Returns the path.
     Mirrors cron.jobs.save_jobs() wrapper shape: `{"jobs": [...], "updated_at": ...}`.
     """
     cron_dir = home / "cron"
@@ -349,7 +349,7 @@ def _reload_cron_jobs(home: Path):
 
 
 def test_snapshot_includes_cron_jobs(backup_env):
-    """With a cron/jobs.json present, snapshot writes cron-jobs.json and records it in manifest."""
+    """With a src/cron/jobs.json present, snapshot writes cron-jobs.json and records it in manifest."""
     cb = backup_env["cb"]
     _write_skill(backup_env["skills"], "alpha")
     _write_cron_jobs(backup_env["home"], [
@@ -367,10 +367,10 @@ def test_snapshot_includes_cron_jobs(backup_env):
 
 
 def test_snapshot_without_cron_jobs_file_still_succeeds(backup_env):
-    """No cron/jobs.json on disk → snapshot succeeds, manifest records absence."""
+    """No src/cron/jobs.json on disk → snapshot succeeds, manifest records absence."""
     cb = backup_env["cb"]
     _write_skill(backup_env["skills"], "alpha")
-    # Deliberately do not create ~/.jarvis/cron/jobs.json
+    # Deliberately do not create ~/.jarvis/src/cron/jobs.json
 
     snap = cb.snapshot_skills(reason="test")
     assert snap is not None
@@ -378,7 +378,7 @@ def test_snapshot_without_cron_jobs_file_still_succeeds(backup_env):
 
     mf = json.loads((snap / "manifest.json").read_text(encoding="utf-8"))
     assert mf["cron_jobs"]["backed_up"] is False
-    assert "cron/jobs.json" in mf["cron_jobs"]["reason"]
+    assert "src/cron/jobs.json" in mf["cron_jobs"]["reason"]
 
 
 def test_snapshot_cron_jobs_malformed_json_still_captured(backup_env):
@@ -540,7 +540,7 @@ def test_rollback_with_snapshot_missing_cron_succeeds(backup_env):
     home = backup_env["home"]
     _write_skill(backup_env["skills"], "alpha")
 
-    # No cron/jobs.json at snapshot time — simulates a pre-feature snapshot
+    # No src/cron/jobs.json at snapshot time — simulates a pre-feature snapshot
     snap = cb.snapshot_skills(reason="test")
     assert snap is not None
     assert not (snap / cb.CRON_JOBS_FILENAME).exists()

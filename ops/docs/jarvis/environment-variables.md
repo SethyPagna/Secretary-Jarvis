@@ -210,7 +210,7 @@ These variables configure the [Tool Gateway](/docs/user-guide/features/tool-gate
 | `TERMINAL_VERCEL_RUNTIME` | Vercel Sandbox runtime (`node24`, `node22`, `python3.13`) |
 | `TERMINAL_TIMEOUT` | Command timeout in seconds |
 | `TERMINAL_LIFETIME_SECONDS` | Max lifetime for terminal sessions in seconds |
-| `TERMINAL_CWD` | Working directory for terminal sessions (gateway/cron only; CLI uses launch dir) |
+| `TERMINAL_CWD` | Working directory for terminal sessions (src/gateway/cron only; CLI uses launch dir) |
 | `SUDO_PASSWORD` | Enable sudo without interactive prompt |
 
 For cloud sandbox backends, persistence is filesystem-oriented. `TERMINAL_LIFETIME_SECONDS` controls when Jarvis cleans up an idle terminal session, and later resumes may recreate the sandbox rather than keep the same live processes running.
@@ -377,7 +377,7 @@ For cloud sandbox backends, persistence is filesystem-oriented. `TERMINAL_LIFETI
 | `BLUEBUBBLES_PASSWORD` | BlueBubbles server password |
 | `BLUEBUBBLES_WEBHOOK_HOST` | Webhook listener bind address (default: `127.0.0.1`) |
 | `BLUEBUBBLES_WEBHOOK_PORT` | Webhook listener port (default: `8645`) |
-| `BLUEBUBBLES_HOME_CHANNEL` | Phone/email for cron/notification delivery |
+| `BLUEBUBBLES_HOME_CHANNEL` | Phone/email for src/cron/notification delivery |
 | `BLUEBUBBLES_ALLOWED_USERS` | Comma-separated authorized users |
 | `BLUEBUBBLES_ALLOW_ALL_USERS` | Allow all users (`true`/`false`) |
 | `QQ_APP_ID` | QQ Bot App ID from [q.qq.com](https://q.qq.com) |
@@ -468,7 +468,7 @@ Only used when the [`teams_pipeline` plugin](/docs/user-guide/messaging/msgraph-
 
 ### LINE Messaging API
 
-Used by the bundled LINE platform plugin (`plugins/platforms/line/`). See [Messaging Gateway â†’ LINE](/docs/user-guide/messaging/line) for full setup.
+Used by the bundled LINE platform plugin (`src/plugins/platforms/line/`). See [Messaging Gateway â†’ LINE](/docs/user-guide/messaging/line) for full setup.
 
 | Variable | Description |
 |----------|-------------|
@@ -547,7 +547,7 @@ Advanced per-platform knobs for throttling the outbound message batcher. Most us
 | `JARVIS_AGENT_NOTIFY_INTERVAL` | Gateway: interval in seconds between progress notifications on long-running agent turns. |
 | `JARVIS_CHECKPOINT_TIMEOUT` | Timeout for filesystem checkpoint creation in seconds (default: `30`). |
 | `JARVIS_EXEC_ASK` | Enable execution approval prompts in gateway mode (`true`/`false`) |
-| `JARVIS_ENABLE_PROJECT_PLUGINS` | Enable auto-discovery of repo-local plugins from `./.jarvis/plugins/` (`true`/`false`, default: `false`) |
+| `JARVIS_ENABLE_PROJECT_PLUGINS` | Enable auto-discovery of repo-local plugins from `./.jarvis/src/plugins/` (`true`/`false`, default: `false`) |
 | `JARVIS_PLUGINS_DEBUG` | `1`/`true` to surface verbose plugin-discovery logs on stderr â€” directories scanned, manifests parsed, skip reasons, and full tracebacks on parse or `register()` failure. Aimed at plugin authors. |
 | `JARVIS_BACKGROUND_NOTIFICATIONS` | Background process notification mode in gateway: `all` (default), `result`, `error`, `off` |
 | `JARVIS_EPHEMERAL_SYSTEM_PROMPT` | Ephemeral system prompt injected at API-call time (never persisted to sessions) |

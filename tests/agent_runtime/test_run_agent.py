@@ -1,4 +1,4 @@
-"""Unit tests for agent/runtime.py (AIAgent).
+"""Unit tests for src/agent/runtime.py (AIAgent).
 
 Tests cover pure functions, state/structure methods, and conversation loop
 pieces. The OpenAI client and tool loading are mocked so no network calls
@@ -3653,7 +3653,7 @@ class TestRetryExhaustion:
             usage=None,
         )
         agent.client.chat.completions.create.return_value = bad_resp
-        # The conversation loop was extracted out of agent/runtime.py and pulls
+        # The conversation loop was extracted out of src/agent/runtime.py and pulls
         # in time/jittered_backoff at module level — patch BOTH so the
         # retry waits don't burn 18+ seconds of real wall-clock time here.
         from agent import conversation_loop as _conv_loop

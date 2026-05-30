@@ -204,7 +204,7 @@ class TestExecuteCode(unittest.TestCase):
         """Sandboxed scripts can import modules that live at the repo root."""
         result = self._run('import jarvis_cli.constants as jarvis_constants; print(jarvis_constants.__file__)')
         self.assertEqual(result["status"], "success")
-        self.assertIn("jarvis_cli/constants.py", result["output"])
+        self.assertIn("src/jarvis_cli/constants.py", result["output"])
 
     def test_single_tool_call(self):
         """Script calls terminal and prints the result."""
@@ -448,7 +448,7 @@ except ValueError as e:
 
 class TestStubSchemaDrift(unittest.TestCase):
     """Verify that _TOOL_STUBS in code_execution_tool.py stay in sync with
-    the real tool schemas registered in tools/registry.py.
+    the real tool schemas registered in src/tools/registry.py.
 
     If a tool gains a new parameter but the sandbox stub isn't updated,
     the LLM will try to use the parameter (it sees it in the system prompt)
@@ -603,12 +603,12 @@ class TestBuildExecuteCodeSchema(unittest.TestCase):
                          "Empty enabled set produces broken import syntax in description")
 
     def test_real_scenario_all_sandbox_tools_disabled(self):
-        """Reproduce the exact code path from tools/model_tools.py:231-234.
+        """Reproduce the exact code path from src/tools/model_tools.py:231-234.
 
         Scenario: user runs `jarvis tools code_execution` (only code_execution
         toolset enabled). tools_to_include = {"execute_code"}.
 
-        tools/model_tools.py does:
+        src/tools/model_tools.py does:
             sandbox_enabled = SANDBOX_ALLOWED_TOOLS & tools_to_include
             dynamic_schema = build_execute_code_schema(sandbox_enabled)
 
@@ -617,7 +617,7 @@ class TestBuildExecuteCodeSchema(unittest.TestCase):
         tools_to_include  = {"execute_code"}
         intersection      = empty set
         """
-        # Simulate tools/model_tools.py:233
+        # Simulate src/tools/model_tools.py:233
         tools_to_include = {"execute_code"}
         sandbox_enabled = SANDBOX_ALLOWED_TOOLS & tools_to_include
 

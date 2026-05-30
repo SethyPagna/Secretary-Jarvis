@@ -1,4 +1,4 @@
-"""Tests for plugins/memory/honcho/session.py — HonchoSession and helpers."""
+"""Tests for src/plugins/memory/honcho/session.py — HonchoSession and helpers."""
 
 from datetime import datetime
 from types import SimpleNamespace

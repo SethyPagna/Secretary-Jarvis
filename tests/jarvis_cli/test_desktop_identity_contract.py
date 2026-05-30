@@ -143,8 +143,8 @@ class DesktopIdentityContractTests(unittest.TestCase):
 
     def test_skill_markdown_uses_jarvis_project_branding(self) -> None:
         skill_markdown = [
-            *ROOT.glob("capabilities/skills/**/*.md"),
-            *ROOT.glob("capabilities/optional-skills/**/*.md"),
+            *ROOT.glob("src/capabilities/skills/**/*.md"),
+            *ROOT.glob("src/capabilities/optional-skills/**/*.md"),
         ]
 
         self.assertGreater(len(skill_markdown), 0)

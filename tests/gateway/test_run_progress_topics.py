@@ -125,7 +125,7 @@ class FakeAgent:
     def __init__(self, **kwargs):
         # Capture anything passed via kwargs (older code path) but don't
         # freeze it — production now assigns tool_progress_callback after
-        # construction (see gateway/run.py around the agent-cache hit),
+        # construction (see src/gateway/run.py around the agent-cache hit),
         # so we must read it at call time, not at init.
         self.tool_progress_callback = kwargs.get("tool_progress_callback")
         self.tools = []
@@ -146,7 +146,7 @@ class FakeAgent:
 
 class LongPreviewAgent:
     """Agent that emits a tool call with a very long preview string."""
-    LONG_CMD = "cd /home/teknium/.jarvis/jarvis-agent/.worktrees/jarvis-d8860339 && source .venv/bin/activate && python -m pytest tests/gateway/test_run_progress_topics.py -n0 -q"
+    LONG_CMD = "cd /home/teknium/.jarvis/jarvis-agent/.worktrees/jarvis-d8860339 && source .venv/bin/activate && python -m pytest tests/src/gateway/test_run_progress_topics.py -n0 -q"
 
     def __init__(self, **kwargs):
         self.tool_progress_callback = kwargs.get("tool_progress_callback")

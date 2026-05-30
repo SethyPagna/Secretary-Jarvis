@@ -1,4 +1,4 @@
-"""Tests for tools/skill_manager_tool.py — skill creation, editing, and deletion."""
+"""Tests for src/tools/skill_manager_tool.py — skill creation, editing, and deletion."""
 
 import json
 from contextlib import contextmanager

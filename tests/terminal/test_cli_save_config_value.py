@@ -1,4 +1,4 @@
-"""Tests for save_config_value() in jarvis_cli/terminal.py — atomic write behavior."""
+"""Tests for save_config_value() in src/jarvis_cli/terminal.py — atomic write behavior."""
 
 import yaml
 from unittest.mock import MagicMock

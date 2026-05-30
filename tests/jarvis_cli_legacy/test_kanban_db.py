@@ -1037,7 +1037,7 @@ def test_dispatch_skips_nonspawnable_into_separate_bucket(kanban_home, monkeypat
 
 def test_has_spawnable_ready_false_when_only_terminal_lanes(kanban_home, monkeypatch):
     """``has_spawnable_ready`` returns False when every ready task is
-    assigned to a control-plane lane — used by gateway/CLI dispatchers
+    assigned to a control-plane lane — used by src/gateway/CLI dispatchers
     to silence the stuck-warn while terminals still have queued work."""
     from jarvis_cli import profiles
     monkeypatch.setattr(profiles, "profile_exists", lambda name: False)
@@ -2330,7 +2330,7 @@ def test_resolve_jarvis_argv_module_actually_runs():
 # without coercion at the boundary. A row that ever held a non-int (e.g. an
 # unsubstituted ``'%s'`` from a logged format string, ``None``, an arbitrary
 # string, or a float-as-string) used to crash ``task_age`` with ``ValueError``
-# and turn ``GET /api/plugins/kanban/board`` into a 500 because the dashboard
+# and turn ``GET /api/src/plugins/kanban/board`` into a 500 because the dashboard
 # calls ``task_age`` unguarded for every task in the response.
 #
 # After the fix, ``_safe_int`` returns ``None`` on bad input and ``task_age``
@@ -2385,7 +2385,7 @@ def test_safe_int_returns_none_on_corrupt_inputs():
 
 
 def test_task_age_handles_corrupt_created_at():
-    """Pre-fix this raised ValueError and 500'd /api/plugins/kanban/board."""
+    """Pre-fix this raised ValueError and 500'd /api/src/plugins/kanban/board."""
     t = _make_task(created_at="%s")
     age = kb.task_age(t)
     assert age["created_age_seconds"] is None
@@ -2425,7 +2425,7 @@ def test_task_dict_survives_corrupt_created_at(tmp_path, monkeypatch):
     """Defense in depth: even if task_age ever raised, plugin_api must not 500.
 
     The PR also added a try/except around the task_age call in
-    `plugins/kanban/dashboard/plugin_api.py::_task_dict`. Verify a single
+    `src/plugins/kanban/dashboard/plugin_api.py::_task_dict`. Verify a single
     corrupt row doesn't turn the whole board response into an error.
     """
     # Set up an isolated kanban home so we can write a corrupt created_at.

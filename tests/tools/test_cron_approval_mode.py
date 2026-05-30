@@ -261,7 +261,7 @@ class TestCronModeInteractions:
 class TestCronWithGatewayOrigin:
     """Cron jobs originating from a gateway platform must NOT be treated as gateway.
 
-    cron/scheduler.py binds JARVIS_SESSION_PLATFORM via contextvars for
+    src/cron/scheduler.py binds JARVIS_SESSION_PLATFORM via contextvars for
     delivery routing (so cron output lands back in the origin chat). The
     API-server approvals work (PR #20311) made check_dangerous_command treat
     any contextvar-bound platform as a gateway session. That would route

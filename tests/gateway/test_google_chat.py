@@ -120,10 +120,10 @@ _ensure_google_mocks()
 # Our google_chat plugin has a companion ``oauth.py`` module (the
 # OAuth helper for native attachment delivery), so we need a real package
 # context. The fully-qualified package import below resolves correctly
-# because ``plugins/__init__.py`` and ``plugins/platforms/__init__.py``
+# because ``src/plugins/__init__.py`` and ``src/plugins/platforms/__init__.py``
 # exist as regular packages on disk. The conftest anti-pattern guard
 # (which targets bare ``import adapter`` / ``from adapter import …`` and
-# ``sys.path.insert`` into ``plugins/platforms/``) does not flag this
+# ``sys.path.insert`` into ``src/plugins/platforms/``) does not flag this
 # fully-qualified form.
 import plugins.platforms.google_chat.adapter as _gc_mod  # noqa: E402
 
@@ -1288,7 +1288,7 @@ class TestEditMessage:
 
     @pytest.mark.asyncio
     async def test_edit_message_overrides_base_so_progress_pipeline_runs(self, adapter):
-        """The gateway tool-progress flow at gateway/run.py:10199 gates on
+        """The gateway tool-progress flow at src/gateway/run.py:10199 gates on
         ``type(adapter).edit_message is BasePlatformAdapter.edit_message``.
         If our subclass doesn't override edit_message, no tool progress is
         ever shown to the user — so this test guards against a future
@@ -2488,7 +2488,7 @@ class TestGoogleChatInteractiveSetup:
             ),
             "Path to Service Account JSON (or inline JSON)": "/tmp/sa.json",
             "Allowed user emails (comma-separated)": "alice@example.com, bob@example.com",
-            "Home space for cron/notification delivery (e.g. spaces/AAAA, or empty)": (
+            "Home space for src/cron/notification delivery (e.g. spaces/AAAA, or empty)": (
                 "spaces/AAAA"
             ),
         }
@@ -2650,7 +2650,7 @@ class TestAuthorizationEmailMatch:
 #
 # After the generic-plugin-interface migration, Google Chat no longer lives in
 # the hardcoded ``_KNOWN_DELIVERY_PLATFORMS`` / ``_HOME_TARGET_ENV_VARS`` sets
-# in ``cron/scheduler.py``.  It earns cron delivery via
+# in ``src/cron/scheduler.py``.  It earns cron delivery via
 # ``PlatformEntry.cron_deliver_env_var``, which the scheduler consults through
 # ``_is_known_delivery_platform`` and ``_resolve_home_env_var``.  The tests
 # below check that public resolver behavior, not the hardcoded sets.

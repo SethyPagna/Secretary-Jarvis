@@ -1,4 +1,4 @@
-"""Tests for the gateway-side clarify primitive (tools/clarify_gateway.py).
+"""Tests for the gateway-side clarify primitive (src/tools/clarify_gateway.py).
 
 The clarify tool needs to ask the user a question and block the agent
 thread until they respond.  These tests cover the module-level state

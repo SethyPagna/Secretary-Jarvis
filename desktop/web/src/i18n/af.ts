@@ -284,7 +284,7 @@ export const af: Translations = {
     providersHint:
       "Skryf memory.provider (leeg = ingebou) en context.engine na config.yaml. Tree volgende sessie in werking.",
     refreshDashboard: "Herskandeer dashboard-uitbreidings",
-    removeConfirm: "Verwyder hierdie inprop uit ~/.jarvis/plugins/?",
+    removeConfirm: "Verwyder hierdie inprop uit ~/.jarvis/src/plugins/?",
     removeHint: "Slegs gebruiker-geïnstalleerde inproppe onder ~/.jarvis/plugins kan verwyder word.",
     rescanHeading: "SPA-inprop-register",
     rescanHint: "Herskandeer ná die byvoeg van lêers op skyf sodat die dashboard-sybalk nuwe manifeste optel.",

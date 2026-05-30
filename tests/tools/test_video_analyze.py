@@ -1,4 +1,4 @@
-"""Tests for video_analyze tool in tools/vision_tools.py."""
+"""Tests for video_analyze tool in src/tools/vision_tools.py."""
 
 import asyncio
 import json

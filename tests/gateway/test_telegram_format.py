@@ -1,4 +1,4 @@
-"""Tests for Telegram MarkdownV2 formatting in gateway/platforms/telegram.py.
+"""Tests for Telegram MarkdownV2 formatting in src/gateway/platforms/telegram.py.
 
 Covers: _escape_mdv2 (pure function), format_message (markdown-to-MarkdownV2
 conversion pipeline), and edge cases that could produce invalid MarkdownV2
@@ -219,7 +219,7 @@ class TestFormatMessageBoldItalic:
         )
         result = adapter.format_message(content)
         assert "*MCP Servers Reloaded*" in result
-        assert "agent\\_one" in result
+        assert "src\\src\agent\\_one" in result
         assert "tool\\[beta\\]" in result
         assert "alpha\\*prod" in result
 

@@ -2,7 +2,7 @@
 
 Background
 ==========
-``cron/scheduler.py:run_job()`` constructs ``AIAgent(...)`` directly without
+``src/cron/scheduler.py:run_job()`` constructs ``AIAgent(...)`` directly without
 calling ``discover_mcp_tools()`` — the initialization that CLI and gateway
 paths do at startup. Cron jobs therefore never saw any MCP tools from
 ``mcp_servers`` in config.yaml. See #4219.

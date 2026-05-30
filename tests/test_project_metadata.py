@@ -26,7 +26,7 @@ def test_matrix_extra_not_in_all():
     With matrix in [all], `uv sync --locked` on Windows tried to build
     python-olm from sdist and failed on `make`. As of 2026-05-12 the
     [matrix] extra is excluded from [all] entirely and routed through
-    `tools/lazy_deps.py` (LAZY_DEPS["platform.matrix"]) — installs at
+    `src/tools/lazy_deps.py` (LAZY_DEPS["platform.matrix"]) — installs at
     first use, where the user is expected to have a toolchain.
     """
     optional_dependencies = _load_optional_dependencies()
@@ -40,14 +40,14 @@ def test_matrix_extra_not_in_all():
     ]
     assert not matrix_in_all, (
         "matrix must not appear in [all] — it's lazy-installed via "
-        "tools/lazy_deps.py LAZY_DEPS['platform.matrix']. Found: "
+        "src/tools/lazy_deps.py LAZY_DEPS['platform.matrix']. Found: "
         f"{matrix_in_all}"
     )
 
 
 def test_lazy_installable_extras_excluded_from_all():
     """Policy (2026-05-12): every extra that has a `LAZY_DEPS` entry
-    in `tools/lazy_deps.py` must be excluded from [all].
+    in `src/tools/lazy_deps.py` must be excluded from [all].
 
     The lazy-install system exists so one quarantined PyPI release
     (e.g. mistralai 2.4.6) can't break every fresh install. Putting a
@@ -61,7 +61,7 @@ def test_lazy_installable_extras_excluded_from_all():
 
     # Hard-coded mirror of the extras that are in LAZY_DEPS as of
     # 2026-05-12. This list intentionally duplicates rather than
-    # imports tools/lazy_deps.py so the test stays a contract — if
+    # imports src/tools/lazy_deps.py so the test stays a contract — if
     # someone adds a new lazy-install backend, they have to update
     # this list AND verify [all] doesn't contain it.
     lazy_covered_extras = {
@@ -95,7 +95,7 @@ def test_messaging_extra_includes_qrcode_for_weixin_setup():
 
 
 def test_dingtalk_extra_includes_qrcode_for_qr_auth():
-    """DingTalk's QR-code device-flow auth (jarvis_cli/dingtalk_auth.py)
+    """DingTalk's QR-code device-flow auth (src/jarvis_cli/dingtalk_auth.py)
     needs the qrcode package."""
     optional_dependencies = _load_optional_dependencies()
 
@@ -104,7 +104,7 @@ def test_dingtalk_extra_includes_qrcode_for_qr_auth():
 
 
 def test_feishu_extra_includes_qrcode_for_qr_login():
-    """Feishu's QR login flow (gateway/platforms/feishu.py) needs the
+    """Feishu's QR login flow (src/gateway/platforms/feishu.py) needs the
     qrcode package."""
     optional_dependencies = _load_optional_dependencies()
 

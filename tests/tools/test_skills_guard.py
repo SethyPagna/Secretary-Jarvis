@@ -1,4 +1,4 @@
-"""Tests for tools/skills_guard.py - security scanner for skills."""
+"""Tests for src/tools/skills_guard.py - security scanner for skills."""
 
 import os
 import stat

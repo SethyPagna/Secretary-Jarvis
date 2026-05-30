@@ -1,4 +1,4 @@
-"""Tests for jarvis_cli/skills_config.py and skills_tool disabled filtering."""
+"""Tests for src/jarvis_cli/skills_config.py and skills_tool disabled filtering."""
 import pytest
 from unittest.mock import patch, MagicMock
 

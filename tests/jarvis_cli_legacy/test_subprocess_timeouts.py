@@ -7,10 +7,10 @@ import pytest
 
 # Parameterise over every CLI module that calls subprocess.run
 _CLI_MODULES = [
-    "jarvis_cli/doctor.py",
-    "jarvis_cli/status.py",
-    "jarvis_cli/clipboard.py",
-    "jarvis_cli/banner.py",
+    "src/jarvis_cli/doctor.py",
+    "src/jarvis_cli/status.py",
+    "src/jarvis_cli/clipboard.py",
+    "src/jarvis_cli/banner.py",
 ]
 
 

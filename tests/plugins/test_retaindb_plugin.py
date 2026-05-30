@@ -1,7 +1,7 @@
 """Tests for the RetainDB memory plugin.
 
 Covers: _Client HTTP client, _WriteQueue SQLite queue, _build_overlay formatter,
-RetainDBMemoryProvider lifecycle/tools/prefetch, thread management, connection pooling.
+RetainDBMemoryProvider lifecycle/src/tools/prefetch, thread management, connection pooling.
 """
 
 import json
@@ -17,7 +17,7 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# Imports — guarded since plugins/memory lives outside the standard test path
+# Imports — guarded since src/plugins/memory lives outside the standard test path
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(autouse=True)

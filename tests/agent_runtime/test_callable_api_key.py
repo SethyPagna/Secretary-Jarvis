@@ -14,7 +14,7 @@ Covered:
     clients inherit Entra auth.
   * ``_truncate_token`` (dashboard preview) renders ``"<entra-id-bearer>"``
     instead of ``"<function ...>"`` and never invokes the callable.
-  * ``agent/runtime.py`` masked-banner path renders the Entra placeholder
+  * ``src/agent/runtime.py`` masked-banner path renders the Entra placeholder
     and never tries to slice/len the callable.
   * Serialization scrub: dumping a runtime dict via ``json.dumps`` with
     a callable api_key raises (default behaviour) — guards against
@@ -262,7 +262,7 @@ class TestBatchRunnerCallableHandling:
 
 
 class TestCliEnsureRuntimeCredentialsCallable:
-    """Regression: ``jarvis_cli/terminal.py:_ensure_runtime_credentials`` previously
+    """Regression: ``src/jarvis_cli/terminal.py:_ensure_runtime_credentials`` previously
     treated a callable ``api_key`` as "not a string" and overwrote it
     with the ``"no-key-required"`` placeholder, which then got sent as
     ``Authorization: Bearer no-key-required`` and rejected by Azure
@@ -297,7 +297,7 @@ class TestInlinedDisplayMasks:
     different display needs (banner vs diagnostic vs UI vs preview)."""
 
     def test_run_agent_banner_uses_is_token_provider_guard(self):
-        """The masked-banner sites live in ``agent/agent_init.py``
+        """The masked-banner sites live in ``src/agent/agent_init.py``
         (the ``__init__`` body was extracted into ``init_agent`` after
         this feature was first written). Both the OpenAI and Anthropic
         client init paths must guard their banner prints with
@@ -307,12 +307,12 @@ class TestInlinedDisplayMasks:
         src = (Path(__file__).resolve().parent.parent.parent
                / "agent" / "agent_init.py").read_text()
         assert src.count("is_token_provider(") >= 2, (
-            "agent/agent_init.py must guard BOTH masked-banner paths "
+            "src/agent/agent_init.py must guard BOTH masked-banner paths "
             "(chat_completions and anthropic_messages) with "
             "is_token_provider()."
         )
         assert src.count('"🔑 Using credentials: Microsoft Entra ID"') >= 2, (
-            "agent/agent_init.py banner blocks should print a static "
+            "src/agent/agent_init.py banner blocks should print a static "
             "'Microsoft Entra ID' label for callable api_keys — no "
             "placeholder plumbing, no describe-mask fallback."
         )
@@ -346,7 +346,7 @@ class TestInlinedDisplayMasks:
         ``len(callable)``."""
         from pathlib import Path
         src = (Path(__file__).resolve().parent.parent.parent
-               / "agent/runtime.py").read_text()
+               / "src/agent/runtime.py").read_text()
         # The function now starts with a callable check.
         assert (
             "if callable(key) and not isinstance(key, str):" in src
@@ -359,7 +359,7 @@ class TestInlinedDisplayMasks:
 
     def test_anthropic_401_diagnostic_handles_callable(self):
         """The Anthropic 401 diagnostic path lives in
-        ``agent/conversation_loop.py`` (the ``run_conversation`` body
+        ``src/agent/conversation_loop.py`` (the ``run_conversation`` body
         was extracted after this feature was first written). It used
         to do ``key[:12]`` on ``self._anthropic_api_key``. For Entra ID +
         Anthropic-style mode that's a callable; slicing crashes."""
@@ -369,7 +369,7 @@ class TestInlinedDisplayMasks:
         # The Anthropic 401 block now branches on is_token_provider
         # before slicing the key.
         assert "Microsoft Entra ID (httpx event hook)" in src, (
-            "agent/conversation_loop.py Anthropic 401 diagnostic must "
+            "src/agent/conversation_loop.py Anthropic 401 diagnostic must "
             "surface a Microsoft Entra ID branch before slicing the "
             "key prefix."
         )

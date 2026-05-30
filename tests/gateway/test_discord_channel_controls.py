@@ -285,7 +285,7 @@ async def test_no_thread_with_auto_thread_disabled_is_noop(adapter, monkeypatch)
 
 
 def test_config_bridges_ignored_channels(monkeypatch, tmp_path):
-    """gateway/config.py bridges discord.ignored_channels to env var."""
+    """src/gateway/config.py bridges discord.ignored_channels to env var."""
     import yaml
     config_file = tmp_path / "config.yaml"
     config_file.write_text(yaml.dump({
@@ -306,7 +306,7 @@ def test_config_bridges_ignored_channels(monkeypatch, tmp_path):
 
 
 def test_config_bridges_no_thread_channels(monkeypatch, tmp_path):
-    """gateway/config.py bridges discord.no_thread_channels to env var."""
+    """src/gateway/config.py bridges discord.no_thread_channels to env var."""
     import yaml
     config_file = tmp_path / "config.yaml"
     config_file.write_text(yaml.dump({

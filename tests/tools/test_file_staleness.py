@@ -5,7 +5,7 @@ Tests for file staleness detection in write_file and patch.
 When a file is modified externally between the agent's read and write,
 the write should include a warning so the agent can re-read and verify.
 
-Run with:  python -m pytest tests/tools/test_file_staleness.py -v
+Run with:  python -m pytest tests/src/tools/test_file_staleness.py -v
 """
 
 import json

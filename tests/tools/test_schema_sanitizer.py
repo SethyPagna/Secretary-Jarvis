@@ -1,4 +1,4 @@
-"""Tests for tools/schema_sanitizer.py.
+"""Tests for src/tools/schema_sanitizer.py.
 
 Targets the known llama.cpp ``json-schema-to-grammar`` failure modes that
 cause ``HTTP 400: Unable to generate parser for this template. ...

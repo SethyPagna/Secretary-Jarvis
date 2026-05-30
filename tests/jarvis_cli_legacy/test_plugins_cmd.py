@@ -506,14 +506,14 @@ class TestDiscoverAllPlugins:
         """Anything deeper than ``<root>/<category>/<plugin>/`` is ignored,
         matching the loader's depth cap."""
         bundled, _, discover = self._entries_by_key(tmp_path, monkeypatch)
-        # plugins/a/b/c/plugin.yaml — too deep, must NOT be discovered.
+        # src/plugins/a/b/c/plugin.yaml — too deep, must NOT be discovered.
         self._write_plugin(bundled, ["a", "b", "c"])
 
         entries = discover()
         assert not any(k.startswith("a/") for k in entries), entries
 
     def test_bundled_memory_and_context_engine_skipped(self, tmp_path, monkeypatch):
-        """``plugins/memory/`` and ``plugins/context_engine/`` use their own
+        """``src/plugins/memory/`` and ``src/plugins/context_engine/`` use their own
         loaders; bundled entries inside them must not appear in the general
         list (matches the pre-refactor skip set)."""
         bundled, _, discover = self._entries_by_key(tmp_path, monkeypatch)
@@ -528,7 +528,7 @@ class TestDiscoverAllPlugins:
 
     def test_user_memory_subdir_is_still_scanned(self, tmp_path, monkeypatch):
         """The memory/context_engine skip only applies to *bundled* — a user
-        plugin at ``~/.jarvis/plugins/memory/<x>/`` should still be discovered
+        plugin at ``~/.jarvis/src/plugins/memory/<x>/`` should still be discovered
         so the user can see what they installed."""
         bundled, user, discover = self._entries_by_key(tmp_path, monkeypatch)
         self._write_plugin(user, ["memory", "my-custom-store"])
@@ -809,7 +809,7 @@ class TestNoAutoActivation:
     def test_compressor_default_ignores_plugin(self):
         """When context.engine is 'compressor', a plugin-registered engine should NOT
         be used — only explicit config triggers plugin engines."""
-        # This tests the agent/runtime.py logic indirectly by checking that the
+        # This tests the src/agent/runtime.py logic indirectly by checking that the
         # code path for default config doesn't call get_plugin_context_engine.
         import agent.runtime as ra_module
         source = open(ra_module.__file__).read()

@@ -1,4 +1,4 @@
-"""Tests for get_tool_emoji in agent/display.py — skin + registry integration."""
+"""Tests for get_tool_emoji in src/agent/display.py — skin + registry integration."""
 
 from unittest.mock import patch as mock_patch, MagicMock
 

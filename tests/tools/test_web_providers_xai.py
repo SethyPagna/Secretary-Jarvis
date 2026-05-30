@@ -1,4 +1,4 @@
-"""Tests for the xAI Web Search provider (plugins/web/xai/).
+"""Tests for the xAI Web Search provider (src/plugins/web/xai/).
 
 Covers:
 - XAIWebSearchProvider.is_available() — cheap probe (env var + auth.json)
@@ -658,7 +658,7 @@ class TestXAIProviderSearchErrors:
 
 
 # ---------------------------------------------------------------------------
-# Integration with tools/web_tools.py backend wiring
+# Integration with src/tools/web_tools.py backend wiring
 # ---------------------------------------------------------------------------
 
 

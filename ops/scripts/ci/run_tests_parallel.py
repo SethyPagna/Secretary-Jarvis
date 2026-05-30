@@ -475,7 +475,7 @@ def _load_durations(repo_root: Path) -> dict[str, float]:
     """Read the duration cache from the repo root.
 
     Returns a dict mapping relative file paths (e.g.
-    ``tests/tools/test_code_execution.py``) to wall-clock seconds from
+    ``tests/src/tools/test_code_execution.py``) to wall-clock seconds from
     the last run. Missing or corrupt file → empty dict (safe fallback).
     """
     path = repo_root / _DURATIONS_FILE

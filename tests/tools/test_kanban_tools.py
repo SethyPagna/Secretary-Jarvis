@@ -1,4 +1,4 @@
-"""Tests for the Kanban tool surface (tools/kanban_tools.py).
+"""Tests for the Kanban tool surface (src/tools/kanban_tools.py).
 
 Verifies:
   - Tools are gated on JARVIS_KANBAN_TASK: a normal chat session sees
@@ -316,8 +316,8 @@ def test_complete_metadata_round_trips_through_show(worker_env):
     from tools import kanban_tools as kt
 
     handoff = {
-        "changed_files": ["jarvis_cli/kanban.py"],
-        "verification": ["pytest tests/tools/test_kanban_tools.py -q"],
+        "changed_files": ["src/jarvis_cli/kanban.py"],
+        "verification": ["pytest tests/src/tools/test_kanban_tools.py -q"],
         "dependencies": [],
         "blocked_reason": None,
         "retry_notes": "none",
@@ -400,7 +400,7 @@ def test_complete_with_result_only(worker_env):
 def test_complete_with_artifacts_lands_in_event_payload(worker_env):
     """``artifacts=[...]`` rides into the completed event payload so the
     gateway notifier can upload them as native attachments. See the
-    kanban notifier in gateway/run.py for the consumer side."""
+    kanban notifier in src/gateway/run.py for the consumer side."""
     from jarvis_cli import kanban_db as kb
     from tools import kanban_tools as kt
 

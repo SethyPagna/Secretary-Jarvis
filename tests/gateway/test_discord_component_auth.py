@@ -16,7 +16,7 @@ from types import SimpleNamespace
 
 import pytest
 
-# Trigger the shared discord mock from tests/gateway/conftest.py before
+# Trigger the shared discord mock from tests/src/gateway/conftest.py before
 # importing the production module.
 from plugins.platforms.discord.adapter import (  # noqa: E402
     ExecApprovalView,

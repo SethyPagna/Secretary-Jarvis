@@ -228,7 +228,7 @@ export const guideItems: KnowledgeItem[] = [
     detail:
       "JARVIS handles general enquiries, remembers preferences, keeps text and voice aligned, and delegates specialist work instead of pretending one persona does every job.",
     badges: ["primary"],
-    source: "jarvis_cli/data/souls/jarvis_SOUL.md",
+    source: "src/jarvis_cli/data/souls/jarvis_SOUL.md",
   },
   {
     id: "delegate-souls",
@@ -238,7 +238,7 @@ export const guideItems: KnowledgeItem[] = [
     detail:
       "FRIDAY handles code, ARGUS security and process hygiene, FORGE packaging, ORACLE research, ATLAS planning, MUSE creative work, and SENTINEL privacy decisions.",
     badges: ["delegation"],
-    source: "jarvis_cli/data/souls/soul_manifest.json",
+    source: "src/jarvis_cli/data/souls/soul_manifest.json",
   },
   {
     id: "skills-tools",

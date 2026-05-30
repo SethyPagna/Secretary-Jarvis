@@ -1,7 +1,7 @@
 """Regression tests: pending-drain + finally-cleanup races must not spawn
 duplicate agents OR silently drop messages that arrived during cleanup.
 
-Two related races in gateway/platforms/base.py:_process_message_background:
+Two related races in src/gateway/platforms/base.py:_process_message_background:
 
 1. Pending-drain path (previous line 1931):
    ``del self._active_sessions[session_key]`` opened a window where a

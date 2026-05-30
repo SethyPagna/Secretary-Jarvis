@@ -524,7 +524,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument(
         "--all",
         action="store_true",
-        help="Scan the full repository (jarvis_cli/, gateway/, tools/, cron/, etc.).",
+        help="Scan the full repository (src/jarvis_cli/, src/gateway/, src/tools/, src/cron/, etc.).",
     )
     p.add_argument(
         "--diff",

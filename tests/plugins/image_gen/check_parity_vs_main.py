@@ -23,7 +23,7 @@ likely a real regression for users on the existing config keys.
 
 Run from the PR worktree:
 
-    python tests/plugins/image_gen/check_parity_vs_main.py
+    python tests/src/plugins/image_gen/check_parity_vs_main.py
 """
 from __future__ import annotations
 

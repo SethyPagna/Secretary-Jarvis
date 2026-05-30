@@ -117,7 +117,7 @@ class TestIgnoreRulesEnvGate:
         """Setting JARVIS_IGNORE_RULES=1 flips JarvisCLI.ignore_rules True."""
         monkeypatch.setenv("JARVIS_IGNORE_RULES", "1")
 
-        # Import JarvisCLI lazily — jarvis_cli/terminal.py has heavy module-init side effects
+        # Import JarvisCLI lazily — src/jarvis_cli/terminal.py has heavy module-init side effects
         # that we don't want to run at test collection time.
         import jarvis_cli.terminal as cli
         importlib.reload(cli)
@@ -127,7 +127,7 @@ class TestIgnoreRulesEnvGate:
         # create the object via object.__new__ and manually run the assignment
         # the same way the real constructor does.
         obj = object.__new__(cli.JarvisCLI)
-        # Replicate the exact logic from jarvis_cli/terminal.py JarvisCLI.__init__:
+        # Replicate the exact logic from src/jarvis_cli/terminal.py JarvisCLI.__init__:
         ignore_rules = False  # constructor default
         obj.ignore_rules = ignore_rules or os.environ.get("JARVIS_IGNORE_RULES") == "1"
 
@@ -151,7 +151,7 @@ class TestIgnoreRulesEnvGate:
 
 
 class TestCmdChatWiring:
-    """The wiring inside ``cmd_chat()`` in ``jarvis_cli/main.py`` must set
+    """The wiring inside ``cmd_chat()`` in ``src/jarvis_cli/main.py`` must set
     both env vars before importing ``cli`` (which evaluates
     ``load_cli_config()`` at module import).
     """

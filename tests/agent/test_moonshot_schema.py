@@ -12,7 +12,7 @@ the JSON Schema ecosystem accepts:
 4. Tuple-style ``items`` arrays — Moonshot requires a single item schema,
    not positional ones. (Ported from anomalyco/opencode#24730.)
 
-These tests cover the repairs applied by ``agent/moonshot_schema.py``.
+These tests cover the repairs applied by ``src/agent/moonshot_schema.py``.
 """
 
 from __future__ import annotations

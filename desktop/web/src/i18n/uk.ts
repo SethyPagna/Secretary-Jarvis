@@ -284,7 +284,7 @@ export const uk: Translations = {
     providersHint:
       "Записує memory.provider (порожньо = вбудований) та context.engine у config.yaml. Набуває чинності в наступній сесії.",
     refreshDashboard: "Перескан розширень панелі",
-    removeConfirm: "Видалити цей плагін з ~/.jarvis/plugins/?",
+    removeConfirm: "Видалити цей плагін з ~/.jarvis/src/plugins/?",
     removeHint: "Видаляти можна лише плагіни, встановлені користувачем у ~/.jarvis/plugins.",
     rescanHeading: "Реєстр SPA-плагінів",
     rescanHint: "Скануйте після додавання файлів на диск, щоб бічна панель підхопила нові маніфести.",

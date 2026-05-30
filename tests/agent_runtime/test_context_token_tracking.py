@@ -1,9 +1,9 @@
-"""Tests for context token tracking in agent/runtime.py's usage extraction.
+"""Tests for context token tracking in src/agent/runtime.py's usage extraction.
 
 The context counter (status bar) must show the TOTAL prompt tokens including
 Anthropic's cached portions. This is an integration test for the token
 extraction in run_conversation(), not the ContextCompressor itself (which
-is tested in tests/agent/test_context_compressor.py).
+is tested in tests/src/agent/test_context_compressor.py).
 """
 
 import sys

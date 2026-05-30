@@ -11,7 +11,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 class TestBuildOrHeaders:
-    """Test the build_or_headers() helper in agent/auxiliary_client.py."""
+    """Test the build_or_headers() helper in src/agent/auxiliary_client.py."""
 
     def test_base_attribution_always_present(self):
         """Attribution headers must always be included regardless of cache setting."""

@@ -381,7 +381,7 @@ class TestApprovalCallbackThreadLocalWiring:
     def test_child_thread_registration_is_visible_and_cleared_in_finally(self):
         """The fix pattern: register INSIDE the worker thread, clear in finally.
 
-        This is exactly what jarvis_cli/terminal.py's run_agent() closure does. If this test
+        This is exactly what src/jarvis_cli/terminal.py's run_agent() closure does. If this test
         fails, the CLI approval prompt freeze (#13617) has regressed.
         """
         from tools.terminal_tool import (
@@ -400,7 +400,7 @@ class TestApprovalCallbackThreadLocalWiring:
         seen = {}
 
         def _worker():
-            # Mimic jarvis_cli/terminal.py's run_agent() thread target.
+            # Mimic src/jarvis_cli/terminal.py's run_agent() thread target.
             set_approval_callback(approval_cb)
             set_sudo_password_callback(sudo_cb)
             try:

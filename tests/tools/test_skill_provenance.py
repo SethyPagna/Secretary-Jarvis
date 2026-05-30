@@ -1,4 +1,4 @@
-"""Tests for tools/skill_provenance.py — write-origin ContextVar."""
+"""Tests for src/tools/skill_provenance.py — write-origin ContextVar."""
 
 import contextvars
 

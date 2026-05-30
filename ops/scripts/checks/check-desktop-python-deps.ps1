@@ -6,6 +6,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
+$SrcRoot = Join-Path $RepoRoot "src"
+$env:PYTHONPATH = if ($env:PYTHONPATH) { "$SrcRoot;$env:PYTHONPATH" } else { $SrcRoot }
 Push-Location $RepoRoot
 
 try {

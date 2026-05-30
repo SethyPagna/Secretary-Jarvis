@@ -12,7 +12,7 @@ Verifies that:
 7. notify_other_tool_call resets consecutive counters
 8. Context compression injects file-read history
 
-Run with:  python -m pytest tests/tools/test_read_loop_detection.py -v
+Run with:  python -m pytest tests/src/tools/test_read_loop_detection.py -v
 """
 
 import json

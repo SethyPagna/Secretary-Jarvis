@@ -1,4 +1,4 @@
-"""Tests for jarvis_cli/completion.py — shell completion script generation."""
+"""Tests for src/jarvis_cli/completion.py — shell completion script generation."""
 
 import argparse
 import os

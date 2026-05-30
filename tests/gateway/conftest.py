@@ -15,7 +15,7 @@ Individual test files may still call their own ``_ensure_telegram_mock``
 
 Plugin-adapter anti-pattern guard
 ---------------------------------
-Tests for platform plugins (``plugins/platforms/<name>/adapter.py``)
+Tests for platform plugins (``src/plugins/platforms/<name>/adapter.py``)
 must load the adapter via
 :func:`tests.gateway._plugin_adapter_loader.load_plugin_adapter`, not by
 adding the plugin directory to ``sys.path`` and doing a bare
@@ -237,9 +237,9 @@ _GUARD_HINT = (
     "Plugin adapter tests must use "
     "``from tests.gateway._plugin_adapter_loader import load_plugin_adapter`` "
     "and call ``load_plugin_adapter('<plugin_name>')`` instead of inserting "
-    "``plugins/platforms/<name>/`` on sys.path and doing a bare ``import "
+    "``src/plugins/platforms/<name>/`` on sys.path and doing a bare ``import "
     "adapter`` / ``from adapter import ...``. See the 'Plugin-adapter "
-    "anti-pattern guard' docstring in tests/gateway/conftest.py."
+    "anti-pattern guard' docstring in tests/src/gateway/conftest.py."
 )
 
 
@@ -247,7 +247,7 @@ def _scan_for_plugin_adapter_antipattern(source: str) -> list[str]:
     """Return a list of offending-line descriptions, or [] if clean.
 
     Flags two things:
-    1. ``sys.path.insert(..., <something mentioning 'plugins/platforms'>)``
+    1. ``sys.path.insert(..., <something mentioning 'src/plugins/platforms'>)``
     2. ``import adapter`` or ``from adapter import ...`` at module level.
     """
     try:
@@ -258,7 +258,7 @@ def _scan_for_plugin_adapter_antipattern(source: str) -> list[str]:
     offenses: list[str] = []
 
     for node in ast.walk(tree):
-        # sys.path.insert(0, ".../plugins/platforms/...")
+        # sys.path.insert(0, ".../src/plugins/platforms/...")
         if isinstance(node, ast.Call):
             func = node.func
             target_name: str | None = None
@@ -276,19 +276,19 @@ def _scan_for_plugin_adapter_antipattern(source: str) -> list[str]:
             if target_name is not None:
                 call_src = ast.unparse(node)
                 # Match both the string-literal form
-                # ``.../plugins/platforms/...`` and the Path-operator form
+                # ``.../src/plugins/platforms/...`` and the Path-operator form
                 # ``Path(...) / 'plugins' / 'platforms' / ...`` that
                 # plugin tests typically use.
                 _src_no_ws = "".join(call_src.split())
                 if (
-                    "plugins/platforms" in call_src
-                    or "plugins\\platforms" in call_src
+                    "src/plugins/platforms" in call_src
+                    or "src\\src\plugins\\platforms" in call_src
                     or "'plugins'/'platforms'" in _src_no_ws
                     or '"plugins"/"platforms"' in _src_no_ws
                 ):
                     offenses.append(
                         f"line {node.lineno}: {target_name}(...) points into "
-                        f"plugins/platforms/"
+                        f"src/plugins/platforms/"
                     )
 
     # Bare `import adapter` / `from adapter import ...` anywhere (module level
@@ -346,9 +346,9 @@ def _run_adapter_antipattern_scan() -> list[str]:
         except OSError:
             continue
         # Fast string pre-filter: skip files that can't possibly violate.
-        # A violating file MUST contain both (a) an adapter/plugins/platforms
+        # A violating file MUST contain both (a) an adapter/src/plugins/platforms
         # reference AND (b) either sys.path manipulation or a bare adapter import.
-        if "adapter" not in source and "plugins/platforms" not in source:
+        if "adapter" not in source and "src/plugins/platforms" not in source:
             continue
         if not (
             "sys.path" in source
@@ -369,7 +369,7 @@ def pytest_configure(config):
     """Reject plugin-adapter tests that use the sys.path anti-pattern.
 
     Runs once per pytest session on the controller, BEFORE any xdist
-    worker is spawned. If any file under ``tests/gateway/`` matches the
+    worker is spawned. If any file under ``tests/src/gateway/`` matches the
     anti-pattern, we fail the whole session with a clear message —
     before a polluted ``sys.path`` can cascade across workers.
 
@@ -379,7 +379,7 @@ def pytest_configure(config):
     strategies:
 
     1. **Tight string pre-filter**: a file can only violate if it contains
-       *both* an adapter/plugins/platforms reference *and* a sys.path
+       *both* an adapter/src/plugins/platforms reference *and* a sys.path
        manipulation or bare ``import adapter``.  This drops ~95% of files
        from needing AST parsing.
     2. **File-locked cache**: the scan result is cached in

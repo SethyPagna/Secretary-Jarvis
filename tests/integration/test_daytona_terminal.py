@@ -17,7 +17,7 @@ pytestmark = pytest.mark.integration
 if not os.getenv("DAYTONA_API_KEY"):
     pytest.skip("DAYTONA_API_KEY not set", allow_module_level=True)
 
-# Import terminal_tool via importlib to avoid tools/__init__.py side effects
+# Import terminal_tool via importlib to avoid src/tools/__init__.py side effects
 import importlib.util
 
 parent_dir = Path(__file__).parent.parent.parent

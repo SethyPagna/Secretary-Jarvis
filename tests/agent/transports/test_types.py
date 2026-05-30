@@ -1,4 +1,4 @@
-"""Tests for agent/transports/types.py — dataclass construction + helpers."""
+"""Tests for src/agent/transports/types.py — dataclass construction + helpers."""
 
 import json
 import pytest
@@ -194,7 +194,7 @@ class TestToolCallBackwardCompat:
         assert tc.response_item_id is None
 
     def test_getattr_pattern_matches_agent_loop(self):
-        """agent/runtime.py uses getattr(tool_call, 'call_id', None) — verify it works."""
+        """src/agent/runtime.py uses getattr(tool_call, 'call_id', None) — verify it works."""
         tc = ToolCall(id="1", name="fn", arguments="{}", provider_data={"call_id": "c1"})
         assert getattr(tc, "call_id", None) == "c1"
         tc_no_pd = ToolCall(id="1", name="fn", arguments="{}")

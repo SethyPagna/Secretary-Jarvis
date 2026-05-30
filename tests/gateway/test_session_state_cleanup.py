@@ -151,7 +151,7 @@ class TestNoMoreBareDeleteSites:
                     docstring_delim = None
 
         assert offenders == [], (
-            "Found bare `del self._running_agents[...]` sites in gateway/run.py. "
+            "Found bare `del self._running_agents[...]` sites in src/gateway/run.py. "
             "Use self._release_running_agent_state(session_key) instead so "
             "_running_agents_ts and _busy_ack_ts are popped in lockstep.\n"
             + "\n".join(f"  line {n}: {l}" for n, l in offenders)

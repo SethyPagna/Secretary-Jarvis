@@ -11,7 +11,7 @@ form was:
      ``Invalid schema for function 'memory': schema must have type 'object'
      and not have 'oneOf'/'anyOf'/'allOf'/'enum'/'not' at the top level``.
 
-We now rely on the runtime handler (``memory_tool()`` in ``tools/memory_tool.py``)
+We now rely on the runtime handler (``memory_tool()`` in ``src/tools/memory_tool.py``)
 to validate required fields per action and return actionable error messages.
 These tests guard the schema against regressing back to a shape strict
 backends reject.

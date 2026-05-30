@@ -1,9 +1,9 @@
 """Tests for namespaced plugin skill registration and resolution.
 
 Covers:
-- agent/skill_utils namespace helpers
-- jarvis_cli/plugins register_skill API + registry
-- tools/skills_tool qualified name dispatch in skill_view
+- src/agent/skill_utils namespace helpers
+- src/jarvis_cli/plugins register_skill API + registry
+- src/tools/skills_tool qualified name dispatch in skill_view
 """
 
 import json

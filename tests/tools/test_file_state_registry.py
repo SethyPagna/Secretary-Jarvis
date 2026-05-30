@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for the cross-agent FileStateRegistry (tools/file_state.py).
+"""Tests for the cross-agent FileStateRegistry (src/tools/file_state.py).
 
 Covers the three layers added for safe concurrent subagent file edits:
 
@@ -11,7 +11,7 @@ Plus integration through the real ``read_file_tool`` / ``write_file_tool``
 / ``patch_tool`` handlers so the full hook wiring is exercised.
 
 Run:
-    python -m pytest tests/tools/test_file_state_registry.py -v
+    python -m pytest tests/src/tools/test_file_state_registry.py -v
 """
 
 from __future__ import annotations

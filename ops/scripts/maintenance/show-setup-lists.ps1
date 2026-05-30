@@ -9,7 +9,7 @@ $FeatureDownloads = @(
     Category = "voice"
     Name = "Piper executable and one local voice"
     Purpose = "Fast fully local TTS for Jarvis and agent voices"
-    ExpectedPath = "C:\Users\user\Downloads\Secretary Jarvis\tools\piper"
+    ExpectedPath = "C:\Users\user\Downloads\Secretary Jarvis\src\tools\piper"
   },
   [pscustomobject]@{
     Category = "voice"
@@ -39,7 +39,7 @@ $FeatureDownloads = @(
     Category = "vision"
     Name = "OCR runtime"
     Purpose = "Read text from screenshots, PDFs, and app windows"
-    ExpectedPath = "C:\Users\user\Downloads\Secretary Jarvis\tools\ocr"
+    ExpectedPath = "C:\Users\user\Downloads\Secretary Jarvis\src\tools\ocr"
   },
   [pscustomobject]@{
     Category = "media"
@@ -110,7 +110,7 @@ if ($Json) {
 
 Write-Host ""
 Write-Host "Needed feature downloads"
-Write-Host "These are tools/models Jarvis is already coded to plug in after you download them."
+Write-Host "These are src/tools/models Jarvis is already coded to plug in after you download them."
 $FeatureDownloads | Format-Table -AutoSize
 
 Write-Host ""

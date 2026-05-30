@@ -284,7 +284,7 @@ export const es: Translations = {
     providersHint:
       "Escribe memory.provider (vacío = incorporado) y context.engine en config.yaml. Surte efecto en la próxima sesión.",
     refreshDashboard: "Volver a escanear extensiones del panel",
-    removeConfirm: "¿Eliminar este complemento de ~/.jarvis/plugins/?",
+    removeConfirm: "¿Eliminar este complemento de ~/.jarvis/src/plugins/?",
     removeHint: "Solo se pueden eliminar complementos instalados por el usuario en ~/.jarvis/plugins.",
     rescanHeading: "Registro de complementos SPA",
     rescanHint: "Vuelve a escanear tras añadir archivos en disco para que la barra lateral del panel detecte nuevos manifiestos.",

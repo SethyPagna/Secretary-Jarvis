@@ -8,7 +8,7 @@ create and chmod the file existed at the process umask (typically ``0o644``),
 briefly exposing OAuth tokens to other local users on multi-user hosts. The
 fix switches them to ``os.open(O_EXCL, mode=0o600)`` + ``os.fdopen`` +
 ``fsync`` so the file is atomic at ``0o600`` on creation. Mirrors the fixes
-shipped for ``agent/google_oauth.py`` (#19673) and ``tools/mcp_oauth.py``
+shipped for ``src/agent/google_oauth.py`` (#19673) and ``src/tools/mcp_oauth.py``
 (#21148).
 
 These tests stay green only while the token file and its parent directory

@@ -1,4 +1,4 @@
-"""Shared fixtures for tests/tools/ web-provider tests.
+"""Shared fixtures for tests/src/tools/ web-provider tests.
 
 Per-file subprocess isolation means each test file gets a fresh interpreter,
 so module-level state (like the web-search-provider registry) is empty when

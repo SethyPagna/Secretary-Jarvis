@@ -451,7 +451,7 @@ class TestResolveApiKeyProviderCredentials:
 
     def test_resolve_lmstudio_no_api_key_substitutes_placeholder(self, monkeypatch):
         # No-auth LM Studio: when LM_API_KEY isn't set, runtime credentials
-        # carry a placeholder so gateway/TUI/cron paths see the local server
+        # carry a placeholder so src/gateway/TUI/cron paths see the local server
         # as configured. get_api_key_provider_status still reports unconfigured.
         monkeypatch.delenv("LM_API_KEY", raising=False)
         monkeypatch.delenv("LM_BASE_URL", raising=False)

@@ -1,4 +1,4 @@
-"""Tests for tools/microsoft_graph_client.py."""
+"""Tests for src/tools/microsoft_graph_client.py."""
 
 from __future__ import annotations
 

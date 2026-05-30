@@ -1,4 +1,4 @@
-"""Unit tests for jarvis_cli/dingtalk_auth.py (QR device-flow registration)."""
+"""Unit tests for src/jarvis_cli/dingtalk_auth.py (QR device-flow registration)."""
 from __future__ import annotations
 
 import sys

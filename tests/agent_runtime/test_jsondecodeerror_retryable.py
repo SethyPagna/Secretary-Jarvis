@@ -2,13 +2,13 @@
 as a local validation error by the main agent loop.
 
 `json.JSONDecodeError` inherits from `ValueError`. The agent loop's
-non-retryable classifier at agent/runtime.py treats `ValueError` / `TypeError`
+non-retryable classifier at src/agent/runtime.py treats `ValueError` / `TypeError`
 as local programming bugs and skips retry. Without an explicit carve-out,
 a transient provider hiccup (malformed response body, truncated stream,
 routing-layer corruption) that surfaces as a JSONDecodeError would bypass
 the retry path and fail the turn immediately.
 
-This test mirrors the exact predicate shape used in agent/runtime.py so that
+This test mirrors the exact predicate shape used in src/agent/runtime.py so that
 any future refactor of that predicate must preserve the invariant:
 
     JSONDecodeError     → NOT local validation error (retryable)
@@ -22,7 +22,7 @@ import json
 
 
 def _mirror_agent_predicate(err: BaseException) -> bool:
-    """Exact shape of agent/runtime.py's is_local_validation_error check.
+    """Exact shape of src/agent/runtime.py's is_local_validation_error check.
 
     Kept in lock-step with the source. If you change one, change both —
     or, better, refactor the check into a shared helper and have both
@@ -75,8 +75,8 @@ class TestAgentLoopSourceStillHasCarveOut:
     def test_run_agent_excludes_jsondecodeerror_from_local_validation(self):
         import inspect
         from agent import conversation_loop
-        # The agent loop body lives in agent/conversation_loop.py after
-        # the agent/runtime.py refactor.  Assert the carve-out is present in
+        # The agent loop body lives in src/agent/conversation_loop.py after
+        # the src/agent/runtime.py refactor.  Assert the carve-out is present in
         # the extracted module specifically — if it ever moves back or
         # disappears, this fails loudly rather than silently passing
         # against a non-existent inline replica.
@@ -87,6 +87,6 @@ class TestAgentLoopSourceStillHasCarveOut:
         # break us.
         assert "is_local_validation_error" in src
         assert "JSONDecodeError" in src, (
-            "agent/conversation_loop.py must carve out json.JSONDecodeError "
+            "src/agent/conversation_loop.py must carve out json.JSONDecodeError "
             "from the is_local_validation_error classification — see #14782."
         )

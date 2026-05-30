@@ -242,7 +242,7 @@ jarvis cron status
 
 On each tick Jarvis:
 
-1. loads jobs from `~/.jarvis/cron/jobs.json`
+1. loads jobs from `~/.jarvis/src/cron/jobs.json`
 2. checks `next_run_at` against the current time
 3. starts a fresh `AIAgent` session for each due job
 4. optionally injects one or more attached skills into that fresh session
@@ -250,7 +250,7 @@ On each tick Jarvis:
 6. delivers the final response
 7. updates run metadata and the next scheduled time
 
-A file lock at `~/.jarvis/cron/.tick.lock` prevents overlapping scheduler ticks from double-running the same job batch.
+A file lock at `~/.jarvis/src/cron/.tick.lock` prevents overlapping scheduler ticks from double-running the same job batch.
 
 ## Delivery options
 
@@ -259,7 +259,7 @@ When scheduling jobs, you specify where the output goes:
 | Option | Description | Example |
 |--------|-------------|---------|
 | `"origin"` | Back to where the job was created | Default on messaging platforms |
-| `"local"` | Save to local files only (`~/.jarvis/cron/output/`) | Default on CLI |
+| `"local"` | Save to local files only (`~/.jarvis/src/cron/output/`) | Default on CLI |
 | `"telegram"` | Telegram home channel | Uses `TELEGRAM_HOME_CHANNEL` |
 | `"telegram:123456"` | Specific Telegram chat by ID | Direct delivery |
 | `"telegram:-100123:17585"` | Specific Telegram topic | `chat_id:thread_id` format |
@@ -327,7 +327,7 @@ cron:
 
 ### Silent suppression
 
-If the agent's final response starts with `[SILENT]`, delivery is suppressed entirely. The output is still saved locally for audit (in `~/.jarvis/cron/output/`), but no message is sent to the delivery target.
+If the agent's final response starts with `[SILENT]`, delivery is suppressed entirely. The output is still saved locally for audit (in `~/.jarvis/src/cron/output/`), but no message is sent to the delivery target.
 
 This is useful for monitoring jobs that should only report when something is wrong:
 
@@ -427,7 +427,7 @@ cronjob(
 
 **How it works:**
 
-- When Job 2 fires, Jarvis reads Job 1's most recent output from `~/.jarvis/cron/output/{job1_id}/*.md`
+- When Job 2 fires, Jarvis reads Job 1's most recent output from `~/.jarvis/src/cron/output/{job1_id}/*.md`
 - That output is prepended to Job 2's prompt automatically
 - Job 2 doesn't need to hardcode "read this file" — it receives the content as context
 - The chain can be any length: Job 1 → Job 2 → Job 3 → ...
@@ -667,7 +667,7 @@ The referenced jobs' most recent completed outputs are injected above the prompt
 
 ## Job storage
 
-Jobs are stored in `~/.jarvis/cron/jobs.json`. Output from job runs is saved to `~/.jarvis/cron/output/{job_id}/{timestamp}.md`.
+Jobs are stored in `~/.jarvis/src/cron/jobs.json`. Output from job runs is saved to `~/.jarvis/src/cron/output/{job_id}/{timestamp}.md`.
 
 Jobs may store `model` and `provider` as `null`. When those fields are omitted, Jarvis resolves them at execution time from the global configuration. They only appear in the job record when a per-job override is set.
 
@@ -1027,7 +1027,7 @@ Delivery targets are case-sensitive and require the correct platform to be confi
 | `matrix` | Matrix homeserver configured |
 | `email` | SMTP configured in `config.yaml` |
 | `sms` | SMS provider configured |
-| `local` | Write access to `~/.jarvis/cron/output/` |
+| `local` | Write access to `~/.jarvis/src/cron/output/` |
 | `origin` | Delivers to the chat where the job was created |
 
 Other supported platforms include `mattermost`, `homeassistant`, `dingtalk`, `feishu`, `wecom`, `weixin`, `bluebubbles`, `qqbot`, and `webhook`. You can also target a specific chat with `platform:chat_id` syntax (e.g., `telegram:-1001234567890`).
@@ -1131,11 +1131,11 @@ ps aux | grep jarvis
 
 ### Check 4: Permissions on jobs.json
 
-Jobs are stored in `~/.jarvis/cron/jobs.json`. If this file is not readable/writable by your user, the scheduler will fail silently:
+Jobs are stored in `~/.jarvis/src/cron/jobs.json`. If this file is not readable/writable by your user, the scheduler will fail silently:
 
 ```bash
-ls -la ~/.jarvis/cron/jobs.json
-chmod 600 ~/.jarvis/cron/jobs.json   # Your user should own it
+ls -la ~/.jarvis/src/cron/jobs.json
+chmod 600 ~/.jarvis/src/cron/jobs.json   # Your user should own it
 ```
 
 ---
@@ -1200,11 +1200,11 @@ The cron subsystem provides scheduled task execution — from simple one-shot de
 
 | File | Purpose |
 |------|---------|
-| `cron/jobs.py` | Job model, storage, atomic read/write to `jobs.json` |
-| `cron/scheduler.py` | Scheduler loop — due-job detection, execution, repeat tracking |
-| `tools/cronjob_tools.py` | Model-facing `cronjob` tool registration and handler |
-| `gateway/run.py` | Gateway integration — cron ticking in the long-running loop |
-| `jarvis_cli/cron.py` | CLI `jarvis cron` subcommands |
+| `src/cron/jobs.py` | Job model, storage, atomic read/write to `jobs.json` |
+| `src/cron/scheduler.py` | Scheduler loop — due-job detection, execution, repeat tracking |
+| `src/tools/cronjob_tools.py` | Model-facing `cronjob` tool registration and handler |
+| `src/gateway/run.py` | Gateway integration — cron ticking in the long-running loop |
+| `src/jarvis_cli/cron.py` | CLI `jarvis cron` subcommands |
 
 ## Scheduling Model
 
@@ -1221,7 +1221,7 @@ The model-facing surface is a single `cronjob` tool with action-style operations
 
 ## Job Storage
 
-Jobs are stored in `~/.jarvis/cron/jobs.json` with atomic write semantics (write to temp file, then rename). Each job record contains:
+Jobs are stored in `~/.jarvis/src/cron/jobs.json` with atomic write semantics (write to temp file, then rename). Each job record contains:
 
 ```json
 {
@@ -1290,7 +1290,7 @@ tick()
 
 ### Gateway Integration
 
-In gateway mode, the scheduler runs in a dedicated background thread (`_start_cron_ticker` in `gateway/run.py`) that calls `scheduler.tick()` every 60 seconds alongside message handling.
+In gateway mode, the scheduler runs in a dedicated background thread (`_start_cron_ticker` in `src/gateway/run.py`) that calls `scheduler.tick()` every 60 seconds alongside message handling.
 
 In CLI mode, cron jobs only fire when `jarvis cron` commands are run or during active CLI sessions.
 
@@ -1352,7 +1352,7 @@ Cron job results can be delivered to any supported platform:
 | Target | Syntax | Example |
 |--------|--------|---------|
 | Origin chat | `origin` | Deliver to the chat where the job was created |
-| Local file | `local` | Save to `~/.jarvis/cron/output/` |
+| Local file | `local` | Save to `~/.jarvis/src/cron/output/` |
 | Telegram | `telegram` or `telegram:<chat_id>` | `telegram:-1001234567890` |
 | Discord | `discord` or `discord:#channel` | `discord:#engineering` |
 | Slack | `slack` | Deliver to Slack home channel |

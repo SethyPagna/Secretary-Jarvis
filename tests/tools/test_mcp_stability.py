@@ -175,7 +175,7 @@ class TestStdioPidTracking:
 
 
 # ---------------------------------------------------------------------------
-# Fix 3: MCP reload timeout (jarvis_cli/terminal.py)
+# Fix 3: MCP reload timeout (src/jarvis_cli/terminal.py)
 # ---------------------------------------------------------------------------
 
 class TestMCPReloadTimeout:

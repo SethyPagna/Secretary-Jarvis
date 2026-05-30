@@ -35,7 +35,7 @@ def _make_run_side_effect(
             )
         # `git status --porcelain` for dirty-tree detection during autostash.
         if "status" in joined and "--porcelain" in joined:
-            out = " M jarvis_cli/main.py\n" if dirty else ""
+            out = " M src/jarvis_cli/main.py\n" if dirty else ""
             return subprocess.CompletedProcess(cmd, 0, stdout=out, stderr="")
         # `git stash list` — return a stash ref when dirty (so _stash_local_changes
         # gets something to return). _stash_local_changes_if_needed is what we

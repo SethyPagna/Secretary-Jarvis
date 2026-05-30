@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 def _path_escapes_skill_dir(resolved: Path, skill_dir_resolved: Path) -> bool:
-    """Reproduce the boundary check from tools/skills_tool.py.
+    """Reproduce the boundary check from src/tools/skills_tool.py.
 
     Returns True when the resolved path is OUTSIDE the skill directory.
     """

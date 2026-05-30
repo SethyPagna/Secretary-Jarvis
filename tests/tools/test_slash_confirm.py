@@ -1,4 +1,4 @@
-"""Tests for tools/slash_confirm.py — the generic slash-command confirmation primitive.
+"""Tests for src/tools/slash_confirm.py — the generic slash-command confirmation primitive.
 
 Covers register/resolve/clear lifecycle, stale-entry behavior, confirm_id
 mismatch, handler exceptions, and async resolution.

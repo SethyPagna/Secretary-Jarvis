@@ -453,7 +453,7 @@ export interface Translations {
     switchTheme: string;
   };
 
-  // ── Achievements plugin (plugins/jarvis-achievements) ──
+  // ── Achievements plugin (src/plugins/jarvis-achievements) ──
   achievements: {
     hero: {
       kicker: string;

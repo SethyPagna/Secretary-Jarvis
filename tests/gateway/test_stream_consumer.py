@@ -137,7 +137,7 @@ class TestEditMessageFinalizeSignature:
     """Every concrete platform adapter must accept the ``finalize`` kwarg.
 
     stream_consumer._send_or_edit always passes ``finalize=`` to
-    ``adapter.edit_message(...)`` (see gateway/stream_consumer.py).  An
+    ``adapter.edit_message(...)`` (see src/gateway/stream_consumer.py).  An
     adapter that overrides edit_message without accepting finalize raises
     TypeError the first time streaming hits a segment break or final edit.
     Guard the contract with an explicit signature check so it cannot
@@ -1070,7 +1070,7 @@ class TestInterimCommentaryMessages:
 class TestCancelledConsumerSetsFlags:
     """Cancellation must set final_response_sent when already_sent is True.
 
-    The 5-second stream_task timeout in gateway/run.py can cancel the
+    The 5-second stream_task timeout in src/gateway/run.py can cancel the
     consumer while it's still processing.  If final_response_sent stays
     False, the gateway falls through to the normal send path and the
     user sees a duplicate message.

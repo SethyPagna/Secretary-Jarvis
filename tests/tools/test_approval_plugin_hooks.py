@@ -1,6 +1,6 @@
 """Tests for pre_approval_request / post_approval_response plugin hooks.
 
-These hooks fire in tools/approval.py::check_all_command_guards whenever a
+These hooks fire in src/tools/approval.py::check_all_command_guards whenever a
 dangerous command needs user approval. They are observer-only (return values
 ignored) and must fire on BOTH the CLI-interactive path and the async gateway
 path, so external tools like macOS notifiers can be alerted regardless of

@@ -4,7 +4,7 @@ The auto Telegram voice reply (``GatewayRunner._send_voice_reply``) is the
 final response of a turn. It must mark its metadata as ``notify=True`` so
 adapters that gate push notifications (Telegram's "important" mode) deliver
 it as a normal push instead of a silent message — mirroring the existing
-final-text path in ``gateway/platforms/base.py``.
+final-text path in ``src/gateway/platforms/base.py``.
 """
 
 import json

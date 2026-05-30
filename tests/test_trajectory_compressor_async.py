@@ -18,7 +18,7 @@ import pytest
 
 
 class TestAsyncClientLazyCreation:
-    """tools/trajectory_compressor.py — _get_async_client()"""
+    """src/tools/trajectory_compressor.py — _get_async_client()"""
 
     def test_async_client_none_after_init(self):
         """async_client should be None after __init__ (not eagerly created)."""

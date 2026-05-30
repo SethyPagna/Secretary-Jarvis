@@ -82,7 +82,7 @@ class NoDeleteAdapter(CleanupCaptureAdapter):
 
     async def delete_message(self, chat_id, message_id) -> bool:  # type: ignore[override]
         # Pretend to be an adapter whose platform doesn't support deletion:
-        # match the base class behavior exactly. gateway/run.py checks
+        # match the base class behavior exactly. src/gateway/run.py checks
         # ``type(adapter).delete_message is BasePlatformAdapter.delete_message``
         # to detect this, so we re-assign at class body level below.
         raise AssertionError("should not be called — cleanup must skip this adapter")
@@ -120,7 +120,7 @@ class FailingAgent:
             cb("tool.started", "terminal", "pwd", {})
             time.sleep(0.25)
         # Empty final_response + failed=True is the shape the gateway
-        # actually returns on provider errors (see gateway/run.py where
+        # actually returns on provider errors (see src/gateway/run.py where
         # failed keys are only propagated when final_response is empty).
         return {
             "final_response": "",

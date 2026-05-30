@@ -1,5 +1,5 @@
 """
-Tests for document cache utilities in gateway/platforms/base.py.
+Tests for document cache utilities in src/gateway/platforms/base.py.
 
 Covers: get_document_cache_dir, cache_document_from_bytes,
         cleanup_document_cache, SUPPORTED_DOCUMENT_TYPES.

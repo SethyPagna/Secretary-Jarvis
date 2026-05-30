@@ -60,10 +60,10 @@ node_modules/
 /.release_notes.md
 
 # Skills Hub state lives in ~/.jarvis/skills/.hub/ at runtime.
-/skills/.hub/
+/src/skills/.hub/
 
 # Web UI build output
-/jarvis_cli/web_dist/
+/src/jarvis_cli/web_dist/
 
 # Web UI assets synced at build time.
 /desktop/web/public/fonts/
@@ -82,6 +82,6 @@ node_modules/
 # Generated docs / development-only outputs
 /website/static/api/skills-index.json
 /models-dev-upstream/
-/jarvis_cli/tui_dist/*
-/jarvis_cli/scripts/
+/src/jarvis_cli/tui_dist/*
+/src/jarvis_cli/scripts/
 /docs/superpowers/*

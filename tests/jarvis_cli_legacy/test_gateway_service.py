@@ -1924,16 +1924,16 @@ class TestLegacyJarvisUnitDetection:
 
         ExecStart variants we've seen in the wild:
           - python -m jarvis_cli.main gateway run
-          - python path/to/jarvis_cli/main.py gateway run
+          - python path/to/src/jarvis_cli/main.py gateway run
           - jarvis gateway run   (direct binary)
-          - python path/to/gateway/run.py
+          - python path/to/src/gateway/run.py
         """
         user_dir, _ = self._setup_search_paths(tmp_path, monkeypatch)
         variants = [
             "ExecStart=/venv/bin/python -m jarvis_cli.main gateway run --replace",
-            "ExecStart=/venv/bin/python /opt/jarvis/jarvis_cli/main.py gateway run",
+            "ExecStart=/venv/bin/python /opt/jarvis/src/jarvis_cli/main.py gateway run",
             "ExecStart=/usr/local/bin/jarvis gateway run --replace",
-            "ExecStart=/venv/bin/python /opt/jarvis/gateway/run.py",
+            "ExecStart=/venv/bin/python /opt/jarvis/src/gateway/run.py",
         ]
         for i, execstart in enumerate(variants):
             name = f"jarvis.service" if i == 0 else f"jarvis.service"  # same name

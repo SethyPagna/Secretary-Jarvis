@@ -1,4 +1,4 @@
-"""Tests for the Microsoft Entra ID adapter (agent/azure_identity_adapter.py).
+"""Tests for the Microsoft Entra ID adapter (src/agent/azure_identity_adapter.py).
 
 Covers:
   - Scope resolution per Azure host shape

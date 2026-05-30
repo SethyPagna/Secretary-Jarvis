@@ -1,11 +1,11 @@
 """Tests for the google-gemini-cli OAuth + Code Assist inference provider.
 
 Covers:
-- agent/google_oauth.py — PKCE, credential I/O with packed refresh format,
+- src/agent/google_oauth.py — PKCE, credential I/O with packed refresh format,
   token refresh dedup, invalid_grant handling, headless paste fallback
-- agent/google_code_assist.py — project discovery, VPC-SC fallback, onboarding
+- src/agent/google_code_assist.py — project discovery, VPC-SC fallback, onboarding
   with LRO polling, quota retrieval
-- agent/gemini_cloudcode_adapter.py — OpenAI↔Gemini translation, request
+- src/agent/gemini_cloudcode_adapter.py — OpenAI↔Gemini translation, request
   envelope wrapping, response unwrapping, tool calls bidirectional, streaming
 - Provider registration — registry entry, aliases, runtime dispatch, auth
   status, _OAUTH_CAPABLE_PROVIDERS regression guard

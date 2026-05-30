@@ -195,21 +195,21 @@ export const api = {
 
   // Cron jobs
   getCronJobs: (profile = "all") =>
-    fetchJSON<CronJob[]>(`/api/cron/jobs?profile=${encodeURIComponent(profile)}`),
+    fetchJSON<CronJob[]>(`/api/src/cron/jobs?profile=${encodeURIComponent(profile)}`),
   createCronJob: (job: { prompt: string; schedule: string; name?: string; deliver?: string }, profile = "default") =>
-    fetchJSON<CronJob>(`/api/cron/jobs?profile=${encodeURIComponent(profile)}`, {
+    fetchJSON<CronJob>(`/api/src/cron/jobs?profile=${encodeURIComponent(profile)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(job),
     }),
   pauseCronJob: (id: string, profile = "default") =>
-    fetchJSON<CronJob>(`/api/cron/jobs/${encodeURIComponent(id)}/pause?profile=${encodeURIComponent(profile)}`, { method: "POST" }),
+    fetchJSON<CronJob>(`/api/src/cron/jobs/${encodeURIComponent(id)}/pause?profile=${encodeURIComponent(profile)}`, { method: "POST" }),
   resumeCronJob: (id: string, profile = "default") =>
-    fetchJSON<CronJob>(`/api/cron/jobs/${encodeURIComponent(id)}/resume?profile=${encodeURIComponent(profile)}`, { method: "POST" }),
+    fetchJSON<CronJob>(`/api/src/cron/jobs/${encodeURIComponent(id)}/resume?profile=${encodeURIComponent(profile)}`, { method: "POST" }),
   triggerCronJob: (id: string, profile = "default") =>
-    fetchJSON<CronJob>(`/api/cron/jobs/${encodeURIComponent(id)}/trigger?profile=${encodeURIComponent(profile)}`, { method: "POST" }),
+    fetchJSON<CronJob>(`/api/src/cron/jobs/${encodeURIComponent(id)}/trigger?profile=${encodeURIComponent(profile)}`, { method: "POST" }),
   deleteCronJob: (id: string, profile = "default") =>
-    fetchJSON<{ ok: boolean }>(`/api/cron/jobs/${encodeURIComponent(id)}?profile=${encodeURIComponent(profile)}`, { method: "DELETE" }),
+    fetchJSON<{ ok: boolean }>(`/api/src/cron/jobs/${encodeURIComponent(id)}?profile=${encodeURIComponent(profile)}`, { method: "DELETE" }),
 
   // Profiles (minimal)
   getProfiles: () =>
@@ -261,7 +261,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, enabled }),
     }),
-  getToolsets: () => fetchJSON<ToolsetInfo[]>("/api/tools/toolsets"),
+  getToolsets: () => fetchJSON<ToolsetInfo[]>("/api/src/tools/toolsets"),
 
   // Session search (FTS5)
   searchSessions: (q: string) =>
@@ -269,11 +269,11 @@ export const api = {
 
   // OAuth provider management
   getOAuthProviders: () =>
-    fetchJSON<OAuthProvidersResponse>("/api/providers/oauth"),
+    fetchJSON<OAuthProvidersResponse>("/api/src/providers/oauth"),
   disconnectOAuthProvider: async (providerId: string) => {
     const token = await getSessionToken();
     return fetchJSON<{ ok: boolean; provider: string }>(
-      `/api/providers/oauth/${encodeURIComponent(providerId)}`,
+      `/api/src/providers/oauth/${encodeURIComponent(providerId)}`,
       {
         method: "DELETE",
         headers: { [SESSION_HEADER]: token },
@@ -283,7 +283,7 @@ export const api = {
   startOAuthLogin: async (providerId: string) => {
     const token = await getSessionToken();
     return fetchJSON<OAuthStartResponse>(
-      `/api/providers/oauth/${encodeURIComponent(providerId)}/start`,
+      `/api/src/providers/oauth/${encodeURIComponent(providerId)}/start`,
       {
         method: "POST",
         headers: {
@@ -297,7 +297,7 @@ export const api = {
   submitOAuthCode: async (providerId: string, sessionId: string, code: string) => {
     const token = await getSessionToken();
     return fetchJSON<OAuthSubmitResponse>(
-      `/api/providers/oauth/${encodeURIComponent(providerId)}/submit`,
+      `/api/src/providers/oauth/${encodeURIComponent(providerId)}/submit`,
       {
         method: "POST",
         headers: {
@@ -310,12 +310,12 @@ export const api = {
   },
   pollOAuthSession: (providerId: string, sessionId: string) =>
     fetchJSON<OAuthPollResponse>(
-      `/api/providers/oauth/${encodeURIComponent(providerId)}/poll/${encodeURIComponent(sessionId)}`,
+      `/api/src/providers/oauth/${encodeURIComponent(providerId)}/poll/${encodeURIComponent(sessionId)}`,
     ),
   cancelOAuthSession: async (sessionId: string) => {
     const token = await getSessionToken();
     return fetchJSON<{ ok: boolean }>(
-      `/api/providers/oauth/sessions/${encodeURIComponent(sessionId)}`,
+      `/api/src/providers/oauth/sessions/${encodeURIComponent(sessionId)}`,
       {
         method: "DELETE",
         headers: { [SESSION_HEADER]: token },
@@ -325,7 +325,7 @@ export const api = {
 
   // Gateway / update actions
   restartGateway: () =>
-    fetchJSON<ActionResponse>("/api/gateway/restart", { method: "POST" }),
+    fetchJSON<ActionResponse>("/api/src/gateway/restart", { method: "POST" }),
   getWhatsAppStatus: () =>
     fetchJSON<WhatsAppStatusResponse>("/api/messaging/whatsapp/status"),
   sendWhatsAppMessage: (body: { to?: string; message?: string; mock?: boolean }) =>
@@ -345,9 +345,9 @@ export const api = {
   getPlugins: () =>
     fetchJSON<PluginManifestResponse[]>("/api/dashboard/plugins"),
   rescanPlugins: () =>
-    fetchJSON<{ ok: boolean; count: number }>("/api/dashboard/plugins/rescan"),
+    fetchJSON<{ ok: boolean; count: number }>("/api/dashboard/src/plugins/rescan"),
 
-  getPluginsHub: () => fetchJSON<PluginsHubResponse>("/api/dashboard/plugins/hub"),
+  getPluginsHub: () => fetchJSON<PluginsHubResponse>("/api/dashboard/src/plugins/hub"),
 
   installAgentPlugin: (body: AgentPluginInstallRequest) =>
     fetchJSON<AgentPluginInstallResponse>("/api/dashboard/agent-plugins/install", {
@@ -389,7 +389,7 @@ export const api = {
 
   setPluginVisibility: (name: string, hidden: boolean) =>
     fetchJSON<{ ok: boolean; name: string; hidden: boolean }>(
-      `/api/dashboard/plugins/${pluginPath(name)}/visibility`,
+      `/api/dashboard/src/plugins/${pluginPath(name)}/visibility`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -284,7 +284,7 @@ export const it: Translations = {
     providersHint:
       "Scrive memory.provider (vuoto = integrato) e context.engine in config.yaml. Effetto dalla prossima sessione.",
     refreshDashboard: "Riscansiona estensioni dashboard",
-    removeConfirm: "Rimuovere questo plugin da ~/.jarvis/plugins/?",
+    removeConfirm: "Rimuovere questo plugin da ~/.jarvis/src/plugins/?",
     removeHint: "Solo i plugin installati dall'utente in ~/.jarvis/plugins possono essere rimossi.",
     rescanHeading: "Registro plugin SPA",
     rescanHint: "Riscansiona dopo aver aggiunto file su disco affinché la barra laterale rilevi i nuovi manifest.",

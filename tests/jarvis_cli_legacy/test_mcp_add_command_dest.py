@@ -2,7 +2,7 @@
 top-level ``args.command`` subparser dest.
 
 The top-level argparse parser uses ``dest="command"`` for its subparsers
-(``jarvis_cli/_parser.py``).  The dispatcher in ``jarvis_cli/main.py``
+(``src/jarvis_cli/_parser.py``).  The dispatcher in ``src/jarvis_cli/main.py``
 reads ``args.command`` to decide which command to run; if it is ``None``
 it falls through to interactive chat.
 

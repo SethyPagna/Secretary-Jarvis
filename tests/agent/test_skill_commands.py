@@ -1,4 +1,4 @@
-"""Tests for agent/skill_commands.py — skill slash command scanning and platform filtering."""
+"""Tests for src/agent/skill_commands.py — skill slash command scanning and platform filtering."""
 
 import os
 from pathlib import Path

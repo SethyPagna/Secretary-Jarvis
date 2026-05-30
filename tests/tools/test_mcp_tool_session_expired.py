@@ -248,7 +248,7 @@ def test_session_expired_handler_returns_none_without_loop(monkeypatch):
             "srv-noloop",
             RuntimeError("Invalid or expired session"),
             lambda: '{"ok": true}',
-            "tools/call",
+            "src/tools/call",
         )
         assert out is None, (
             "Without an event loop, session-expired handler must fall "
@@ -266,7 +266,7 @@ def test_session_expired_handler_returns_none_without_server_record():
         "does-not-exist",
         RuntimeError("Invalid or expired session"),
         lambda: '{"ok": true}',
-        "tools/call",
+        "src/tools/call",
     )
     assert out is None
 
@@ -293,7 +293,7 @@ def test_session_expired_handler_returns_none_when_retry_also_fails(
             "srv-retry-fail",
             RuntimeError("Invalid or expired session"),
             _retry_raises,
-            "tools/call",
+            "src/tools/call",
         )
         assert out is None, (
             "When the retry itself fails, the handler must return None "
@@ -321,7 +321,7 @@ def test_session_expired_handler_returns_none_when_retry_also_fails(
 def test_non_tool_handlers_also_reconnect_on_session_expired(
     monkeypatch, tmp_path, handler_factory, handler_kwargs, session_method, op_label
 ):
-    """All four non-``tools/call`` MCP handlers share the recovery
+    """All four non-``src/tools/call`` MCP handlers share the recovery
     pattern and must reconnect the same way on session-expired."""
     monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
 

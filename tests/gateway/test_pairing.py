@@ -1,4 +1,4 @@
-"""Tests for gateway/pairing.py — DM pairing security system."""
+"""Tests for src/gateway/pairing.py — DM pairing security system."""
 
 import json
 import os

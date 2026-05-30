@@ -78,12 +78,12 @@ def _clear_approval_state():
 
 
 # ------------------------------------------------------------------
-# Blocking gateway approval infrastructure (tools/approval.py)
+# Blocking gateway approval infrastructure (src/tools/approval.py)
 # ------------------------------------------------------------------
 
 
 class TestBlockingGatewayApproval:
-    """Tests for the blocking approval mechanism in tools/approval.py."""
+    """Tests for the blocking approval mechanism in src/tools/approval.py."""
 
     def setup_method(self):
         _clear_approval_state()
@@ -619,7 +619,7 @@ class TestBlockingApprovalE2E:
 
 
 # ------------------------------------------------------------------
-# Fallback: no gateway callback (cron/batch mode)
+# Fallback: no gateway callback (src/cron/batch mode)
 # ------------------------------------------------------------------
 
 

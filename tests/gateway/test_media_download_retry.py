@@ -2,10 +2,10 @@
 Tests for media download retry logic added in PR #2982.
 
 Covers:
-- gateway/platforms/base.py:       cache_image_from_url
-- gateway/platforms/slack.py:      SlackAdapter._download_slack_file
+- src/gateway/platforms/base.py:       cache_image_from_url
+- src/gateway/platforms/slack.py:      SlackAdapter._download_slack_file
                                     SlackAdapter._download_slack_file_bytes
-- gateway/platforms/mattermost.py: MattermostAdapter._send_url_as_file
+- src/gateway/platforms/mattermost.py: MattermostAdapter._send_url_as_file
 
 All async tests use asyncio.run() directly — pytest-asyncio is not installed
 in this environment.

@@ -689,7 +689,7 @@ class TestPlatformToolsetConsistency:
             ts_name = meta["default_toolset"]
             assert ts_name in TOOLSETS, (
                 f"Platform {platform!r} references toolset {ts_name!r} "
-                f"which is not defined in tools/toolsets.py"
+                f"which is not defined in src/tools/toolsets.py"
             )
 
     def test_gateway_toolset_includes_all_messaging_platforms(self):
@@ -1090,7 +1090,7 @@ def test_get_platform_tools_feishu_tools_not_on_other_platforms():
 
 
 def test_get_effective_configurable_toolsets_dedupes_bundled_plugins():
-    """Bundled plugins (plugins/spotify) share their toolset key with the
+    """Bundled plugins (src/plugins/spotify) share their toolset key with the
     built-in CONFIGURABLE_TOOLSETS entry. The effective list must not list
     them twice — otherwise `jarvis tools` → "reconfigure existing" shows
     the same toolset two rows in a row.

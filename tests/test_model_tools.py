@@ -1,4 +1,4 @@
-"""Tests for tools/model_tools.py — function call dispatch, agent-loop interception, legacy toolsets."""
+"""Tests for src/tools/model_tools.py — function call dispatch, agent-loop interception, legacy toolsets."""
 
 import json
 from unittest.mock import ANY, call, patch

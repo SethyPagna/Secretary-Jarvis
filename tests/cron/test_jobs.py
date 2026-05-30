@@ -1,4 +1,4 @@
-"""Tests for cron/jobs.py — schedule parsing, job CRUD, and due-job detection."""
+"""Tests for src/cron/jobs.py — schedule parsing, job CRUD, and due-job detection."""
 
 import json
 import threading

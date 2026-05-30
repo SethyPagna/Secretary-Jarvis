@@ -1,6 +1,6 @@
 """Regression tests for the transcription_tools variant of #17140.
 
-Same class of bug as ``tools/tts_tool.py`` (fixed in PR #17163): the STT
+Same class of bug as ``src/tools/tts_tool.py`` (fixed in PR #17163): the STT
 provider call sites read API keys via ``os.getenv()``, which bypasses
 ``~/.jarvis/.env`` entries. These tests confirm each STT provider now
 consults ``get_env_value()`` and the provider auto-detect + explicit

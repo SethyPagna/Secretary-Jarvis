@@ -3,7 +3,7 @@
 These exercise the dispatch logic in ``tools.browser_tool._browser_eval`` and
 the response shaping in ``CDPSupervisor.evaluate_runtime`` using mocks — no
 real browser, no real WebSocket.  Real-CDP coverage lives in
-``tests/tools/test_browser_supervisor.py`` (gated on Chrome being installed).
+``tests/src/tools/test_browser_supervisor.py`` (gated on Chrome being installed).
 """
 from __future__ import annotations
 

@@ -4,7 +4,7 @@ Tests for read_file_tool safety guards: device-path blocking,
 character-count limits, file deduplication, and dedup reset on
 context compression.
 
-Run with:  python -m pytest tests/tools/test_file_read_guards.py -v
+Run with:  python -m pytest tests/src/tools/test_file_read_guards.py -v
 """
 
 import json

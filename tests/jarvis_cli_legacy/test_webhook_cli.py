@@ -1,4 +1,4 @@
-"""Tests for jarvis_cli/webhook.py — webhook subscription CLI."""
+"""Tests for src/jarvis_cli/webhook.py — webhook subscription CLI."""
 
 import json
 import os

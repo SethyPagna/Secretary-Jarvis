@@ -20,13 +20,13 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        Entry Points                                  │
 │                                                                      │
-│  CLI (jarvis_cli/terminal.py)    Gateway (gateway/run.py)    ACP (acp_adapter/)     │
+│  CLI (src/jarvis_cli/terminal.py)    Gateway (src/gateway/run.py)    ACP (src/acp_adapter/)     │
 │  Batch Runner    API Server                  Python Library          │
 └──────────┬──────────────┬───────────────────────┬───────────────────┘
            │              │                       │
            ▼              ▼                       ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     AIAgent (agent/runtime.py)                          │
+│                     AIAgent (src/agent/runtime.py)                          │
 │                                                                     │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
 │  │ Prompt       │  │ Provider     │  │ Tool         │               │
@@ -48,7 +48,7 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 │ Session Storage   │              │ Tool Backends         │
 │ (SQLite + FTS5)   │              │ Terminal (7 backends) │
 │ session_state.py   │              │ Browser (5 backends)  │
-│ gateway/session.py│              │ Web (4 backends)      │
+│ src/gateway/session.py│              │ Web (4 backends)      │
 └───────────────────┘              │ MCP (dynamic)         │
                                    │ File, Vision, etc.    │
                                    └──────────────────────┘
@@ -58,15 +58,15 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 
 ```text
 jarvis-agent/
-├── agent/runtime.py              # AIAgent — core conversation loop (large file)
-├── jarvis_cli/terminal.py                    # JarvisDesktopRuntime — interactive terminal UI (large file)
-├── tools/model_tools.py            # Tool discovery, schema collection, dispatch
-├── tools/toolsets.py               # Tool groupings and platform presets
+├── src/agent/runtime.py              # AIAgent — core conversation loop (large file)
+├── src/jarvis_cli/terminal.py                    # JarvisDesktopRuntime — interactive terminal UI (large file)
+├── src/tools/model_tools.py            # Tool discovery, schema collection, dispatch
+├── src/tools/toolsets.py               # Tool groupings and platform presets
 ├── session_state.py           # SQLite session/state database with FTS5
-├── jarvis_cli/constants.py       # JARVIS_HOME, profile-aware paths
-├── tools/batch_runner.py           # Batch trajectory generation
+├── src/jarvis_cli/constants.py       # JARVIS_HOME, profile-aware paths
+├── src/tools/batch_runner.py           # Batch trajectory generation
 │
-├── agent/                    # Agent internals
+├── src/agent/                    # Agent internals
 │   ├── prompt_builder.py     # System prompt assembly
 │   ├── context_engine.py     # ContextEngine ABC (pluggable)
 │   ├── context_compressor.py # Default engine — lossy summarization
@@ -81,7 +81,7 @@ jarvis-agent/
 │   ├── memory_provider.py   # Memory provider ABC
 │   └── trajectory.py         # Trajectory saving helpers
 │
-├── jarvis_cli/               # CLI subcommands and setup
+├── src/jarvis_cli/               # CLI subcommands and setup
 │   ├── main.py               # Entry point — all `jarvis` subcommands (large file)
 │   ├── config.py             # DEFAULT_CONFIG, OPTIONAL_ENV_VARS, migration
 │   ├── commands.py           # COMMAND_REGISTRY — central slash command definitions
@@ -98,7 +98,7 @@ jarvis-agent/
 │   ├── callbacks.py          # Terminal callbacks (clarify, sudo, approval)
 │   └── gateway.py            # jarvis gateway start/stop
 │
-├── tools/                    # Tool implementations (one file per tool)
+├── src/tools/                    # Tool implementations (one file per tool)
 │   ├── registry.py           # Central tool registry
 │   ├── approval.py           # Dangerous command detection
 │   ├── terminal_tool.py      # Terminal orchestration
@@ -114,7 +114,7 @@ jarvis-agent/
 │   ├── ansi_strip.py         # ANSI escape stripping
 │   └── environments/         # Terminal backends (local, docker, ssh, modal, daytona, singularity)
 │
-├── gateway/                  # Messaging platform gateway
+├── src/gateway/                  # Messaging platform gateway
 │   ├── run.py                # GatewayRunner — message dispatch (large file)
 │   ├── session.py            # SessionStore — conversation persistence
 │   ├── delivery.py           # Outbound message delivery
@@ -129,12 +129,12 @@ jarvis-agent/
 │                             #   bluebubbles, qqbot, homeassistant, webhook, api_server,
 │                             #   yuanbao
 │
-├── acp_adapter/              # ACP server (VS Code / Zed / JetBrains)
-├── cron/                     # Scheduler (jobs.py, scheduler.py)
-├── plugins/memory/           # Memory provider plugins
-├── plugins/context_engine/   # Context engine plugins
-├── capabilities/skills/      # Bundled skills (always available)
-├── capabilities/optional-skills/  # Official optional skills (install explicitly)
+├── src/acp_adapter/              # ACP server (VS Code / Zed / JetBrains)
+├── src/cron/                     # Scheduler (jobs.py, scheduler.py)
+├── src/plugins/memory/           # Memory provider plugins
+├── src/plugins/context_engine/   # Context engine plugins
+├── src/capabilities/skills/      # Bundled skills (always available)
+├── src/capabilities/optional-skills/  # Official optional skills (install explicitly)
 └── tests/                    # Pytest suite (~3,000+ tests)
 ```
 
@@ -194,7 +194,7 @@ If you are new to the codebase:
 
 ### Agent Loop
 
-The synchronous orchestration engine (`AIAgent` in `agent/runtime.py`). Handles provider selection, prompt construction, tool execution, retries, fallback, callbacks, compression, and persistence. Supports three API modes for different provider backends.
+The synchronous orchestration engine (`AIAgent` in `src/agent/runtime.py`). Handles provider selection, prompt construction, tool execution, retries, fallback, callbacks, compression, and persistence. Supports three API modes for different provider backends.
 
 → [Agent Loop Internals](./agent-loop.md)
 
@@ -216,7 +216,7 @@ A shared runtime resolver used by CLI, gateway, cron, ACP, and auxiliary calls. 
 
 ### Tool System
 
-Central tool registry (`tools/registry.py`) with 70+ registered tools across ~28 toolsets. Each tool file self-registers at import time. The registry handles schema collection, dispatch, availability checking, and error wrapping. Terminal tools support 7 backends (local, Docker, SSH, Daytona, Modal, Singularity, Vercel Sandbox).
+Central tool registry (`src/tools/registry.py`) with 70+ registered tools across ~28 toolsets. Each tool file self-registers at import time. The registry handles schema collection, dispatch, availability checking, and error wrapping. Terminal tools support 7 backends (local, Docker, SSH, Daytona, Modal, Singularity, Vercel Sandbox).
 
 → [Tools Runtime](./tools-runtime.md)
 
@@ -234,7 +234,7 @@ Long-running process with 20 platform adapters, unified session routing, user au
 
 ### Plugin System
 
-Three discovery sources: `~/.jarvis/plugins/` (user), `.jarvis/plugins/` (project), and pip entry points. Plugins register tools, hooks, and CLI commands through a context API. Two specialized plugin types exist: memory providers (`plugins/memory/`) and context engines (`plugins/context_engine/`). Both are single-select — only one of each can be active at a time, configured via `jarvis plugins` or `config.yaml`.
+Three discovery sources: `~/.jarvis/src/plugins/` (user), `.jarvis/src/plugins/` (project), and pip entry points. Plugins register tools, hooks, and CLI commands through a context API. Two specialized plugin types exist: memory providers (`src/plugins/memory/`) and context engines (`src/plugins/context_engine/`). Both are single-select — only one of each can be active at a time, configured via `jarvis plugins` or `config.yaml`.
 
 → [Plugin Guide](/docs/guides/build-a-jarvis-plugin), [Memory Provider Plugin](./memory-provider-plugin.md)
 
@@ -274,12 +274,12 @@ tools/registry.py  (no deps — imported by all tool files)
        ↑
 tools/*.py  (each calls registry.register() at import time)
        ↑
-tools/model_tools.py  (imports tools/registry + triggers tool discovery)
+tools/model_tools.py  (imports src/tools/registry + triggers tool discovery)
        ↑
-agent/runtime.py, jarvis_cli/terminal.py, tools/batch_runner.py, environments/
+agent/runtime.py, src/jarvis_cli/terminal.py, src/tools/batch_runner.py, environments/
 ```
 
-This chain means tool registration happens at import time, before any agent instance is created. Any `tools/*.py` file with a top-level `registry.register()` call is auto-discovered — no manual import list needed.
+This chain means tool registration happens at import time, before any agent instance is created. Any `src/tools/*.py` file with a top-level `registry.register()` call is auto-discovered — no manual import list needed.
 
 ## Source: `developer-guide/agent-loop.md`
 
@@ -291,7 +291,7 @@ description: "Detailed walkthrough of AIAgent execution, API modes, tools, callb
 
 # Agent Loop Internals
 
-The core orchestration engine is `agent/runtime.py`'s `AIAgent` class — a large file (15k+ lines) that handles everything from prompt assembly to tool dispatch to provider failover.
+The core orchestration engine is `src/agent/runtime.py`'s `AIAgent` class — a large file (15k+ lines) that handles everything from prompt assembly to tool dispatch to provider failover.
 
 ## Core Responsibilities
 
@@ -423,9 +423,9 @@ When the model returns tool calls:
 
 ```text
 for each tool_call in response.tool_calls:
-    1. Resolve handler from tools/registry.py
+    1. Resolve handler from src/tools/registry.py
     2. Fire pre_tool_call plugin hook
-    3. Check if dangerous command (tools/approval.py)
+    3. Check if dangerous command (src/tools/approval.py)
        - If dangerous: invoke approval_callback, wait for user
     4. Execute handler with args + task_id
     5. Fire post_tool_call plugin hook
@@ -434,7 +434,7 @@ for each tool_call in response.tool_calls:
 
 ### Agent-Level Tools
 
-Some tools are intercepted by `agent/runtime.py` *before* reaching `handle_function_call()`:
+Some tools are intercepted by `src/agent/runtime.py` *before* reaching `handle_function_call()`:
 
 | Tool | Why intercepted |
 |------|--------------------|
@@ -507,13 +507,13 @@ After each turn:
 
 | File | Purpose |
 |------|---------|
-| `agent/runtime.py` | AIAgent class — the complete agent loop |
-| `agent/prompt_builder.py` | System prompt assembly from memory, skills, context files, personality |
-| `agent/context_engine.py` | ContextEngine ABC — pluggable context management |
-| `agent/context_compressor.py` | Default engine — lossy summarization algorithm |
-| `agent/prompt_caching.py` | Anthropic prompt caching markers and cache metrics |
-| `agent/auxiliary_client.py` | Auxiliary LLM client for side tasks (vision, summarization) |
-| `tools/model_tools.py` | Tool schema collection, `handle_function_call()` dispatch |
+| `src/agent/runtime.py` | AIAgent class — the complete agent loop |
+| `src/agent/prompt_builder.py` | System prompt assembly from memory, skills, context files, personality |
+| `src/agent/context_engine.py` | ContextEngine ABC — pluggable context management |
+| `src/agent/context_compressor.py` | Default engine — lossy summarization algorithm |
+| `src/agent/prompt_caching.py` | Anthropic prompt caching markers and cache metrics |
+| `src/agent/auxiliary_client.py` | Auxiliary LLM client for side tasks (vision, summarization) |
+| `src/tools/model_tools.py` | Tool schema collection, `handle_function_call()` dispatch |
 
 ## Related Docs
 
@@ -539,16 +539,16 @@ The messaging gateway is the long-running process that connects Jarvis to 20+ ex
 
 | File | Purpose |
 |------|---------|
-| `gateway/run.py` | `GatewayRunner` — main loop, slash commands, message dispatch (large file; check git for current LOC) |
-| `gateway/session.py` | `SessionStore` — conversation persistence and session key construction |
-| `gateway/delivery.py` | Outbound message delivery to target platforms/channels |
-| `gateway/pairing.py` | DM pairing flow for user authorization |
-| `gateway/channel_directory.py` | Maps chat IDs to human-readable names for cron delivery |
-| `gateway/hooks.py` | Hook discovery, loading, and lifecycle event dispatch |
-| `gateway/mirror.py` | Cross-session message mirroring for `send_message` |
-| `gateway/status.py` | Token lock management for profile-scoped gateway instances |
-| `gateway/builtin_hooks/` | Extension point for always-registered hooks (none shipped) |
-| `gateway/platforms/` | Platform adapters (one per messaging platform) |
+| `src/gateway/run.py` | `GatewayRunner` — main loop, slash commands, message dispatch (large file; check git for current LOC) |
+| `src/gateway/session.py` | `SessionStore` — conversation persistence and session key construction |
+| `src/gateway/delivery.py` | Outbound message delivery to target platforms/channels |
+| `src/gateway/pairing.py` | DM pairing flow for user authorization |
+| `src/gateway/channel_directory.py` | Maps chat IDs to human-readable names for cron delivery |
+| `src/gateway/hooks.py` | Hook discovery, loading, and lifecycle event dispatch |
+| `src/gateway/mirror.py` | Cross-session message mirroring for `send_message` |
+| `src/gateway/status.py` | Token lock management for profile-scoped gateway instances |
+| `src/gateway/builtin_hooks/` | Extension point for always-registered hooks (none shipped) |
+| `src/gateway/platforms/` | Platform adapters (one per messaging platform) |
 
 ## Architecture Overview
 
@@ -602,15 +602,15 @@ agent:main:{platform}:{chat_type}:{chat_id}
 
 For example: `agent:main:telegram:private:123456789`
 
-Thread-aware platforms (Telegram forum topics, Discord threads, Slack threads) may include thread IDs in the chat_id portion. **Never construct session keys manually** — always use `build_session_key()` from `gateway/session.py`.
+Thread-aware platforms (Telegram forum topics, Discord threads, Slack threads) may include thread IDs in the chat_id portion. **Never construct session keys manually** — always use `build_session_key()` from `src/gateway/session.py`.
 
 ### Two-Level Message Guard
 
 When an agent is actively running, incoming messages pass through two sequential guards:
 
-1. **Level 1 — Base adapter** (`gateway/platforms/base.py`): Checks `_active_sessions`. If the session is active, queues the message in `_pending_messages` and sets an interrupt event. This catches messages *before* they reach the gateway runner.
+1. **Level 1 — Base adapter** (`src/gateway/platforms/base.py`): Checks `_active_sessions`. If the session is active, queues the message in `_pending_messages` and sets an interrupt event. This catches messages *before* they reach the gateway runner.
 
-2. **Level 2 — Gateway runner** (`gateway/run.py`): Checks `_running_agents`. Intercepts specific commands (`/stop`, `/new`, `/queue`, `/status`, `/approve`, `/deny`) and routes them appropriately. Everything else triggers `running_agent.interrupt()`.
+2. **Level 2 — Gateway runner** (`src/gateway/run.py`): Checks `_running_agents`. Intercepts specific commands (`/stop`, `/new`, `/queue`, `/status`, `/approve`, `/deny`) and routes them appropriately. Everything else triggers `running_agent.interrupt()`.
 
 Commands that must reach the runner while the agent is blocked (like `/approve`) are dispatched **inline** via `await self._message_handler(event)` — they bypass the background task system to avoid race conditions.
 
@@ -633,13 +633,13 @@ New user: ABC123
 Gateway: "Paired! You're now authorized."
 ```
 
-Pairing state is persisted in `gateway/pairing.py` and survives restarts.
+Pairing state is persisted in `src/gateway/pairing.py` and survives restarts.
 
 ## Slash Command Dispatch
 
 All slash commands in the gateway flow through the same resolution pipeline:
 
-1. `resolve_command()` from `jarvis_cli/commands.py` maps input to canonical name (handles aliases, prefix matching)
+1. `resolve_command()` from `src/jarvis_cli/commands.py` maps input to canonical name (handles aliases, prefix matching)
 2. The canonical name is checked against `GATEWAY_KNOWN_COMMANDS`
 3. Handler in `_handle_message()` dispatches based on canonical name
 4. Some commands are gated on config (`gateway_config_gate` on `CommandDef`)
@@ -670,7 +670,7 @@ Unlike the CLI (which uses `load_cli_config()` with hardcoded defaults), the gat
 
 ## Platform Adapters
 
-Each messaging platform has an adapter in `gateway/platforms/`:
+Each messaging platform has an adapter in `src/gateway/platforms/`:
 
 ```text
 gateway/platforms/
@@ -709,7 +709,7 @@ Adapters that connect with unique credentials call `acquire_scoped_lock()` in `c
 
 ## Delivery Path
 
-Outgoing deliveries (`gateway/delivery.py`) handle:
+Outgoing deliveries (`src/gateway/delivery.py`) handle:
 
 - **Direct reply** — send response back to the originating chat
 - **Home channel delivery** — route cron job outputs and background results to a configured home channel
@@ -735,7 +735,7 @@ Gateway hooks are Python modules that respond to lifecycle events:
 | `agent:end` | Agent finishes and returns response |
 | `command:*` | Any slash command is executed |
 
-Hooks are discovered from `gateway/builtin_hooks/` (an extension point — currently empty in the shipped distribution; `_register_builtin_hooks()` is a no-op stub) and `~/.jarvis/hooks/` (user-installed). Each hook is a directory with a `HOOK.yaml` manifest and `handler.py`.
+Hooks are discovered from `src/gateway/builtin_hooks/` (an extension point — currently empty in the shipped distribution; `_register_builtin_hooks()` is a no-op stub) and `~/.jarvis/hooks/` (user-installed). Each hook is a directory with a `HOOK.yaml` manifest and `handler.py`.
 
 ## Memory Provider Integration
 
@@ -802,21 +802,21 @@ Jarvis tools are self-registering functions grouped into toolsets and executed t
 
 Primary files:
 
-- `tools/registry.py`
-- `tools/model_tools.py`
-- `tools/toolsets.py`
-- `tools/terminal_tool.py`
-- `tools/environments/*`
+- `src/tools/registry.py`
+- `src/tools/model_tools.py`
+- `src/tools/toolsets.py`
+- `src/tools/terminal_tool.py`
+- `src/tools/environments/*`
 
 ## Tool registration model
 
 Each tool module calls `registry.register(...)` at import time.
 
-`tools/model_tools.py` is responsible for importing/discovering tool modules and building the schema list used by the model.
+`src/tools/model_tools.py` is responsible for importing/discovering tool modules and building the schema list used by the model.
 
 ### How `registry.register()` works
 
-Every tool file in `tools/` calls `registry.register()` at module level to declare itself. The function signature is:
+Every tool file in `src/tools/` calls `registry.register()` at module level to declare itself. The function signature is:
 
 ```python
 registry.register(
@@ -836,10 +836,10 @@ Each call creates a `ToolEntry` stored in the singleton `ToolRegistry._tools` di
 
 ### Discovery: `discover_builtin_tools()`
 
-When `tools/model_tools.py` is imported, it calls `discover_builtin_tools()` from `tools/registry.py`. This function scans every `tools/*.py` file using AST parsing to find modules that contain top-level `registry.register()` calls, then imports them:
+When `src/tools/model_tools.py` is imported, it calls `discover_builtin_tools()` from `src/tools/registry.py`. This function scans every `src/tools/*.py` file using AST parsing to find modules that contain top-level `registry.register()` calls, then imports them:
 
 ```python
-# tools/registry.py (simplified)
+# src/tools/registry.py (simplified)
 def discover_builtin_tools(tools_dir=None):
     tools_path = Path(tools_dir) if tools_dir else Path(__file__).parent
     for path in sorted(tools_path.glob("*.py")):
@@ -849,7 +849,7 @@ def discover_builtin_tools(tools_dir=None):
             importlib.import_module(f"tools.{path.stem}")
 ```
 
-This auto-discovery means new tool files are picked up automatically — no manual list to maintain. The AST check only matches top-level `registry.register()` calls (not calls inside functions), so helper modules in `tools/` are not imported.
+This auto-discovery means new tool files are picked up automatically — no manual list to maintain. The AST check only matches top-level `registry.register()` calls (not calls inside functions), so helper modules in `src/tools/` are not imported.
 
 Each import triggers the module's `registry.register()` calls. Errors in optional tools (e.g., missing `fal_client` for image generation) are caught and logged — they don't prevent other tools from loading.
 
@@ -973,7 +973,7 @@ When a tool handler is async, `_run_async()` bridges it to the sync dispatch pat
 
 ## The DANGEROUS_PATTERNS approval flow
 
-The terminal tool integrates a dangerous-command approval system defined in `tools/approval.py`:
+The terminal tool integrates a dangerous-command approval system defined in `src/tools/approval.py`:
 
 1. **Pattern detection** — `DANGEROUS_PATTERNS` is a list of `(regex, description)` tuples covering destructive operations:
    - Recursive deletes (`rm -rf`)

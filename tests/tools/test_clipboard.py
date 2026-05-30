@@ -2,8 +2,8 @@
 and CLI integration.
 
 Coverage:
-  jarvis_cli/clipboard.py  — platform-specific image extraction (macOS, WSL, Wayland, X11)
-  jarvis_cli/terminal.py                   — _try_attach_clipboard_image, _build_multimodal_content,
+  src/jarvis_cli/clipboard.py  — platform-specific image extraction (macOS, WSL, Wayland, X11)
+  src/jarvis_cli/terminal.py                   — _try_attach_clipboard_image, _build_multimodal_content,
                               image attachment state, queue tuple routing
 """
 

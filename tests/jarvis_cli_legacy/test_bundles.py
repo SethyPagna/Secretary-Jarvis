@@ -1,4 +1,4 @@
-"""Tests for jarvis_cli/bundles.py — the `jarvis bundles` CLI subcommand."""
+"""Tests for src/jarvis_cli/bundles.py — the `jarvis bundles` CLI subcommand."""
 
 import argparse
 import sys

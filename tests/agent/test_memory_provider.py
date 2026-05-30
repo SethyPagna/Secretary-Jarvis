@@ -380,7 +380,7 @@ class TestMemoryManager:
 
 
 class TestPluginMemoryDiscovery:
-    """Memory providers are discovered from plugins/memory/ directory."""
+    """Memory providers are discovered from src/plugins/memory/ directory."""
 
     def test_discover_finds_providers(self):
         """discover_memory_providers returns available providers."""
@@ -404,10 +404,10 @@ class TestPluginMemoryDiscovery:
 
 
 class TestUserInstalledProviderDiscovery:
-    """Memory providers installed to $JARVIS_HOME/plugins/ should be found.
+    """Memory providers installed to $JARVIS_HOME/src/plugins/ should be found.
 
     Regression test for issues #4956 and #9099: load_memory_provider() and
-    discover_memory_providers() only scanned the bundled plugins/memory/
+    discover_memory_providers() only scanned the bundled src/plugins/memory/
     directory, ignoring user-installed plugins.
     """
 
@@ -445,7 +445,7 @@ class TestUserInstalledProviderDiscovery:
         assert "holographic" in names  # bundled still found
 
     def test_load_user_plugin(self, tmp_path, monkeypatch):
-        """load_memory_provider() can load from $JARVIS_HOME/plugins/."""
+        """load_memory_provider() can load from $JARVIS_HOME/src/plugins/."""
         from plugins.memory import load_memory_provider
         self._make_user_memory_plugin(tmp_path, "myexternal")
         monkeypatch.setattr(
@@ -515,7 +515,7 @@ class TestSequentialDispatchRouting:
     memory_manager.has_tool() and handle_tool_call().
 
     This is a regression test for a bug where _execute_tool_calls_sequential
-    in agent/runtime.py had its own inline dispatch chain that skipped
+    in src/agent/runtime.py had its own inline dispatch chain that skipped
     memory_manager.has_tool(), causing all memory provider tools to fall
     through to the registry and return "Unknown tool". The fix added
     has_tool() + handle_tool_call() to the sequential path.
@@ -617,7 +617,7 @@ class TestSequentialDispatchRouting:
 
 class TestSetupFieldFiltering:
     """Test the 'when' clause and 'default_from' logic used by the
-    memory setup wizard in jarvis_cli/memory_setup.py.
+    memory setup wizard in src/jarvis_cli/memory_setup.py.
 
     These features are generic — any memory plugin can use them in
     get_config_schema(). Currently used by the hindsight plugin.
@@ -925,13 +925,13 @@ class TestOnMemoryWriteBridge:
 
     def test_on_memory_write_remove_not_bridged(self):
         """The bridge intentionally skips 'remove' — only add/replace notify."""
-        # This tests the contract that agent/runtime.py checks:
+        # This tests the contract that src/agent/runtime.py checks:
         #   function_args.get("action") in ("add", "replace")
         mgr = MemoryManager()
         p = FakeMemoryProvider("ext")
         mgr.add_provider(p)
 
-        # Manager itself doesn't filter — agent/runtime.py does.
+        # Manager itself doesn't filter — src/agent/runtime.py does.
         # But providers should handle remove gracefully.
         mgr.on_memory_write("remove", "memory", "old fact")
         assert p.memory_writes == [("remove", "memory", "old fact")]
@@ -958,7 +958,7 @@ class TestOnMemoryWriteBridge:
             {"type": "function", "function": {"name": "web_search", "description": "Search", "parameters": {}}},
         ]
 
-        # Apply the same dedup logic from agent/runtime.py __init__
+        # Apply the same dedup logic from src/agent/runtime.py __init__
         _existing_names = {
             t.get("function", {}).get("name")
             for t in existing_tools
@@ -1072,7 +1072,7 @@ class TestMemoryToolToolsetGate:
     causing 10x latency on local models (Qwen3-30B: 1.7s → 42s) and
     tool-call loops on small models.
 
-    These tests mirror the gate logic in agent/agent_init.py around the
+    These tests mirror the gate logic in src/agent/agent_init.py around the
     memory provider tool injection block. The gate condition is:
 
         enabled_toolsets is None        → no filter, inject (backward compat)

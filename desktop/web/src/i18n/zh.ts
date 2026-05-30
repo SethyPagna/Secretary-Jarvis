@@ -280,7 +280,7 @@ export const zh: Translations = {
     providersHint:
       "写入 config.yaml：memory.provider（留空为内置）、context.engine。下次会话生效。",
     refreshDashboard: "重新扫描仪表盘扩展",
-    removeConfirm: "从 ~/.jarvis/plugins/ 删除此插件？",
+    removeConfirm: "从 ~/.jarvis/src/plugins/ 删除此插件？",
     removeHint: "仅可移除用户安装在 ~/.jarvis/plugins 下的插件。",
     rescanHeading: "SPA 插件注册表",
     rescanHint: "在磁盘新增文件后扫描，使侧边栏载入新 manifest。",

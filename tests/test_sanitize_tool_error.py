@@ -102,7 +102,7 @@ class TestEnvelope:
 class TestHandleFunctionCallIntegration:
     """Verify handle_function_call routes exception-path errors through the sanitizer.
 
-    Note: the "Unknown tool: ..." early-return in tools/registry.py is a
+    Note: the "Unknown tool: ..." early-return in src/tools/registry.py is a
     *different* code path from `except Exception` in handle_function_call —
     that one returns directly without sanitization (and there's nothing to
     sanitize in a hardcoded format string anyway). This test exercises the

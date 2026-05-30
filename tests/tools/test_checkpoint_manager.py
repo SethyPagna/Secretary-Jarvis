@@ -1,4 +1,4 @@
-"""Tests for tools/checkpoint_manager.py — CheckpointManager (v2 single-store)."""
+"""Tests for src/tools/checkpoint_manager.py — CheckpointManager (v2 single-store)."""
 
 import json
 import logging

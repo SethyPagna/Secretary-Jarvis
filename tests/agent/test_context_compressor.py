@@ -1,4 +1,4 @@
-"""Tests for agent/context_compressor.py — compression logic, thresholds, truncation fallback."""
+"""Tests for src/agent/context_compressor.py — compression logic, thresholds, truncation fallback."""
 
 import pytest
 from unittest.mock import patch, MagicMock
@@ -674,7 +674,7 @@ class TestAuxModelFallbackSurfacedToCallers:
 
         # Recovery succeeded → no fallback placeholder
         assert c._last_summary_fallback_used is False
-        # But aux-model failure IS recorded for the gateway/CLI warning
+        # But aux-model failure IS recorded for the src/gateway/CLI warning
         assert c._last_aux_model_failure_model == "broken-aux-model"
         assert c._last_aux_model_failure_error is not None
         assert "400" in c._last_aux_model_failure_error

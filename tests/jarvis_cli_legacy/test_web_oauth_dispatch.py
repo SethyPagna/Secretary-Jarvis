@@ -80,7 +80,7 @@ def test_minimax_login_does_not_launch_anthropic_flow():
         return_value=None,
     ):
         resp = client.post(
-            "/api/providers/oauth/minimax-oauth/start",
+            "/api/src/providers/oauth/minimax-oauth/start",
             headers=HEADERS,
         )
 
@@ -266,7 +266,7 @@ def test_anthropic_pkce_branch_still_works():
         return_value=fake_anthropic_response,
     ):
         resp = client.post(
-            "/api/providers/oauth/anthropic/start",
+            "/api/src/providers/oauth/anthropic/start",
             headers=HEADERS,
         )
 
@@ -303,7 +303,7 @@ def test_unknown_pkce_provider_rejected_cleanly():
     try:
         ws._OAUTH_PROVIDER_CATALOG = original_catalog + (fake_entry,)
         resp = client.post(
-            "/api/providers/oauth/hypothetical-pkce-provider/start",
+            "/api/src/providers/oauth/hypothetical-pkce-provider/start",
             headers=HEADERS,
         )
     finally:

@@ -1,6 +1,6 @@
 """Regression tests for the Discord /model picker.
 
-Uses the shared discord mock from tests/gateway/conftest.py (installed
+Uses the shared discord mock from tests/src/gateway/conftest.py (installed
 at collection time via _ensure_discord_mock()). Previously this file
 installed its own mock at module-import time and clobbered sys.modules,
 breaking other gateway tests under pytest-xdist.

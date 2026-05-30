@@ -51,7 +51,7 @@ def _make_jarvis_tree(root: Path) -> None:
 
     # jarvis-agent repo (should be EXCLUDED)
     (root / "jarvis-agent").mkdir(exist_ok=True)
-    (root / "jarvis-agent" / "agent/runtime.py").write_text("# big file\n")
+    (root / "jarvis-agent" / "src/agent/runtime.py").write_text("# big file\n")
     (root / "jarvis-agent" / ".git").mkdir()
     (root / "jarvis-agent" / ".git" / "HEAD").write_text("ref: refs/heads/main\n")
 
@@ -75,12 +75,12 @@ def _make_jarvis_tree(root: Path) -> None:
 class TestShouldExclude:
     def test_excludes_jarvis_agent(self):
         from jarvis_cli.backup import _should_exclude
-        assert _should_exclude(Path("jarvis-agent/agent/runtime.py"))
+        assert _should_exclude(Path("jarvis-agent/src/agent/runtime.py"))
         assert _should_exclude(Path("jarvis-agent/.git/HEAD"))
 
     def test_excludes_pycache(self):
         from jarvis_cli.backup import _should_exclude
-        assert _should_exclude(Path("plugins/__pycache__/mod.cpython-312.pyc"))
+        assert _should_exclude(Path("src/plugins/__pycache__/mod.cpython-312.pyc"))
 
     def test_excludes_pyc_files(self):
         from jarvis_cli.backup import _should_exclude

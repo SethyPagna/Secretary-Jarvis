@@ -13,7 +13,7 @@ _CWD_PLACEHOLDERS = (".", "auto", "cwd")
 
 
 def _resolve_cwd(terminal_config: dict, defaults: dict, env: dict):
-    """Mirror the CWD resolution logic from jarvis_cli/terminal.py load_cli_config()."""
+    """Mirror the CWD resolution logic from src/jarvis_cli/terminal.py load_cli_config()."""
     effective_backend = terminal_config.get("env_type", "local")
 
     if effective_backend == "local":
@@ -84,7 +84,7 @@ class TestNonLocalBackends:
 
 
 class TestGatewayLazyImport:
-    """Gateway lazy import of jarvis_cli/terminal.py must not clobber TERMINAL_CWD."""
+    """Gateway lazy import of src/jarvis_cli/terminal.py must not clobber TERMINAL_CWD."""
 
     def test_gateway_cwd_preserved(self):
         env = {"_JARVIS_GATEWAY": "1", "TERMINAL_CWD": "/home/user/project"}

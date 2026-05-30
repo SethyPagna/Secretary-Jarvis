@@ -5,7 +5,7 @@ symlinks, which it swaps for a regular file.  Managed deployments that
 symlink ``~/.jarvis/config.yaml`` (and other state files) to a git-tracked
 profile package were silently detached on every config write.
 
-The fix: a shared ``atomic_replace`` helper in ``jarvis_cli/utils.py`` that resolves the
+The fix: a shared ``atomic_replace`` helper in ``src/jarvis_cli/utils.py`` that resolves the
 target through ``os.path.realpath`` when it is a symlink, so the real file is
 overwritten in-place while the symlink survives.  All atomic-write sites in
 the codebase were migrated to the helper; these tests pin that invariant.

@@ -7,7 +7,7 @@ const BACKEND = process.env.JARVIS_DASHBOARD_URL ?? "http://127.0.0.1:9119";
 
 /**
  * In production the Python desktop backend injects a one-shot session token
- * into `index.html` (see `jarvis_cli/web_server.py`). The Vite dev server
+ * into `index.html` (see `src/jarvis_cli/web_server.py`). The Vite dev server
  * serves its own `index.html`, so unless we forward that token, protected
  * `/api/*` calls return 401.
  *
@@ -79,7 +79,7 @@ export default defineConfig({
     ],
   },
   build: {
-    outDir: "../../jarvis_cli/web_dist",
+    outDir: "../../src/jarvis_cli/web_dist",
     emptyOutDir: true,
     rollupOptions: {
       output: {

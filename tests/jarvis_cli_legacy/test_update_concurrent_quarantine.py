@@ -20,7 +20,7 @@ from jarvis_cli import main as cli_main
 
 
 # Tests in this module either exercise the REAL _detect_concurrent_jarvis_instances
-# helper (and need the autouse stub in tests/jarvis_cli/conftest.py disabled),
+# helper (and need the autouse stub in tests/src/jarvis_cli/conftest.py disabled),
 # or supply their own explicit return value via patch.object. Mark the whole
 # module so the conftest fixture skips its default stub.
 pytestmark = pytest.mark.real_concurrent_gate

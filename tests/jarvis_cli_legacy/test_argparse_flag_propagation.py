@@ -96,7 +96,7 @@ class TestYoloEnvVar:
 class TestAcceptHooksOnAgentSubparsers:
     """Verify --accept-hooks is accepted at every agent-subcommand
     position (before the subcommand, between group/subcommand, and
-    after the leaf subcommand) for gateway/cron/mcp/acp.  Regression
+    after the leaf subcommand) for src/gateway/src/cron/mcp/acp.  Regression
     against prior behaviour where the flag only worked on the root
     parser and `chat`, so `jarvis gateway run --accept-hooks` failed
     with `unrecognized arguments`."""

@@ -28,18 +28,10 @@ ROOT_FILE_ALLOWLIST = {
 
 ROOT_DIR_ALLOWLIST = {
     ".github",
-    "acp_adapter",
-    "agent",
-    "capabilities",
-    "cron",
     "desktop",
-    "gateway",
-    "jarvis_cli",
     "ops",
-    "plugins",
-    "providers",
+    "src",
     "tests",
-    "tools",
 }
 
 ROOT_PY_MODULES = set()
@@ -47,12 +39,12 @@ ROOT_PY_MODULES = set()
 APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
     "desktop/electron/main.js",
     "desktop/electron/preload.js",
-    "capabilities/optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
+    "src/capabilities/optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
     "ops/scripts/build/after-pack-icon.cjs",
     "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
     "ops/scripts/checks/whatsapp-bridge/allowlist.test.mjs",
     "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
-    "capabilities/skills/creative/p5js/scripts/export-frames.js",
+    "src/capabilities/skills/creative/p5js/scripts/export-frames.js",
     "desktop/web/config/eslint.config.js",
 }
 
@@ -74,7 +66,7 @@ LEGACY_BRAND_SOURCE_EXCLUDES = {
 
 LEGACY_BRAND_SCAN_DIR_EXCLUDES = {
     ".github",
-    "jarvis_cli/web_dist",
+    "src/jarvis_cli/web_dist",
     "release",
     "tests",
 }
@@ -142,14 +134,14 @@ class RepositoryLayoutContractTests(unittest.TestCase):
 
     def test_config_and_locale_assets_live_under_package_or_metadata_dirs(self) -> None:
         self.assertTrue((ROOT / "ops" / "config" / "env" / ".env.example").is_file())
-        self.assertTrue((ROOT / "jarvis_cli" / "data" / "locales" / "en.yaml").is_file())
+        self.assertTrue((ROOT / "src" / "jarvis_cli" / "data" / "locales" / "en.yaml").is_file())
         self.assertFalse((ROOT / "locales").exists())
 
     def test_gitignore_keeps_skill_assets_trackable(self) -> None:
-        self.assertFalse(_is_git_ignored("capabilities/skills/creative/p5js/references/export-pipeline.md"))
-        self.assertFalse(_is_git_ignored("capabilities/skills/creative/p5js/scripts/export-frames.js"))
-        self.assertFalse(_is_git_ignored("capabilities/optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md"))
-        self.assertFalse(_is_git_ignored("plugins/jarvis-achievements/dashboard/dist/index.js"))
+        self.assertFalse(_is_git_ignored("src/capabilities/skills/creative/p5js/references/export-pipeline.md"))
+        self.assertFalse(_is_git_ignored("src/capabilities/skills/creative/p5js/scripts/export-frames.js"))
+        self.assertFalse(_is_git_ignored("src/capabilities/optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md"))
+        self.assertFalse(_is_git_ignored("src/plugins/jarvis-achievements/dashboard/dist/index.js"))
 
     def test_gitignore_still_ignores_generated_dependency_and_release_dirs(self) -> None:
         self.assertTrue(_is_git_ignored("node_modules/example-package/index.js"))
@@ -157,18 +149,18 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         self.assertTrue(_is_git_ignored("release/JARVIS 1.0.0.exe"))
         self.assertTrue(_is_git_ignored("desktop/release/JARVIS 1.0.0.exe"))
         self.assertTrue(_is_git_ignored("runtime/llama.cpp/llama-server.exe"))
-        self.assertTrue(_is_git_ignored("jarvis_cli/web_dist/index.html"))
+        self.assertTrue(_is_git_ignored("src/jarvis_cli/web_dist/index.html"))
         self.assertTrue(_is_git_ignored("desktop/web/public/fonts/Collapse-Regular.woff2"))
         self.assertTrue(_is_git_ignored("desktop/web/public/ds-assets/crest.svg"))
 
     def test_skill_and_plugin_assets_referenced_by_manifests_are_tracked(self) -> None:
         tracked = {path.as_posix() for path in _tracked_paths()}
 
-        self.assertIn("capabilities/skills/creative/p5js/references/export-pipeline.md", tracked)
-        self.assertIn("capabilities/skills/creative/p5js/scripts/export-frames.js", tracked)
-        self.assertIn("capabilities/optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md", tracked)
-        self.assertIn("plugins/jarvis-achievements/dashboard/dist/index.js", tracked)
-        self.assertIn("plugins/jarvis-achievements/dashboard/dist/style.css", tracked)
+        self.assertIn("src/capabilities/skills/creative/p5js/references/export-pipeline.md", tracked)
+        self.assertIn("src/capabilities/skills/creative/p5js/scripts/export-frames.js", tracked)
+        self.assertIn("src/capabilities/optional-skills/creative/concept-diagrams/examples/wind-turbine-structure.md", tracked)
+        self.assertIn("src/plugins/jarvis-achievements/dashboard/dist/index.js", tracked)
+        self.assertIn("src/plugins/jarvis-achievements/dashboard/dist/style.css", tracked)
 
     def test_tracked_paths_do_not_use_legacy_brand_names(self) -> None:
         legacy_paths = [
@@ -191,10 +183,10 @@ class RepositoryLayoutContractTests(unittest.TestCase):
                 and path.parts[1] == "vendor"
             )
             and not (
-                len(path.parts) >= 4
-                and path.parts[0] == "plugins"
-                and path.parts[2] == "dashboard"
-                and path.parts[3] == "dist"
+                len(path.parts) >= 5
+                and path.parts[:2] == ("src", "plugins")
+                and path.parts[3] == "dashboard"
+                and path.parts[4] == "dist"
             )
         }
 
@@ -212,9 +204,9 @@ class RepositoryLayoutContractTests(unittest.TestCase):
 
     def test_tracked_plugin_bundles_use_jarvis_runtime_bridge(self) -> None:
         bundle_paths = [
-            ROOT / "plugins" / "jarvis-achievements" / "dashboard" / "dist" / "index.js",
-            ROOT / "plugins" / "jarvis-achievements" / "dashboard" / "dist" / "style.css",
-            ROOT / "plugins" / "kanban" / "dashboard" / "dist" / "index.js",
+            ROOT / "src" / "plugins" / "jarvis-achievements" / "dashboard" / "dist" / "index.js",
+            ROOT / "src" / "plugins" / "jarvis-achievements" / "dashboard" / "dist" / "style.css",
+            ROOT / "src" / "plugins" / "kanban" / "dashboard" / "dist" / "index.js",
         ]
         bundle_text = "\n".join(path.read_text(encoding="utf-8") for path in bundle_paths)
 
@@ -223,7 +215,7 @@ class RepositoryLayoutContractTests(unittest.TestCase):
             "__HERMES_PLUGINS__",
             "__HERMES_SESSION_TOKEN__",
             "X-Hermes-Session-Token",
-            "/api/plugins/hermes-achievements",
+            "/api/src/plugins/hermes-achievements",
             "Hermes",
             "HERMES",
             "hermes",
@@ -236,7 +228,7 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         self.assertIn("__JARVIS_PLUGINS__", bundle_text)
         self.assertIn("__JARVIS_SESSION_TOKEN__", bundle_text)
         self.assertIn("X-Jarvis-Session-Token", bundle_text)
-        self.assertIn("/api/plugins/jarvis-achievements", bundle_text)
+        self.assertIn("/api/src/plugins/jarvis-achievements", bundle_text)
         self.assertIn('register("jarvis-achievements"', bundle_text)
 
     def test_app_authored_sources_do_not_contain_legacy_brand_tokens(self) -> None:

@@ -90,7 +90,7 @@ Some commands are so catastrophic — irreversible filesystem wipes, fork bombs,
 - Cron jobs running in headless `approve` mode
 - User explicitly clicking "allow always"
 
-The blocklist is the floor below `--yolo`. It trips **before** the approval layer even sees the command, and there's no override flag. Patterns currently covered (not exhaustive; kept in sync with `tools/approval.py::UNRECOVERABLE_BLOCKLIST`):
+The blocklist is the floor below `--yolo`. It trips **before** the approval layer even sees the command, and there's no override flag. Patterns currently covered (not exhaustive; kept in sync with `src/tools/approval.py::UNRECOVERABLE_BLOCKLIST`):
 
 | Pattern | Why it's hardline |
 |---|---|
@@ -116,7 +116,7 @@ approvals:
 
 ### What Triggers Approval
 
-The following patterns trigger approval prompts (defined in `tools/approval.py`):
+The following patterns trigger approval prompts (defined in `src/tools/approval.py`):
 
 | Pattern | Description |
 |---------|-------------|
@@ -309,7 +309,7 @@ When using the `docker` terminal backend, Jarvis applies strict security hardeni
 
 ### Docker Security Flags
 
-Every container runs with these flags (defined in `tools/environments/docker.py`):
+Every container runs with these flags (defined in `src/tools/environments/docker.py`):
 
 ```python
 _SECURITY_ARGS = [
@@ -616,7 +616,7 @@ The SSH connection details live in `.env` (not `config.yaml`) so they aren't che
 
 ## Supply-chain advisory checking
 
-Jarvis ships with a built-in advisory scanner that flags Python packages in the active venv that match a curated catalog of known-compromised versions (supply-chain worms like the May 2026 `mistralai 2.4.6` poisoning). Implementation lives in `jarvis_cli/security_advisories.py`.
+Jarvis ships with a built-in advisory scanner that flags Python packages in the active venv that match a curated catalog of known-compromised versions (supply-chain worms like the May 2026 `mistralai 2.4.6` poisoning). Implementation lives in `src/jarvis_cli/security_advisories.py`.
 
 How it runs:
 
@@ -636,7 +636,7 @@ The check itself is stdlib-only and runs from one `importlib.metadata.version()`
 
 ### Lazy install of optional dependencies
 
-Many features (Mistral TTS, ElevenLabs, Honcho memory, Bedrock, Slack, Matrix, …) depend on Python packages that not every user needs. Jarvis installs these **lazily** on first use rather than eagerly under `jarvis-agent[all]`. The implementation lives in `tools/lazy_deps.py`.
+Many features (Mistral TTS, ElevenLabs, Honcho memory, Bedrock, Slack, Matrix, …) depend on Python packages that not every user needs. Jarvis installs these **lazily** on first use rather than eagerly under `jarvis-agent[all]`. The implementation lives in `src/tools/lazy_deps.py`.
 
 The trade-off this fixes:
 
@@ -649,7 +649,7 @@ How it works:
 2. If the deps are missing, `ensure` checks `security.allow_lazy_installs` in `config.yaml` (default `true`) and runs a venv-scoped `pip install` for the allowlisted specs.
 3. If the install fails or the user has disabled lazy installs, the call raises `FeatureUnavailable` with the actual pip stderr and a pointer at `jarvis tools`.
 
-Security guarantees enforced by `tools/lazy_deps.py`:
+Security guarantees enforced by `src/tools/lazy_deps.py`:
 
 | Guarantee | What it means |
 |---|---|
@@ -872,10 +872,10 @@ For the full data flow diagram, see [`docs/credential-pool-flow.excalidraw`](htt
 
 The credential pool integrates at the provider resolution layer:
 
-1. **`agent/credential_pool.py`** — Pool manager: storage, selection, rotation, cooldowns
-2. **`jarvis_cli/auth_commands.py`** — CLI commands and interactive wizard
-3. **`jarvis_cli/runtime_provider.py`** — Pool-aware credential resolution
-4. **`agent/runtime.py`** — Error recovery: 429/402/401 → pool rotation → fallback
+1. **`src/agent/credential_pool.py`** — Pool manager: storage, selection, rotation, cooldowns
+2. **`src/jarvis_cli/auth_commands.py`** — CLI commands and interactive wizard
+3. **`src/jarvis_cli/runtime_provider.py`** — Pool-aware credential resolution
+4. **`src/agent/runtime.py`** — Error recovery: 429/402/401 → pool rotation → fallback
 
 ## Storage
 

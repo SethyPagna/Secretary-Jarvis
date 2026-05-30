@@ -3,7 +3,7 @@
 When the agent is actively running (session present in
 ``adapter._active_sessions``) and the user fires off multiple TEXT
 follow-ups in rapid succession, the previous behaviour was a single-slot
-replacement at ``gateway/platforms/base.py``:
+replacement at ``src/gateway/platforms/base.py``:
 
     self._pending_messages[session_key] = event
 

@@ -1,4 +1,4 @@
-"""Tests for cron/scheduler.py — origin resolution, delivery routing, and error logging."""
+"""Tests for src/cron/scheduler.py — origin resolution, delivery routing, and error logging."""
 
 import json
 import logging

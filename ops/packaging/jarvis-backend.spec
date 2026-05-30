@@ -5,13 +5,14 @@ from PyInstaller.utils.hooks import collect_data_files
 
 
 repo_root = Path(SPECPATH).parents[1]
-entrypoint = repo_root / "jarvis_cli" / "desktop_entry.py"
+src_root = repo_root / "src"
+entrypoint = src_root / "jarvis_cli" / "desktop_entry.py"
 data_files = [
-    (str(repo_root / "jarvis_cli" / "data" / "default_SOUL.md"), "jarvis_cli/data"),
-    (str(repo_root / "jarvis_cli" / "data" / "locales"), "jarvis_cli/data/locales"),
-    (str(repo_root / "jarvis_cli" / "data" / "souls"), "jarvis_cli/data/souls"),
+    (str(src_root / "jarvis_cli" / "data" / "default_SOUL.md"), "jarvis_cli/data"),
+    (str(src_root / "jarvis_cli" / "data" / "locales"), "jarvis_cli/data/locales"),
+    (str(src_root / "jarvis_cli" / "data" / "souls"), "jarvis_cli/data/souls"),
 ]
-web_dist = repo_root / "jarvis_cli" / "web_dist"
+web_dist = src_root / "jarvis_cli" / "web_dist"
 if web_dist.exists():
     data_files.append((str(web_dist), "jarvis_cli/web_dist"))
 for package_name in (
@@ -34,7 +35,7 @@ for package_name in (
 
 a = Analysis(
     [str(entrypoint)],
-    pathex=[str(repo_root)],
+    pathex=[str(src_root), str(repo_root)],
     binaries=[],
     datas=data_files,
     hiddenimports=[

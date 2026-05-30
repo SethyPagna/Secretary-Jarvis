@@ -7,7 +7,7 @@ natively) or pre-analysed via the ``auxiliary.vision`` pipeline so the
 main model only sees text.
 
 The companion end-to-end regression for #24015 lives in
-``tests/tools/test_computer_use_capture_routing.py``; this file pins the
+``tests/src/tools/test_computer_use_capture_routing.py``; this file pins the
 unit contract of the helper in isolation so behaviour does not regress
 silently if the surrounding ``computer_use`` plumbing is refactored.
 """

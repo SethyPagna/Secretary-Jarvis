@@ -28,7 +28,7 @@ dependencies = [
   # Scope rule: only packages used by EVERY jarvis session belong here.
   # Anything that's provider-specific (`anthropic`, `firecrawl-py`,
   # `exa-py`, `fal-client`, `edge-tts`, `parallel-web`) belongs in an
-  # extra and gets lazy-installed via `tools/lazy_deps.py` when the
+  # extra and gets lazy-installed via `src/tools/lazy_deps.py` when the
   # user picks that backend. Smaller `dependencies` = smaller blast
   # radius for the next supply-chain attack.
   "openai==2.24.0",
@@ -44,9 +44,9 @@ dependencies = [
   # Bumped from 2.12.5 to 2.13.4 to pull in pydantic-core 2.46.4.
   # pydantic-core 2.41.5 (pulled by 2.12.5) segfaults when the OpenAI SDK's
   # Responses API resource is exercised from a non-main thread, which is the
-  # codex_responses dispatch in agent/chat_completion_helpers.py:_call.
+  # codex_responses dispatch in src/agent/chat_completion_helpers.py:_call.
   "pydantic==2.13.4",
-  # Cron scheduler (built-in feature — scheduled cron/interval jobs use croniter).
+  # Cron scheduler (built-in feature — scheduled src/cron/interval jobs use croniter).
   "croniter==6.0.0",
   # Skills Hub (GitHub App JWT auth — optional, only needed for bot identity)
   "PyJWT[crypto]==2.12.1",  # CVE-2026-32597
@@ -124,10 +124,10 @@ acp = ["agent-client-protocol==0.9.0"]
 #      advisory page, confirm no malicious code review findings).
 #   2. Add back: mistral = ["mistralai==<verified-version>"]
 #   3. Re-enable Mistral in:
-#        - tools/lazy_deps.py (LAZY_DEPS["tts.mistral"], LAZY_DEPS["stt.mistral"])
-#        - jarvis_cli/tools_config.py (un-hide from provider picker)
-#        - jarvis_cli/web_server.py (re-add to dashboard STT options)
-#        - tools/transcription_tools.py / tools/tts_tool.py (drop disabled stubs)
+#        - src/tools/lazy_deps.py (LAZY_DEPS["tts.mistral"], LAZY_DEPS["stt.mistral"])
+#        - src/jarvis_cli/tools_config.py (un-hide from provider picker)
+#        - src/jarvis_cli/web_server.py (re-add to dashboard STT options)
+#        - src/tools/transcription_tools.py / src/tools/tts_tool.py (drop disabled stubs)
 #   4. Run `uv lock` to regenerate transitives.
 #   5. Optionally re-add to [all] only after a few days of clean operation.
 bedrock = ["boto3==1.42.89"]
@@ -142,7 +142,7 @@ termux = [
 ]
 termux-all = [
   # Best-effort "install all" profile for Termux. Same policy as [all]:
-  # only includes extras that aren't covered by `tools/lazy_deps.py`.
+  # only includes extras that aren't covered by `src/tools/lazy_deps.py`.
   # Backends like telegram/slack/dingtalk/feishu/honcho lazy-install at
   # first use, so they're no longer eager-installed here.
   "jarvis-agent[termux]",
@@ -163,8 +163,8 @@ google = [
   "google-auth-httplib2==0.3.1",
 ]
 youtube = [
-  # Required by capabilities/skills/media/youtube-content and
-  # capabilities/optional-skills/productivity/memento-flashcards (youtube_quiz.py).
+  # Required by src/capabilities/skills/media/youtube-content and
+  # src/capabilities/optional-skills/productivity/memento-flashcards (youtube_quiz.py).
   # Without this declaration uv sync omits the package and both skills fail
   # at first invocation with ModuleNotFoundError (issue #22243).
   "youtube-transcript-api==1.2.4",
@@ -173,7 +173,7 @@ youtube = [
 web = []
 all = [
   # Policy (2026-05-12): `[all]` includes only extras that genuinely
-  # CAN'T be lazy-installed via `tools/lazy_deps.py` — i.e. things every
+  # CAN'T be lazy-installed via `src/tools/lazy_deps.py` — i.e. things every
   # session can use, things needed before the agent loop is alive
   # (desktop runtime), and skill deps that packagers (AUR, Homebrew)
   # need in the wheel. Anything an opt-in backend (provider, search,
@@ -221,10 +221,29 @@ plugins = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["agent", "agent.*", "tools", "tools.*", "jarvis_cli", "gateway", "gateway.*", "cron", "acp_adapter", "plugins", "plugins.*", "providers", "providers.*"]
+where = ["src"]
+include = [
+  "acp_adapter",
+  "acp_adapter.*",
+  "agent",
+  "agent.*",
+  "cron",
+  "cron.*",
+  "gateway",
+  "gateway.*",
+  "jarvis_cli",
+  "jarvis_cli.*",
+  "plugins",
+  "plugins.*",
+  "providers",
+  "providers.*",
+  "tools",
+  "tools.*",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 markers = [
     "integration: marks tests requiring external services (API keys, Modal, etc.)",
     "real_concurrent_gate: opt out of the autouse stub that disables the legacy concurrent-instance detector",
@@ -260,7 +279,7 @@ select = ["PLW1514"]
 # Tests can intentionally exercise locale-encoding edge cases.
 "tests/**" = ["PLW1514"]
 # Skills and plugins are partially user-authored — their own conventions.
-"capabilities/skills/**" = ["PLW1514"]
-"capabilities/optional-skills/**" = ["PLW1514"]
-"plugins/**" = ["PLW1514"]
+"src/capabilities/skills/**" = ["PLW1514"]
+"src/capabilities/optional-skills/**" = ["PLW1514"]
+"src/plugins/**" = ["PLW1514"]
 

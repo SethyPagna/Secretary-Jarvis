@@ -7,6 +7,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
+$SrcRoot = Join-Path $RepoRoot "src"
+$env:PYTHONPATH = if ($env:PYTHONPATH) { "$SrcRoot;$env:PYTHONPATH" } else { $SrcRoot }
 
 function Resolve-DesktopPython {
     $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
@@ -59,8 +61,8 @@ function Test-NodeRuntimeScripts {
         "ops/scripts/build/after-pack-icon.cjs",
         "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
         "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
-        "capabilities/optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
-        "capabilities/skills/creative/p5js/scripts/export-frames.js"
+        "src/capabilities/optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
+        "src/capabilities/skills/creative/p5js/scripts/export-frames.js"
     )
 
     foreach ($script in $runtimeScripts) {

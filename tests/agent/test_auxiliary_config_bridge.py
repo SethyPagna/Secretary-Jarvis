@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 def _run_auxiliary_bridge(config_dict, monkeypatch):
     """Simulate the auxiliary config → env var bridging logic shared by CLI and gateway.
 
-    This mirrors the code in jarvis_cli/terminal.py load_cli_config() and gateway/run.py.
+    This mirrors the code in src/jarvis_cli/terminal.py load_cli_config() and src/gateway/run.py.
     Both use the same pattern; we test it once here.
     """
     # Clear env vars
@@ -195,7 +195,7 @@ class TestAuxiliaryConfigBridge:
 
 
 class TestGatewayBridgeCodeParity:
-    """Verify the gateway/run.py config bridge contains the auxiliary section."""
+    """Verify the src/gateway/run.py config bridge contains the auxiliary section."""
 
     def test_gateway_has_auxiliary_bridge(self):
         """The gateway config bridge must include auxiliary.* bridging."""
@@ -257,7 +257,7 @@ class TestVisionModelOverride:
 
 
 class TestDefaultConfigShape:
-    """Verify the DEFAULT_CONFIG in jarvis_cli/config.py has correct auxiliary structure."""
+    """Verify the DEFAULT_CONFIG in src/jarvis_cli/config.py has correct auxiliary structure."""
 
     def test_auxiliary_section_exists(self):
         from jarvis_cli.config import DEFAULT_CONFIG
@@ -284,16 +284,16 @@ class TestDefaultConfigShape:
 
 
 class TestCLIDefaultsHaveAuxiliaryKeys:
-    """Verify jarvis_cli/terminal.py load_cli_config() defaults dict does NOT include auxiliary
+    """Verify src/jarvis_cli/terminal.py load_cli_config() defaults dict does NOT include auxiliary
     (it comes from config.yaml deep merge, not hardcoded defaults)."""
 
     def test_cli_defaults_can_merge_auxiliary(self):
         """The load_cli_config deep merge logic handles keys not in defaults.
         Verify auxiliary would be picked up from config.yaml."""
-        # This is a structural assertion: jarvis_cli/terminal.py's second-pass loop
+        # This is a structural assertion: src/jarvis_cli/terminal.py's second-pass loop
         # carries over keys from file_config that aren't in defaults.
         # So auxiliary config from config.yaml gets merged even though
-        # jarvis_cli/terminal.py's defaults dict doesn't define it.
+        # src/jarvis_cli/terminal.py's defaults dict doesn't define it.
         import jarvis_cli.terminal as _cli_mod
         # See note in test_gateway_has_auxiliary_bridge — pin UTF-8 so the
         # test runs on Windows where the default locale is cp1252.

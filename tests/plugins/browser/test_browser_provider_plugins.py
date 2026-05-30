@@ -18,7 +18,7 @@ Covers:
 These tests use *real* imports from the plugin modules — no mocking of
 provider classes themselves — so the test catches drift in the ABC
 interface, the registry, and the plugin glue layer simultaneously.
-Mirrors ``tests/plugins/web/test_web_search_provider_plugins.py`` from
+Mirrors ``tests/src/plugins/web/test_web_search_provider_plugins.py`` from
 PR #25182.
 """
 from __future__ import annotations

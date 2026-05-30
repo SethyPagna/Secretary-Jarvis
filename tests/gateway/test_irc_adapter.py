@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from tests.gateway._plugin_adapter_loader import load_plugin_adapter
 
-# Load plugins/platforms/irc/adapter.py under a unique module name
+# Load src/plugins/platforms/irc/adapter.py under a unique module name
 # (plugin_adapter_irc) so it cannot collide with other plugin adapters
 # loaded by sibling tests in the same xdist worker.
 _irc_mod = load_plugin_adapter("irc")

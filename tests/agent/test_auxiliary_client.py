@@ -2064,7 +2064,7 @@ class TestAuxiliaryPoolRotationRetry:
 class TestCodexAdapterReasoningTranslation:
     """Verify _CodexCompletionsAdapter translates extra_body.reasoning
     into the Responses API's top-level reasoning + include fields, matching
-    agent/transports/codex.py::build_kwargs() behavior.
+    src/agent/transports/codex.py::build_kwargs() behavior.
 
     Regression for user feedback (Apr 26): auxiliary callers that configure
     reasoning via auxiliary.<task>.extra_body.reasoning had that config
@@ -2186,7 +2186,7 @@ class TestCodexAdapterReasoningTranslation:
         assert "reasoning" not in captured
 
     def test_reasoning_effort_null_falls_back_to_medium(self):
-        """Parity with agent/transports/codex.py::build_kwargs() — falsy
+        """Parity with src/agent/transports/codex.py::build_kwargs() — falsy
         ``effort`` (None / empty / 0) keeps the default ``medium`` instead
         of being forwarded to Codex.  Codex rejects ``{"effort": null}``
         with HTTP 400 (Invalid value for parameter `reasoning.effort`)."""

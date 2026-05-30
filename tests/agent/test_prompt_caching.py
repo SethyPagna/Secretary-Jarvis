@@ -1,4 +1,4 @@
-"""Tests for agent/prompt_caching.py — Anthropic cache control injection."""
+"""Tests for src/agent/prompt_caching.py — Anthropic cache control injection."""
 
 import copy
 import pytest

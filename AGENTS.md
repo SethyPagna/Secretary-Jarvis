@@ -21,25 +21,25 @@ entry points you'll actually edit.
 
 ```
 jarvis-agent/
-├── agent/runtime.py          # AIAgent class — core conversation loop (~12k LOC)
-├── tools/model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
-├── tools/toolsets.py           # Toolset definitions, JARVIS core tool list
-├── jarvis_cli/terminal.py                # JARVIS interactive shell orchestrator (~11k LOC)
+├── src/agent/runtime.py          # AIAgent class — core conversation loop (~12k LOC)
+├── src/tools/model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
+├── src/tools/toolsets.py           # Toolset definitions, JARVIS core tool list
+├── src/jarvis_cli/terminal.py                # JARVIS interactive shell orchestrator (~11k LOC)
 ├── session_state.py       # SessionDB — SQLite session store (FTS5 search)
-├── jarvis_cli/constants.py   # get_jarvis_home(), display_jarvis_home() — profile-aware paths
-├── jarvis_cli/logging_config.py     # setup_logging() — agent.log / errors.log / gateway.log (profile-aware)
-├── tools/batch_runner.py       # Parallel batch processing
-├── agent/                # Agent internals (provider adapters, memory, caching, compression, etc.)
-├── jarvis_cli/           # CLI subcommands, setup wizard, plugins loader, skin engine
-├── tools/                # Tool implementations — auto-discovered via tools/registry.py
+├── src/jarvis_cli/constants.py   # get_jarvis_home(), display_jarvis_home() — profile-aware paths
+├── src/jarvis_cli/logging_config.py     # setup_logging() — agent.log / errors.log / gateway.log (profile-aware)
+├── src/tools/batch_runner.py       # Parallel batch processing
+├── src/agent/                # Agent internals (provider adapters, memory, caching, compression, etc.)
+├── src/jarvis_cli/           # CLI subcommands, setup wizard, plugins loader, skin engine
+├── src/tools/                # Tool implementations — auto-discovered via src/tools/registry.py
 │   └── environments/     # Terminal backends (local, docker, ssh, modal, daytona, singularity)
-├── gateway/              # Messaging gateway — run.py + session.py + platforms/
+├── src/gateway/              # Messaging gateway — run.py + session.py + platforms/
 │   ├── platforms/        # Adapter per platform (telegram, discord, slack, whatsapp,
 │   │                     #   homeassistant, signal, matrix, mattermost, email, sms,
 │   │                     #   dingtalk, wecom, weixin, feishu, qqbot, bluebubbles,
 │   │                     #   yuanbao, webhook, api_server, ...). See ADDING_A_PLATFORM.md.
 │   └── builtin_hooks/    # Extension point for always-registered gateway hooks (none shipped)
-├── plugins/              # Plugin system (see "Plugins" section below)
+├── src/plugins/              # Plugin system (see "Plugins" section below)
 │   ├── memory/           # Memory-provider plugins (honcho, mem0, supermemory, ...)
 │   ├── context_engine/   # Context-engine plugins
 │   ├── model-providers/  # Inference backend plugins (openrouter, anthropic, gmi, ...)
@@ -49,10 +49,10 @@ jarvis-agent/
 │   ├── image_gen/        # Image-generation providers
 │   └── <others>/         # disk-cleanup, example-dashboard, google_meet, platforms,
 │                         #   spotify, strike-freedom-cockpit, ...
-├── capabilities/skills/   # Built-in skills bundled with the repo
-├── capabilities/optional-skills/  # Heavier/niche skills shipped but NOT active by default
-├── acp_adapter/          # ACP server (VS Code / Zed / JetBrains integration)
-├── cron/                 # Scheduler — jobs.py, scheduler.py
+├── src/capabilities/skills/   # Built-in skills bundled with the repo
+├── src/capabilities/optional-skills/  # Heavier/niche skills shipped but NOT active by default
+├── src/acp_adapter/          # ACP server (VS Code / Zed / JetBrains integration)
+├── src/cron/                 # Scheduler — jobs.py, scheduler.py
 ├── ops/                  # Build, packaging, docs, public scripts, desktop run launchers
 └── tests/                # Pytest suite (~17k tests across ~900 files as of May 2026)
 ```
@@ -69,18 +69,18 @@ tools/registry.py  (no deps — imported by all tool files)
        ↑
 tools/*.py  (each calls registry.register() at import time)
        ↑
-tools/model_tools.py  (imports tools/registry + triggers tool discovery)
+tools/model_tools.py  (imports src/tools/registry + triggers tool discovery)
        ↑
-agent/runtime.py, jarvis_cli/terminal.py, tools/batch_runner.py, environments/
+agent/runtime.py, src/jarvis_cli/terminal.py, src/tools/batch_runner.py, environments/
 ```
 
 ---
 
-## AIAgent Class (agent/runtime.py)
+## AIAgent Class (src/agent/runtime.py)
 
 The real `AIAgent.__init__` takes ~60 parameters (credentials, routing, callbacks,
 session context, budget, credential pool, etc.). The signature below is the
-minimum subset you'll usually touch — read `agent/runtime.py` for the full list.
+minimum subset you'll usually touch — read `src/agent/runtime.py` for the full list.
 
 ```python
 class AIAgent:
@@ -136,16 +136,16 @@ Reasoning content is stored in `assistant_msg["reasoning"]`.
 
 ---
 
-## CLI Architecture (jarvis_cli/terminal.py)
+## CLI Architecture (src/jarvis_cli/terminal.py)
 
 - **Rich** for banner/panels, **prompt_toolkit** for input with autocomplete
-- **KawaiiSpinner** (`agent/display.py`) — animated faces during API calls, `┊` activity feed for tool results
-- `load_cli_config()` in jarvis_cli/terminal.py merges hardcoded defaults + user config YAML
-- **Skin engine** (`jarvis_cli/skin_engine.py`) — data-driven CLI theming; initialized from `display.skin` config key at startup; skins customize banner colors, spinner faces/verbs/wings, tool prefix, response box, branding text
+- **KawaiiSpinner** (`src/agent/display.py`) — animated faces during API calls, `┊` activity feed for tool results
+- `load_cli_config()` in src/jarvis_cli/terminal.py merges hardcoded defaults + user config YAML
+- **Skin engine** (`src/jarvis_cli/skin_engine.py`) — data-driven CLI theming; initialized from `display.skin` config key at startup; skins customize banner colors, spinner faces/verbs/wings, tool prefix, response box, branding text
 - `process_command()` is a method on the JARVIS shell — dispatches on canonical command name resolved via `resolve_command()` from the central registry
-- Skill slash commands: `agent/skill_commands.py` scans `~/.jarvis/skills/`, injects as **user message** (not system prompt) to preserve prompt caching
+- Skill slash commands: `src/agent/skill_commands.py` scans `~/.jarvis/skills/`, injects as **user message** (not system prompt) to preserve prompt caching
 
-### Slash Command Registry (`jarvis_cli/commands.py`)
+### Slash Command Registry (`src/jarvis_cli/commands.py`)
 
 All slash commands are defined in a central `COMMAND_REGISTRY` list of `CommandDef` objects. Every downstream consumer derives from this registry automatically:
 
@@ -159,22 +159,22 @@ All slash commands are defined in a central `COMMAND_REGISTRY` list of `CommandD
 
 ### Adding a Slash Command
 
-1. Add a `CommandDef` entry to `COMMAND_REGISTRY` in `jarvis_cli/commands.py`:
+1. Add a `CommandDef` entry to `COMMAND_REGISTRY` in `src/jarvis_cli/commands.py`:
 ```python
 CommandDef("mycommand", "Description of what it does", "Session",
            aliases=("mc",), args_hint="[arg]"),
 ```
-2. Add handler in the JARVIS shell `process_command()` in `jarvis_cli/terminal.py`:
+2. Add handler in the JARVIS shell `process_command()` in `src/jarvis_cli/terminal.py`:
 ```python
 elif canonical == "mycommand":
     self._handle_mycommand(cmd_original)
 ```
-3. If the command is available in the gateway, add a handler in `gateway/run.py`:
+3. If the command is available in the gateway, add a handler in `src/gateway/run.py`:
 ```python
 if canonical == "mycommand":
     return await self._handle_mycommand(event)
 ```
-4. For persistent settings, use `save_config_value()` in `jarvis_cli/terminal.py`
+4. For persistent settings, use `save_config_value()` in `src/jarvis_cli/terminal.py`
 
 **CommandDef fields:**
 - `name` — canonical name without slash (e.g. `"background"`)
@@ -235,17 +235,17 @@ as the truth for user-facing behavior.
 ## Adding New Tools
 
 For most custom or local-only tools, do **not** edit Jarvis core. Use the plugin
-route instead: create `~/.jarvis/plugins/<name>/plugin.yaml` and
-`~/.jarvis/plugins/<name>/__init__.py`, then register tools with
+route instead: create `~/.jarvis/src/plugins/<name>/plugin.yaml` and
+`~/.jarvis/src/plugins/<name>/__init__.py`, then register tools with
 `ctx.register_tool(...)`. Plugin toolsets are discovered automatically and can be
-enabled or disabled without touching `tools/` or `tools/toolsets.py`.
+enabled or disabled without touching `src/tools/` or `src/tools/toolsets.py`.
 
 Use the built-in route below only when the user is explicitly contributing a new
 core Jarvis tool that should ship in the base system.
 
 Built-in/core tools require changes in **2 files**:
 
-**1. Create `tools/your_tool.py`:**
+**1. Create `src/tools/your_tool.py`:**
 ```python
 import json, os
 from tools.registry import registry
@@ -266,9 +266,9 @@ registry.register(
 )
 ```
 
-**2. Add to `tools/toolsets.py`** — either `_JARVIS_CORE_TOOLS` (all platforms) or a new toolset. **This step is required:** auto-discovery imports the tool and registers its schema, but the tool is only *exposed to an agent* if its name appears in a toolset. `_JARVIS_CORE_TOOLS` is not dead code — it's the default bundle every platform's base toolset inherits from.
+**2. Add to `src/tools/toolsets.py`** — either `_JARVIS_CORE_TOOLS` (all platforms) or a new toolset. **This step is required:** auto-discovery imports the tool and registers its schema, but the tool is only *exposed to an agent* if its name appears in a toolset. `_JARVIS_CORE_TOOLS` is not dead code — it's the default bundle every platform's base toolset inherits from.
 
-Auto-discovery: any `tools/*.py` file with a top-level `registry.register()` call is imported automatically — no manual import list to maintain. Wiring into a toolset is still a deliberate, manual step.
+Auto-discovery: any `src/tools/*.py` file with a top-level `registry.register()` call is imported automatically — no manual import list to maintain. Wiring into a toolset is still a deliberate, manual step.
 
 The registry handles schema collection, dispatch, availability checking, and error wrapping. All handlers MUST return a JSON string.
 
@@ -276,7 +276,7 @@ The registry handles schema collection, dispatch, availability checking, and err
 
 **State files**: If a tool stores persistent state (caches, logs, checkpoints), use `get_jarvis_home()` for the base directory — never `Path.home() / ".jarvis"`. This ensures each profile gets its own state.
 
-**Agent-level tools** (todo, memory): intercepted by `agent/runtime.py` before `handle_function_call()`. See `tools/todo_tool.py` for the pattern.
+**Agent-level tools** (todo, memory): intercepted by `src/agent/runtime.py` before `handle_function_call()`. See `src/tools/todo_tool.py` for the pattern.
 
 ---
 
@@ -306,7 +306,7 @@ Reference: #2810 (bounds pass), #9801 (SHA pinning + audit CI).
 ## Adding Configuration
 
 ### config.yaml options:
-1. Add to `DEFAULT_CONFIG` in `jarvis_cli/config.py`
+1. Add to `DEFAULT_CONFIG` in `src/jarvis_cli/config.py`
 2. Bump `_config_version` (check the current value at the top of `DEFAULT_CONFIG`)
    ONLY if you need to actively migrate/transform existing user config
    (renaming keys, changing structure). Adding a new key to an existing
@@ -323,14 +323,14 @@ Reference: #2810 (bounds pass), #9801 (SHA pinning + audit CI).
 `auxiliary` holds per-task overrides for side-LLM work (curator, vision,
 embedding, title generation, session_search, etc.) — each task can pin
 its own provider/model/base_url/max_tokens/reasoning_effort. See
-`agent/auxiliary_client.py::_resolve_auto` for resolution order.
+`src/agent/auxiliary_client.py::_resolve_auto` for resolution order.
 
 `curator` holds the background skill-maintenance config —
 `enabled`, `interval_hours`, `min_idle_hours`, `stale_after_days`,
 `archive_after_days`, `backup` (nested).
 
 ### .env variables (SECRETS ONLY — API keys, tokens, passwords):
-1. Add to `OPTIONAL_ENV_VARS` in `jarvis_cli/config.py` with metadata:
+1. Add to `OPTIONAL_ENV_VARS` in `src/jarvis_cli/config.py` with metadata:
 ```python
 "NEW_API_KEY": {
     "description": "What it's for",
@@ -350,9 +350,9 @@ the env var in code (see `gateway_timeout`, `terminal.cwd` → `TERMINAL_CWD`).
 
 | Loader | Used by | Location |
 |--------|---------|----------|
-| `load_cli_config()` | CLI mode | `jarvis_cli/terminal.py` — merges CLI-specific defaults + user YAML |
-| `load_config()` | `jarvis tools`, `jarvis setup`, most CLI subcommands | `jarvis_cli/config.py` — merges `DEFAULT_CONFIG` + user YAML |
-| Direct YAML load | Gateway runtime | `gateway/run.py` + `gateway/config.py` — reads user YAML raw |
+| `load_cli_config()` | CLI mode | `src/jarvis_cli/terminal.py` — merges CLI-specific defaults + user YAML |
+| `load_config()` | `jarvis tools`, `jarvis setup`, most CLI subcommands | `src/jarvis_cli/config.py` — merges `DEFAULT_CONFIG` + user YAML |
+| Direct YAML load | Gateway runtime | `src/gateway/run.py` + `src/gateway/config.py` — reads user YAML raw |
 
 If you add a new key and the CLI sees it but the gateway doesn't (or vice
 versa), you're on the wrong loader. Check `DEFAULT_CONFIG` coverage.
@@ -369,7 +369,7 @@ versa), you're on the wrong loader. Check `DEFAULT_CONFIG` coverage.
 
 ## Skin/Theme System
 
-The skin engine (`jarvis_cli/skin_engine.py`) provides data-driven CLI visual customization. Skins are **pure data** — no code changes needed to add a new skin.
+The skin engine (`src/jarvis_cli/skin_engine.py`) provides data-driven CLI visual customization. Skins are **pure data** — no code changes needed to add a new skin.
 
 ### Architecture
 
@@ -393,17 +393,17 @@ jarvis_cli/skin_engine.py    # SkinConfig dataclass, built-in skins, YAML loader
 | Banner section headers | `colors.banner_accent` | `banner.py` |
 | Banner dim text | `colors.banner_dim` | `banner.py` |
 | Banner body text | `colors.banner_text` | `banner.py` |
-| Response box border | `colors.response_border` | `jarvis_cli/terminal.py` |
+| Response box border | `colors.response_border` | `src/jarvis_cli/terminal.py` |
 | Spinner faces (waiting) | `spinner.waiting_faces` | `display.py` |
 | Spinner faces (thinking) | `spinner.thinking_faces` | `display.py` |
 | Spinner verbs | `spinner.thinking_verbs` | `display.py` |
 | Spinner wings (optional) | `spinner.wings` | `display.py` |
 | Tool output prefix | `tool_prefix` | `display.py` |
 | Per-tool emojis | `tool_emojis` | `display.py` → `get_tool_emoji()` |
-| Agent name | `branding.agent_name` | `banner.py`, `jarvis_cli/terminal.py` |
-| Welcome message | `branding.welcome` | `jarvis_cli/terminal.py` |
-| Response box label | `branding.response_label` | `jarvis_cli/terminal.py` |
-| Prompt symbol | `branding.prompt_symbol` | `jarvis_cli/terminal.py` |
+| Agent name | `branding.agent_name` | `banner.py`, `src/jarvis_cli/terminal.py` |
+| Welcome message | `branding.welcome` | `src/jarvis_cli/terminal.py` |
+| Response box label | `branding.response_label` | `src/jarvis_cli/terminal.py` |
+| Prompt symbol | `branding.prompt_symbol` | `src/jarvis_cli/terminal.py` |
 
 ### Built-in skins
 
@@ -414,7 +414,7 @@ jarvis_cli/skin_engine.py    # SkinConfig dataclass, built-in skins, YAML loader
 
 ### Adding a built-in skin
 
-Add to `_BUILTIN_SKINS` dict in `jarvis_cli/skin_engine.py`:
+Add to `_BUILTIN_SKINS` dict in `src/jarvis_cli/skin_engine.py`:
 
 ```python
 "mytheme": {
@@ -458,13 +458,13 @@ Activate with `/skin cyberpunk` or `display.skin: cyberpunk` in config.yaml.
 
 ## Plugins
 
-Jarvis has two plugin surfaces. Both live under `plugins/` in the repo so
+Jarvis has two plugin surfaces. Both live under `src/plugins/` in the repo so
 repo-shipped plugins can be discovered alongside user-installed ones in
-`~/.jarvis/plugins/` and pip-installed entry points.
+`~/.jarvis/src/plugins/` and pip-installed entry points.
 
-### General plugins (`jarvis_cli/plugins.py` + `plugins/<name>/`)
+### General plugins (`src/jarvis_cli/plugins.py` + `src/plugins/<name>/`)
 
-`PluginManager` discovers plugins from `~/.jarvis/plugins/`, `./.jarvis/plugins/`,
+`PluginManager` discovers plugins from `~/.jarvis/src/plugins/`, `./.jarvis/src/plugins/`,
 and pip entry points. Each plugin exposes a `register(ctx)` function that
 can:
 
@@ -476,24 +476,24 @@ can:
   plugin's argparse tree is wired into `jarvis` at startup so
   `jarvis <pluginname> <subcmd>` works with no change to `main.py`
 
-Hooks are invoked from `tools/model_tools.py` (pre/post tool) and `agent/runtime.py`
+Hooks are invoked from `src/tools/model_tools.py` (pre/post tool) and `src/agent/runtime.py`
 (lifecycle). **Discovery timing pitfall:** `discover_plugins()` only runs
-as a side effect of importing `tools/model_tools.py`. Code paths that read plugin
-state without importing `tools/model_tools.py` first must call `discover_plugins()`
+as a side effect of importing `src/tools/model_tools.py`. Code paths that read plugin
+state without importing `src/tools/model_tools.py` first must call `discover_plugins()`
 explicitly (it's idempotent).
 
-### Memory-provider plugins (`plugins/memory/<name>/`)
+### Memory-provider plugins (`src/plugins/memory/<name>/`)
 
 Separate discovery system for pluggable memory backends. Current built-in
 providers include **honcho, mem0, supermemory, byterover, hindsight,
 holographic, openviking, retaindb**.
 
-Each provider implements the `MemoryProvider` ABC (see `agent/memory_provider.py`)
-and is orchestrated by `agent/memory_manager.py`. Lifecycle hooks include
+Each provider implements the `MemoryProvider` ABC (see `src/agent/memory_provider.py`)
+and is orchestrated by `src/agent/memory_manager.py`. Lifecycle hooks include
 `sync_turn(turn_messages)`, `prefetch(query)`, `shutdown()`, and optional
 `post_setup(jarvis_home, config)` for setup-wizard integration.
 
-**CLI commands via `plugins/memory/<name>/jarvis_cli/terminal.py`:** if a memory plugin
+**CLI commands via `src/plugins/memory/<name>/src/jarvis_cli/terminal.py`:** if a memory plugin
 defines `register_cli(subparser)`, `discover_plugin_cli_commands()` finds
 it at argparse setup time and wires it into `jarvis <plugin>`. The
 framework only exposes CLI commands for the **currently active** memory
@@ -501,36 +501,36 @@ provider (read from `memory.provider` in config.yaml), so disabled
 providers don't clutter `jarvis --help`.
 
 **Rule (Teknium, May 2026):** plugins MUST NOT modify core files
-(`agent/runtime.py`, `jarvis_cli/terminal.py`, `gateway/run.py`, `jarvis_cli/main.py`, etc.).
+(`src/agent/runtime.py`, `src/jarvis_cli/terminal.py`, `src/gateway/run.py`, `src/jarvis_cli/main.py`, etc.).
 If a plugin needs a capability the framework doesn't expose, expand the
 generic plugin surface (new hook, new ctx method) — never hardcode
 plugin-specific logic into core. PR #5295 removed 95 lines of hardcoded
 honcho argparse from `main.py` for exactly this reason.
 
 **No new in-tree memory providers (policy, May 2026):** the set of
-built-in memory providers under `plugins/memory/` is closed. New memory
+built-in memory providers under `src/plugins/memory/` is closed. New memory
 backends must ship as **standalone plugin repos** that users install
-into `~/.jarvis/plugins/` (or via pip entry points) — they implement
+into `~/.jarvis/src/plugins/` (or via pip entry points) — they implement
 the same `MemoryProvider` ABC, register through the same discovery
 path, and integrate via `jarvis memory setup` / `post_setup()` without
 landing in this tree. PRs that add a new directory under
-`plugins/memory/` will be closed with a pointer to publish the
+`src/plugins/memory/` will be closed with a pointer to publish the
 provider as its own repo. Existing in-tree providers stay; bug fixes
 to them are welcome.
 
-### Model-provider plugins (`plugins/model-providers/<name>/`)
+### Model-provider plugins (`src/plugins/model-providers/<name>/`)
 
 Every inference backend (openrouter, anthropic, gmi, deepseek, nvidia, …)
 ships as a plugin here. Each plugin's `__init__.py` calls
 `providers.register_provider(ProviderProfile(...))` at module load.
-`providers/__init__.py._discover_providers()` is a **lazy, separate
+`src/providers/__init__.py._discover_providers()` is a **lazy, separate
 discovery system** — scanned on first `get_provider_profile()` or
 `list_providers()` call, NOT by the general PluginManager.
 
 Scan order:
-1. Bundled: `<repo>/plugins/model-providers/<name>/`
-2. User: `$JARVIS_HOME/plugins/model-providers/<name>/`
-3. Legacy: `<repo>/providers/<name>.py` (back-compat)
+1. Bundled: `<repo>/src/plugins/model-providers/<name>/`
+2. User: `$JARVIS_HOME/src/plugins/model-providers/<name>/`
+3. Legacy: `<repo>/src/providers/<name>.py` (back-compat)
 
 User plugins of the same name override bundled ones — `register_provider()`
 is last-writer-wins. This lets third parties swap out any built-in
@@ -545,10 +545,10 @@ Full authoring guide: `ops/docs/jarvis/tools-and-toolsets.md`.
 
 ### Dashboard / context-engine / image-gen plugin directories
 
-`plugins/context_engine/`, `plugins/image_gen/`, etc. follow the same
+`src/plugins/context_engine/`, `src/plugins/image_gen/`, etc. follow the same
 pattern (ABC + orchestrator + per-plugin directory). Context engines
-plug into `agent/context_engine.py`; image-gen providers into
-`agent/image_gen_provider.py`. Reference / docs-companion plugins
+plug into `src/agent/context_engine.py`; image-gen providers into
+`src/agent/image_gen_provider.py`. Reference / docs-companion plugins
 (`example-dashboard`, `strike-freedom-cockpit`, `plugin-llm-example`,
 `plugin-llm-async-example`) live in the
 [`jarvis-example-plugins`](https://github.com/JARVISProject/jarvis-example-plugins)
@@ -560,18 +560,18 @@ companion repo, not in this tree.
 
 Two parallel surfaces:
 
-- **`capabilities/skills/`** — built-in skills shipped and loadable by default.
-  Organized by category directories (e.g. `capabilities/skills/github/`, `capabilities/skills/mlops/`).
-- **`capabilities/optional-skills/`** — heavier or niche skills shipped with the repo but
+- **`src/capabilities/skills/`** — built-in skills shipped and loadable by default.
+  Organized by category directories (e.g. `src/capabilities/skills/github/`, `src/capabilities/skills/mlops/`).
+- **`src/capabilities/optional-skills/`** — heavier or niche skills shipped with the repo but
   NOT active by default. Installed explicitly via
   `jarvis skills install official/<category>/<skill>`. Adapter lives in
-  `tools/skills_hub.py` (`OptionalSkillSource`). Categories include
+  `src/tools/skills_hub.py` (`OptionalSkillSource`). Categories include
   `autonomous-ai-agents`, `blockchain`, `communication`, `creative`,
   `devops`, `email`, `health`, `mcp`, `migration`, `mlops`, `productivity`,
   `research`, `security`, `web-development`.
 
 When reviewing skill PRs, check which directory they target — heavy-dep or
-niche skills belong in `capabilities/optional-skills/`.
+niche skills belong in `src/capabilities/optional-skills/`.
 
 ### SKILL.md frontmatter
 
@@ -600,7 +600,7 @@ violate them.
    ```python
    import re, pathlib
    m = re.search(r'^description: (.*)$',
-                 pathlib.Path('capabilities/skills/<cat>/<name>/SKILL.md').read_text(),
+                 pathlib.Path('src/capabilities/skills/<cat>/<name>/SKILL.md').read_text(),
                  re.MULTILINE)
    assert len(m.group(1)) <= 60, len(m.group(1))
    ```
@@ -669,7 +669,7 @@ contributor skill PRs.
 
 ## Toolsets
 
-All toolsets are defined in `tools/toolsets.py` as a single `TOOLSETS` dict.
+All toolsets are defined in `src/tools/toolsets.py` as a single `TOOLSETS` dict.
 Each platform's adapter picks a base toolset (e.g. Telegram uses
 `"messaging"`); `_JARVIS_CORE_TOOLS` is the default bundle most
 platforms inherit from.
@@ -688,7 +688,7 @@ Enable/disable per platform via `jarvis tools` (the curses UI) or the
 
 ## Delegation (`delegate_task`)
 
-`tools/delegate_tool.py` spawns a subagent with an isolated
+`src/tools/delegate_tool.py` spawns a subagent with an isolated
 context + terminal session. Synchronous: the parent waits for the
 child's summary before continuing its own loop — if the parent is
 interrupted, the child is cancelled.
@@ -725,12 +725,12 @@ Background skill-maintenance system that tracks usage on agent-created
 skills and auto-archives stale ones. Users never lose skills; archives
 go to `~/.jarvis/skills/.archive/` and are restorable.
 
-- **Core:** `agent/curator.py` (review loop, auto-transitions, LLM review
-  prompt) + `agent/curator_backup.py` (pre-run tar.gz snapshots).
-- **CLI:** `jarvis_cli/curator.py` wires `jarvis curator <verb>` where
+- **Core:** `src/agent/curator.py` (review loop, auto-transitions, LLM review
+  prompt) + `src/agent/curator_backup.py` (pre-run tar.gz snapshots).
+- **CLI:** `src/jarvis_cli/curator.py` wires `jarvis curator <verb>` where
   verbs are: `status`, `run`, `pause`, `resume`, `pin`, `unpin`,
   `archive`, `restore`, `prune`, `backup`, `rollback`.
-- **Telemetry:** `tools/skill_usage.py` owns the sidecar
+- **Telemetry:** `src/tools/skill_usage.py` owns the sidecar
   `~/.jarvis/skills/.usage.json` — per-skill `use_count`, `view_count`,
   `patch_count`, `last_activity_at`, `state` (active / stale /
   archived), `pinned`.
@@ -755,7 +755,7 @@ Full user-facing docs: `ops/docs/jarvis/memory.md`.
 
 ## Cron (scheduled jobs)
 
-`cron/jobs.py` (job store) + `cron/scheduler.py` (tick loop). Agents
+`src/cron/jobs.py` (job store) + `src/cron/scheduler.py` (tick loop). Agents
 schedule jobs via the `cronjob` tool; users via `jarvis cron <verb>`
 (`list`, `add`, `edit`, `pause`, `resume`, `run`, `remove`) or the
 `/cron` slash command.
@@ -778,7 +778,7 @@ Hardening invariants:
   cannot monopolize the scheduler.
 - Catchup window: half the job's period, clamped to 120s–2h.
 - Grace window: 120s for one-shot jobs whose fire time was missed.
-- File lock at `~/.jarvis/cron/.tick.lock` prevents duplicate ticks
+- File lock at `~/.jarvis/src/cron/.tick.lock` prevents duplicate ticks
   across processes.
 - Cron sessions pass `skip_memory=True` by default; memory providers
   intentionally do not run during cron.
@@ -797,12 +797,12 @@ workers spawned by the dispatcher drive it via a dedicated `kanban_*`
 toolset so their schema footprint is zero when they're not inside a
 kanban task.
 
-- **CLI:** `jarvis_cli/kanban.py` wires `jarvis kanban` with verbs
+- **CLI:** `src/jarvis_cli/kanban.py` wires `jarvis kanban` with verbs
   `init`, `create`, `list` (alias `ls`), `show`, `assign`, `link`,
   `unlink`, `comment`, `complete`, `block`, `unblock`, `archive`,
   `tail`, plus less-commonly-used `watch`, `stats`, `runs`, `log`,
   `assignees`, `heartbeat`, `notify-*`, `dispatch`, `daemon`, `gc`.
-- **Worker/orchestrator toolset:** `tools/kanban_tools.py` exposes
+- **Worker/orchestrator toolset:** `src/tools/kanban_tools.py` exposes
   `kanban_show`, `kanban_complete`, `kanban_block`, `kanban_heartbeat`,
   `kanban_comment`, `kanban_create`, `kanban_link`; profiles that
   explicitly enable the `kanban` toolset outside a dispatcher-spawned
@@ -811,8 +811,8 @@ kanban task.
   stale claims, promotes ready tasks, atomically claims, and spawns
   assigned profiles. Runs **inside the gateway** by default via
   `kanban.dispatch_in_gateway: true`.
-- **Plugin assets:** `plugins/kanban/dashboard/` (web UI) +
-  `plugins/kanban/systemd/` (`jarvis-kanban-dispatcher.service` for
+- **Plugin assets:** `src/plugins/kanban/dashboard/` (web UI) +
+  `src/plugins/kanban/systemd/` (`jarvis-kanban-dispatcher.service` for
   standalone dispatcher deployment).
 
 Isolation model:
@@ -865,7 +865,7 @@ in config.yaml (or `JARVIS_BACKGROUND_NOTIFICATIONS` env var):
 Jarvis supports **profiles** — multiple fully isolated instances, each with its own
 `JARVIS_HOME` directory (config, API keys, memory, sessions, skills, gateway, etc.).
 
-The core mechanism: `_apply_profile_override()` in `jarvis_cli/main.py` sets
+The core mechanism: `_apply_profile_override()` in `src/jarvis_cli/main.py` sets
 `JARVIS_HOME` before any module imports. All `get_jarvis_home()` references
 automatically scope to the active profile.
 
@@ -909,7 +909,7 @@ automatically scope to the active profile.
    a unique credential (bot token, API key), call `acquire_scoped_lock()` from
    `gateway.status` in the `connect()`/`start()` method and `release_scoped_lock()` in
    `disconnect()`/`stop()`. This prevents two profiles from using the same credential.
-   See `gateway/platforms/telegram.py` for the canonical pattern.
+   See `src/gateway/platforms/telegram.py` for the canonical pattern.
 
 6. **Profile operations are HOME-anchored, not JARVIS_HOME-anchored** — `_get_profiles_root()`
    returns `Path.home() / ".jarvis" / "profiles"`, NOT `get_jarvis_home() / "profiles"`.
@@ -924,26 +924,26 @@ for user-facing print/log messages. Hardcoding `~/.jarvis` breaks profiles — e
 has its own `JARVIS_HOME` directory. This was the source of 5 bugs fixed in PR #3575.
 
 ### DO NOT introduce new `simple_term_menu` usage
-Existing call sites in `jarvis_cli/main.py` remain for legacy fallback only;
+Existing call sites in `src/jarvis_cli/main.py` remain for legacy fallback only;
 the preferred UI is curses (stdlib) because `simple_term_menu` has
 ghost-duplication rendering bugs in tmux/iTerm2 with arrow keys. New
-interactive menus must use `jarvis_cli/curses_ui.py` — see
-`jarvis_cli/tools_config.py` for the canonical pattern.
+interactive menus must use `src/jarvis_cli/curses_ui.py` — see
+`src/jarvis_cli/tools_config.py` for the canonical pattern.
 
 ### DO NOT use `\033[K` (ANSI erase-to-EOL) in spinner/display code
 Leaks as literal `?[K` text under `prompt_toolkit`'s `patch_stdout`. Use space-padding: `f"\r{line}{' ' * pad}"`.
 
-### `_last_resolved_tool_names` is a process-global in `tools/model_tools.py`
+### `_last_resolved_tool_names` is a process-global in `src/tools/model_tools.py`
 `_run_single_child()` in `delegate_tool.py` saves and restores this global around subagent execution. If you add new code that reads this global, be aware it may be temporarily stale during child agent runs.
 
 ### DO NOT hardcode cross-tool references in schema descriptions
-Tool schema descriptions must not mention tools from other toolsets by name (e.g., `browser_navigate` saying "prefer web_search"). Those tools may be unavailable (missing API keys, disabled toolset), causing the model to hallucinate calls to non-existent tools. If a cross-reference is needed, add it dynamically in `get_tool_definitions()` in `tools/model_tools.py` — see the `browser_navigate` / `execute_code` post-processing blocks for the pattern.
+Tool schema descriptions must not mention tools from other toolsets by name (e.g., `browser_navigate` saying "prefer web_search"). Those tools may be unavailable (missing API keys, disabled toolset), causing the model to hallucinate calls to non-existent tools. If a cross-reference is needed, add it dynamically in `get_tool_definitions()` in `src/tools/model_tools.py` — see the `browser_navigate` / `execute_code` post-processing blocks for the pattern.
 
 ### The gateway has TWO message guards — both must bypass approval/control commands
 When an agent is running, messages pass through two sequential guards:
-(1) **base adapter** (`gateway/platforms/base.py`) queues messages in
+(1) **base adapter** (`src/gateway/platforms/base.py`) queues messages in
 `_pending_messages` when `session_key in self._active_sessions`, and
-(2) **gateway runner** (`gateway/run.py`) intercepts `/stop`, `/new`,
+(2) **gateway runner** (`src/gateway/run.py`) intercepts `/stop`, `/new`,
 `/queue`, `/status`, `/approve`, `/deny` before they reach
 `running_agent.interrupt()`. Any new command that must reach the runner
 while the agent is blocked (e.g. approval prompts) MUST bypass BOTH
@@ -968,7 +968,7 @@ The `_isolate_jarvis_home` autouse fixture in `tests/conftest.py` redirects `JAR
 
 **Profile tests**: When testing profile features, also mock `Path.home()` so that
 `_get_profiles_root()` and `_get_default_jarvis_home()` resolve within the temp dir.
-Use the pattern from `tests/jarvis_cli/test_profiles.py`:
+Use the pattern from `tests/src/jarvis_cli/test_profiles.py`:
 ```python
 @pytest.fixture
 def profile_env(tmp_path, monkeypatch):
@@ -991,8 +991,8 @@ that have caused multiple "works locally, fails in CI" incidents (and the revers
 
 ```bash
 ops/scripts/public/run_tests.sh                                  # full suite, CI-parity
-ops/scripts/public/run_tests.sh tests/gateway/                   # one directory
-ops/scripts/public/run_tests.sh tests/agent/test_foo.py::test_x  # one test
+ops/scripts/public/run_tests.sh tests/src/gateway/                   # one directory
+ops/scripts/public/run_tests.sh tests/src/agent/test_foo.py::test_x  # one test
 ops/scripts/public/run_tests.sh -v --tb=long                     # pass-through pytest flags
 ops/scripts/public/run_tests.sh --no-isolate tests/foo/          # disable subprocess isolation (faster, for debugging)
 ```
@@ -1049,7 +1049,7 @@ python -m pytest tests/ -q
 If you need to bypass isolation for fast feedback while debugging:
 
 ```bash
-python -m pytest tests/agent/test_foo.py -q --no-isolate
+python -m pytest tests/src/agent/test_foo.py -q --no-isolate
 ```
 
 Always run the full suite before pushing changes.

@@ -32,7 +32,7 @@ def _fast_retry_backoff(monkeypatch):
         return
 
     monkeypatch.setattr(run_agent, "jittered_backoff", lambda *a, **k: 0.0)
-    # The conversation loop was extracted out of agent/runtime.py into
+    # The conversation loop was extracted out of src/agent/runtime.py into
     # ``agent.conversation_loop``, which imports ``jittered_backoff``
     # directly (``from agent.retry_utils import jittered_backoff``).
     # Patching ``run_agent.jittered_backoff`` alone misses every retry

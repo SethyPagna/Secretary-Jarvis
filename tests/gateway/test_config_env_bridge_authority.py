@@ -1,4 +1,4 @@
-"""Regression tests for the config.yaml → env var bridge in gateway/run.py.
+"""Regression tests for the config.yaml → env var bridge in src/gateway/run.py.
 
 Guards against the 60-vs-500 bug where a stale `.env JARVIS_MAX_ITERATIONS=60`
 entry silently shadowed `agent.max_turns: 500` in config.yaml because the

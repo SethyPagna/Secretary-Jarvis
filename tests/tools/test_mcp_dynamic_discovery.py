@@ -1,4 +1,4 @@
-"""Tests for MCP dynamic tool discovery (notifications/tools/list_changed)."""
+"""Tests for MCP dynamic tool discovery (notifications/src/tools/list_changed)."""
 
 import asyncio
 from types import SimpleNamespace
@@ -96,7 +96,7 @@ class TestMessageHandler:
         with patch.object(MCPServerTask, "_schedule_tools_refresh") as mock_schedule:
             handler = server._make_message_handler()
             notification = ServerNotification(
-                root=ToolListChangedNotification(method="notifications/tools/list_changed")
+                root=ToolListChangedNotification(method="notifications/src/tools/list_changed")
             )
             await handler(notification)
             mock_schedule.assert_called_once()

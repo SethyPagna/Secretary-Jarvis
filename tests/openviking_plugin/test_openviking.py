@@ -1,4 +1,4 @@
-"""Tests for plugins/memory/openviking/__init__.py — URI normalization and payload handling."""
+"""Tests for src/plugins/memory/openviking/__init__.py — URI normalization and payload handling."""
 
 import json
 

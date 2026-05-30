@@ -1,4 +1,4 @@
-"""Tests for agent/insights.py — InsightsEngine analytics and reporting."""
+"""Tests for src/agent/insights.py — InsightsEngine analytics and reporting."""
 
 import time
 import pytest

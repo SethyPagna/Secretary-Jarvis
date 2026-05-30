@@ -642,7 +642,7 @@ class TestResumeDisplayConfig:
     """resume_display config option defaults and behavior."""
 
     def test_default_config_has_resume_display(self):
-        """DEFAULT_CONFIG in jarvis_cli/config.py includes resume_display."""
+        """DEFAULT_CONFIG in src/jarvis_cli/config.py includes resume_display."""
         from jarvis_cli.config import DEFAULT_CONFIG
         display = DEFAULT_CONFIG.get("display", {})
         assert "resume_display" in display

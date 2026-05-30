@@ -1,4 +1,4 @@
-"""Tests for SSL certificate auto-detection in gateway/run.py."""
+"""Tests for SSL certificate auto-detection in src/gateway/run.py."""
 
 import importlib
 import os
@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 
 
 def _load_ensure_ssl():
-    """Import _ensure_ssl_certs fresh (gateway/run.py has heavy deps, so we
+    """Import _ensure_ssl_certs fresh (src/gateway/run.py has heavy deps, so we
     extract just the function source to avoid importing the whole gateway)."""
     # We can test via the actual module since conftest isolates JARVIS_HOME,
     # but we need to be careful about side effects.  Instead, replicate the

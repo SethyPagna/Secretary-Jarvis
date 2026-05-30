@@ -1,4 +1,4 @@
-"""Tests for agent/curator.py — orchestrator, idle gating, state transitions.
+"""Tests for src/agent/curator.py — orchestrator, idle gating, state transitions.
 
 LLM spawning is never exercised here — `_run_llm_review` is monkeypatched so
 tests run fully offline and the curator module doesn't need real credentials.
@@ -859,11 +859,11 @@ def test_curator_slot_is_canonical_aux_task():
     assert slot["model"] == ""
     assert slot["timeout"] > 0, "curator timeout should be set (reviews run long)"
 
-    # 2. jarvis_cli/main.py _AUX_TASKS — CLI picker
+    # 2. src/jarvis_cli/main.py _AUX_TASKS — CLI picker
     aux_keys = {k for k, _name, _desc in _AUX_TASKS}
     assert "curator" in aux_keys, "curator missing from _AUX_TASKS (CLI picker)"
 
-    # 3. jarvis_cli/web_server.py _AUX_TASK_SLOTS — REST API allowlist
+    # 3. src/jarvis_cli/web_server.py _AUX_TASK_SLOTS — REST API allowlist
     assert "curator" in _AUX_TASK_SLOTS, \
         "curator missing from _AUX_TASK_SLOTS (dashboard REST API)"
 

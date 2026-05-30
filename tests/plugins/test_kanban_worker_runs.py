@@ -27,7 +27,7 @@ from jarvis_cli import kanban_db as kb
 # ---------------------------------------------------------------------------
 
 def _load_plugin_router():
-    """Dynamically load plugins/kanban/dashboard/plugin_api.py and return its router."""
+    """Dynamically load src/plugins/kanban/dashboard/plugin_api.py and return its router."""
     repo_root = Path(__file__).resolve().parents[2]
     plugin_file = repo_root / "plugins" / "kanban" / "dashboard" / "plugin_api.py"
     assert plugin_file.exists(), f"plugin file missing: {plugin_file}"
@@ -59,7 +59,7 @@ def kanban_home(tmp_path, monkeypatch):
 @pytest.fixture
 def client(kanban_home):
     app = FastAPI()
-    app.include_router(_load_plugin_router(), prefix="/api/plugins/kanban")
+    app.include_router(_load_plugin_router(), prefix="/api/src/plugins/kanban")
     return TestClient(app)
 
 
@@ -83,7 +83,7 @@ def _insert_run(conn, task_id, *, worker_pid=None, ended_at=None):
 
 def test_workers_active_empty_board(client):
     """Board with no running tasks returns an empty workers list."""
-    r = client.get("/api/plugins/kanban/workers/active")
+    r = client.get("/api/src/plugins/kanban/workers/active")
     assert r.status_code == 200
     body = r.json()
     assert body["workers"] == []
@@ -103,7 +103,7 @@ def test_workers_active_with_running_task(client):
     finally:
         conn.close()
 
-    r = client.get("/api/plugins/kanban/workers/active")
+    r = client.get("/api/src/plugins/kanban/workers/active")
     assert r.status_code == 200
     body = r.json()
     assert body["count"] == 1
@@ -125,7 +125,7 @@ def test_workers_active_excludes_ended_runs(client):
     finally:
         conn.close()
 
-    r = client.get("/api/plugins/kanban/workers/active")
+    r = client.get("/api/src/plugins/kanban/workers/active")
     assert r.status_code == 200
     assert r.json()["count"] == 0
 
@@ -140,7 +140,7 @@ def test_workers_active_excludes_runs_without_pid(client):
     finally:
         conn.close()
 
-    r = client.get("/api/plugins/kanban/workers/active")
+    r = client.get("/api/src/plugins/kanban/workers/active")
     assert r.status_code == 200
     assert r.json()["count"] == 0
 
@@ -151,7 +151,7 @@ def test_workers_active_excludes_runs_without_pid(client):
 
 def test_get_run_404_unknown_id(client):
     """Non-existent run_id returns 404."""
-    r = client.get("/api/plugins/kanban/runs/999999")
+    r = client.get("/api/src/plugins/kanban/runs/999999")
     assert r.status_code == 404
     assert "999999" in r.json()["detail"]
 
@@ -165,7 +165,7 @@ def test_get_run_ok(client):
     finally:
         conn.close()
 
-    r = client.get(f"/api/plugins/kanban/runs/{run_id}")
+    r = client.get(f"/api/src/plugins/kanban/runs/{run_id}")
     assert r.status_code == 200
     body = r.json()
     assert "run" in body
@@ -182,7 +182,7 @@ def test_get_run_ok(client):
 
 def test_inspect_run_404(client):
     """Non-existent run_id returns 404."""
-    r = client.get("/api/plugins/kanban/runs/888888/inspect")
+    r = client.get("/api/src/plugins/kanban/runs/888888/inspect")
     assert r.status_code == 404
 
 
@@ -195,7 +195,7 @@ def test_inspect_run_already_ended(client):
     finally:
         conn.close()
 
-    r = client.get(f"/api/plugins/kanban/runs/{run_id}/inspect")
+    r = client.get(f"/api/src/plugins/kanban/runs/{run_id}/inspect")
     assert r.status_code == 200
     body = r.json()
     assert body["alive"] is False
@@ -211,7 +211,7 @@ def test_inspect_run_no_pid(client):
     finally:
         conn.close()
 
-    r = client.get(f"/api/plugins/kanban/runs/{run_id}/inspect")
+    r = client.get(f"/api/src/plugins/kanban/runs/{run_id}/inspect")
     assert r.status_code == 200
     body = r.json()
     assert body["alive"] is False
@@ -245,7 +245,7 @@ def test_inspect_run_dead_pid(client, monkeypatch):
     else:
         pytest.skip("plugin module not yet loaded")
 
-    r = client.get(f"/api/plugins/kanban/runs/{run_id}/inspect")
+    r = client.get(f"/api/src/plugins/kanban/runs/{run_id}/inspect")
     assert r.status_code == 200
     body = r.json()
     assert body["alive"] is False
@@ -290,7 +290,7 @@ def test_inspect_run_live_pid(client, monkeypatch):
     else:
         pytest.skip("plugin module not yet loaded")
 
-    r = client.get(f"/api/plugins/kanban/runs/{run_id}/inspect")
+    r = client.get(f"/api/src/plugins/kanban/runs/{run_id}/inspect")
     assert r.status_code == 200
     body = r.json()
     assert body["alive"] is True

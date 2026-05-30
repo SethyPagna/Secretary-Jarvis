@@ -80,7 +80,7 @@ class TestHandleUpdateCommand:
         with patch("gateway.run._jarvis_home", tmp_path):
             # The handler does Path(__file__).parent.parent.resolve()
             # We need to make project_root / '.git' not exist.
-            # Since Path(__file__) resolves to the real gateway/run.py,
+            # Since Path(__file__) resolves to the real src/gateway/run.py,
             # project_root will be the real jarvis-agent dir (which HAS .git).
             # Patch Path to control this.
             original_path = Path

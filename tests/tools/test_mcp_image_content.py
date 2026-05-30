@@ -4,7 +4,7 @@ Background
 ==========
 MCP tool results may include ``ImageContent`` blocks (screenshots from
 Playwright / Blockbench / Puppeteer / any server that returns renders).
-The tool result handler in ``tools/mcp_tool.py`` used to iterate content
+The tool result handler in ``src/tools/mcp_tool.py`` used to iterate content
 blocks looking only for ``block.text`` — image blocks were silently dropped
 and the agent saw an empty result. Distilled from @c3115644151's PR #17915
 and @gnanirahulnutakki's PR #10848 (both too stale to cherry-pick); this

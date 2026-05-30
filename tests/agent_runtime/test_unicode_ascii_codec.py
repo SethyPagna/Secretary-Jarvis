@@ -257,7 +257,7 @@ class TestApiKeyClientSync:
         mock_client.api_key = bad_key
         agent.client = mock_client
 
-        # --- replicate the recovery logic from agent/runtime.py ---
+        # --- replicate the recovery logic from src/agent/runtime.py ---
         _raw_key = agent.api_key
         _clean_key = _strip_non_ascii(_raw_key)
         assert _clean_key != _raw_key, "test precondition: key should have non-ASCII"

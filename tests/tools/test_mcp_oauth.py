@@ -1,4 +1,4 @@
-"""Tests for tools/mcp_oauth.py — OAuth 2.1 PKCE support for MCP servers."""
+"""Tests for src/tools/mcp_oauth.py — OAuth 2.1 PKCE support for MCP servers."""
 
 import json
 import os
@@ -62,7 +62,7 @@ class TestJarvisTokenStorage:
         Regression for the TOCTOU race where ``write_text`` + post-write
         ``chmod`` briefly left credentials at the process umask (commonly
         0o644 = world-readable) before tightening to owner-only. Mirrors
-        the fix shipped for ``agent/google_oauth.py`` in #19673.
+        the fix shipped for ``src/agent/google_oauth.py`` in #19673.
         """
         monkeypatch.setenv("JARVIS_HOME", str(tmp_path))
         storage = JarvisTokenStorage("perm-test-server")

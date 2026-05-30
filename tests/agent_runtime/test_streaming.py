@@ -1084,7 +1084,7 @@ class TestAnthropicStreamCallbacks:
 
 class TestPartialToolCallWarning:
     """Regression: when a stream dies mid tool-call argument generation after
-    text was already delivered, the partial-stream stub at agent/runtime.py
+    text was already delivered, the partial-stream stub at src/agent/runtime.py
     line ~6107 used to silently set ``tool_calls=None`` and return
     ``finish_reason=stop``, losing the attempted action with zero user-facing
     signal.  Live-observed Apr 2026 with MiniMax M2.7 on a 6-minute audit

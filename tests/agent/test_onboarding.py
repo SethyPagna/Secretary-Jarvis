@@ -1,4 +1,4 @@
-"""Tests for agent/onboarding.py — contextual first-touch hint helpers."""
+"""Tests for src/agent/onboarding.py — contextual first-touch hint helpers."""
 
 from __future__ import annotations
 

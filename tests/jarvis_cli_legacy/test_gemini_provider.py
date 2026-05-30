@@ -181,7 +181,7 @@ class TestGeminiContextLength:
 
 class TestGeminiAgentInit:
     def test_agent_imports_without_error(self):
-        """Verify agent/runtime.py has no SyntaxError (the critical bug)."""
+        """Verify src/agent/runtime.py has no SyntaxError (the critical bug)."""
         import importlib
         import agent.runtime as run_agent
         importlib.reload(run_agent)

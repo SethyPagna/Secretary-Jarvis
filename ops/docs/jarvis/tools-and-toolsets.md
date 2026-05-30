@@ -19,7 +19,7 @@ Tools are functions that extend the agent's capabilities. They're organized into
 Jarvis ships with a broad built-in tool registry covering web search, browser automation, terminal execution, file editing, memory, delegation, RL training, messaging delivery, Home Assistant, and more.
 
 :::note
-**Honcho cross-session memory** is available as a memory provider plugin (`plugins/memory/honcho/`), not as a built-in toolset. See [Plugins](./plugins.md) for installation.
+**Honcho cross-session memory** is available as a memory provider plugin (`src/plugins/memory/honcho/`), not as a built-in toolset. See [Plugins](./plugins.md) for installation.
 :::
 
 High-level categories:
@@ -459,7 +459,7 @@ These two tools live in the `browser` toolset but only register when a Chrome De
 
 ## `feishu_doc` toolset
 
-Scoped to the Feishu document-comment intelligent-reply handler (`gateway/platforms/feishu_comment.py`). Not exposed on `jarvis-cli` or the regular Feishu chat adapter.
+Scoped to the Feishu document-comment intelligent-reply handler (`src/gateway/platforms/feishu_comment.py`). Not exposed on `jarvis-cli` or the regular Feishu chat adapter.
 
 | Tool | Description | Requires environment |
 |------|-------------|----------------------|
@@ -502,7 +502,7 @@ Scoped to the Feishu document-comment handler. Drives comment read/write operati
 
 
 :::note
-**Honcho tools** (`honcho_profile`, `honcho_search`, `honcho_context`, `honcho_reasoning`, `honcho_conclude`) are no longer built-in. They are available via the Honcho memory provider plugin at `plugins/memory/honcho/`. See [Memory Providers](../user-guide/features/memory-providers.md) for installation and usage.
+**Honcho tools** (`honcho_profile`, `honcho_search`, `honcho_context`, `honcho_reasoning`, `honcho_conclude`) are no longer built-in. They are available via the Honcho memory provider plugin at `src/plugins/memory/honcho/`. See [Memory Providers](../user-guide/features/memory-providers.md) for installation and usage.
 :::
 
 ## `image_gen` toolset
@@ -590,7 +590,7 @@ Opt-in toolset (not loaded in the default `jarvis-cli` set). Add via `--toolsets
 
 Opt-in toolset (not loaded in the default `jarvis-cli` set). Add via `--toolsets video_gen` or enable it in `jarvis tools` → Video Generation, which also walks you through picking a backend.
 
-Backends ship as plugins under `plugins/video_gen/<name>/`:
+Backends ship as plugins under `src/plugins/video_gen/<name>/`:
 
 - **xAI Grok-Imagine** — text-to-video and image-to-video (SuperGrok OAuth or `XAI_API_KEY`).
 - **FAL.ai** — Veo 3.1, Pixverse v6, Kling O3 (requires `FAL_KEY`).
@@ -849,7 +849,7 @@ modifying Jarvis core, use the plugin route instead:
 - [Build a Jarvis Plugin](/docs/guides/build-a-jarvis-plugin)
 
 Default to plugins for most custom tool creation. Only follow this page when
-you explicitly want to ship a new built-in tool in `tools/` and `tools/toolsets.py`.
+you explicitly want to ship a new built-in tool in `src/tools/` and `src/tools/toolsets.py`.
 :::
 
 Make it a **Skill** when the capability can be expressed as instructions + shell commands + existing tools (arXiv search, git workflows, Docker management, PDF processing).
@@ -860,17 +860,17 @@ Make it a **Tool** when it requires end-to-end integration with API keys, custom
 
 Adding a tool touches **2 files**:
 
-1. **`tools/your_tool.py`** — handler, schema, check function, `registry.register()` call
-2. **`tools/toolsets.py`** — add tool name to `_JARVIS_CORE_TOOLS` (or a specific toolset)
+1. **`src/tools/your_tool.py`** — handler, schema, check function, `registry.register()` call
+2. **`src/tools/toolsets.py`** — add tool name to `_JARVIS_CORE_TOOLS` (or a specific toolset)
 
-Any `tools/*.py` file with a top-level `registry.register()` call is auto-discovered at startup — no manual import list required.
+Any `src/tools/*.py` file with a top-level `registry.register()` call is auto-discovered at startup — no manual import list required.
 
 ## Step 1: Create the Built-in Tool File
 
 Every tool file follows the same structure:
 
 ```python
-# tools/weather_tool.py
+# src/tools/weather_tool.py
 """Weather Tool -- look up current weather for a location."""
 
 import json
@@ -952,7 +952,7 @@ registry.register(
 
 ## Step 2: Add the Built-in Tool to a Toolset
 
-In `tools/toolsets.py`, add the tool name:
+In `src/tools/toolsets.py`, add the tool name:
 
 ```python
 # If it should be available on all platforms (CLI + messaging):
@@ -971,7 +971,7 @@ _JARVIS_CORE_TOOLS = [
 
 ## ~~Step 3: Add Discovery Import~~ (No longer needed)
 
-Tool modules with a top-level `registry.register()` call are auto-discovered by `discover_builtin_tools()` in `tools/registry.py`. No manual import list to maintain — just create your file in `tools/` and it's picked up at startup.
+Tool modules with a top-level `registry.register()` call are auto-discovered by `discover_builtin_tools()` in `src/tools/registry.py`. No manual import list to maintain — just create your file in `src/tools/` and it's picked up at startup.
 
 ## Async Handlers
 
@@ -1013,11 +1013,11 @@ registry.register(
 
 ## Agent-Loop Intercepted Tools
 
-Some tools (`todo`, `memory`, `session_search`, `delegate_task`) need access to per-session agent state. These are intercepted by `agent/runtime.py` before reaching the registry. The registry still holds their schemas, but `dispatch()` returns a fallback error if the intercept is bypassed.
+Some tools (`todo`, `memory`, `session_search`, `delegate_task`) need access to per-session agent state. These are intercepted by `src/agent/runtime.py` before reaching the registry. The registry still holds their schemas, but `dispatch()` returns a fallback error if the intercept is bypassed.
 
 ## Optional: Setup Wizard Integration
 
-If your tool requires an API key, add it to `jarvis_cli/config.py`:
+If your tool requires an API key, add it to `src/jarvis_cli/config.py`:
 
 ```python
 OPTIONAL_ENV_VARS = {
@@ -1035,9 +1035,9 @@ OPTIONAL_ENV_VARS = {
 ## Checklist
 
 - [ ] Tool file created with handler, schema, check function, and registration
-- [ ] Added to appropriate toolset in `tools/toolsets.py`
+- [ ] Added to appropriate toolset in `src/tools/toolsets.py`
 - [ ] Confirmed this really should be a built-in/core tool and not a plugin
 - [ ] Handler returns JSON strings, errors returned as `{"error": "..."}`
-- [ ] Optional: API key added to `OPTIONAL_ENV_VARS` in `jarvis_cli/config.py`
-- [ ] Optional: Added to `tools/toolset_distributions.py` for batch processing
+- [ ] Optional: API key added to `OPTIONAL_ENV_VARS` in `src/jarvis_cli/config.py`
+- [ ] Optional: Added to `src/tools/toolset_distributions.py` for batch processing
 - [ ] Tested with `jarvis chat -q "Use the weather tool for London"`

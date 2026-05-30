@@ -15,7 +15,7 @@ class TestStepCallbackNormalization:
     """The gateway's _step_callback_sync normalizes prev_tools from run_agent."""
 
     def _extract_step_callback(self):
-        """Build a minimal _step_callback_sync using the same logic as gateway/run.py.
+        """Build a minimal _step_callback_sync using the same logic as src/gateway/run.py.
 
         We replicate the closure so we can test normalisation in isolation
         without spinning up the full gateway.
@@ -51,7 +51,7 @@ class TestStepCallbackNormalization:
         """When prev_tools is list[dict], tool_names should be list[str]."""
         cb, events, loop = self._extract_step_callback()
 
-        # Simulate the enriched format from agent/runtime.py
+        # Simulate the enriched format from src/agent/runtime.py
         prev_tools = [
             {"name": "terminal", "result": '{"output": "hello"}'},
             {"name": "read_file", "result": '{"content": "..."}'},

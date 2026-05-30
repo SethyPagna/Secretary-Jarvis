@@ -349,7 +349,7 @@ class TestOllamaCloudModelsDev:
 
 class TestOllamaCloudAgentInit:
     def test_agent_imports_without_error(self):
-        """Verify agent/runtime.py has no SyntaxError."""
+        """Verify src/agent/runtime.py has no SyntaxError."""
         import importlib
         import agent.runtime as run_agent
         importlib.reload(run_agent)

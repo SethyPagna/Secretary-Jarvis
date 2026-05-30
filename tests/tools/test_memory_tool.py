@@ -1,4 +1,4 @@
-"""Tests for tools/memory_tool.py — MemoryStore, security scanning, and tool dispatcher."""
+"""Tests for src/tools/memory_tool.py — MemoryStore, security scanning, and tool dispatcher."""
 
 import json
 import pytest

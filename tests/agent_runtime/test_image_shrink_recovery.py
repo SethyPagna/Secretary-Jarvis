@@ -3,7 +3,7 @@
 Covers the full chain for Anthropic's 5 MB per-image ceiling (and any
 future provider that returns an image-too-large error):
 
-  1. agent/error_classifier.py: 400 with "image exceeds 5 MB maximum"
+  1. src/agent/error_classifier.py: 400 with "image exceeds 5 MB maximum"
      gets FailoverReason.image_too_large, not context_overflow.
   2. run_agent._try_shrink_image_parts_in_messages mutates the API
      payload in-place, re-encoding native data: URL image parts to fit

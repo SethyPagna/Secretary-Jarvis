@@ -1,4 +1,4 @@
-"""Tests for tools/skill_usage.py — sidecar telemetry + provenance filtering."""
+"""Tests for src/tools/skill_usage.py — sidecar telemetry + provenance filtering."""
 
 import json
 import multiprocessing as mp

@@ -1,7 +1,7 @@
 """Tests for jarvis_cli.bootstrap — Windows UTF-8 stdio shim.
 
 The bootstrap module is imported at the top of every Jarvis entry point
-(jarvis, jarvis-agent, jarvis-acp, gateway, batch_runner, jarvis_cli/terminal.py).  It
+(jarvis, jarvis-agent, jarvis-acp, gateway, batch_runner, src/jarvis_cli/terminal.py).  It
 fixes Python's Windows UTF-8 defaults so print("café") doesn't crash and
 subprocess children inherit UTF-8 mode.
 
@@ -239,12 +239,12 @@ class TestEntryPointsImportBootstrap:
     # Entry points that invoke Jarvis as a process.  Each one must
     # import jarvis_cli.bootstrap before doing any file I/O or stdout writes.
     ENTRY_POINTS = [
-        "jarvis_cli/main.py",   # jarvis CLI (console_script)
-        "agent/runtime.py",          # jarvis-agent (console_script)
-        "acp_adapter/entry.py",  # jarvis-acp (console_script)
-        "gateway/run.py",        # gateway
-        "tools/batch_runner.py",       # batch mode
-        "jarvis_cli/terminal.py",                # legacy direct-launch terminal
+        "src/jarvis_cli/main.py",   # jarvis CLI (console_script)
+        "src/agent/runtime.py",          # jarvis-agent (console_script)
+        "src/acp_adapter/entry.py",  # jarvis-acp (console_script)
+        "src/gateway/run.py",        # gateway
+        "src/tools/batch_runner.py",       # batch mode
+        "src/jarvis_cli/terminal.py",                # legacy direct-launch terminal
     ]
 
     @pytest.mark.parametrize("path", ENTRY_POINTS)

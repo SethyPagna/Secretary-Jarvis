@@ -840,7 +840,7 @@ class TestAgentCacheActiveSafety:
         active._last_activity_ts = __import__("time").time()
         active.client = MagicMock()  # simulate an OpenAI client
         def _real_close():
-            active.client = None  # mirrors agent/runtime.py:3299
+            active.client = None  # mirrors src/agent/runtime.py:3299
         active.close = _real_close
         active.shutdown_memory_provider = MagicMock()
 

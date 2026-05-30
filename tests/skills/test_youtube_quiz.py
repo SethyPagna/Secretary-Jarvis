@@ -1,4 +1,4 @@
-"""Tests for capabilities/optional-skills/productivity/memento-flashcards/scripts/youtube_quiz.py"""
+"""Tests for src/capabilities/optional-skills/productivity/memento-flashcards/scripts/youtube_quiz.py"""
 
 import json
 import sys

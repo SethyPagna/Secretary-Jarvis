@@ -1,4 +1,4 @@
-"""Integration tests for slash command access control gating in gateway/run.py.
+"""Integration tests for slash command access control gating in src/gateway/run.py.
 
 Drives the real ``GatewayRunner._handle_message`` path with a stub session
 store so we exercise the actual gate inserted at the dispatch site (not a

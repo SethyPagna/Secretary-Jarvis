@@ -1,7 +1,7 @@
 """Tests for PR1 pluggable image gen: scanner recursion, kinds, path keys.
 
 Covers ``_scan_directory`` recursion into category namespaces
-(``plugins/image_gen/openai/``), ``kind`` parsing, path-derived registry
+(``src/plugins/image_gen/openai/``), ``kind`` parsing, path-derived registry
 keys, and the new gate logic (bundled backends auto-load; user backends
 still opt-in; exclusive kind skipped; unknown kinds → standalone warning).
 """
@@ -144,7 +144,7 @@ class TestCategoryNamespaceRecursion:
         mgr = PluginManager()
         mgr.discover_and_load()
 
-        # The bundled plugins/image_gen/openai/ exists in the repo — filter
+        # The bundled src/plugins/image_gen/openai/ exists in the repo — filter
         # it out so we're only asserting on the user-dir layout.
         user_plugins_in_registry = {
             k for k, p in mgr._plugins.items() if p.manifest.source != "bundled"
@@ -273,7 +273,7 @@ class TestBackendGate:
 
 class TestBundledBackendAutoLoad:
     def test_bundled_image_gen_openai_autoloads(self, tmp_path, monkeypatch):
-        """The bundled ``plugins/image_gen/openai/`` plugin loads without
+        """The bundled ``src/plugins/image_gen/openai/`` plugin loads without
         any opt-in — it's ``kind: backend`` and shipped in-repo."""
         import os
         jarvis_home = Path(os.environ["JARVIS_HOME"])  # set by hermetic conftest fixture

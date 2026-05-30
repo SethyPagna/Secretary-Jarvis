@@ -284,7 +284,7 @@ export const fr: Translations = {
     providersHint:
       "Écrit memory.provider (vide = intégré) et context.engine dans config.yaml. Prend effet à la prochaine session.",
     refreshDashboard: "Re-scanner les extensions du tableau de bord",
-    removeConfirm: "Retirer ce plugin de ~/.jarvis/plugins/ ?",
+    removeConfirm: "Retirer ce plugin de ~/.jarvis/src/plugins/ ?",
     removeHint: "Seuls les plugins installés par l'utilisateur sous ~/.jarvis/plugins peuvent être supprimés.",
     rescanHeading: "Registre des plugins SPA",
     rescanHint: "Re-scannez après avoir ajouté des fichiers sur le disque pour que la barre latérale prenne en compte les nouveaux manifestes.",

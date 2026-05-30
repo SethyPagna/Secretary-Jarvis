@@ -1,7 +1,7 @@
 """Regression test for config.yaml `security.redact_secrets: false` toggle.
 
-Bug: `agent/redact.py` snapshots `_REDACT_ENABLED` from the env var
-`JARVIS_REDACT_SECRETS` at module-import time. `jarvis_cli/main.py` at
+Bug: `src/agent/redact.py` snapshots `_REDACT_ENABLED` from the env var
+`JARVIS_REDACT_SECRETS` at module-import time. `src/jarvis_cli/main.py` at
 line ~174 calls `setup_logging(mode="cli")` which transitively imports
 `agent.redact` — BEFORE any config bridge ran. So if a user set
 `security.redact_secrets: false` in config.yaml (instead of as an env var
@@ -9,7 +9,7 @@ in .env), the toggle was silently ignored in both `jarvis chat` and
 `jarvis gateway run`.
 
 Fix: bridge `security.redact_secrets` from config.yaml → `JARVIS_REDACT_SECRETS`
-env var in `jarvis_cli/main.py` BEFORE the `setup_logging()` call.
+env var in `src/jarvis_cli/main.py` BEFORE the `setup_logging()` call.
 """
 import os
 import subprocess

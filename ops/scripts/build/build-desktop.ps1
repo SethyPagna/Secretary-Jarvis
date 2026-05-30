@@ -12,6 +12,8 @@ $ErrorActionPreference = "Stop"
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
 Push-Location $RepoRoot
+$SrcRoot = Join-Path $RepoRoot "src"
+$env:PYTHONPATH = if ($env:PYTHONPATH) { "$SrcRoot;$env:PYTHONPATH" } else { $SrcRoot }
 
 function Invoke-Checked {
     param(
@@ -61,7 +63,7 @@ try {
     Invoke-Checked $npm.Source --prefix desktop/web run build
 
     $webDist = Join-Path $RepoRoot "desktop/web/dist"
-    $embeddedDist = Join-Path $RepoRoot "jarvis_cli/web_dist"
+    $embeddedDist = Join-Path $RepoRoot "src/jarvis_cli/web_dist"
     $viteEmbeddedDist = $embeddedDist
     if (Test-Path (Join-Path $webDist "index.html")) {
         if (Test-Path $embeddedDist) {
@@ -74,7 +76,7 @@ try {
         Write-Host "Vite already emitted the web app into $viteEmbeddedDist"
     }
     else {
-        throw "Vite build output not found. Expected desktop/web/dist or jarvis_cli/web_dist."
+        throw "Vite build output not found. Expected desktop/web/dist or src/jarvis_cli/web_dist."
     }
 
     Invoke-Checked $Python -m PyInstaller $PyInstallerSpec --noconfirm --clean

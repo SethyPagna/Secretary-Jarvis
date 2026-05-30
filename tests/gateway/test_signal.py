@@ -311,7 +311,7 @@ class TestSignalSessionSource:
 
 
 # ---------------------------------------------------------------------------
-# Phone Redaction in agent/redact.py
+# Phone Redaction in src/agent/redact.py
 # ---------------------------------------------------------------------------
 
 class TestSignalPhoneRedaction:

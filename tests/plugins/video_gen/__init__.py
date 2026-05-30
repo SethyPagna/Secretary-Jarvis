@@ -1,1 +1,1 @@
-"""Make tests/plugins/video_gen a package."""
+"""Make tests/src/plugins/video_gen a package."""

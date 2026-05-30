@@ -32,7 +32,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         )
         vite_config = (ROOT / "desktop" / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
 
-        self.assertIn('outDir: "../../jarvis_cli/web_dist"', vite_config)
+        self.assertIn('outDir: "../../src/jarvis_cli/web_dist"', vite_config)
         self.assertIn("$viteEmbeddedDist", build_script)
         self.assertIn("Vite already emitted", build_script)
         self.assertIn("desktop/web/dist", build_script)
@@ -85,8 +85,8 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("portable", package["build"]["win"]["target"])
         self.assertNotIn("nsis", package["build"]["win"]["target"])
         self.assertIn({"from": "desktop/assets", "to": "assets"}, package["build"]["extraResources"])
-        self.assertIn({"from": "capabilities/skills", "to": "skills"}, package["build"]["extraResources"])
-        self.assertIn({"from": "capabilities/optional-skills", "to": "optional-skills"}, package["build"]["extraResources"])
+        self.assertIn({"from": "src/capabilities/skills", "to": "skills"}, package["build"]["extraResources"])
+        self.assertIn({"from": "src/capabilities/optional-skills", "to": "optional-skills"}, package["build"]["extraResources"])
         self.assertNotIn(
             {"from": "docker-compose.local-models.yml", "to": "docker-compose.local-models.yml"},
             package["build"]["extraResources"],
@@ -103,7 +103,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
 
     def test_vite_build_uses_relative_asset_paths_for_file_fallback(self) -> None:
         vite_config = (ROOT / "desktop" / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
-        built_index = (ROOT / "jarvis_cli" / "web_dist" / "index.html").read_text(
+        built_index = (ROOT / "src" / "jarvis_cli" / "web_dist" / "index.html").read_text(
             encoding="utf-8",
         )
 
@@ -151,7 +151,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("desktop/electron/main.js", checker)
         self.assertIn("desktop/electron/preload.js", checker)
         self.assertIn("ops/scripts/checks/whatsapp-bridge/bridge.mjs", checker)
-        self.assertIn("capabilities/skills/creative/p5js/scripts/export-frames.js", checker)
+        self.assertIn("src/capabilities/skills/creative/p5js/scripts/export-frames.js", checker)
         self.assertIn("--check", checker)
         self.assertIn("npm.cmd --prefix desktop/web run build", checker)
         self.assertIn("Resolve-DesktopPython", checker)

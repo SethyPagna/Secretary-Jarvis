@@ -7,7 +7,7 @@ Verifies that:
   combined skill content when the user types ``/<bundle-slug>``.
 
 The actual ``/<bundle-slug>`` → combined-message build is tested in
-``tests/agent/test_skill_bundles.py``; this file only checks the gateway
+``tests/src/agent/test_skill_bundles.py``; this file only checks the gateway
 glue (handler wiring, dispatch ordering, event.text rewrite).
 """
 

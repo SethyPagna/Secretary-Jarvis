@@ -1,4 +1,4 @@
-"""Tests for the light-mode terminal detection + color remap in jarvis_cli/terminal.py.
+"""Tests for the light-mode terminal detection + color remap in src/jarvis_cli/terminal.py.
 
 Covers the env-override path and the SkinConfig.get_color() wrapper that
 the resize / light-mode salvage installs at module import time.  We don't

@@ -1,4 +1,4 @@
-"""Tests for edge cases in tools/file_operations.py.
+"""Tests for edge cases in src/tools/file_operations.py.
 
 Covers:
 - ``_is_likely_binary()`` content-analysis branch (dead-code removal regression guard)

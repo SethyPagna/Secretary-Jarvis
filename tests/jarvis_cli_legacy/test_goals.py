@@ -1,4 +1,4 @@
-"""Tests for jarvis_cli/goals.py — persistent cross-turn goals."""
+"""Tests for src/jarvis_cli/goals.py — persistent cross-turn goals."""
 
 from __future__ import annotations
 

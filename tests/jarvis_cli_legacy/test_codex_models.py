@@ -39,7 +39,7 @@ def test_get_codex_model_ids_prioritizes_default_and_cache(tmp_path, monkeypatch
 
 def test_setup_wizard_codex_import_resolves():
     """Regression test for #712: setup.py must import the correct function name."""
-    # This mirrors the exact import used in jarvis_cli/setup.py line 873.
+    # This mirrors the exact import used in src/jarvis_cli/setup.py line 873.
     # A prior bug had 'get_codex_models' (wrong) instead of 'get_codex_model_ids'.
     from jarvis_cli.codex_models import get_codex_model_ids as setup_import
     assert callable(setup_import)

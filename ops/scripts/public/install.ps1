@@ -1492,7 +1492,7 @@ Delete the contents (or this file) to use the default personality.
     $pythonExe = "$InstallDir\venv\Scripts\python.exe"
     if (Test-Path $pythonExe) {
         try {
-            & $pythonExe "$InstallDir\tools\skills_sync.py" 2>$null
+            & $pythonExe "$InstallDir\src\tools\skills_sync.py" 2>$null
             Write-Success "Skills synced to ~/.jarvis/skills/"
         } catch {
             # Fallback: simple directory copy
@@ -1618,7 +1618,7 @@ function Install-NodeDeps {
         $browserNpmOk = _Run-NpmInstall "Browser tools" $InstallDir $browserLog $npmExe
 
         # Install Playwright Chromium (mirrors ops/scripts/public/install.sh behaviour for
-        # Linux).  Without this, tools/browser_tool.py::check_browser_requirements
+        # Linux).  Without this, src/tools/browser_tool.py::check_browser_requirements
         # returns False (no Chromium under %LOCALAPPDATA%\ms-playwright), and the
         # browser_* tools are silently filtered out of the agent's tool schema.
         # System Chrome at "C:\Program Files\Google\Chrome\..." is NOT used by
@@ -1948,7 +1948,7 @@ function Write-Completion {
     Write-Host "   API Keys:  " -NoNewline -ForegroundColor Yellow
     Write-Host "$JarvisHome\.env"
     Write-Host "   Data:      " -NoNewline -ForegroundColor Yellow
-    Write-Host "$JarvisHome\cron\, sessions\, logs\"
+    Write-Host "$JarvisHome\src\cron\, sessions\, logs\"
     Write-Host "   Code:      " -NoNewline -ForegroundColor Yellow
     Write-Host "$JarvisHome\jarvis-agent\"
     Write-Host ""

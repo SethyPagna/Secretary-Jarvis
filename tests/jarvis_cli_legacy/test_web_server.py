@@ -340,7 +340,7 @@ class TestWebServerEndpoints:
 
     def test_path_traversal_dotdot_blocked(self):
         """Direct .. path traversal via encoded sequences."""
-        resp = self.client.get("/%2e%2e/jarvis_cli/web_server.py")
+        resp = self.client.get("/%2e%2e/src/jarvis_cli/web_server.py")
         assert resp.status_code in {200, 404}
         if resp.status_code == 200:
             assert "FastAPI" not in resp.text  # Should not serve the actual source
@@ -583,12 +583,12 @@ class TestNewEndpoints:
         assert resp.status_code == 400
 
     def test_cron_list(self):
-        resp = self.client.get("/api/cron/jobs")
+        resp = self.client.get("/api/src/cron/jobs")
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
 
     def test_cron_job_not_found(self):
-        resp = self.client.get("/api/cron/jobs/nonexistent-id")
+        resp = self.client.get("/api/src/cron/jobs/nonexistent-id")
         assert resp.status_code == 404
 
     # --- Profiles ---
@@ -854,7 +854,7 @@ class TestNewEndpoints:
         ]
 
     def test_toolsets_list(self):
-        resp = self.client.get("/api/tools/toolsets")
+        resp = self.client.get("/api/src/tools/toolsets")
         assert resp.status_code == 200
         toolsets = resp.json()
         assert isinstance(toolsets, list)
@@ -898,7 +898,7 @@ class TestNewEndpoints:
         )
         monkeypatch.setattr(web_server, "load_config", lambda: {"platform_toolsets": {"cli": ["web", "skills"]}})
 
-        resp = self.client.get("/api/tools/toolsets")
+        resp = self.client.get("/api/src/tools/toolsets")
 
         assert resp.status_code == 200
         assert resp.json() == [
@@ -1850,28 +1850,28 @@ class TestPluginAPIAuth:
     def test_plugin_route_requires_auth(self):
         """Plugin API routes should return 401 without a valid session token."""
         # Use a known plugin route (kanban board)
-        resp = self.client.get("/api/plugins/kanban/board")
+        resp = self.client.get("/api/src/plugins/kanban/board")
         assert resp.status_code == 401
 
     def test_plugin_route_allows_auth(self):
         """Plugin API routes should work with a valid session token.
 
-        Use ``/api/plugins/example/hello`` from the example-dashboard plugin —
+        Use ``/api/src/plugins/example/hello`` from the example-dashboard plugin —
         a stable, side-effect-free GET that's always loaded in tests. With a
         valid token the handler should run (200); without one the middleware
         should 401 before the handler is reached.
         """
         # Without auth: middleware blocks before reaching the handler.
-        resp = self.client.get("/api/plugins/example/hello")
+        resp = self.client.get("/api/src/plugins/example/hello")
         assert resp.status_code == 401
 
         # With auth: handler runs.
-        resp = self.auth_client.get("/api/plugins/example/hello")
+        resp = self.auth_client.get("/api/src/plugins/example/hello")
         assert resp.status_code == 200
 
     def test_plugin_post_requires_auth(self):
         """Plugin POST routes should return 401 without a valid session token."""
-        resp = self.client.post("/api/plugins/kanban/tasks", json={"title": "test"})
+        resp = self.client.post("/api/src/plugins/kanban/tasks", json={"title": "test"})
         assert resp.status_code == 401
 
     def test_plugin_patch_requires_auth(self):
@@ -1882,14 +1882,14 @@ class TestPluginAPIAuth:
         regression that whitelists non-GET methods can't sneak through.
         """
         resp = self.client.patch(
-            "/api/plugins/kanban/tasks/t_fake",
+            "/api/src/plugins/kanban/tasks/t_fake",
             json={"title": "renamed"},
         )
         assert resp.status_code == 401
 
     def test_plugin_delete_requires_auth(self):
         """Plugin DELETE routes should return 401 without a valid session token."""
-        resp = self.client.delete("/api/plugins/kanban/tasks/t_fake")
+        resp = self.client.delete("/api/src/plugins/kanban/tasks/t_fake")
         assert resp.status_code == 401
 
     def test_non_kanban_plugin_route_requires_auth(self):
@@ -1901,12 +1901,12 @@ class TestPluginAPIAuth:
         path to lock that in.
         """
         # Real plugin path (jarvis-achievements is loaded by default).
-        resp = self.client.get("/api/plugins/jarvis-achievements/overview")
+        resp = self.client.get("/api/src/plugins/jarvis-achievements/overview")
         assert resp.status_code == 401
         # Same for an arbitrary plugin namespace that doesn't even exist —
         # the middleware should 401 before routing decides 404, so an
         # attacker can't fingerprint plugin names by status codes.
-        resp = self.client.get("/api/plugins/_definitely_not_a_plugin_/anything")
+        resp = self.client.get("/api/src/plugins/_definitely_not_a_plugin_/anything")
         assert resp.status_code == 401
 
     def test_plugin_websocket_unaffected_by_http_middleware(self):
@@ -1924,7 +1924,7 @@ class TestPluginAPIAuth:
         # (its own _check_ws_token), NOT 401 from the HTTP middleware.
         try:
             with self.client.websocket_connect(
-                "/api/plugins/kanban/events"
+                "/api/src/plugins/kanban/events"
             ):
                 pass  # if we got here without disconnect, the WS accepted us
         except WebSocketDisconnect:

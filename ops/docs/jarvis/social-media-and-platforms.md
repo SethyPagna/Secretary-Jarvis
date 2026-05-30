@@ -3044,7 +3044,7 @@ SLACK_APP_TOKEN=xapp-your-app-token-here
 SLACK_ALLOWED_USERS=U01ABC2DEF3              # Comma-separated Member IDs
 
 # Optional
-SLACK_HOME_CHANNEL=C01234567890              # Default channel for cron/scheduled messages
+SLACK_HOME_CHANNEL=C01234567890              # Default channel for src/cron/scheduled messages
 SLACK_HOME_CHANNEL_NAME=general              # Human-readable name for the home channel (optional)
 ```
 
@@ -3085,7 +3085,7 @@ Jarvis command with its description.
 
 Under the hood: Jarvis ships with a generated Slack app manifest (see
 Step 1, Option A) that declares every command in
-[`COMMAND_REGISTRY`](https://github.com/SethyPagna/Secretary-Jarvis/blob/main/jarvis_cli/commands.py)
+[`COMMAND_REGISTRY`](https://github.com/SethyPagna/Secretary-Jarvis/blob/main/src/jarvis_cli/commands.py)
 as a slash command. In Socket Mode, Slack routes the command event
 through the WebSocket regardless of the manifest's `url` field.
 
@@ -3986,7 +3986,7 @@ This skill replaces the older `xitter` skill (which wrapped a third-party Python
 
 ## Secret Safety (MANDATORY)
 
-Critical rules when operating inside an agent/LLM session:
+Critical rules when operating inside an src/agent/LLM session:
 
 - **Never** read, print, parse, summarize, upload, or send `~/.xurl` to LLM context.
 - **Never** ask the user to paste credentials/tokens into chat.

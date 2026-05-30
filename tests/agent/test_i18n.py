@@ -38,7 +38,7 @@ def _flatten(d, prefix="") -> dict:
 def test_all_locales_exist():
     """Every supported language must have a catalog file on disk."""
     for lang in i18n.SUPPORTED_LANGUAGES:
-        assert (LOCALES_DIR / f"{lang}.yaml").is_file(), f"missing jarvis_cli/data/locales/{lang}.yaml"
+        assert (LOCALES_DIR / f"{lang}.yaml").is_file(), f"missing src/jarvis_cli/data/locales/{lang}.yaml"
 
 
 @pytest.mark.parametrize("lang", [l for l in i18n.SUPPORTED_LANGUAGES if l != "en"])

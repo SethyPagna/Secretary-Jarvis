@@ -7,7 +7,7 @@ Verifies:
     human-readable diff
   * when any skills changed, a one-shot note is queued on
     ``runner._pending_skills_reload_notes[session_key]`` (the agent loop
-    consumes and clears it on the next user turn — see ``gateway/run.py``
+    consumes and clears it on the next user turn — see ``src/gateway/run.py``
     near the ``_has_fresh_tool_tail`` block)
   * the handler does NOT append to the session transcript out-of-band —
     message alternation must not be broken by a phantom user turn

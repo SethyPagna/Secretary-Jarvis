@@ -101,7 +101,7 @@ class TestGatewayPidState:
         pid_path.write_text(json.dumps({
             "pid": os.getpid(),
             "kind": "jarvis-gateway",
-            "argv": ["/venv/bin/python", "/repo/jarvis_cli/main.py", "gateway", "run", "--replace"],
+            "argv": ["/venv/bin/python", "/repo/src/jarvis_cli/main.py", "gateway", "run", "--replace"],
             "start_time": 123,
         }))
 
@@ -110,7 +110,7 @@ class TestGatewayPidState:
         monkeypatch.setattr(
             status,
             "_read_process_cmdline",
-            lambda pid: "/venv/bin/python /repo/jarvis_cli/main.py gateway run --replace",
+            lambda pid: "/venv/bin/python /repo/src/jarvis_cli/main.py gateway run --replace",
         )
 
         assert status.acquire_gateway_runtime_lock() is True
@@ -459,7 +459,7 @@ class TestScopedLocks:
             "pid": 873,
             "start_time": None,
             "kind": "jarvis-gateway",
-            "argv": ["/Users/user/.jarvis/jarvis-agent/jarvis_cli/main.py", "gateway", "run", "--replace"],
+            "argv": ["/Users/user/.jarvis/jarvis-agent/src/jarvis_cli/main.py", "gateway", "run", "--replace"],
         }))
 
         # Post-#21561 the liveness probe routes through
@@ -495,7 +495,7 @@ class TestScopedLocks:
             "pid": 99999,
             "start_time": None,
             "kind": "jarvis-gateway",
-            "argv": ["jarvis_cli/main.py", "gateway", "run"],
+            "argv": ["src/jarvis_cli/main.py", "gateway", "run"],
         }))
 
         monkeypatch.setattr(status, "_pid_exists", lambda pid: True)
@@ -519,7 +519,7 @@ class TestScopedLocks:
             "pid": 99999,
             "start_time": None,
             "kind": "jarvis-gateway",
-            "argv": ["/Users/user/.jarvis/jarvis-agent/jarvis_cli/main.py", "gateway", "run", "--replace"],
+            "argv": ["/Users/user/.jarvis/jarvis-agent/src/jarvis_cli/main.py", "gateway", "run", "--replace"],
         }))
 
         monkeypatch.setattr(status, "_pid_exists", lambda pid: True)
@@ -930,14 +930,14 @@ class TestReadProcessCmdlinePsFallback:
 
         monkeypatch.setattr(status.Path, "read_bytes", fake_read_bytes)
         result = status._read_process_cmdline(12345)
-        assert "jarvis_cli/main.py" in result
+        assert "src/jarvis_cli/main.py" in result
         assert calls == ["proc"]
 
     def test_ps_fallback_used_when_proc_returns_empty(self, monkeypatch):
         monkeypatch.setattr(status.Path, "read_bytes", lambda self: b"")
         monkeypatch.setattr(
             status.subprocess, "run",
-            lambda args, **kwargs: SimpleNamespace(returncode=0, stdout="python jarvis_cli/main.py gateway run\n"),
+            lambda args, **kwargs: SimpleNamespace(returncode=0, stdout="python src/jarvis_cli/main.py gateway run\n"),
         )
         result = status._read_process_cmdline(12345)
-        assert "jarvis_cli/main.py" in result
+        assert "src/jarvis_cli/main.py" in result

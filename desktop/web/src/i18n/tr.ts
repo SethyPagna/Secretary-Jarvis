@@ -284,7 +284,7 @@ export const tr: Translations = {
     providersHint:
       "config.yaml'a memory.provider (boş = yerleşik) ve context.engine yazar. Bir sonraki oturumda etkili olur.",
     refreshDashboard: "Pano uzantılarını yeniden tara",
-    removeConfirm: "Bu eklenti ~/.jarvis/plugins/ içinden kaldırılsın mı?",
+    removeConfirm: "Bu eklenti ~/.jarvis/src/plugins/ içinden kaldırılsın mı?",
     removeHint: "Yalnızca ~/.jarvis/plugins altındaki kullanıcı tarafından yüklenmiş eklentiler kaldırılabilir.",
     rescanHeading: "SPA eklenti kayıt defteri",
     rescanHint: "Diske dosya ekledikten sonra yeniden tarayın, böylece pano kenar çubuğu yeni manifestleri algılar.",

@@ -284,7 +284,7 @@ export const en: Translations = {
     providersHint:
       "Writes memory.provider (empty = built-in) and context.engine to config.yaml. Takes effect next session.",
     refreshDashboard: "Rescan desktop extensions",
-    removeConfirm: "Remove this plugin from ~/.jarvis/plugins/?",
+    removeConfirm: "Remove this plugin from ~/.jarvis/src/plugins/?",
     removeHint: "Only user-installed plugins under ~/.jarvis/plugins can be removed.",
     rescanHeading: "SPA plugin registry",
     rescanHint: "Rescan after adding files on disk so the desktop sidebar picks up new manifests.",

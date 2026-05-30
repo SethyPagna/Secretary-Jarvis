@@ -1,4 +1,4 @@
-"""Tests for the Mistral (Voxtral) TTS provider in tools/tts_tool.py."""
+"""Tests for the Mistral (Voxtral) TTS provider in src/tools/tts_tool.py."""
 
 import base64
 from unittest.mock import MagicMock, patch

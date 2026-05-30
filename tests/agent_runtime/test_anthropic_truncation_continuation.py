@@ -104,7 +104,7 @@ class TestContinuationLogicBranching:
 
     @pytest.mark.parametrize("api_mode", ["chat_completions", "bedrock_converse", "anthropic_messages"])
     def test_all_three_api_modes_hit_continuation_branch(self, api_mode):
-        # The guard in agent/runtime.py is:
+        # The guard in src/agent/runtime.py is:
         #   if self.api_mode in ("chat_completions", "bedrock_converse", "anthropic_messages"):
         assert api_mode in {"chat_completions", "bedrock_converse", "anthropic_messages"}
 

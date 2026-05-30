@@ -18,7 +18,7 @@ most recently* — not the one that raised the prompt. Confirmed in the
 wild on Slack with two concurrent channels: session A's `rm -rf`
 approval card was delivered to session B.
 
-The fix (4 LOC in ``agent/runtime.py``) snapshots the caller's context with
+The fix (4 LOC in ``src/agent/runtime.py``) snapshots the caller's context with
 ``copy_context()`` and submits ``ctx.run(_run_tool, …)`` instead of
 ``_run_tool`` directly. Mirrors ``asyncio.to_thread`` semantics.
 
@@ -46,7 +46,7 @@ def test_executor_submit_without_copy_context_does_not_propagate():
     approval-session routing race in the gateway before #16660.
 
     If this test ever fails — i.e. submit() starts propagating
-    ContextVars by default — the copy_context() wrapper in agent/runtime.py
+    ContextVars by default — the copy_context() wrapper in src/agent/runtime.py
     becomes redundant but not harmful, and the call-site test below
     should be updated accordingly.
     """
@@ -95,7 +95,7 @@ def test_run_tool_worker_sees_parent_approval_session_key():
     """End-to-end call-site guard.
 
     Mirrors the exact shape of the fixed call site in
-    ``agent/runtime.py::_execute_tool_calls_concurrent`` — a
+    ``src/agent/runtime.py::_execute_tool_calls_concurrent`` — a
     ``ThreadPoolExecutor`` with ``executor.submit(ctx.run, fn, *args)``.
     Sets the real ``tools.approval._approval_session_key`` ContextVar
     in the caller and asserts the worker observes it via
@@ -142,11 +142,11 @@ def test_run_agent_concurrent_executor_wraps_submit_with_copy_context():
     """Source-level guard that the fix stays at the REAL call site.
 
     The behavioral tests above exercise the pattern in isolation and
-    pass regardless of whether ``agent/runtime.py`` actually uses it.
+    pass regardless of whether ``src/agent/runtime.py`` actually uses it.
     This guard inspects ``_execute_tool_calls_concurrent`` directly and
     asserts that ``executor.submit`` is called with ``ctx.run`` (or
     ``copy_context()`` appears within a few lines) — so reverting the
-    wrapper in ``agent/runtime.py`` fails this test with a clear message.
+    wrapper in ``src/agent/runtime.py`` fails this test with a clear message.
     """
     import ast
     import inspect
@@ -155,7 +155,7 @@ def test_run_agent_concurrent_executor_wraps_submit_with_copy_context():
     from agent import tool_executor as tool_executor_module
 
     # Source for both modules — the concurrent-executor body lives in
-    # ``agent/tool_executor.py`` after the agent/runtime.py refactor (PR
+    # ``src/agent/tool_executor.py`` after the src/agent/runtime.py refactor (PR
     # following #16660).  Search both so this guard keeps firing
     # regardless of where the call site lives.
     sources = []
@@ -177,7 +177,7 @@ def test_run_agent_concurrent_executor_wraps_submit_with_copy_context():
 
     # Filter to the submit call inside the concurrent tool executor —
     # identifiable by passing `_run_tool` as its target. Other submit()
-    # call sites in agent/runtime.py (e.g. auxiliary client warm-up) are
+    # call sites in src/agent/runtime.py (e.g. auxiliary client warm-up) are
     # out of scope for this regression.
     tool_submits = []
     for call in submit_calls_in_agent:
@@ -200,12 +200,12 @@ def test_run_agent_concurrent_executor_wraps_submit_with_copy_context():
 
     assert tool_submits, (
         "Could not locate `executor.submit(... _run_tool ...)` in "
-        "agent/runtime.py. The call site may have been renamed — update this "
+        "src/agent/runtime.py. The call site may have been renamed — update this "
         "guard along with the refactor."
     )
     unfixed = [c for kind, c in tool_submits if kind == "unfixed"]
     assert not unfixed, (
-        "agent/runtime.py contains `executor.submit(_run_tool, ...)` without a "
+        "src/agent/runtime.py contains `executor.submit(_run_tool, ...)` without a "
         "`ctx.run` wrapper. This is the pre-#16660 shape: worker threads "
         "will read a fresh ContextVar and approval-session routing "
         "collapses to the os.environ fallback. Wrap with "

@@ -1,4 +1,4 @@
-"""Tests for jarvis_cli/tips.py — random tip display at session start."""
+"""Tests for src/jarvis_cli/tips.py — random tip display at session start."""
 
 import pytest
 from jarvis_cli.tips import TIPS, get_random_tip
@@ -55,10 +55,10 @@ class TestGetRandomTip:
 
 
 class TestTipIntegrationInCLI:
-    """Test that the tip display code in jarvis_cli/terminal.py works correctly."""
+    """Test that the tip display code in src/jarvis_cli/terminal.py works correctly."""
 
     def test_tip_import_works(self):
-        """The import used in jarvis_cli/terminal.py must succeed."""
+        """The import used in src/jarvis_cli/terminal.py must succeed."""
         from jarvis_cli.tips import get_random_tip
         assert callable(get_random_tip)
 

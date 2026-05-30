@@ -4,7 +4,7 @@ TTS provider tools must resolve API keys from ``~/.jarvis/.env`` (via
 ``jarvis_cli.config.get_env_value``) and not only from ``os.environ`` —
 otherwise users who keep their keys in the dotenv file see "API key not set"
 errors even though the key is configured. Same class of bug as #15914 (auth)
-already addressed for ``agent/credential_pool`` and ``jarvis_cli/auth``.
+already addressed for ``src/agent/credential_pool`` and ``src/jarvis_cli/auth``.
 """
 
 from unittest.mock import MagicMock, patch

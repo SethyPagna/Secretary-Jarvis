@@ -25,7 +25,7 @@ def _reset_modules(prefixes: tuple[str, ...]):
 
 @pytest.fixture(autouse=True)
 def _restore_cli_and_tool_modules():
-    """Save and restore tools/cli/run_agent modules around every test."""
+    """Save and restore src/tools/cli/run_agent modules around every test."""
     prefixes = ("tools", "cli", "run_agent")
     original_modules = {
         name: module

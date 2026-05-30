@@ -1,4 +1,4 @@
-"""Tests for Bug #12905 fixes in agent/anthropic_adapter.py — macOS Keychain support."""
+"""Tests for Bug #12905 fixes in src/agent/anthropic_adapter.py — macOS Keychain support."""
 
 import json
 import platform

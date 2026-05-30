@@ -166,7 +166,7 @@ def _ensure_teams_mock():
 
 _ensure_teams_mock()
 
-# Load plugins/platforms/teams/adapter.py under a unique module name
+# Load src/plugins/platforms/teams/adapter.py under a unique module name
 # (plugin_adapter_teams) so it cannot collide with sibling plugin adapters.
 _teams_mod = load_plugin_adapter("teams")
 

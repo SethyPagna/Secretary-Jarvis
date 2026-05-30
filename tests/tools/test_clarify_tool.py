@@ -1,4 +1,4 @@
-"""Tests for tools/clarify_tool.py - Interactive clarifying questions."""
+"""Tests for src/tools/clarify_tool.py - Interactive clarifying questions."""
 
 import json
 from typing import List, Optional

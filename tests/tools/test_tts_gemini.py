@@ -1,4 +1,4 @@
-"""Tests for the Google Gemini TTS provider in tools/tts_tool.py."""
+"""Tests for the Google Gemini TTS provider in src/tools/tts_tool.py."""
 
 import base64
 import struct

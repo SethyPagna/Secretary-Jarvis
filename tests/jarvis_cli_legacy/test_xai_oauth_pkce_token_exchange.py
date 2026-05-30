@@ -6,7 +6,7 @@ browser-side authorize step but fails at the token endpoint with
 re-validates PKCE at the token step instead of relying purely on
 state captured during the authorize redirect.
 
-The fix in ``jarvis_cli/auth.py`` extracts the token POST into
+The fix in ``src/jarvis_cli/auth.py`` extracts the token POST into
 :func:`_xai_oauth_exchange_code_for_tokens` and:
 
 * Sends ``code_verifier`` (RFC 7636 §4.5 requirement).

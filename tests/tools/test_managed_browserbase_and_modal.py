@@ -25,7 +25,7 @@ def _load_tool_module(module_name: str, filename: str):
 
 
 def _load_plugin_module(module_name: str, relpath: str):
-    """Load a plugin module by file path from ``plugins/``.
+    """Load a plugin module by file path from ``src/plugins/``.
 
     Mirror of :func:`_load_tool_module` for the plugin tree. Used by tests
     that exercise the per-vendor browser plugins' session-lifecycle

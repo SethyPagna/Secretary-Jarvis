@@ -1,4 +1,4 @@
-﻿"""Tests for tools/trajectory_compressor.py — config, metrics, and compression logic."""
+﻿"""Tests for src/tools/trajectory_compressor.py — config, metrics, and compression logic."""
 
 import importlib
 import json

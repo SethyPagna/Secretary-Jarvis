@@ -1,6 +1,6 @@
 """Tests for MCP tool-handler circuit-breaker recovery.
 
-The circuit breaker in ``tools/mcp_tool.py`` is intended to short-circuit
+The circuit breaker in ``src/tools/mcp_tool.py`` is intended to short-circuit
 calls to an MCP server that has failed ``_CIRCUIT_BREAKER_THRESHOLD``
 consecutive times, then *transition back to a usable state* once the
 server has had time to recover (or an explicit reconnect succeeds).
@@ -232,7 +232,7 @@ def test_circuit_breaker_cleared_on_reconnect(monkeypatch, tmp_path):
             "srv",
             OAuthFlowError("initial"),
             _retry_call,
-            "tools/call test",
+            "src/tools/call test",
         )
         # The call as a whole still surfaces needs_reauth because the
         # retry itself didn't succeed, but the breaker state must

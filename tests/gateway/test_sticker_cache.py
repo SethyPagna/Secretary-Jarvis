@@ -1,4 +1,4 @@
-"""Tests for gateway/sticker_cache.py — sticker description cache."""
+"""Tests for src/gateway/sticker_cache.py — sticker description cache."""
 
 import json
 import time

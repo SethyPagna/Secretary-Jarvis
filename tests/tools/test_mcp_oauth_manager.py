@@ -1,8 +1,8 @@
-"""Tests for the MCP OAuth manager (tools/mcp_oauth_manager.py).
+"""Tests for the MCP OAuth manager (src/tools/mcp_oauth_manager.py).
 
 The manager consolidates the eight scattered MCP-OAuth call sites into a
 single object with disk-mtime watch, dedup'd 401 handling, and a provider
-cache. See `tools/mcp_oauth_manager.py` for design rationale.
+cache. See `src/tools/mcp_oauth_manager.py` for design rationale.
 """
 import json
 import os

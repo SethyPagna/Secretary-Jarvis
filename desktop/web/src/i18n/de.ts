@@ -284,7 +284,7 @@ export const de: Translations = {
     providersHint:
       "Schreibt memory.provider (leer = eingebaut) und context.engine in config.yaml. Wirkt sich auf die nächste Sitzung aus.",
     refreshDashboard: "Dashboard-Erweiterungen erneut scannen",
-    removeConfirm: "Dieses Plugin aus ~/.jarvis/plugins/ entfernen?",
+    removeConfirm: "Dieses Plugin aus ~/.jarvis/src/plugins/ entfernen?",
     removeHint: "Nur vom Benutzer installierte Plugins unter ~/.jarvis/plugins können entfernt werden.",
     rescanHeading: "SPA-Plugin-Registry",
     rescanHint: "Nach dem Hinzufügen von Dateien auf dem Datenträger erneut scannen, damit die Sidebar neue Manifeste erkennt.",

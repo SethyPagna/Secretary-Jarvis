@@ -178,7 +178,7 @@ class TestImageRejectionPhraseIsolation:
     so they route to the correct recovery handler (e.g. _try_shrink_image_parts).
     """
 
-    # Reproduces the phrase list used in agent/runtime.py's error-handler block.
+    # Reproduces the phrase list used in src/agent/runtime.py's error-handler block.
     _REJECTION_PHRASES = (
         "only 'text' content type is supported",
         "only text content type is supported",
@@ -202,7 +202,7 @@ class TestImageRejectionPhraseIsolation:
         return any(p in low for p in self._REJECTION_PHRASES)
 
     def test_anthropic_image_too_large_does_not_trip(self):
-        # From agent/error_classifier.py _IMAGE_TOO_LARGE_PATTERNS —
+        # From src/agent/error_classifier.py _IMAGE_TOO_LARGE_PATTERNS —
         # these must route to image_too_large / _try_shrink_image_parts_in_messages,
         # NOT to our vision-unsupported fallback.
         bodies = [

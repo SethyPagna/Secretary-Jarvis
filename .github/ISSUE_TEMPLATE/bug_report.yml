@@ -142,7 +142,7 @@ body:
         If you've dug into the code and identified the root cause, share it here.
         Include file paths, line numbers, and code snippets if possible. This massively speeds up fixes.
       placeholder: |
-        The bug is in `gateway/run.py` line 949. `len(history)` counts session_meta entries
+        The bug is in `src/gateway/run.py` line 949. `len(history)` counts session_meta entries
         but `agent_messages` was built from filtered history...
 
   - type: textarea
@@ -151,7 +151,7 @@ body:
       label: Proposed Fix (optional)
       description: If you have a fix in mind (or a PR ready), describe it here.
       placeholder: |
-        Replace `.get()` with `.pop()` on line 289 of `gateway/platforms/base.py`
+        Replace `.get()` with `.pop()` on line 289 of `src/gateway/platforms/base.py`
         to actually clear the pending message after retrieval.
 
   - type: checkboxes

@@ -26,7 +26,7 @@ import argparse
 from datetime import datetime
 from typing import List
 
-# Import the web tools to test (updated path after moving tools/)
+# Import the web tools to test (updated path after moving src/tools/)
 from tools.web_tools import (
     web_search_tool,
     web_extract_tool,

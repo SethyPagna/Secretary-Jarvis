@@ -110,7 +110,7 @@ This means your existing Cursor conventions automatically apply when using Jarvi
 
 ### At startup (system prompt)
 
-Context files are loaded by `build_context_files_prompt()` in `agent/prompt_builder.py`:
+Context files are loaded by `build_context_files_prompt()` in `src/agent/prompt_builder.py`:
 
 1. **Scan working directory** — checks for `.jarvis.md` → `AGENTS.md` → `CLAUDE.md` → `.cursorrules` (first match wins)
 2. **Content is read** — each file is read as UTF-8 text
@@ -121,7 +121,7 @@ Context files are loaded by `build_context_files_prompt()` in `agent/prompt_buil
 
 ### During the session (progressive discovery)
 
-`SubdirectoryHintTracker` in `agent/subdirectory_hints.py` watches tool call arguments for file paths:
+`SubdirectoryHintTracker` in `src/agent/subdirectory_hints.py` watches tool call arguments for file paths:
 
 1. **Path extraction** — after each tool call, file paths are extracted from arguments (`path`, `workdir`, shell commands)
 2. **Ancestor walk** — the directory and up to 5 parent directories are checked (stopping at already-visited directories)
@@ -392,9 +392,9 @@ This is one of the most important design choices in the project because it affec
 
 Primary files:
 
-- `agent/runtime.py`
-- `agent/prompt_builder.py`
-- `tools/memory_tool.py`
+- `src/agent/runtime.py`
+- `src/agent/prompt_builder.py`
+- `src/tools/memory_tool.py`
 
 ## Cached system prompt layers
 
@@ -493,7 +493,7 @@ renderable inside a terminal.
 `SOUL.md` lives at `~/.jarvis/SOUL.md` and serves as the agent's identity — the very first section of the system prompt. The loading logic in `prompt_builder.py` works as follows:
 
 ```python
-# From agent/prompt_builder.py (simplified)
+# From src/agent/prompt_builder.py (simplified)
 def load_soul_md() -> Optional[str]:
     soul_path = get_jarvis_home() / "SOUL.md"
     if not soul_path.exists():
@@ -523,7 +523,7 @@ Be targeted and efficient in your exploration and investigations.
 `build_context_files_prompt()` uses a **priority system** — only one project context type is loaded (first match wins):
 
 ```python
-# From agent/prompt_builder.py (simplified)
+# From src/agent/prompt_builder.py (simplified)
 def build_context_files_prompt(cwd=None, skip_soul=False):
     cwd_path = Path(cwd).resolve()
 
@@ -587,10 +587,10 @@ Local memory and user profile data are injected as frozen snapshots at session s
 
 ## Context files
 
-`agent/prompt_builder.py` scans and sanitizes project context files using a **priority system** — only one type is loaded (first match wins):
+`src/agent/prompt_builder.py` scans and sanitizes project context files using a **priority system** — only one type is loaded (first match wins):
 
 1. `.jarvis.md` / `JARVIS.md` (walks to git root)
-2. `AGENTS.md` (CWD at startup; subdirectories discovered progressively during the session via `agent/subdirectory_hints.py`)
+2. `AGENTS.md` (CWD at startup; subdirectories discovered progressively during the session via `src/agent/subdirectory_hints.py`)
 3. `CLAUDE.md` (CWD only)
 4. `.cursorrules` / `.cursor/rules/*.mdc` (CWD only)
 
@@ -604,7 +604,7 @@ The skills system contributes a compact skills index to the prompt when skills t
 
 ## Supported prompt customization surfaces
 
-Most users should treat `agent/prompt_builder.py` as implementation code, not a configuration surface. The supported customization path is to change the prompt inputs Jarvis already loads, rather than editing Python templates in place.
+Most users should treat `src/agent/prompt_builder.py` as implementation code, not a configuration surface. The supported customization path is to change the prompt inputs Jarvis already loads, rather than editing Python templates in place.
 
 ### Use these surfaces first
 
@@ -617,7 +617,7 @@ Most users should treat `agent/prompt_builder.py` as implementation code, not a 
 
 ### When to edit code instead
 
-Edit `agent/prompt_builder.py` only if you are intentionally maintaining a fork or contributing upstream behavior changes. That file assembles the prompt plumbing, cache boundaries, and injection order for every session. Direct edits there are global product changes, not per-user prompt customization.
+Edit `src/agent/prompt_builder.py` only if you are intentionally maintaining a fork or contributing upstream behavior changes. That file assembles the prompt plumbing, cache boundaries, and injection order for every session. Direct edits there are global product changes, not per-user prompt customization.
 
 In other words:
 
@@ -633,7 +633,7 @@ The architecture is intentionally optimized to:
 - preserve provider-side prompt caching
 - avoid mutating history unnecessarily
 - keep memory semantics understandable
-- let gateway/ACP/CLI add context without poisoning persistent prompt state
+- let src/gateway/ACP/CLI add context without poisoning persistent prompt state
 
 ## Related docs
 
@@ -648,13 +648,13 @@ The architecture is intentionally optimized to:
 JARVIS uses a dual compression system and Anthropic prompt caching to
 manage context window usage efficiently across long conversations.
 
-Source files: `agent/context_engine.py` (ABC), `agent/context_compressor.py` (default engine),
-`agent/prompt_caching.py`, `gateway/run.py` (session hygiene), `agent/runtime.py` (search for `_compress_context`)
+Source files: `src/agent/context_engine.py` (ABC), `src/agent/context_compressor.py` (default engine),
+`src/agent/prompt_caching.py`, `src/gateway/run.py` (session hygiene), `src/agent/runtime.py` (search for `_compress_context`)
 
 
 ## Pluggable Context Engine
 
-Context management is built on the `ContextEngine` ABC (`agent/context_engine.py`). The built-in `ContextCompressor` is the default implementation, but plugins can replace it with alternative engines (e.g., Lossless Context Management).
+Context management is built on the `ContextEngine` ABC (`src/agent/context_engine.py`). The built-in `ContextCompressor` is the default implementation, but plugins can replace it with alternative engines (e.g., Lossless Context Management).
 
 ```yaml
 context:
@@ -669,7 +669,7 @@ The engine is responsible for:
 - Tracking token usage from API responses
 
 Selection is config-driven via `context.engine` in `config.yaml`. The resolution order:
-1. Check `plugins/context_engine/<name>/` directory
+1. Check `src/plugins/context_engine/<name>/` directory
 2. Check general plugin system (`register_context_engine()`)
 3. Fall back to built-in `ContextCompressor`
 
@@ -698,7 +698,7 @@ Jarvis has two separate compression layers that operate independently:
 
 ### 1. Gateway Session Hygiene (85% threshold)
 
-Located in `gateway/run.py` (search for `Session hygiene: auto-compress`). This is a **safety net** that
+Located in `src/gateway/run.py` (search for `Session hygiene: auto-compress`). This is a **safety net** that
 runs before the agent processes a message. It prevents API failures when sessions
 grow too large between turns (e.g., overnight accumulation in Telegram/Discord).
 
@@ -714,7 +714,7 @@ in long gateway sessions.
 
 ### 2. Agent ContextCompressor (50% threshold, configurable)
 
-Located in `agent/context_compressor.py`. This is the **primary compression
+Located in `src/agent/context_compressor.py`. This is the **primary compression
 system** that runs inside the agent's tool loop with access to accurate,
 API-reported token counts.
 
@@ -916,7 +916,7 @@ text for this purpose.
 
 ## Prompt Caching (Anthropic)
 
-Source: `agent/prompt_caching.py`
+Source: `src/agent/prompt_caching.py`
 
 Reduces input token costs by ~75% on multi-turn conversations by caching the
 conversation prefix. Uses Anthropic's `cache_control` breakpoints.
@@ -990,4 +990,4 @@ The CLI shows caching status at startup:
 
 ## Context Pressure Warnings
 
-Intermediate context-pressure warnings have been removed (see the iteration-budget block in `agent/runtime.py`, which notes: "No intermediate pressure warnings — they caused models to 'give up' prematurely on complex tasks"). Compression fires when prompt tokens reach the configured `compression.threshold` (default 50%) with no prior warning step; gateway session hygiene fires as the secondary safety net at 85% of the model's context window.
+Intermediate context-pressure warnings have been removed (see the iteration-budget block in `src/agent/runtime.py`, which notes: "No intermediate pressure warnings — they caused models to 'give up' prematurely on complex tasks"). Compression fires when prompt tokens reach the configured `compression.threshold` (default 50%) with no prior warning step; gateway session hygiene fires as the secondary safety net at 85% of the model's context window.

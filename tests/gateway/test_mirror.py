@@ -1,4 +1,4 @@
-"""Tests for gateway/mirror.py — session mirroring."""
+"""Tests for src/gateway/mirror.py — session mirroring."""
 
 import json
 from pathlib import Path

@@ -14,7 +14,7 @@ which would be a real regression for users on the existing config keys.
 Run from the PR worktree:
 
     cd ~/.jarvis/jarvis-agent/.worktrees/browser-providers-plugin
-    python tests/plugins/browser/check_parity_vs_main.py
+    python tests/src/plugins/browser/check_parity_vs_main.py
 """
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Tests for Qwen OAuth provider authentication (jarvis_cli/auth.py).
+"""Tests for Qwen OAuth provider authentication (src/jarvis_cli/auth.py).
 
 Covers: _qwen_cli_auth_path, _read_qwen_cli_tokens, _save_qwen_cli_tokens,
 _qwen_access_token_is_expiring, _refresh_qwen_cli_tokens,

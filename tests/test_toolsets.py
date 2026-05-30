@@ -1,4 +1,4 @@
-"""Tests for tools/toolsets.py — toolset resolution, validation, and composition."""
+"""Tests for src/tools/toolsets.py — toolset resolution, validation, and composition."""
 
 from tools.registry import ToolRegistry
 from tools.toolsets import (

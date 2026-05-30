@@ -26,7 +26,7 @@ def _make_response(content):
 # ── _extract_relevant_content (line 996) ──────────────────────────────────
 
 class TestExtractRelevantContentNoneGuard:
-    """tools/browser_tool.py — _extract_relevant_content()"""
+    """src/tools/browser_tool.py — _extract_relevant_content()"""
 
     def test_none_content_falls_back_to_truncated(self):
         """When LLM returns None content, should fall back to truncated snapshot."""
@@ -62,7 +62,7 @@ class TestExtractRelevantContentNoneGuard:
 # ── browser_vision (line 1626) ────────────────────────────────────────────
 
 class TestBrowserVisionNoneGuard:
-    """tools/browser_tool.py — browser_vision() analysis extraction"""
+    """src/tools/browser_tool.py — browser_vision() analysis extraction"""
 
     def test_none_content_produces_fallback_message(self):
         """When LLM returns None content, analysis should have a fallback message."""

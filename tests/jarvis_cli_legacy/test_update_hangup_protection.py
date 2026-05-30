@@ -1,7 +1,7 @@
 """Tests for SIGHUP protection and stdout mirroring in ``jarvis update``.
 
 Covers ``_UpdateOutputStream``, ``_install_hangup_protection``, and
-``_finalize_update_output`` in ``jarvis_cli/main.py``.  These exist so
+``_finalize_update_output`` in ``src/jarvis_cli/main.py``.  These exist so
 that ``jarvis update`` survives a terminal disconnect mid-install
 (SSH drop, shell close) without leaving the venv half-installed.
 """

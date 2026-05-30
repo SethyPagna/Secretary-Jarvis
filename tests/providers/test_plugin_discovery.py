@@ -1,8 +1,8 @@
 """Tests for the model-providers plugin discovery system.
 
 Verifies that:
- 1. All bundled providers at plugins/model-providers/<name>/ are discovered
- 2. User plugins at $JARVIS_HOME/plugins/model-providers/<name>/ override bundled
+ 1. All bundled providers at src/plugins/model-providers/<name>/ are discovered
+ 2. User plugins at $JARVIS_HOME/src/plugins/model-providers/<name>/ override bundled
  3. plugin.yaml manifests with kind=model-provider are correctly categorized
 """
 
@@ -19,7 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _clear_provider_caches():
-    """Force providers/__init__.py to re-discover on next list_providers()."""
+    """Force src/providers/__init__.py to re-discover on next list_providers()."""
     import providers as _pkg
     _pkg._REGISTRY.clear()
     _pkg._ALIASES.clear()
@@ -34,7 +34,7 @@ def _clear_provider_caches():
 
 
 def test_bundled_plugins_discovered():
-    """Every plugins/model-providers/<name>/ should contain a plugin.yaml + __init__.py."""
+    """Every src/plugins/model-providers/<name>/ should contain a plugin.yaml + __init__.py."""
     plugins_dir = REPO_ROOT / "plugins" / "model-providers"
     assert plugins_dir.is_dir(), f"Missing {plugins_dir}"
 
@@ -111,7 +111,7 @@ def test_user_plugin_overrides_bundled(tmp_path, monkeypatch):
 
 def test_general_plugin_manager_skips_model_provider_kind(tmp_path, monkeypatch):
     """The general PluginManager must NOT import model-provider plugins
-    (providers/__init__.py handles them). It records the manifest only."""
+    (src/providers/__init__.py handles them). It records the manifest only."""
     from jarvis_cli import plugins as plugin_mod
 
     jarvis_home = tmp_path / ".jarvis"

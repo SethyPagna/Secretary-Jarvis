@@ -268,7 +268,7 @@ class TestContextNotHalvedOnOutputCapError:
             "- input_tokens: 180000 = available_tokens: 20000"
         )
 
-        # Simulate the handler logic from agent/runtime.py
+        # Simulate the handler logic from src/agent/runtime.py
         agent = self._make_agent_with_compressor(context_length=200_000)
         old_ctx = agent.context_compressor.context_length
 

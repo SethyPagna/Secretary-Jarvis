@@ -1,4 +1,4 @@
-"""Tests for agent/model_metadata.py — token estimation, context lengths,
+"""Tests for src/agent/model_metadata.py — token estimation, context lengths,
 probing, caching, and error parsing.
 
 Coverage levels:

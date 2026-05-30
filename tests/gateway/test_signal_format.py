@@ -124,7 +124,7 @@ class TestItalicFalsePositives:
         assert _find_style(styles, "ITALIC") == []
 
     def test_snake_case_path(self):
-        text, styles = _m2s("/tools/delegate_tool.py")
+        text, styles = _m2s("/src/tools/delegate_tool.py")
         assert _find_style(styles, "ITALIC") == []
 
     def test_snake_case_between_words(self):
@@ -148,9 +148,9 @@ class TestItalicFalsePositives:
     def test_bullet_list_file_paths(self):
         """Real-world case that triggered the bug."""
         md = (
-            "* tools/delegate_tool.py — delegation\n"
-            "* tools/file_tools.py — file operations\n"
-            "* tools/web_tools.py — web operations"
+            "* src/tools/delegate_tool.py — delegation\n"
+            "* src/tools/file_tools.py — file operations\n"
+            "* src/tools/web_tools.py — web operations"
         )
         text, styles = _m2s(md)
         assert _find_style(styles, "ITALIC") == []
@@ -180,9 +180,9 @@ class TestItalicFalsePositives:
         """Multi-paragraph response with * should not false-positive."""
         md = (
             "I checked the following files:\n\n"
-            "* tools/delegate_tool.py — sub-agent delegation\n"
-            "* tools/file_tools.py — file read/write/search\n"
-            "* tools/web_tools.py — web search/extract\n\n"
+            "* src/tools/delegate_tool.py — sub-agent delegation\n"
+            "* src/tools/file_tools.py — file read/write/search\n"
+            "* src/tools/web_tools.py — web search/extract\n\n"
             "Everything looks good."
         )
         text, styles = _m2s(md)

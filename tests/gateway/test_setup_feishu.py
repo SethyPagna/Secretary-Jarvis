@@ -1,4 +1,4 @@
-"""Tests for _setup_feishu() in jarvis_cli/gateway.py.
+"""Tests for _setup_feishu() in src/jarvis_cli/gateway.py.
 
 Verifies that the interactive setup writes env vars that correctly drive the
 Feishu adapter: credentials, connection mode, DM policy, and group policy.

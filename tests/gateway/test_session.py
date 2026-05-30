@@ -92,7 +92,7 @@ class TestSessionSourceRoundtrip:
     def test_unknown_platform_rejected_for_bad_names(self):
         """Arbitrary platform names are rejected (no accidental enum pollution).
 
-        Only bundled platform plugins (discovered under ``plugins/platforms/``)
+        Only bundled platform plugins (discovered under ``src/plugins/platforms/``)
         and runtime-registered plugins get dynamic enum members.
         """
         with pytest.raises(ValueError):
@@ -325,7 +325,7 @@ class TestBuildSessionContextPrompt:
         with patch("jarvis_cli.constants.display_jarvis_home", return_value="~/.jarvis/profiles/coder"):
             prompt = build_session_context_prompt(ctx)
 
-        assert "~/.jarvis/profiles/coder/cron/output/" in prompt
+        assert "~/.jarvis/profiles/coder/src/cron/output/" in prompt
 
     def test_whatsapp_prompt(self):
         config = GatewayConfig(

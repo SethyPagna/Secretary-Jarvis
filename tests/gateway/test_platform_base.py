@@ -1,4 +1,4 @@
-"""Tests for gateway/platforms/base.py — MessageEvent, media extraction, message truncation."""
+"""Tests for src/gateway/platforms/base.py — MessageEvent, media extraction, message truncation."""
 
 import os
 from unittest.mock import patch

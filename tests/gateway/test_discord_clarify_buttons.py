@@ -24,7 +24,7 @@ _repo = str(Path(__file__).resolve().parents[2])
 if _repo not in sys.path:
     sys.path.insert(0, _repo)
 
-# Triggers the shared discord mock from tests/gateway/conftest.py before
+# Triggers the shared discord mock from tests/src/gateway/conftest.py before
 # importing the production module.
 from plugins.platforms.discord.adapter import (  # noqa: E402
     ClarifyChoiceView,

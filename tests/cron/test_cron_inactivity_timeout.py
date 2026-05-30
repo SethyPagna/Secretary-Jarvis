@@ -170,7 +170,7 @@ class TestInactivityTimeout:
         assert result["final_response"] == "Done"
 
     def _parse_cron_timeout(self, raw_value):
-        """Mirror the defensive parsing logic from cron/scheduler.py run_job()."""
+        """Mirror the defensive parsing logic from src/cron/scheduler.py run_job()."""
         if raw_value:
             try:
                 return float(raw_value)

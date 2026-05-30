@@ -1,4 +1,4 @@
-"""Unit tests for tools/tool_backend_helpers.py.
+"""Unit tests for src/tools/tool_backend_helpers.py.
 
 Tests cover:
 - managed_jarvis_managed_tools_enabled() subscription-based gate

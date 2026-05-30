@@ -1,4 +1,4 @@
-"""Tests for the KittenTTS local provider in tools/tts_tool.py."""
+"""Tests for the KittenTTS local provider in src/tools/tts_tool.py."""
 
 import json
 from unittest.mock import MagicMock, patch

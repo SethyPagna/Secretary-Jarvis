@@ -42,7 +42,7 @@ except ImportError:
 parent_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(parent_dir))
 
-# Import terminal_tool module directly using importlib to avoid tools/__init__.py
+# Import terminal_tool module directly using importlib to avoid src/tools/__init__.py
 import importlib.util
 terminal_tool_path = parent_dir / "tools" / "terminal_tool.py"
 spec = importlib.util.spec_from_file_location("terminal_tool", terminal_tool_path)

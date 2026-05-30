@@ -1,5 +1,5 @@
 """
-Tests for Telegram document handling in gateway/platforms/telegram.py.
+Tests for Telegram document handling in src/gateway/platforms/telegram.py.
 
 Covers: document type detection, download/cache flow, size limits,
         text injection, error handling.

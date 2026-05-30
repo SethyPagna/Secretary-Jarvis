@@ -745,7 +745,7 @@ class TestMatrixConfigBridge:
         config_file = tmp_path / "config.yaml"
         config_file.write_text(yaml.dump(yaml_content))
 
-        # Simulate the bridge logic from gateway/config.py
+        # Simulate the bridge logic from src/gateway/config.py
         yaml_cfg = yaml.safe_load(config_file.read_text())
         matrix_cfg = yaml_cfg.get("matrix", {})
         if isinstance(matrix_cfg, dict):

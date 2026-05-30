@@ -170,7 +170,7 @@ def test_manager_reset_flag_preserved():
 
 
 def test_sync_all_propagates_session_id_to_providers():
-    """agent/runtime.py's sync_all call must pass session_id through to providers.
+    """src/agent/runtime.py's sync_all call must pass session_id through to providers.
 
     Without this, a provider that updates _session_id defensively in
     sync_turn (as Hindsight does at hindsight/__init__.py:1199) never
@@ -240,7 +240,7 @@ def _make_hindsight_provider():
     # Writer queue infra the flush-on-switch path enqueues onto. We stub
     # _ensure_writer / _register_atexit so no real thread is spawned;
     # tests exercising flush delivery live in
-    # tests/plugins/memory/test_hindsight_provider.py where the full
+    # tests/src/plugins/memory/test_hindsight_provider.py where the full
     # writer-queue wiring is in place.
     import queue as _queue
     provider._retain_queue = _queue.Queue()
@@ -250,7 +250,7 @@ def _make_hindsight_provider():
     provider._register_atexit = lambda: None
     # Mode + API state used by _resolve_retain_target; stub the resolver
     # so tests don't actually probe the API. Real probe behavior is
-    # exercised by tests in tests/plugins/memory/test_hindsight_provider.py.
+    # exercised by tests in tests/src/plugins/memory/test_hindsight_provider.py.
     provider._mode = "cloud"
     provider._api_url = ""
     provider._api_key = ""

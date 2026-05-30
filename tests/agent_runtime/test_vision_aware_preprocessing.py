@@ -1,4 +1,4 @@
-"""Tests for the vision-aware image preprocessing in agent/runtime.py.
+"""Tests for the vision-aware image preprocessing in src/agent/runtime.py.
 
 Covers:
 

@@ -35,7 +35,7 @@ def _make_event(text: str) -> MessageEvent:
 
 
 def _make_runner():
-    """Mirror tests/gateway/test_unknown_command.py::_make_runner."""
+    """Mirror tests/src/gateway/test_unknown_command.py::_make_runner."""
     from gateway.run import GatewayRunner
 
     runner = object.__new__(GatewayRunner)

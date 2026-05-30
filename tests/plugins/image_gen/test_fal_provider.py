@@ -3,7 +3,7 @@
 
 The plugin is a thin registration adapter — actual FAL pipeline logic
 lives in ``tools.image_generation_tool`` and is exercised by
-``tests/tools/test_image_generation.py``. These tests focus on:
+``tests/src/tools/test_image_generation.py``. These tests focus on:
 
 * the ``ImageGenProvider`` ABC surface (name, models, schema)
 * call-time indirection (``_it`` resolution at ``generate()`` time so

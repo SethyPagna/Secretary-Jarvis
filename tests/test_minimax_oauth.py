@@ -1,4 +1,4 @@
-"""Tests for MiniMax OAuth provider (jarvis_cli/auth.py).
+"""Tests for MiniMax OAuth provider (src/jarvis_cli/auth.py).
 
 Covers:
 - PKCE pair generation (S256 challenge)

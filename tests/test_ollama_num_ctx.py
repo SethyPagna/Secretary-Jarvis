@@ -1,8 +1,8 @@
 """Tests for Ollama num_ctx context length detection and injection.
 
 Covers:
-  agent/model_metadata.py — query_ollama_num_ctx()
-  agent/runtime.py — _ollama_num_ctx detection + extra_body injection
+  src/agent/model_metadata.py — query_ollama_num_ctx()
+  src/agent/runtime.py — _ollama_num_ctx detection + extra_body injection
 """
 
 from unittest.mock import patch, MagicMock

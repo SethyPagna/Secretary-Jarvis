@@ -345,7 +345,7 @@ class TestErrorHandling:
 
 
 class TestSessionRetirementOnRunAgent:
-    """agent/runtime.py side: when run_turn returns should_retire=True, the
+    """src/agent/runtime.py side: when run_turn returns should_retire=True, the
     AIAgent must close + null _codex_session so the next turn respawns."""
 
     def test_should_retire_drops_session(self, monkeypatch):

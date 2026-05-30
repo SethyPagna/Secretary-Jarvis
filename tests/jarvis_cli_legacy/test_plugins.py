@@ -41,7 +41,7 @@ def _make_plugin_dir(base: Path, name: str, *, register_body: str = "pass",
     need this. Pass ``auto_enable=False`` for tests that exercise the
     unenabled path.
 
-    *base* is expected to be ``<jarvis_home>/plugins/``; we derive
+    *base* is expected to be ``<jarvis_home>/src/plugins/``; we derive
     ``<jarvis_home>`` from it by walking one level up.
     """
     plugin_dir = base / name
@@ -90,7 +90,7 @@ class TestPluginDiscovery:
     """Tests for plugin discovery from directories and entry points."""
 
     def test_discover_user_plugins(self, tmp_path, monkeypatch):
-        """Plugins in ~/.jarvis/plugins/ are discovered."""
+        """Plugins in ~/.jarvis/src/plugins/ are discovered."""
         plugins_dir = tmp_path / "jarvis_test" / "plugins"
         _make_plugin_dir(plugins_dir, "hello_plugin")
         monkeypatch.setenv("JARVIS_HOME", str(tmp_path / "jarvis_test"))
@@ -102,7 +102,7 @@ class TestPluginDiscovery:
         assert mgr._plugins["hello_plugin"].enabled
 
     def test_discover_project_plugins(self, tmp_path, monkeypatch):
-        """Plugins in ./.jarvis/plugins/ are discovered."""
+        """Plugins in ./.jarvis/src/plugins/ are discovered."""
         project_dir = tmp_path / "project"
         project_dir.mkdir()
         monkeypatch.chdir(project_dir)
@@ -253,7 +253,7 @@ class TestPluginLoading:
 
     def test_user_memory_plugin_auto_coerced_to_exclusive(self, tmp_path, monkeypatch):
         """User-installed memory plugins must NOT be loaded by the general
-        PluginManager — they belong to plugins/memory discovery.
+        PluginManager — they belong to src/plugins/memory discovery.
 
         Regression test for the mempalace crash:
             'PluginContext' object has no attribute 'register_memory_provider'
@@ -262,7 +262,7 @@ class TestPluginLoading:
         ``__init__.py`` should be auto-detected and treated as
         ``kind: exclusive`` so the general loader records the manifest but
         does not import/register() it. The real activation happens through
-        ``plugins/memory/__init__.py`` via ``memory.provider`` config.
+        ``src/plugins/memory/__init__.py`` via ``memory.provider`` config.
         """
         plugins_dir = tmp_path / "jarvis_test" / "plugins"
         plugin_dir = plugins_dir / "mempalace"
@@ -888,7 +888,7 @@ class TestPluginManagerList:
 class TestPreLlmCallTargetRouting:
     """Tests for pre_llm_call hook return format with target-aware routing.
 
-    The routing logic lives in agent/runtime.py, but the return format is collected
+    The routing logic lives in src/agent/runtime.py, but the return format is collected
     by invoke_hook(). These tests verify the return format works correctly and
     that downstream code can route based on the 'target' key.
     """
@@ -967,7 +967,7 @@ class TestPreLlmCallTargetRouting:
         assert "guardrail text" in contexts
 
     def test_routing_logic_all_to_user_message(self, tmp_path, monkeypatch):
-        """Simulate the routing logic from agent/runtime.py.
+        """Simulate the routing logic from src/agent/runtime.py.
 
         All plugin context — dicts and plain strings — ends up in a single
         user message context string. There is no system_prompt target.
@@ -995,7 +995,7 @@ class TestPreLlmCallTargetRouting:
             conversation_history=[], is_first_turn=True, model="test",
         )
 
-        # Replicate agent/runtime.py routing logic — everything goes to user msg
+        # Replicate src/agent/runtime.py routing logic — everything goes to user msg
         _ctx_parts = []
         for r in results:
             if isinstance(r, dict) and r.get("context"):

@@ -1,4 +1,4 @@
-"""Tests for tools/process_registry.py — ProcessRegistry query methods, pruning, checkpoint."""
+"""Tests for src/tools/process_registry.py — ProcessRegistry query methods, pruning, checkpoint."""
 
 import json
 import os

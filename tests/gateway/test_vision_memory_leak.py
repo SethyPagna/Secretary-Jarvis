@@ -1,7 +1,7 @@
 """Tests for _enrich_message_with_vision — regression for #5719.
 
 The auxiliary vision LLM can echo system-prompt memory-context back into
-its analysis output.  The boundary fix in gateway/run.py runs the generic
+its analysis output.  The boundary fix in src/gateway/run.py runs the generic
 sanitize_context helper over the description so the fenced wrapper and
 its system-note are removed before the description reaches the user.
 

@@ -1,4 +1,4 @@
-"""Tests for agent/image_gen_registry.py — provider registration & active lookup."""
+"""Tests for src/agent/image_gen_registry.py — provider registration & active lookup."""
 
 from __future__ import annotations
 

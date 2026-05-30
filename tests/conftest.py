@@ -359,7 +359,7 @@ def _hermetic_environment(tmp_path, monkeypatch):
     monkeypatch.setenv("AWS_METADATA_SERVICE_NUM_ATTEMPTS", "1")
 
     # 5. Reset plugin singleton so tests don't leak plugins from
-    #    ~/.jarvis/plugins/ (which, per step 3, is now empty — but the
+    #    ~/.jarvis/src/plugins/ (which, per step 3, is now empty — but the
     #    singleton might still be cached from a previous test).
     try:
         import jarvis_cli.plugins as _plugins_mod
@@ -486,7 +486,7 @@ def _ensure_current_event_loop(request):
 # environment and finds the developer's live ``jarvis-gateway`` process
 # via ``psutil`` — sending it SIGTERM mid-test. The shutdown forensics in
 # PR #23285 caught this happening 5+ times in 3 days, every time
-# correlated with a ``tests/jarvis_cli/`` pytest run starting up.
+# correlated with a ``tests/src/jarvis_cli/`` pytest run starting up.
 #
 # This fixture makes the leak impossible by intercepting the two
 # primitives that actually do damage:
@@ -631,8 +631,8 @@ def _live_system_guard(request, monkeypatch):
         "jarvis-gateway",
         "jarvis.service",
         "jarvis_cli.main gateway",
-        "jarvis_cli/main.py gateway",
-        "gateway/run.py",
+        "src/jarvis_cli/main.py gateway",
+        "src/gateway/run.py",
         "jarvis gateway",
     )
     _MUTATING_VERBS = (

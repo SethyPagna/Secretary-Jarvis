@@ -1,7 +1,7 @@
 """Regression test for issue #22357 — gateway memory-nudge counter hydration.
 
 The gateway creates a fresh AIAgent for each inbound message in several
-common scenarios (cache miss, 1h idle eviction at gateway/run.py
+common scenarios (cache miss, 1h idle eviction at src/gateway/run.py
 _AGENT_CACHE_IDLE_TTL_SECS, config-signature mismatch, process restart).
 A freshly built AIAgent has _turns_since_memory=0 and _user_turn_count=0.
 
@@ -32,7 +32,7 @@ def _make_minimal_agent():
 
 def _run_hydration(conversation_history, memory_nudge_interval=10,
                    prior_turn_count=0, prior_turns_since_memory=0):
-    """Replicate the hydration block from agent/runtime.py:11128-11150.
+    """Replicate the hydration block from src/agent/runtime.py:11128-11150.
     Keeping this in sync with the production code is a one-line job; the
     block has no dependencies on anything except primitives + history.
     """
@@ -121,10 +121,10 @@ def test_production_code_contains_hydration_block():
     run_conversation(). If someone deletes it, tests above still pass
     against the inline replica — this fails them awake.
 
-    After the agent/runtime.py refactor the agent-loop body lives in
-    ``agent/conversation_loop.py`` and uses ``agent.X`` rather than
+    After the src/agent/runtime.py refactor the agent-loop body lives in
+    ``src/agent/conversation_loop.py`` and uses ``agent.X`` rather than
     ``self.X``.  Assert the block is present in the extracted module
-    specifically — if it ever drifts back into agent/runtime.py or
+    specifically — if it ever drifts back into src/agent/runtime.py or
     disappears entirely, this guard fails loudly.
     """
     from pathlib import Path

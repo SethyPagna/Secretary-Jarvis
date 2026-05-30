@@ -308,7 +308,7 @@ Jarvis discovers MCP servers at startup and registers their tools into the norma
 
 ### Dynamic Tool Discovery
 
-MCP servers can notify Jarvis when their available tools change at runtime by sending a `notifications/tools/list_changed` notification. When Jarvis receives this notification, it automatically re-fetches the server's tool list and updates the registry — no manual `/reload-mcp` required.
+MCP servers can notify Jarvis when their available tools change at runtime by sending a `notifications/src/tools/list_changed` notification. When Jarvis receives this notification, it automatically re-fetches the server's tool list and updates the registry — no manual `/reload-mcp` required.
 
 This is useful for MCP servers whose capabilities change dynamically (e.g. a server that adds tools when a new database schema is loaded, or removes tools when a service goes offline).
 

@@ -1,7 +1,7 @@
 """Regression guard for Feishu bot-sender authorization bypass.
 
-Mirrors tests/gateway/test_discord_bot_auth_bypass.py for Platform.FEISHU.
-Without the bypass in gateway/run.py, Feishu bot senders admitted by the
+Mirrors tests/src/gateway/test_discord_bot_auth_bypass.py for Platform.FEISHU.
+Without the bypass in src/gateway/run.py, Feishu bot senders admitted by the
 adapter would be rejected at _is_user_authorized with "Unauthorized user"
 — same class of bug as Discord #4466.
 """

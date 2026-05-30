@@ -32,7 +32,7 @@ def _mock_runtime_provider(monkeypatch):
 
 
 class TestCronJobCleanup:
-    """cron/scheduler.py — end_session + close in the finally block."""
+    """src/cron/scheduler.py — end_session + close in the finally block."""
 
     def test_keyboard_interrupt_in_end_session_does_not_skip_close(self):
         """If end_session raises KeyboardInterrupt, close() must still run."""

@@ -1,7 +1,7 @@
 """
 Interface compliance tests for all plugin-based gateway platforms.
 
-Discovers platforms dynamically under ``plugins/platforms/`` — no manual
+Discovers platforms dynamically under ``src/plugins/platforms/`` — no manual
 enumeration — and verifies each one implements the required contract.
 """
 

@@ -1,4 +1,4 @@
-"""Tests for tools/send_message_tool.py."""
+"""Tests for src/tools/send_message_tool.py."""
 
 import asyncio
 import json

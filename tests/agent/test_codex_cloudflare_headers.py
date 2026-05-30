@@ -20,8 +20,8 @@ These tests pin:
   from codex-rs ``auth.rs``)
 - graceful handling of malformed tokens (drop the account-ID header, don't
   raise)
-- primary-client wiring at both entry points in ``agent/runtime.py``
-- aux-client wiring at both entry points in ``agent/auxiliary_client.py``
+- primary-client wiring at both entry points in ``src/agent/runtime.py``
+- aux-client wiring at both entry points in ``src/agent/auxiliary_client.py``
 """
 from __future__ import annotations
 

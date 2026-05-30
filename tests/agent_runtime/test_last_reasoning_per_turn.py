@@ -10,7 +10,7 @@ from __future__ import annotations
 
 
 def _extract_last_reasoning(messages):
-    """Replica of the extraction loop in agent/runtime.py (~line 13867).
+    """Replica of the extraction loop in src/agent/runtime.py (~line 13867).
 
     Tests pin the loop's behaviour so that refactors can't silently
     regress the per-turn semantic.

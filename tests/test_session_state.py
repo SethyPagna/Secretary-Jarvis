@@ -2757,7 +2757,7 @@ class TestAutoMaintenance:
         self._make_old_ended(db, "old2", days_old=100)
         db.create_session(session_id="new", source="cli")  # active
 
-        # Transcript files mimicking real gateway/CLI layout
+        # Transcript files mimicking real src/gateway/CLI layout
         (sessions_dir / "old1.json").write_text("{}")
         (sessions_dir / "old1.jsonl").write_text("{}\n")
         (sessions_dir / "old2.jsonl").write_text("{}\n")

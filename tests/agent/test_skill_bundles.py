@@ -1,4 +1,4 @@
-"""Tests for agent/skill_bundles.py — YAML-defined skill bundles."""
+"""Tests for src/agent/skill_bundles.py — YAML-defined skill bundles."""
 
 import os
 from pathlib import Path

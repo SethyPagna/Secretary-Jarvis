@@ -36,7 +36,7 @@ from jarvis_cli.profile_distribution import (
 
 
 # ---------------------------------------------------------------------------
-# Isolated profile env (matches tests/jarvis_cli/test_profiles.py)
+# Isolated profile env (matches tests/src/jarvis_cli/test_profiles.py)
 # ---------------------------------------------------------------------------
 
 

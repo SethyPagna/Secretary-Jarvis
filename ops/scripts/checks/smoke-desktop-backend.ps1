@@ -9,6 +9,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\..")
+$SrcRoot = Join-Path $RepoRoot "src"
+$env:PYTHONPATH = if ($env:PYTHONPATH) { "$SrcRoot;$env:PYTHONPATH" } else { $SrcRoot }
 $BaseUrl = "http://${BindHost}:$Port"
 $LogId = [Guid]::NewGuid().ToString("N")
 $StdoutLog = Join-Path ([IO.Path]::GetTempPath()) "jarvis-backend-smoke-$LogId.out.log"

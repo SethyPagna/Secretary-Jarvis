@@ -7,7 +7,7 @@ import re
 import pytest
 
 
-# The regex from gateway/run.py insights handler
+# The regex from src/gateway/run.py insights handler
 _UNICODE_DASH_RE = re.compile(r'[\u2012\u2013\u2014\u2015](days|source)')
 
 

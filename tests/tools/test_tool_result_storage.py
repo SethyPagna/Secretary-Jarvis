@@ -1,4 +1,4 @@
-"""Tests for tools/tool_result_storage.py -- 3-layer tool result persistence."""
+"""Tests for src/tools/tool_result_storage.py -- 3-layer tool result persistence."""
 
 import pytest
 from unittest.mock import MagicMock, patch

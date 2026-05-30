@@ -124,6 +124,10 @@ function backendEnv() {
   const resourceRoot = app.isPackaged && process.resourcesPath
     ? process.resourcesPath
     : path.resolve(__dirname, '..', '..')
+  const sourceRoot = path.join(resourceRoot, 'src')
+  const pythonPath = fs.existsSync(sourceRoot)
+    ? `${sourceRoot}${path.delimiter}${process.env.PYTHONPATH || ''}`
+    : process.env.PYTHONPATH
   const exeDir = app.isPackaged ? path.dirname(app.getPath('exe')) : path.resolve(__dirname, '..', '..')
   const portableDir = process.env.PORTABLE_EXECUTABLE_DIR
     || (process.env.PORTABLE_EXECUTABLE_FILE ? path.dirname(process.env.PORTABLE_EXECUTABLE_FILE) : '')
@@ -151,6 +155,7 @@ function backendEnv() {
   return {
     ...process.env,
     PATH: nextPath,
+    PYTHONPATH: pythonPath,
     JARVIS_DESKTOP_EMBEDDED: '1',
     JARVIS_DESKTOP_PARENT_PID: String(process.pid),
     JARVIS_DESKTOP_SHUTDOWN_TOKEN: BACKEND_SHUTDOWN_TOKEN,
@@ -292,10 +297,11 @@ async function waitForBackend(timeoutMs = 20000) {
 function rendererIndexCandidates() {
   const candidates = [
     path.join(__dirname, '..', 'web', 'dist', 'index.html'),
-    path.join(__dirname, '..', '..', 'jarvis_cli', 'web_dist', 'index.html')
+    path.join(__dirname, '..', '..', 'src', 'jarvis_cli', 'web_dist', 'index.html')
   ]
 
   if (process.resourcesPath) {
+    candidates.push(path.join(process.resourcesPath, 'src', 'jarvis_cli', 'web_dist', 'index.html'))
     candidates.push(path.join(process.resourcesPath, 'jarvis_cli', 'web_dist', 'index.html'))
   }
 

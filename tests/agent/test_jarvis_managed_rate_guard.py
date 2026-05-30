@@ -1,4 +1,4 @@
-"""Tests for agent/jarvis_managed_rate_guard.py — cross-session JARVIS Managed rate limit guard."""
+"""Tests for src/agent/jarvis_managed_rate_guard.py — cross-session JARVIS Managed rate limit guard."""
 
 import json
 import os

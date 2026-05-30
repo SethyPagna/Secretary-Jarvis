@@ -14,7 +14,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 class TestInterruptModule:
-    """Tests for tools/interrupt.py"""
+    """Tests for src/tools/interrupt.py"""
 
     def test_set_and_check(self):
         from tools.interrupt import set_interrupt, is_interrupted

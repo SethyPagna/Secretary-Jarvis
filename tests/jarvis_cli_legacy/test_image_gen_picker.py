@@ -72,7 +72,7 @@ class TestPluginPickerInjection:
     def test_fal_surfaced_alongside_other_plugins(self, monkeypatch):
         from jarvis_cli import tools_config
 
-        # After #26241, FAL is itself a plugin (`plugins/image_gen/fal/`)
+        # After #26241, FAL is itself a plugin (`src/plugins/image_gen/fal/`)
         # and the hardcoded `TOOL_CATEGORIES["image_gen"]` FAL row is
         # gone. The plugin-row builder therefore surfaces it like any
         # other backend — no deduplication step needed.

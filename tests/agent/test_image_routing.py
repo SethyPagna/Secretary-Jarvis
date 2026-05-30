@@ -1,4 +1,4 @@
-"""Tests for agent/image_routing.py — the per-turn image input mode decision."""
+"""Tests for src/agent/image_routing.py — the per-turn image input mode decision."""
 
 from __future__ import annotations
 

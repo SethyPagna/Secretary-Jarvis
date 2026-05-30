@@ -2,11 +2,11 @@
 
 The bug had two sequential gates both rejecting bot messages:
 
-  Gate 1 — `on_message` in gateway/platforms/discord.py ran the user-allowlist
+  Gate 1 — `on_message` in src/gateway/platforms/discord.py ran the user-allowlist
   check BEFORE the bot filter, so bot senders were dropped with a warning
   before the DISCORD_ALLOW_BOTS policy was ever evaluated.
 
-  Gate 2 — `_is_user_authorized` in gateway/run.py rejected bots at the
+  Gate 2 — `_is_user_authorized` in src/gateway/run.py rejected bots at the
   gateway level even if they somehow reached that layer.
 
 These tests assert both gates now pass a bot message through when

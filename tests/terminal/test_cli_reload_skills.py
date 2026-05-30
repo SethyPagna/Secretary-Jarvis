@@ -3,7 +3,7 @@
 The CLI handler prints the diff (name + description) for the user and —
 when any skills were added or removed — queues a one-shot note on
 ``self._pending_skills_reload_note``. The note is prepended to the NEXT
-user message (see jarvis_cli/terminal.py ~L8770, same pattern as
+user message (see src/jarvis_cli/terminal.py ~L8770, same pattern as
 ``_pending_model_switch_note``) and cleared after use, so no phantom user
 turn is persisted to ``conversation_history``.
 """

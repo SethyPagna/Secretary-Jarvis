@@ -1,12 +1,12 @@
 """Shared helper for loading platform-plugin ``adapter.py`` modules in tests.
 
-Every platform plugin under ``plugins/platforms/<name>/`` ships its own
+Every platform plugin under ``src/plugins/platforms/<name>/`` ships its own
 ``adapter.py``. If two tests independently do::
 
-    sys.path.insert(0, "plugins/platforms/irc")
+    sys.path.insert(0, "src/plugins/platforms/irc")
     from adapter import IRCAdapter
 
-    sys.path.insert(0, "plugins/platforms/teams")
+    sys.path.insert(0, "src/plugins/platforms/teams")
     from adapter import TeamsAdapter
 
 …then whichever collects first in an xdist worker wins
@@ -19,7 +19,7 @@ It loads the adapter from an explicit file path under a unique module
 name (``plugin_adapter_<plugin_name>``), so it cannot collide with any
 other plugin's adapter module.
 
-The ``tests/gateway/conftest.py`` guard rejects the anti-pattern at
+The ``tests/src/gateway/conftest.py`` guard rejects the anti-pattern at
 collection time so this can't regress when new plugin adapter tests are
 added.
 """
@@ -37,7 +37,7 @@ _PLUGINS_DIR = _REPO_ROOT / "plugins" / "platforms"
 
 
 def load_plugin_adapter(plugin_name: str) -> ModuleType:
-    """Import ``plugins/platforms/<plugin_name>/adapter.py`` in isolation.
+    """Import ``src/plugins/platforms/<plugin_name>/adapter.py`` in isolation.
 
     The module is registered under the unique name
     ``plugin_adapter_<plugin_name>`` in ``sys.modules``. No ``sys.path``

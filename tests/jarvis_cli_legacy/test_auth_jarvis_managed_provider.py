@@ -1152,7 +1152,7 @@ def test_persist_jarvis_managed_credentials_writes_both_pool_and_providers(tmp_p
 
     Regression guard: before this helper existed, `jarvis auth add jarvis_managed`
     wrote only the pool. After the JARVIS Managed agent_key's 24h TTL expired, the
-    401-recovery path in agent/runtime.py called resolve_jarvis_managed_runtime_credentials
+    401-recovery path in src/agent/runtime.py called resolve_jarvis_managed_runtime_credentials
     which reads providers.jarvis_managed, found it empty, raised AuthError, and the
     agent failed with "Non-retryable client error". Both stores must stay
     in sync at write time.
@@ -1194,7 +1194,7 @@ def test_persist_jarvis_managed_credentials_allows_recovery_from_401(tmp_path, m
     """End-to-end: after persisting via the helper, resolve_jarvis_managed_runtime_credentials
     must succeed (not raise "Jarvis is not logged into JARVIS Managed").
 
-    This is the exact path that agent/runtime.py's `_try_refresh_jarvis_managed_client_credentials`
+    This is the exact path that src/agent/runtime.py's `_try_refresh_jarvis_managed_client_credentials`
     calls after a JARVIS Managed 401 — before the fix it would raise AuthError because
     providers.jarvis_managed was empty.
     """

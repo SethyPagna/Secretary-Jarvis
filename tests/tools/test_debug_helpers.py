@@ -1,4 +1,4 @@
-"""Tests for tools/debug_helpers.py — DebugSession class."""
+"""Tests for src/tools/debug_helpers.py — DebugSession class."""
 
 import json
 import os

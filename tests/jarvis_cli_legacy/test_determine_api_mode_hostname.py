@@ -1,6 +1,6 @@
 """Regression tests for ``determine_api_mode`` hostname handling.
 
-Companion to tests/jarvis_cli/test_detect_api_mode_for_url.py — the same
+Companion to tests/src/jarvis_cli/test_detect_api_mode_for_url.py — the same
 false-positive class (custom URLs containing ``api.openai.com`` /
 ``api.anthropic.com`` as a path segment or host suffix) must be rejected
 by ``determine_api_mode`` as well, since it's the code path used by

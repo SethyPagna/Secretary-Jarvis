@@ -51,7 +51,7 @@ class TestExtractPathWord:
         assert SlashCommandCompleter._extract_path_word("README.md") is None
 
     def test_word_after_space(self):
-        assert SlashCommandCompleter._extract_path_word("fix the bug in ./tools/") == "./tools/"
+        assert SlashCommandCompleter._extract_path_word("fix the bug in ./src/tools/") == "./src/tools/"
 
     def test_just_dot_slash(self):
         assert SlashCommandCompleter._extract_path_word("./") == "./"

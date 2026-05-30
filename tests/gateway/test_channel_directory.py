@@ -1,4 +1,4 @@
-"""Tests for gateway/channel_directory.py — channel resolution and display."""
+"""Tests for src/gateway/channel_directory.py — channel resolution and display."""
 
 import asyncio
 import json

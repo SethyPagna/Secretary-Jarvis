@@ -1,7 +1,7 @@
 # Matrix cross-signing bootstrap — E2E test
 
 Self-contained end-to-end test for the auto-bootstrap behavior added in
-`gateway/platforms/matrix.py`. Spins up a real Continuwuity homeserver
+`src/gateway/platforms/matrix.py`. Spins up a real Continuwuity homeserver
 in Docker, registers a fresh bot, runs the patched bootstrap path
 against it, and asserts:
 
@@ -35,7 +35,7 @@ busy locally.
 ## What the test exercises
 
 The test mirrors the bootstrap snippet from
-`gateway/platforms/matrix.py` (the "if MATRIX_RECOVERY_KEY else
+`src/gateway/platforms/matrix.py` (the "if MATRIX_RECOVERY_KEY else
 get_own_cross_signing_public_keys / generate_recovery_key" branch)
 inline so it runs without importing the entire jarvis gateway and its
 many dependencies. **If the source diverges from what's in

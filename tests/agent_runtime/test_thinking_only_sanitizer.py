@@ -1,7 +1,7 @@
 """Tests for the thinking-only assistant message sanitizer.
 
 Covers _is_thinking_only_assistant() + _drop_thinking_only_and_merge_users()
-in agent/runtime.py. The sanitizer runs on the per-call api_messages copy and
+in src/agent/runtime.py. The sanitizer runs on the per-call api_messages copy and
 drops assistant turns that contain only reasoning (no visible content, no
 tool_calls). Adjacent user messages left behind are merged so role
 alternation is preserved for the provider.

@@ -1,4 +1,4 @@
-"""Tests for tools/skills_sync.py — manifest-based skill seeding and updating."""
+"""Tests for src/tools/skills_sync.py — manifest-based skill seeding and updating."""
 
 from pathlib import Path
 from unittest.mock import patch

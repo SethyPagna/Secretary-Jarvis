@@ -428,7 +428,7 @@ Jarvis currently integrates with these skills ecosystems and discovery sources:
 These are maintained in the Jarvis repository itself and install with builtin trust.
 
 - Catalog: [Official Optional Skills Catalog](../../reference/optional-skills-catalog)
-- Source in repo: `capabilities/optional-skills/`
+- Source in repo: `src/capabilities/optional-skills/`
 - Example:
 
 ```bash
@@ -583,7 +583,7 @@ Important behavior:
 | Level | Source | Policy |
 |-------|--------|--------|
 | `builtin` | Ships with Jarvis | Always trusted |
-| `official` | `capabilities/optional-skills/` in the repo | Builtin trust, no third-party warning |
+| `official` | `src/capabilities/optional-skills/` in the repo | Builtin trust, no third-party warning |
 | `trusted` | Trusted registries/repos such as `openai/skills`, `anthropics/skills`, `huggingface/skills` | More permissive policy than community sources |
 | `community` | Everything else (`skills.sh`, well-known endpoints, custom GitHub repos, most marketplaces) | Non-dangerous findings can be overridden with `--force`; `dangerous` verdicts stay blocked |
 
@@ -696,7 +696,7 @@ Useful when you want to share one skill without asking the user to subscribe to 
 
 #### Trust levels for taps
 
-New taps are assigned `community` trust by default. Skills installed from them run through the standard security scan and show the third-party warning panel on first install. If your org or a widely-trusted source should get higher trust, add its repo to `TRUSTED_REPOS` in `tools/skills_hub.py` (requires a Jarvis core PR).
+New taps are assigned `community` trust by default. Skills installed from them run through the standard security scan and show the third-party warning panel on first install. If your org or a widely-trusted source should get higher trust, add its repo to `TRUSTED_REPOS` in `src/tools/skills_hub.py` (requires a Jarvis core PR).
 
 #### Tap management
 
@@ -718,14 +718,14 @@ Taps are stored in `~/.jarvis/.hub/taps.json` (created on demand).
 
 ## Bundled skill updates (`jarvis skills reset`)
 
-Jarvis ships with a set of bundled skills in `capabilities/skills/` inside the repo. On install and on every `jarvis update`, a sync pass copies those into `~/.jarvis/skills/` and records a manifest at `~/.jarvis/skills/.bundled_manifest` mapping each skill name to the content hash at the time it was synced (the **origin hash**).
+Jarvis ships with a set of bundled skills in `src/capabilities/skills/` inside the repo. On install and on every `jarvis update`, a sync pass copies those into `~/.jarvis/skills/` and records a manifest at `~/.jarvis/skills/.bundled_manifest` mapping each skill name to the content hash at the time it was synced (the **origin hash**).
 
 On each sync, Jarvis recomputes the hash of your local copy and compares it to the origin hash:
 
 - **Unchanged** → safe to pull upstream changes, copy the new bundled version in, record the new origin hash.
 - **Changed** → treated as **user-modified** and skipped forever, so your edits never get stomped.
 
-The protection is good, but it has one sharp edge. If you edit a bundled skill and then later want to abandon your changes and go back to the bundled version by just copy-pasting from `~/.jarvis/jarvis-agent/capabilities/skills/`, the manifest still holds the *old* origin hash from whenever the last successful sync ran. Your fresh copy-paste contents (current bundled hash) won't match that stale origin hash, so sync keeps flagging it as user-modified.
+The protection is good, but it has one sharp edge. If you edit a bundled skill and then later want to abandon your changes and go back to the bundled version by just copy-pasting from `~/.jarvis/jarvis-agent/src/capabilities/skills/`, the manifest still holds the *old* origin hash from whenever the last successful sync ran. Your fresh copy-paste contents (current bundled hash) won't match that stale origin hash, so sync keeps flagging it as user-modified.
 
 `jarvis skills reset` is the escape hatch:
 
@@ -1092,7 +1092,7 @@ Make it a **Tool** when:
 
 ## Skill Directory Structure
 
-Bundled skills live in `capabilities/skills/` organized by category. Official optional skills use the same structure in `capabilities/optional-skills/`:
+Bundled skills live in `src/capabilities/skills/` organized by category. Official optional skills use the same structure in `src/capabilities/optional-skills/`:
 
 ```text
 capabilities/skills/
@@ -1224,7 +1224,7 @@ terminal:
     - ANOTHER_VAR
 ```
 
-See `capabilities/skills/apple/` for examples of macOS-only skills.
+See `src/capabilities/skills/apple/` for examples of macOS-only skills.
 
 ## Secure Setup on Load
 
@@ -1324,7 +1324,7 @@ When loaded, Jarvis checks if these files exist. Missing files trigger `setup_ne
 Use `required_environment_variables` for simple API keys and tokens (strings stored in `~/.jarvis/.env`). Use `required_credential_files` for OAuth token files, client secrets, service account JSON, certificates, or any credential that's a file on disk.
 :::
 
-See the `capabilities/skills/productivity/google-workspace/SKILL.md` for a complete example using both.
+See the `src/capabilities/skills/productivity/google-workspace/SKILL.md` for a complete example using both.
 
 ## Skill Guidelines
 
@@ -1393,12 +1393,12 @@ jarvis chat --toolsets skills -q "Use the X skill to do Y"
 
 ## Where Should the Skill Live?
 
-Bundled skills (in `capabilities/skills/`) ship with every Jarvis install. They should be **broadly useful to most users**:
+Bundled skills (in `src/capabilities/skills/`) ship with every Jarvis install. They should be **broadly useful to most users**:
 
 - Document handling, web research, common dev workflows, system administration
 - Used regularly by a wide range of people
 
-If your skill is official and useful but not universally needed (e.g., a paid service integration, a heavyweight dependency), put it in **`capabilities/optional-skills/`** — it ships with the repo, is discoverable via `jarvis skills browse` (labeled "official"), and installs with builtin trust.
+If your skill is official and useful but not universally needed (e.g., a paid service integration, a heavyweight dependency), put it in **`src/capabilities/optional-skills/`** — it ships with the repo, is discoverable via `jarvis skills browse` (labeled "official"), and installs with builtin trust.
 
 If your skill is specialized, community-contributed, or niche, it's better suited for a **Skills Hub** — upload it to a registry and share it via `jarvis skills install`.
 
@@ -1431,7 +1431,7 @@ All hub-installed skills go through a security scanner that checks for:
 
 Trust levels:
 - `builtin` — ships with Jarvis (always trusted)
-- `official` — from `capabilities/optional-skills/` in the repo (builtin trust, no third-party warning)
+- `official` — from `src/capabilities/optional-skills/` in the repo (builtin trust, no third-party warning)
 - `trusted` — from openai/skills, anthropics/skills, huggingface/skills
 - `community` — non-dangerous findings can be overridden with `--force`; `dangerous` verdicts remain blocked
 
@@ -1513,7 +1513,7 @@ If a skill is missing from this list but present in the repo, refresh the deskto
 | Skill | Description | Path |
 |-------|-------------|------|
 | [`kanban-orchestrator`](/docs/user-guide/skills/bundled/devops/devops-kanban-orchestrator) | Decomposition playbook + anti-temptation rules for an orchestrator profile routing work through Kanban. The "don't do the work yourself" rule and the basic lifecycle are auto-injected into every kanban worker's system prompt; this skill... | `devops/kanban-orchestrator` |
-| [`kanban-worker`](/docs/user-guide/skills/bundled/devops/devops-kanban-worker) | Pitfalls, examples, and edge cases for Jarvis Kanban workers. The lifecycle itself is auto-injected into every worker's system prompt as KANBAN_GUIDANCE (from agent/prompt_builder.py); this skill is what you load when you want deeper det... | `devops/kanban-worker` |
+| [`kanban-worker`](/docs/user-guide/skills/bundled/devops/devops-kanban-worker) | Pitfalls, examples, and edge cases for Jarvis Kanban workers. The lifecycle itself is auto-injected into every worker's system prompt as KANBAN_GUIDANCE (from src/agent/prompt_builder.py); this skill is what you load when you want deeper det... | `devops/kanban-worker` |
 | [`webhook-subscriptions`](/docs/user-guide/skills/bundled/devops/devops-webhook-subscriptions) | Webhook subscriptions: event-driven agent runs. | `devops/webhook-subscriptions` |
 
 ## dogfood
@@ -1656,7 +1656,7 @@ description: "Official optional skills shipped with jarvis-agent — install via
 
 # Optional Skills Catalog
 
-Optional skills ship with jarvis-agent under `capabilities/optional-skills/` but are **not active by default**. Install them explicitly:
+Optional skills ship with jarvis-agent under `src/capabilities/optional-skills/` but are **not active by default**. Install them explicitly:
 
 ```bash
 jarvis skills install official/<category>/<skill>
@@ -1849,7 +1849,7 @@ jarvis skills uninstall <skill-name>
 
 To add a new optional skill to the repository:
 
-1. Create a directory under `capabilities/optional-skills/<category>/<skill-name>/`
+1. Create a directory under `src/capabilities/optional-skills/<category>/<skill-name>/`
 2. Add a `SKILL.md` with standard frontmatter (name, description, version, author)
 3. Include any supporting files in `references/`, `templates/`, or `scripts/` subdirectories
 4. Submit a pull request — the skill will appear in this catalog and get its own docs page once merged

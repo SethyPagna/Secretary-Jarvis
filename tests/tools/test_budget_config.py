@@ -1,4 +1,4 @@
-"""Unit tests for tools/budget_config.py.
+"""Unit tests for src/tools/budget_config.py.
 
 Covers default values, resolve_threshold() priority chain
 (pinned > tool_overrides > registry > default), immutability,

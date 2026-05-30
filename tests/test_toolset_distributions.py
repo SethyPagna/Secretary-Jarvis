@@ -1,4 +1,4 @@
-"""Tests for tools/toolset_distributions.py — distribution CRUD, sampling, validation."""
+"""Tests for src/tools/toolset_distributions.py — distribution CRUD, sampling, validation."""
 
 import pytest
 from unittest.mock import patch

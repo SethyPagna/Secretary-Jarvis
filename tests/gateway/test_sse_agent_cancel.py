@@ -40,7 +40,7 @@ def _make_request():
 # ---------------------------------------------------------------------------
 
 class TestSSEAgentCancelOnDisconnect:
-    """gateway/platforms/api_server.py — _write_sse_chat_completion()"""
+    """src/gateway/platforms/api_server.py — _write_sse_chat_completion()"""
 
     def test_agent_task_cancelled_on_client_disconnect(self):
         """When response.write raises ConnectionResetError (client dropped),

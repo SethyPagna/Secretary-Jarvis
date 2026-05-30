@@ -93,7 +93,7 @@ class TestResolveAzureFoundryRuntimeEntra:
         """GPT-5.x / o-series / codex models on Azure are Responses-API-only.
         The runtime auto-upgrades api_mode regardless of auth mode — this is
         the same behaviour as the static-key path (see
-        ``jarvis_cli/models.py::azure_foundry_model_api_mode``)."""
+        ``src/jarvis_cli/models.py::azure_foundry_model_api_mode``)."""
         from jarvis_cli.runtime_provider import _resolve_azure_foundry_runtime
         runtime = _resolve_azure_foundry_runtime(
             requested_provider="azure-foundry",

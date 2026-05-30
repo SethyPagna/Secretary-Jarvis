@@ -1,4 +1,4 @@
-"""Tests for tools/vision_tools.py — URL validation, type hints, error logging."""
+"""Tests for src/tools/vision_tools.py — URL validation, type hints, error logging."""
 
 import asyncio
 import json

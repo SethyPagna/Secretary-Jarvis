@@ -1,6 +1,6 @@
 ﻿#!/usr/bin/env python3
 """
-Test script to verify checkpoint behavior in tools/batch_runner.py
+Test script to verify checkpoint behavior in src/tools/batch_runner.py
 
 This script simulates batch processing with intentional failures to test:
 1. Whether checkpoints are saved incrementally during processing
@@ -373,7 +373,7 @@ Risk: Bugs in multiprocessing lock/manager code
 📋 TESTING STRATEGY
 -------------------
 1. Run test_current_implementation() - Confirm bug exists
-2. Apply fix to tools/batch_runner.py
+2. Apply fix to src/tools/batch_runner.py
 3. Run test_current_implementation() again - Should see incremental updates
 4. Run test_interruption_and_resume() - Verify resume works
 5. Manual test: Start run, kill process mid-batch, resume

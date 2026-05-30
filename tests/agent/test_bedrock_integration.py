@@ -209,7 +209,7 @@ class TestRuntimeProvider:
 # ---------------------------------------------------------------------------
 
 class TestProvidersModule:
-    """Verify bedrock is wired into jarvis_cli/providers.py."""
+    """Verify bedrock is wired into src/jarvis_cli/providers.py."""
 
     def test_bedrock_alias_in_providers(self):
         from jarvis_cli.providers import ALIASES
