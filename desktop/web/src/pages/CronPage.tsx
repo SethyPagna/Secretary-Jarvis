@@ -540,40 +540,41 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
   const nodes = [
     {
       icon: MessageCircle,
-      label: "Input",
-      title: "Voice, chat, WhatsApp, Telegram",
+      label: "Trigger",
+      title: "Voice, chat, WhatsApp, Telegram, schedule",
       tone: "cyan",
     },
     {
       icon: Bot,
-      label: "Reason",
-      title: "JARVIS routes to models, tools, and souls",
+      label: "JARVIS Router",
+      title: "Chooses model, soul, memory, and tools",
       tone: "violet",
     },
     {
       icon: GitBranch,
-      label: "Decide",
-      title: "Permissions, memories, skills, approvals",
+      label: "Decision",
+      title: "Approvals, branches, retries, safety",
       tone: "emerald",
     },
     {
       icon: Send,
-      label: "Respond",
-      title: "Text, voice, files, platform replies",
+      label: "Output",
+      title: "Voice, text, files, platform replies",
       tone: "amber",
     },
   ] as const;
+  const palette = ["Trigger", "LLM", "Soul", "Skill", "HTTP", "File", "TTS", "Approval"];
 
   return (
-    <section className="overflow-hidden border border-white/10 bg-[#10151d]/88 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
+    <section className="overflow-hidden rounded-md border border-white/10 bg-[#10151d]/88 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
       <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.1em] text-white">
             <Zap className="h-4 w-4 text-cyan-200" />
-            Workflow Canvas
+            Workflow Builder
           </div>
           <p className="mt-1 text-sm text-slate-300/72">
-            Build automations from live inputs, model reasoning, skills, and platform replies.
+            Build automations from inputs, JARVIS reasoning, skills, approvals, and replies.
           </p>
         </div>
         <button
@@ -586,41 +587,96 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
         </button>
       </div>
 
-      <div className="relative grid gap-3 p-4 md:grid-cols-4">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-8 right-8 top-1/2 hidden h-px bg-gradient-to-r from-cyan-300/10 via-cyan-200/35 to-amber-200/10 md:block"
-        />
-        {nodes.map((node, index) => {
-          const Icon = node.icon;
-          return (
+      <div className="grid min-h-[310px] gap-3 p-4 lg:grid-cols-[11rem_minmax(0,1fr)_14rem]">
+        <aside className="rounded-md border border-white/10 bg-black/22 p-3">
+          <div className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            Nodes
+          </div>
+          <div className="mt-3 grid gap-1.5">
+            {palette.map((item) => (
+              <button
+                key={item}
+                type="button"
+                className="flex h-8 items-center justify-between rounded-sm border border-white/8 bg-white/5 px-2 text-left text-xs text-slate-200/82 transition hover:border-cyan-200/28 hover:bg-cyan-200/10 hover:text-white"
+                title={`Add ${item} node`}
+              >
+                <span>{item}</span>
+                <span className="text-cyan-100/36">+</span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <div className="relative overflow-hidden rounded-md border border-white/10 bg-[radial-gradient(circle_at_50%_38%,rgba(0,212,255,0.12),transparent_22rem),linear-gradient(135deg,rgba(0,0,0,0.32),rgba(255,255,255,0.03))] p-4">
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-[0.18]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          <div className="relative grid h-full min-h-[260px] items-center gap-3 md:grid-cols-4">
             <div
-              key={node.label}
-              className="relative z-10 min-h-[112px] border border-white/10 bg-black/24 p-3 backdrop-blur"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span
-                  className={cn(
-                    "grid h-9 w-9 place-items-center border",
-                    node.tone === "cyan" && "border-cyan-200/30 bg-cyan-200/10 text-cyan-100",
-                    node.tone === "violet" && "border-violet-200/30 bg-violet-200/10 text-violet-100",
-                    node.tone === "emerald" && "border-emerald-200/30 bg-emerald-200/10 text-emerald-100",
-                    node.tone === "amber" && "border-amber-200/30 bg-amber-200/10 text-amber-100",
-                  )}
+              aria-hidden
+              className="pointer-events-none absolute left-8 right-8 top-1/2 hidden h-px bg-gradient-to-r from-cyan-300/10 via-cyan-200/42 to-amber-200/10 md:block"
+            />
+            {nodes.map((node, index) => {
+              const Icon = node.icon;
+              return (
+                <div
+                  key={node.label}
+                  className="relative z-10 min-h-[122px] rounded-md border border-white/12 bg-black/42 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] backdrop-blur"
                 >
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="font-mono text-xs text-slate-400">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-              </div>
-              <div className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                {node.label}
-              </div>
-              <div className="mt-1 text-sm font-medium text-white">{node.title}</div>
+                  <div className="flex items-start justify-between gap-3">
+                    <span
+                      className={cn(
+                        "grid h-9 w-9 place-items-center rounded-md border",
+                        node.tone === "cyan" && "border-cyan-200/30 bg-cyan-200/10 text-cyan-100",
+                        node.tone === "violet" && "border-violet-200/30 bg-violet-200/10 text-violet-100",
+                        node.tone === "emerald" && "border-emerald-200/30 bg-emerald-200/10 text-emerald-100",
+                        node.tone === "amber" && "border-amber-200/30 bg-amber-200/10 text-amber-100",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="font-mono text-xs text-slate-400">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                    {node.label}
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-white">{node.title}</div>
+                  {index < nodes.length - 1 ? (
+                    <span className="absolute -right-3 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-cyan-100 shadow-[0_0_14px_rgba(125,249,255,0.8)] md:block" />
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <aside className="rounded-md border border-white/10 bg-black/22 p-3">
+          <div className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            Inspector
+          </div>
+          <div className="mt-3 space-y-2 text-xs text-slate-300/76">
+            <div className="rounded-sm border border-cyan-200/14 bg-cyan-200/8 p-2">
+              Active route: JARVIS Router
             </div>
-          );
-        })}
+            <div className="rounded-sm border border-white/8 bg-white/5 p-2">
+              Model: local default
+            </div>
+            <div className="rounded-sm border border-white/8 bg-white/5 p-2">
+              Soul: auto-delegate
+            </div>
+            <div className="rounded-sm border border-white/8 bg-white/5 p-2">
+              Runs: manual, scheduled, platform trigger
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
   );
