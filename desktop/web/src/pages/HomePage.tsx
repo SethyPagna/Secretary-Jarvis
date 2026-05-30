@@ -625,7 +625,7 @@ export default function HomePage() {
       setVoiceBusy(true);
       setTerminalEntries((entries) => [
         ...entries,
-        { kind: "output", text: "Transcribing voice input..." },
+        { kind: "output", text: "JARVIS is hearing you..." },
       ]);
 
       try {
@@ -639,8 +639,8 @@ export default function HomePage() {
         setTerminalEntries((entries) => [
           ...entries,
           {
-            kind: "output",
-            text: `Voice transcript (${result.provider ?? result.engine ?? "stt"}): ${transcript}`,
+            kind: "input",
+            text: transcript,
           },
         ]);
         await runDesktopAgentTurn(transcript, "voice");
@@ -726,7 +726,7 @@ export default function HomePage() {
       setListening(true);
       setTerminalEntries((entries) => [
         ...entries,
-        { kind: "output", text: "Listening..." },
+        { kind: "output", text: "Voice is live." },
       ]);
     } catch {
       stopVoiceStream();
@@ -988,7 +988,7 @@ export default function HomePage() {
           <AudioLevelMeter level={audioLevel} active={listening || speaking || voiceBusy} />
           <div className="flex items-center gap-2">
             <QuickAction
-              label={listening ? "Stop listening" : "Voice input"}
+              label={listening ? "Listening" : autoVoiceArmed ? "Voice live" : "Talk"}
               icon={Mic}
               active={autoVoiceArmed || listening || voiceBusy}
               busy={voiceBusy}
