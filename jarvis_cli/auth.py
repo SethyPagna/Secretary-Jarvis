@@ -815,7 +815,7 @@ def _auth_file_path() -> Path:
             raise RuntimeError(
                 f"Refusing to touch real user auth store during test run: {path}. "
                 "Set JARVIS_HOME to a tmp_path in your test fixture, or run "
-                "via scripts/run_tests.sh for hermetic CI-parity env."
+                "via ops/scripts/public/run_tests.sh for hermetic CI-parity env."
             )
     return path
 

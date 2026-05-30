@@ -60,7 +60,7 @@ class DesktopBackendStartupContractTests(unittest.TestCase):
         self.assertNotIn("pip install timed out", combined)
 
     def test_packaged_backend_smoke_runs_preflight_before_launch(self) -> None:
-        source = (ROOT / "scripts" / "smoke-desktop-backend.ps1").read_text(
+        source = (ROOT / "ops" / "scripts" / "checks" / "smoke-desktop-backend.ps1").read_text(
             encoding="utf-8",
         )
 

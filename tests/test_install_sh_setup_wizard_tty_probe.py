@@ -21,9 +21,9 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-INSTALL_SH = REPO_ROOT / "scripts" / "install.sh"
+INSTALL_SH = REPO_ROOT / "ops" / "scripts" / "public" / "install.sh"
 
-# Every function in scripts/install.sh that previously gated on a bare
+# Every function in ops/scripts/public/install.sh that previously gated on a bare
 # ``[ -e /dev/tty ]`` check before redirecting stdin from ``/dev/tty``.
 GATED_FUNCTIONS = ("run_setup_wizard", "install_system_packages", "maybe_start_gateway")
 
@@ -40,7 +40,7 @@ def _extract_function_body(name: str) -> str:
         text,
         re.MULTILINE | re.DOTALL,
     )
-    assert match is not None, f"{name}() not found in scripts/install.sh"
+    assert match is not None, f"{name}() not found in ops/scripts/public/install.sh"
     return match["body"]
 
 

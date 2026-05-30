@@ -16,7 +16,7 @@ Hermetic-test invariants enforced here (see AGENTS.md for rationale):
 
 These invariants make the local test run match CI closely. Gaps that
 remain (CPU count, xdist worker count) are addressed by the canonical
-test runner at ``scripts/run_tests.sh``.
+test runner at ``ops/scripts/public/run_tests.sh``.
 """
 
 import asyncio

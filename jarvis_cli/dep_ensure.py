@@ -93,7 +93,7 @@ def _find_install_script(
         bundled = package_dir / "scripts" / script_name
         if bundled.is_file():
             return bundled, shell
-        repo = repo_root / "scripts" / script_name
+        repo = repo_root / "ops" / "scripts" / "public" / script_name
         if repo.is_file():
             return repo, shell
 

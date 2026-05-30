@@ -6,7 +6,7 @@
 # Uses uv for desktop/server installs and Python's stdlib venv + pip on Termux.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/ops/scripts/public/install.sh | bash
 #
 # Or with options:
 #   curl -fsSL ... | bash -s -- --no-venv --skip-setup
@@ -337,7 +337,7 @@ detect_os() {
             OS="windows"
             DISTRO="windows"
             log_error "Windows detected. Please use the PowerShell installer:"
-            log_info "  iex (irm https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.ps1)"
+            log_info "  iex (irm https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/ops/scripts/public/install.ps1)"
             exit 1
             ;;
         *)
@@ -1042,9 +1042,9 @@ install_deps() {
         # Android).  Stopgap until psutil#2762 ships upstream.
         if "$PIP_PYTHON" -c 'import sys; raise SystemExit(0 if sys.platform == "android" else 1)' 2>/dev/null; then
             log_info "Android Python detected: prebuilding psutil compatibility shim..."
-            if ! "$PIP_PYTHON" "$INSTALL_DIR/scripts/install_psutil_android.py" --pip "$PIP_PYTHON -m pip"; then
+            if ! "$PIP_PYTHON" "$INSTALL_DIR/ops/scripts/public/install_psutil_android.py" --pip "$PIP_PYTHON -m pip"; then
                 log_warn "psutil Android prebuild failed — package install will likely fail next."
-                log_info "Workaround: manually rerun 'python scripts/install_psutil_android.py' once your toolchain is set up."
+                log_info "Workaround: manually rerun 'python ops/scripts/public/install_psutil_android.py' once your toolchain is set up."
             fi
         fi
 

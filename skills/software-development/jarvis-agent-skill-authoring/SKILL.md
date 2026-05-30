@@ -78,7 +78,7 @@ One or two paragraphs: what and why.
 ## <Topic sections specific to the skill>
 - Quick-reference tables are common
 - Code blocks with exact commands
-- Jarvis-specific recipes (tests via scripts/run_tests.sh, desktop backend paths, etc.)
+- Jarvis-specific recipes (tests via ops/scripts/public/run_tests.sh, desktop backend paths, etc.)
 
 ## Common Pitfalls
 Numbered list of mistakes and their fixes.

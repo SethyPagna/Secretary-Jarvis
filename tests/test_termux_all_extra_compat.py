@@ -5,7 +5,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = REPO_ROOT / "pyproject.toml"
-INSTALL_SH = REPO_ROOT / "scripts" / "install.sh"
+INSTALL_SH = REPO_ROOT / "ops" / "scripts" / "public" / "install.sh"
 
 
 def test_pyproject_defines_termux_all_without_known_blockers() -> None:

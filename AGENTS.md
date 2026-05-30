@@ -9,7 +9,7 @@ Instructions for AI coding assistants and developers working on the jarvis-agent
 source .venv/bin/activate   # or: source venv/bin/activate
 ```
 
-`scripts/run_tests.sh` probes `.venv` first, then `venv`, then
+`ops/scripts/public/run_tests.sh` probes `.venv` first, then `venv`, then
 `$HOME/.jarvis/jarvis-agent/venv` (for worktrees that share a venv with the
 main checkout).
 
@@ -655,7 +655,7 @@ violate them.
 
 7. **Tests live at `tests/skills/test_<skill>_skill.py`** and use only
    stdlib + pytest + `unittest.mock`. No live network calls. Run via
-   `scripts/run_tests.sh tests/skills/test_<skill>_skill.py -q`.
+   `ops/scripts/public/run_tests.sh tests/skills/test_<skill>_skill.py -q`.
 
 8. **Environment-template additions belong in `ops/config/env/.env.example`
    and stay isolated to a clearly delimited block.** Don't touch the
@@ -985,18 +985,18 @@ def profile_env(tmp_path, monkeypatch):
 
 ## Testing
 
-**ALWAYS use `scripts/run_tests.sh`** — do not call `pytest` directly. The script enforces
+**ALWAYS use `ops/scripts/public/run_tests.sh`** — do not call `pytest` directly. The script enforces
 hermetic environment parity with CI (unset credential vars, TZ=UTC, LANG=C.UTF-8,
 `-n auto` xdist workers, in-tree subprocess-isolation plugin). Direct `pytest`
 on a 16+ core developer machine with API keys set diverges from CI in ways
 that have caused multiple "works locally, fails in CI" incidents (and the reverse).
 
 ```bash
-scripts/run_tests.sh                                  # full suite, CI-parity
-scripts/run_tests.sh tests/gateway/                   # one directory
-scripts/run_tests.sh tests/agent/test_foo.py::test_x  # one test
-scripts/run_tests.sh -v --tb=long                     # pass-through pytest flags
-scripts/run_tests.sh --no-isolate tests/foo/          # disable subprocess isolation (faster, for debugging)
+ops/scripts/public/run_tests.sh                                  # full suite, CI-parity
+ops/scripts/public/run_tests.sh tests/gateway/                   # one directory
+ops/scripts/public/run_tests.sh tests/agent/test_foo.py::test_x  # one test
+ops/scripts/public/run_tests.sh -v --tb=long                     # pass-through pytest flags
+ops/scripts/public/run_tests.sh --no-isolate tests/foo/          # disable subprocess isolation (faster, for debugging)
 ```
 
 ### Subprocess-per-test isolation

@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-INSTALL_SH = REPO_ROOT / "scripts" / "install.sh"
+INSTALL_SH = REPO_ROOT / "ops" / "scripts" / "public" / "install.sh"
 
 
 def test_install_script_skips_playwright_download_when_system_browser_exists() -> None:

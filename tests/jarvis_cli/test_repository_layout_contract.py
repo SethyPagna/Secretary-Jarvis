@@ -49,7 +49,6 @@ ROOT_DIR_ALLOWLIST = {
     "ops",
     "plugins",
     "providers",
-    "scripts",
     "skills",
     "tests",
     "tools",
@@ -80,7 +79,7 @@ APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
     "desktop/web/config/eslint.config.js",
 }
 
-ROOT_SCRIPT_ALLOWLIST = {
+PUBLIC_SCRIPT_ALLOWLIST = {
     "install.cmd",
     "install.ps1",
     "install.sh",
@@ -224,14 +223,15 @@ class RepositoryLayoutContractTests(unittest.TestCase):
 
         self.assertEqual(tracked_js, APP_RUNTIME_JAVASCRIPT_ALLOWLIST)
 
-    def test_root_scripts_are_public_entrypoints_only(self) -> None:
-        tracked_root_scripts = {
-            path.parts[1]
+    def test_public_scripts_live_under_ops(self) -> None:
+        tracked_public_scripts = {
+            path.parts[3]
             for path in _tracked_paths()
-            if len(path.parts) == 2 and path.parts[0] == "scripts"
+            if len(path.parts) == 4
+            and path.parts[:3] == ("ops", "scripts", "public")
         }
 
-        self.assertEqual(tracked_root_scripts, ROOT_SCRIPT_ALLOWLIST)
+        self.assertEqual(tracked_public_scripts, PUBLIC_SCRIPT_ALLOWLIST)
 
     def test_tracked_plugin_bundles_use_jarvis_runtime_bridge(self) -> None:
         bundle_paths = [

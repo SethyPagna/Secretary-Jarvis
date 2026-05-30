@@ -107,7 +107,7 @@ Required files:
 - `ops/scripts/maintenance/rebrand.py`
 - `jarvis_cli/data/default_SOUL.md`
 - `jarvis_cli/jarvis_constants.py`
-- `scripts/install.sh`
+- `ops/scripts/public/install.sh`
 - `pyproject.toml`
 - `README.md`
 

@@ -232,7 +232,7 @@ def uninstall_gateway_service():
 # Windows-specific uninstall helpers
 # ============================================================================
 #
-# The installer (``scripts/install.ps1``) does four Windows-only things that
+# The installer (``ops/scripts/public/install.ps1``) does four Windows-only things that
 # ``remove_path_from_shell_configs`` / ``remove_wrapper_script`` don't cover:
 #
 #   1. Sets User-scope env vars ``JARVIS_HOME`` and ``JARVIS_GIT_BASH_PATH``
@@ -664,9 +664,9 @@ def run_uninstall(args):
         print()
         print("To reinstall later with your existing settings:")
         if _is_windows():
-            print(color("  iex (irm https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.ps1)", Colors.DIM))
+            print(color("  iex (irm https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/ops/scripts/public/install.ps1)", Colors.DIM))
         else:
-            print(color("  curl -fsSL https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.sh | bash", Colors.DIM))
+            print(color("  curl -fsSL https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/ops/scripts/public/install.sh | bash", Colors.DIM))
         print()
 
     if _is_windows():

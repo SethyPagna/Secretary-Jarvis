@@ -22,7 +22,7 @@ def test_ensure_dependency_returns_false_when_missing_noninteractive():
 
 
 def test_find_install_script_from_checkout(tmp_path):
-    """_find_install_script finds scripts/install.sh in a git checkout."""
+    """_find_install_script finds ops/scripts/public/install.sh in a git checkout."""
     from jarvis_cli.dep_ensure import _find_install_script
     scripts_dir = tmp_path / "scripts"
     scripts_dir.mkdir()
@@ -76,12 +76,12 @@ def test_find_install_script_returns_sh_on_posix(tmp_path):
 def test_find_install_script_falls_back_to_repo_root(tmp_path):
     """When no bundled script, check repo root."""
     repo_root = tmp_path / "repo"
-    (repo_root / "scripts").mkdir(parents=True)
-    (repo_root / "scripts" / "install.sh").write_text("# fake")
+    (repo_root / "ops" / "scripts" / "public").mkdir(parents=True)
+    (repo_root / "ops" / "scripts" / "public" / "install.sh").write_text("# fake")
     from jarvis_cli.dep_ensure import _find_install_script
     with patch("jarvis_cli.dep_ensure._IS_WINDOWS", False):
         path, shell = _find_install_script(package_dir=tmp_path / "jarvis_cli", repo_root=repo_root)
-        assert path == repo_root / "scripts" / "install.sh"
+        assert path == repo_root / "ops" / "scripts" / "public" / "install.sh"
         assert shell == "bash"
 
 

@@ -5,7 +5,7 @@
 # Uses uv for fast Python provisioning and package management.
 #
 # Usage:
-#   iex (irm https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.ps1)
+#   iex (irm https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/ops/scripts/public/install.ps1)
 #
 # Or download and run with options:
 #   .\install.ps1 -NoVenv -SkipSetup
@@ -1208,7 +1208,7 @@ function Install-Dependencies {
         # and creates a sibling .venv\ inside the repo -- leaving venv\
         # empty and producing the broken state where `jarvis.exe` exists
         # in the wrong directory and imports fail with ModuleNotFoundError.
-        # (Mirrors the same flag in scripts/install.sh::install_deps.)
+        # (Mirrors the same flag in ops/scripts/public/install.sh::install_deps.)
         $env:UV_PROJECT_ENVIRONMENT = "$InstallDir\venv"
         & $UvCmd sync --extra all --locked
         if ($LASTEXITCODE -eq 0) {
@@ -1617,7 +1617,7 @@ function Install-NodeDeps {
         $browserLog = "$env:TEMP\jarvis-npm-browser-$(Get-Random).log"
         $browserNpmOk = _Run-NpmInstall "Browser tools" $InstallDir $browserLog $npmExe
 
-        # Install Playwright Chromium (mirrors scripts/install.sh behaviour for
+        # Install Playwright Chromium (mirrors ops/scripts/public/install.sh behaviour for
         # Linux).  Without this, tools/browser_tool.py::check_browser_requirements
         # returns False (no Chromium under %LOCALAPPDATA%\ms-playwright), and the
         # browser_* tools are silently filtered out of the agent's tool schema.
@@ -2357,7 +2357,7 @@ try {
     Write-Err "Installation failed: $_"
     Write-Host ""
     Write-Info "If the error is unclear, try downloading and running the script directly:"
-    Write-Host "  Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/scripts/install.ps1' -OutFile install.ps1" -ForegroundColor Yellow
+    Write-Host "  Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/ops/scripts/public/install.ps1' -OutFile install.ps1" -ForegroundColor Yellow
     Write-Host "  .\install.ps1" -ForegroundColor Yellow
     Write-Host ""
 }

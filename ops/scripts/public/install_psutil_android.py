@@ -12,7 +12,7 @@ patch (``LINUX = sys.platform.startswith(("linux", "android"))``), and
 installs the patched tree with ``pip install --no-build-isolation``.
 
 Usage:
-    python scripts/install_psutil_android.py [--pip "/path/to/pip"] [--uv]
+    python ops/scripts/public/install_psutil_android.py [--pip "/path/to/pip"] [--uv]
 
 When neither flag is given, the script auto-detects ``uv`` on PATH and
 falls back to ``<sys.executable> -m pip``.

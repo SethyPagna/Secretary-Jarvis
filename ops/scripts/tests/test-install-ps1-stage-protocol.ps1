@@ -14,7 +14,7 @@
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
-$installScript = Join-Path $repoRoot "scripts\install.ps1"
+$installScript = Join-Path $repoRoot "ops\scripts\public\install.ps1"
 
 if (-not (Test-Path $installScript)) {
     throw "Could not locate install.ps1 at $installScript"

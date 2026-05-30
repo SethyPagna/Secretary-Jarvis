@@ -572,7 +572,7 @@ def main(argv: list[str]) -> int:
             REPO_ROOT / "cron",
             REPO_ROOT / "agent",
             REPO_ROOT / "plugins",
-            REPO_ROOT / "scripts",
+            REPO_ROOT / "ops" / "scripts" / "public",
             REPO_ROOT / "acp_adapter",
             REPO_ROOT / "ops" / "config" / "acp_registry",
         ]

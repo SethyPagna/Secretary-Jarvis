@@ -14,13 +14,13 @@
 #   * Proper venv activation (probes .venv, venv, then ~/.jarvis/...)
 #
 # Usage:
-#   scripts/run_tests.sh                            # full suite
-#   scripts/run_tests.sh -j 4                       # cap parallelism
-#   scripts/run_tests.sh tests/agent/               # discover only here
-#   scripts/run_tests.sh tests/agent/ tests/acp/    # multiple roots
-#   scripts/run_tests.sh tests/foo.py               # single file
-#   scripts/run_tests.sh tests/foo.py -- --tb=long  # path + pytest args
-#   scripts/run_tests.sh -- -v --tb=long            # pytest args only
+#   ops/scripts/public/run_tests.sh                            # full suite
+#   ops/scripts/public/run_tests.sh -j 4                       # cap parallelism
+#   ops/scripts/public/run_tests.sh tests/agent/               # discover only here
+#   ops/scripts/public/run_tests.sh tests/agent/ tests/acp/    # multiple roots
+#   ops/scripts/public/run_tests.sh tests/foo.py               # single file
+#   ops/scripts/public/run_tests.sh tests/foo.py -- --tb=long  # path + pytest args
+#   ops/scripts/public/run_tests.sh -- -v --tb=long            # pytest args only
 #
 # Everything after a literal '--' is passed through to each per-file
 # pytest invocation. Positional path arguments before '--' override

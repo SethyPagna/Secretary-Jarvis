@@ -7,7 +7,7 @@ works, since mock-CDP unit tests can only prove the happy paths we
 thought to model.
 
 Run manually:
-    scripts/run_tests.sh tests/tools/test_browser_supervisor.py
+    ops/scripts/public/run_tests.sh tests/tools/test_browser_supervisor.py
 
 Automated: skipped in CI unless ``JARVIS_E2E_BROWSER=1`` is set.
 """

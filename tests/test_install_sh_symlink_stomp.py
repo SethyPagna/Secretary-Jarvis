@@ -24,7 +24,7 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-INSTALL_SH = REPO_ROOT / "scripts" / "install.sh"
+INSTALL_SH = REPO_ROOT / "ops" / "scripts" / "public" / "install.sh"
 
 
 def _extract_setup_path_shim_block() -> str:
@@ -36,7 +36,7 @@ def _extract_setup_path_shim_block() -> str:
         re.DOTALL,
     )
     assert match is not None, (
-        "Could not locate the setup_path shim-write block in scripts/install.sh"
+        "Could not locate the setup_path shim-write block in ops/scripts/public/install.sh"
     )
     return match["block"]
 

@@ -1,7 +1,7 @@
 # Stress / battle-test suite
 
 Long-running tests that exercise the Kanban kernel under adversarial
-conditions. **Not run by `scripts/run_tests.sh`** because they can
+conditions. **Not run by `ops/scripts/public/run_tests.sh`** because they can
 take 30+ seconds each and spawn real subprocesses.
 
 Run manually:

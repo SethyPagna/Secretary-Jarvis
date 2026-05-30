@@ -68,7 +68,7 @@ def test_kanban_codex_lane_documents_required_contracts():
         "codex exec --full-auto",
         "/goal Work in this repository only",
         "process(action=\"kill\", session_id=session_id)",
-        "scripts/run_tests.sh",
+        "ops/scripts/public/run_tests.sh",
         '"codex_lane"',
         '"used"',
         '"mode"',

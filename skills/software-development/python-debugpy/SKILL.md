@@ -98,19 +98,19 @@ The jarvis test runner and pytest both support this:
 
 ```bash
 # Drop to pdb on failure (or on any raised exception):
-scripts/run_tests.sh tests/path/to/test_file.py::test_name --pdb
+ops/scripts/public/run_tests.sh tests/path/to/test_file.py::test_name --pdb
 
 # Drop to pdb at the START of the test:
-scripts/run_tests.sh tests/path/to/test_file.py::test_name --trace
+ops/scripts/public/run_tests.sh tests/path/to/test_file.py::test_name --trace
 
 # Show locals in tracebacks without pdb:
-scripts/run_tests.sh tests/path/to/test_file.py --showlocals --tb=long
+ops/scripts/public/run_tests.sh tests/path/to/test_file.py --showlocals --tb=long
 ```
 
-Note: `scripts/run_tests.sh` uses xdist (`-n 4`) by default, and pdb does NOT work under xdist. Add `-p no:xdist` or run a single test with `-n 0`:
+Note: `ops/scripts/public/run_tests.sh` uses xdist (`-n 4`) by default, and pdb does NOT work under xdist. Add `-p no:xdist` or run a single test with `-n 0`:
 
 ```bash
-scripts/run_tests.sh tests/foo_test.py::test_bar --pdb -p no:xdist
+ops/scripts/public/run_tests.sh tests/foo_test.py::test_bar --pdb -p no:xdist
 # or
 source .venv/bin/activate
 python -m pytest tests/foo_test.py::test_bar --pdb
@@ -325,7 +325,7 @@ Long-lived. Use `remote-pdb` at a handler, or `debugpy` with `--wait-for-client`
 
 7. **asyncio.** `pdb` works in coroutines but `await` inside pdb requires Python 3.13+ or `await` from `interact` mode on older versions. For 3.11/3.12, use `asyncio.run_coroutine_threadsafe` tricks or `!stmt`-based awaits via `asyncio.ensure_future`.
 
-8. **`scripts/run_tests.sh` strips credentials and sets `HOME=<tmpdir>`.** If your bug depends on user config or real API keys, it won't reproduce under the wrapper. Debug with raw `pytest` first to repro, then re-confirm under the wrapper.
+8. **`ops/scripts/public/run_tests.sh` strips credentials and sets `HOME=<tmpdir>`.** If your bug depends on user config or real API keys, it won't reproduce under the wrapper. Debug with raw `pytest` first to repro, then re-confirm under the wrapper.
 
 9. **Forking / multiprocessing.** pdb does not follow forks. Each child needs its own `breakpoint()` or `set_trace()`. For Jarvis subagents, debug one process at a time.
 
@@ -354,7 +354,7 @@ breakpoint()
 
 **"This test passes in isolation but fails in the suite."**
 ```bash
-scripts/run_tests.sh tests/the_test.py --pdb -p no:xdist
+ops/scripts/public/run_tests.sh tests/the_test.py --pdb -p no:xdist
 # But if it only fails WITH other tests:
 source .venv/bin/activate
 python -m pytest tests/ -x --pdb -p no:xdist
