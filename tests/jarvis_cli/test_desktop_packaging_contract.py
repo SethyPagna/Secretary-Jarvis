@@ -159,7 +159,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn(' "-$version"', checker)
         self.assertIn("check-desktop-python-deps.ps1", checker)
         self.assertIn("-Python $desktopPython", checker)
-        self.assertIn("release/JARVIS 1.0.0.exe", checker)
+        self.assertIn("desktop/release/JARVIS 1.0.0.exe", checker)
         self.assertIn("Test-OwnedRuntimeProcesses", checker)
         self.assertIn('Join-Path $PSScriptRoot "..\\..\\.."', checker)
 

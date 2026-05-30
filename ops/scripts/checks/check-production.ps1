@@ -102,7 +102,7 @@ try {
         }
     }
 
-    $releaseExe = Join-Path $RepoRoot "release/JARVIS 1.0.0.exe"
+    $releaseExe = Join-Path $RepoRoot "desktop/release/JARVIS 1.0.0.exe"
     if (Test-Path $releaseExe) {
         Write-Host "Release artifact present: $releaseExe"
     } elseif ($RequireRelease) {

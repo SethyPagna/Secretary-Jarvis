@@ -104,7 +104,7 @@ try {
 
     if (-not $SkipInstaller) {
         Invoke-Checked $npm.Source run desktop:pack
-        Get-ChildItem -Path (Join-Path $RepoRoot "release") -Force -ErrorAction SilentlyContinue |
+        Get-ChildItem -Path (Join-Path $RepoRoot "desktop/release") -Force -ErrorAction SilentlyContinue |
             Where-Object {
                 ((-not $_.PSIsContainer) -and (
                     $_.Name -like "JARVIS Setup*.exe" -or
@@ -115,8 +115,8 @@ try {
             Remove-Item -Recurse -Force
 
         if (-not $SkipRendererSmoke) {
-            $portableExe = Join-Path $RepoRoot "release/JARVIS 1.0.0.exe"
-            $unpackedExe = Join-Path $RepoRoot "release/win-unpacked/JARVIS.exe"
+            $portableExe = Join-Path $RepoRoot "desktop/release/JARVIS 1.0.0.exe"
+            $unpackedExe = Join-Path $RepoRoot "desktop/release/win-unpacked/JARVIS.exe"
             $rendererSmoke = Join-Path $PSScriptRoot "smoke-electron-renderer.ps1"
             if (Test-Path $portableExe) {
                 & $rendererSmoke -AppPath $portableExe -BackendPort ($SmokePort + 1) -DebugPort ($SmokePort + 601) -TimeoutSec 180
@@ -125,14 +125,14 @@ try {
                 & $rendererSmoke -AppPath $unpackedExe -BackendPort ($SmokePort + 1) -DebugPort ($SmokePort + 601) -TimeoutSec 120
             }
             else {
-                throw "Electron pack did not create release/JARVIS 1.0.0.exe or release/win-unpacked/JARVIS.exe."
+                throw "Electron pack did not create desktop/release/JARVIS 1.0.0.exe or desktop/release/win-unpacked/JARVIS.exe."
             }
         }
 
-        $unpackedDir = Join-Path $RepoRoot "release/win-unpacked"
+        $unpackedDir = Join-Path $RepoRoot "desktop/release/win-unpacked"
         if (Test-Path $unpackedDir) {
             Remove-Item -LiteralPath $unpackedDir -Recurse -Force
-            Write-Host "Removed intermediate release/win-unpacked directory; portable exe remains the release artifact."
+            Write-Host "Removed intermediate desktop/release/win-unpacked directory; portable exe remains the release artifact."
         }
 
         if (-not $KeepBuildArtifacts) {

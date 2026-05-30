@@ -46,7 +46,7 @@ $oldModelsDir = $env:JARVIS_MODELS_DIR
 $oldUpperPath = [Environment]::GetEnvironmentVariable("PATH", "Process")
 $oldMixedPath = [Environment]::GetEnvironmentVariable("Path", "Process")
 $resourceCandidates = @(
-    (Join-Path (Resolve-Path ".").Path "release\win-unpacked\resources"),
+    (Join-Path (Resolve-Path ".").Path "desktop\release\win-unpacked\resources"),
     (Join-Path (Resolve-Path ".").Path "runtime")
 )
 $resourceRoot = $resourceCandidates | Where-Object { Test-Path (Join-Path $_ "runtime\llama.cpp\llama-server.exe") } | Select-Object -First 1

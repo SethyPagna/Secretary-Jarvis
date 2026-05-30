@@ -53,6 +53,7 @@ node_modules/
 /build/
 /dist/
 /release/
+/desktop/release/
 /runtime/llama.cpp/
 /wandb/
 /testlogs

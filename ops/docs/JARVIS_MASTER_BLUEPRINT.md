@@ -55,7 +55,7 @@ Implemented checkpoints:
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
 | Permissions/platforms/workflows/settings | Not started | Planned phases 6-8 |
-| Packaging/installers | Done for local Windows build | `ops/scripts/build/build-desktop.ps1` now produces one visible portable artifact: `release/JARVIS 1.0.0.exe`; setup/unpacked outputs are removed after packaging |
+| Packaging/installers | Done for local Windows build | `ops/scripts/build/build-desktop.ps1` now produces one visible portable artifact: `desktop/release/JARVIS 1.0.0.exe`; setup/unpacked outputs are removed after packaging |
 
 ## Production Readiness Gates
 
@@ -464,4 +464,4 @@ Latest autoconfig result from this workspace:
 - Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.
 - STT dependency status: `faster-whisper==1.2.1` is installed. Non-interactive pip flags were required: `PIP_NO_INPUT=1` and `PIP_DISABLE_PIP_VERSION_CHECK=1`.
 - STT model cache status: `Systran/faster-whisper-tiny.en` is downloaded. The Hugging Face Xet path stalled on larger model blobs, so first-run downloads should set `HF_HUB_DISABLE_XET=1`.
-- Packaging status: Electron/web/native-runtime configuration checks pass, FastAPI/Uvicorn/Kokoro/soundfile are packaged deps, and `ops/scripts/build/build-desktop.ps1` completed locally with Python 3.11. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced one visible portable executable at `release/JARVIS 1.0.0.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.
+- Packaging status: Electron/web/native-runtime configuration checks pass, FastAPI/Uvicorn/Kokoro/soundfile are packaged deps, and `ops/scripts/build/build-desktop.ps1` completed locally with Python 3.11. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced one visible portable executable at `desktop/release/JARVIS 1.0.0.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.

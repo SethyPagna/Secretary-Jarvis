@@ -6,7 +6,7 @@ Push-Location $RepoRoot
 try {
     $escapedRepo = [Regex]::Escape((Resolve-Path $RepoRoot).Path)
     $repoParent = Split-Path -Parent $RepoRoot
-    $escapedRelease = [Regex]::Escape((Join-Path $RepoRoot "release"))
+    $escapedRelease = [Regex]::Escape((Join-Path $RepoRoot "desktop/release"))
     $escapedUserData = [Regex]::Escape((Join-Path $env:APPDATA "JARVIS"))
     $modelRoots = @(
         (Join-Path $repoParent "models"),

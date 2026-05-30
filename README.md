@@ -31,7 +31,7 @@ On Windows, use the root launchers:
 ```
 
 `run-jarvis.cmd` prefers the packaged desktop app at
-`release\JARVIS 1.0.0.exe` when it exists. Otherwise it falls back to the
+`desktop\release\JARVIS 1.0.0.exe` when it exists. Otherwise it falls back to the
 Electron development shell. It also enables minimize-to-tray and points the
 backend at the sibling `models\` folder when that folder exists.
 

@@ -29,8 +29,8 @@ try {
     $env:JARVIS_DISABLE_LAZY_INSTALLS = "1"
 
     $exeCandidates = @(
-        (Join-Path $RepoRoot "release/JARVIS 1.0.0.exe"),
-        (Join-Path $RepoRoot "release/JARVIS.exe")
+        (Join-Path $RepoRoot "desktop/release/JARVIS 1.0.0.exe"),
+        (Join-Path $RepoRoot "desktop/release/JARVIS.exe")
     )
     $desktopExe = $exeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 

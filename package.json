@@ -37,7 +37,7 @@
     "productName": "JARVIS",
     "afterPack": "ops/scripts/build/after-pack-icon.cjs",
     "directories": {
-      "output": "release"
+      "output": "desktop/release"
     },
     "files": [
       "desktop/electron/**/*",

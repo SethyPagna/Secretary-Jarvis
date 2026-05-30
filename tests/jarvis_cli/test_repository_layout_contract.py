@@ -179,6 +179,7 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         self.assertTrue(_is_git_ignored("node_modules/example-package/index.js"))
         self.assertTrue(_is_git_ignored("desktop/web/node_modules/example-package/index.js"))
         self.assertTrue(_is_git_ignored("release/JARVIS 1.0.0.exe"))
+        self.assertTrue(_is_git_ignored("desktop/release/JARVIS 1.0.0.exe"))
         self.assertTrue(_is_git_ignored("runtime/llama.cpp/llama-server.exe"))
         self.assertTrue(_is_git_ignored("jarvis_cli/web_dist/index.html"))
         self.assertTrue(_is_git_ignored("desktop/web/public/fonts/Collapse-Regular.woff2"))
