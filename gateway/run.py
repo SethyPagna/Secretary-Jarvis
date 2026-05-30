@@ -6116,8 +6116,8 @@ class GatewayRunner:
         # and an operator who explicitly listed the chat expects those to
         # be honored. Run this check before the no-user-id guard below so
         # documented behavior matches reality
-        # (docs/jarvis/environment-variables.md,
-        # docs/jarvis/social-media-and-platforms.md).
+        # (ops/docs/jarvis/environment-variables.md,
+        # ops/docs/jarvis/social-media-and-platforms.md).
         if source.chat_type in {"group", "forum", "channel"} and source.chat_id:
             chat_allowlist_env = {
                 Platform.TELEGRAM: "TELEGRAM_GROUP_ALLOWED_CHATS",

@@ -2,7 +2,7 @@
 
 > **Bundled with JARVIS.** Originally authored by [@PCinkusz](https://github.com/PCinkusz) at https://github.com/PCinkusz/jarvis-achievements — vendored into `plugins/jarvis-achievements/` so it ships with the dashboard out-of-the-box and stays in lockstep with Jarvis feature changes. Upstream repo remains the staging ground for new badges and UI iteration.
 >
-> When Jarvis is installed via the desktop package or cloned from source, this plugin is available to the backend and desktop skills surfaces. No separate install step. See `docs/jarvis/skills-hub.md` in the main docs.
+> When Jarvis is installed via the desktop package or cloned from source, this plugin is available to the backend and desktop skills surfaces. No separate install step. See `ops/docs/jarvis/skills-hub.md` in the main docs.
 
 Achievement system for the Jarvis Dashboard: collectible, tiered badges generated from real local Jarvis session history.
 

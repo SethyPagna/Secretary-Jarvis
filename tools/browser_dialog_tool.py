@@ -9,7 +9,7 @@ appears when a CDP endpoint is reachable (Browserbase with a
 ``connectUrl``, local Chromium-family browser via ``/browser connect``, or
 ``browser.cdp_url`` set in config).
 
-See ``docs/jarvis/tools-and-toolsets.md`` for the full
+See ``ops/docs/jarvis/tools-and-toolsets.md`` for the full
 design.
 """
 

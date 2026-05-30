@@ -1,6 +1,6 @@
 """Remote model catalog fetcher.
 
-JARVIS publishes a small JSON manifest of curated models under ``docs/api`` so
+JARVIS publishes a small JSON manifest of curated models under ``ops/docs/api`` so
 providers can be refreshed without shipping a release. This module fetches,
 validates, and caches that manifest, falling back to the in-repo hardcoded
 lists when the network is unavailable.
@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 DEFAULT_CATALOG_URL = (
-    "https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/docs/api/model-catalog.json"
+    "https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/ops/docs/api/model-catalog.json"
 )
 DEFAULT_TTL_HOURS = 24
 DEFAULT_FETCH_TIMEOUT = 8.0

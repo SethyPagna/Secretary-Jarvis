@@ -248,7 +248,7 @@ export const guideItems: KnowledgeItem[] = [
     detail:
       "Skills stay discoverable from the Skills page. Toolsets let platforms and workflows use only the capabilities they need instead of exposing every tool everywhere.",
     badges: ["skills", "toolsets"],
-    source: "docs/jarvis/tools-and-toolsets.md",
+    source: "ops/docs/jarvis/tools-and-toolsets.md",
   },
   {
     id: "mcp-platforms",
@@ -258,7 +258,7 @@ export const guideItems: KnowledgeItem[] = [
     detail:
       "MCP servers and social platforms should be configured through dedicated pages with credential tests, recent activity, and per-platform tool limits.",
     badges: ["MCP", "platforms"],
-    source: "docs/jarvis/mcp-integration.md",
+    source: "ops/docs/jarvis/mcp-integration.md",
   },
   {
     id: "memory-context",
@@ -268,7 +268,7 @@ export const guideItems: KnowledgeItem[] = [
     detail:
       "JARVIS loads SOUL.md, memory files, and project context in defined priority order. It should not store secrets or repeat stale context when profiles switch.",
     badges: ["memory", "context"],
-    source: "docs/jarvis/context-files.md",
+    source: "ops/docs/jarvis/context-files.md",
   },
   {
     id: "least-privilege",
@@ -278,7 +278,7 @@ export const guideItems: KnowledgeItem[] = [
     detail:
       "Permissions should default to local, scoped access. Sensitive paths and credentials stay blocked unless the user explicitly allows a specific operation.",
     badges: ["permissions"],
-    source: "docs/jarvis/security.md",
+    source: "ops/docs/jarvis/security.md",
   },
   {
     id: "shutdown-hygiene",
@@ -425,7 +425,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when changing process ownership, API routes, packaging, or long-running services.",
     badges: ["system"],
-    source: "docs/jarvis/architecture.md",
+    source: "ops/docs/jarvis/architecture.md",
   },
   {
     id: "context-files",
@@ -435,7 +435,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when changing how JARVIS loads identity, project guidance, or memory into the prompt.",
     badges: ["context"],
-    source: "docs/jarvis/context-files.md",
+    source: "ops/docs/jarvis/context-files.md",
   },
   {
     id: "memory",
@@ -445,7 +445,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when adding retention rules, profile switching, search, or memory write behavior.",
     badges: ["memory"],
-    source: "docs/jarvis/memory.md",
+    source: "ops/docs/jarvis/memory.md",
   },
   {
     id: "environment",
@@ -455,7 +455,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when adding a new setting, provider credential, or package-time runtime flag.",
     badges: ["env"],
-    source: "docs/jarvis/environment-variables.md",
+    source: "ops/docs/jarvis/environment-variables.md",
   },
   {
     id: "skills-hub",
@@ -465,7 +465,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when wiring user skills, bundled skills, marketplace-style discovery, or safety levels.",
     badges: ["skills"],
-    source: "docs/jarvis/skills-hub.md",
+    source: "ops/docs/jarvis/skills-hub.md",
   },
   {
     id: "tools",
@@ -475,7 +475,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when changing tool availability, approval rules, or per-platform execution rights.",
     badges: ["tools"],
-    source: "docs/jarvis/tools-and-toolsets.md",
+    source: "ops/docs/jarvis/tools-and-toolsets.md",
   },
   {
     id: "mcp",
@@ -485,7 +485,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when adding external tool servers or debugging MCP startup and permissions.",
     badges: ["MCP"],
-    source: "docs/jarvis/mcp-integration.md",
+    source: "ops/docs/jarvis/mcp-integration.md",
   },
   {
     id: "platforms",
@@ -495,7 +495,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when adjusting gateway configuration, setup wizards, message routing, or platform credentials.",
     badges: ["platforms"],
-    source: "docs/jarvis/social-media-and-platforms.md",
+    source: "ops/docs/jarvis/social-media-and-platforms.md",
   },
   {
     id: "scheduling",
@@ -505,7 +505,7 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when adding scheduled workflows, recurring tasks, or shutdown-safe job handling.",
     badges: ["cron"],
-    source: "docs/jarvis/scheduling.md",
+    source: "ops/docs/jarvis/scheduling.md",
   },
   {
     id: "security",
@@ -515,6 +515,6 @@ export const referenceItems: KnowledgeItem[] = [
     detail:
       "Use this when changing permissions, credential storage, network access, or destructive actions.",
     badges: ["security"],
-    source: "docs/jarvis/security.md",
+    source: "ops/docs/jarvis/security.md",
   },
 ];

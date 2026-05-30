@@ -57,7 +57,7 @@ def _cmd_list(_args) -> None:
     if not specs:
         print("No shell hooks configured in ~/.jarvis/config.yaml.")
         print("See `jarvis hooks --help` or")
-        print("    docs/jarvis/scheduling.md")
+        print("    ops/docs/jarvis/scheduling.md")
         print("for the config schema and worked examples.")
         return
 

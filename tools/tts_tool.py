@@ -19,7 +19,7 @@ Custom command providers:
   under ``tts.providers.<name>`` in ``~/.jarvis/config.yaml``. Jarvis
   writes the input text to a temp file and runs the configured shell
   command, which must produce the audio file at the expected path.
-  See the voice section of ``docs/jarvis/index.md``.
+  See the voice section of ``ops/docs/jarvis/index.md``.
 
 Output formats:
 - Opus (.ogg) for Telegram voice bubbles (requires ffmpeg for Edge TTS)

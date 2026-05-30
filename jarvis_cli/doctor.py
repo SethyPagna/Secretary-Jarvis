@@ -697,7 +697,7 @@ def run_doctor(args):
                 example_config = PROJECT_ROOT / 'docs' / 'examples' / 'config.yaml.example'
                 if example_config.exists():
                     shutil.copy2(str(example_config), str(config_path))
-                    check_ok(f"Created {_DHH}/config.yaml from docs/examples/config.yaml.example")
+                    check_ok(f"Created {_DHH}/config.yaml from ops/docs/examples/config.yaml.example")
                 else:
                     from jarvis_cli.config import DEFAULT_CONFIG, save_config
                     save_config(DEFAULT_CONFIG)

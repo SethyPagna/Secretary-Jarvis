@@ -1,4 +1,4 @@
-﻿# ============================================================================
+# ============================================================================
 # JARVIS Installer for Windows
 # ============================================================================
 # Installation script for Windows (PowerShell).
@@ -1443,7 +1443,7 @@ function Copy-ConfigTemplates {
     # Create config.yaml
     $configPath = "$JarvisHome\config.yaml"
     if (-not (Test-Path $configPath)) {
-        $examplePath = "$InstallDir\docs\examples\config.yaml.example"
+        $examplePath = "$InstallDir\ops\docs\examples\config.yaml.example"
         if (Test-Path $examplePath) {
             Copy-Item $examplePath $configPath
             Write-Success "Created ~/.jarvis/config.yaml from template"

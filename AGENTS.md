@@ -543,7 +543,7 @@ NOT import them (would double-instantiate `ProviderProfile`). Plugins
 without an explicit `kind:` get auto-coerced via a source-text heuristic
 (`register_provider` + `ProviderProfile` in `__init__.py`).
 
-Full authoring guide: `docs/jarvis/tools-and-toolsets.md`.
+Full authoring guide: `ops/docs/jarvis/tools-and-toolsets.md`.
 
 ### Dashboard / context-engine / image-gen plugin directories
 
@@ -751,7 +751,7 @@ Config section (`curator:` in `config.yaml`):
 `enabled`, `interval_hours`, `min_idle_hours`, `stale_after_days`,
 `archive_after_days`, `backup.*`.
 
-Full user-facing docs: `docs/jarvis/memory.md`.
+Full user-facing docs: `ops/docs/jarvis/memory.md`.
 
 ---
 
@@ -828,7 +828,7 @@ Isolation model:
   same task (default: 2), the dispatcher auto-blocks it to prevent spin
   loops.
 
-Full user-facing docs: `docs/jarvis/scheduling.md`.
+Full user-facing docs: `ops/docs/jarvis/scheduling.md`.
 
 ---
 

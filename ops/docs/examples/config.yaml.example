@@ -1,4 +1,4 @@
-﻿# JARVIS CLI Configuration
+# JARVIS CLI Configuration
 # Copy this file to cli-config.yaml and customize as needed.
 # This file configures the CLI behavior. Environment variables in .env take precedence.
 
@@ -1081,7 +1081,7 @@ display:
 # runs (gateway, cron) need --accept-hooks, JARVIS_ACCEPT_HOOKS=1, or the
 # hooks_auto_accept key below.
 #
-# See docs/jarvis/scheduling.md for the full JSON wire
+# See ops/docs/jarvis/scheduling.md for the full JSON wire
 # protocol and worked examples.
 #
 # hooks:

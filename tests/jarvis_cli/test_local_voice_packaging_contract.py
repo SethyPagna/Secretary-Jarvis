@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class LocalVoicePackagingContractTests(unittest.TestCase):
     def test_blueprint_uses_local_voice_stack_without_elevenlabs(self) -> None:
-        blueprint = (ROOT / "docs" / "JARVIS_MASTER_BLUEPRINT.md").read_text(
+        blueprint = (ROOT / "ops" / "docs" / "JARVIS_MASTER_BLUEPRINT.md").read_text(
             encoding="utf-8",
         )
 
@@ -63,7 +63,7 @@ class LocalVoicePackagingContractTests(unittest.TestCase):
         self.assertIn("windowsHide: true", electron_main)
 
     def test_desktop_runtime_is_native_without_compose_files(self) -> None:
-        blueprint = (ROOT / "docs" / "JARVIS_MASTER_BLUEPRINT.md").read_text(
+        blueprint = (ROOT / "ops" / "docs" / "JARVIS_MASTER_BLUEPRINT.md").read_text(
             encoding="utf-8",
         )
 

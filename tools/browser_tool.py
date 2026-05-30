@@ -2534,7 +2534,7 @@ def browser_snapshot(
 
         # Merge supervisor state (pending dialogs + frame tree) when a CDP
         # supervisor is attached to this task. No-op otherwise. See
-        # docs/jarvis/tools-and-toolsets.md.
+        # ops/docs/jarvis/tools-and-toolsets.md.
         try:
             from tools.browser_supervisor import SUPERVISOR_REGISTRY  # type: ignore[import-not-found]
             _supervisor = SUPERVISOR_REGISTRY.get(effective_task_id)

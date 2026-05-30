@@ -3,7 +3,7 @@
 
 This script crawls every skill source (skills.sh, GitHub taps, official,
 clawhub, lobehub, claude-marketplace) and writes a JSON index with resolved
-GitHub paths. The index is committed under ``docs/api`` so the desktop skills
+GitHub paths. The index is committed under ``ops/docs/api`` so the desktop skills
 page and backend can use it without hitting the GitHub API.
 
 Usage:
@@ -13,7 +13,7 @@ Usage:
     # CI (set GITHUB_TOKEN as secret)
     GITHUB_TOKEN=ghp_... python ops/scripts/catalog/build_skills_index.py
 
-Output: docs/api/skills-index.json
+Output: ops/docs/api/skills-index.json
 """
 
 import json
@@ -44,7 +44,7 @@ from tools.skills_hub import (
 )
 import httpx
 
-OUTPUT_PATH = os.path.join(REPO_ROOT, "docs", "api", "skills-index.json")
+OUTPUT_PATH = os.path.join(REPO_ROOT, "ops", "docs", "api", "skills-index.json")
 INDEX_VERSION = 1
 
 

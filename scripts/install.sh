@@ -1444,8 +1444,8 @@ copy_config_templates() {
 
     # Create config.yaml at ~/.jarvis/config.yaml (top level, easy to find)
     if [ ! -f "$JARVIS_HOME/config.yaml" ]; then
-        if [ -f "$INSTALL_DIR/docs/examples/config.yaml.example" ]; then
-            cp "$INSTALL_DIR/docs/examples/config.yaml.example" "$JARVIS_HOME/config.yaml"
+        if [ -f "$INSTALL_DIR/ops/docs/examples/config.yaml.example" ]; then
+            cp "$INSTALL_DIR/ops/docs/examples/config.yaml.example" "$JARVIS_HOME/config.yaml"
             log_success "Created ~/.jarvis/config.yaml from template"
         fi
     else

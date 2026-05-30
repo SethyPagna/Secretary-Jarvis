@@ -692,7 +692,7 @@ DEFAULT_CONFIG = {
         # CDP supervisor — dialog + frame detection via a persistent WebSocket.
         # Active only when a CDP-capable backend is attached (Browserbase or
         # local Chrome via /browser connect). See
-        # docs/jarvis/tools-and-toolsets.md.
+        # ops/docs/jarvis/tools-and-toolsets.md.
         "dialog_policy": "must_respond",  # must_respond | auto_dismiss | auto_accept
         "dialog_timeout_s": 300,  # Safety auto-dismiss after N seconds under must_respond
         "camofox": {
@@ -1450,7 +1450,7 @@ DEFAULT_CONFIG = {
     # {matcher, command, timeout} dicts.  First registration of a new
     # command prompts the user for consent; subsequent runs reuse the
     # stored approval from ~/.jarvis/shell-hooks-allowlist.json.
-    # See `docs/jarvis/scheduling.md` for schema + examples.
+    # See `ops/docs/jarvis/scheduling.md` for schema + examples.
     "hooks": {},
 
     # Auto-accept shell-hook registrations without a TTY prompt.  Also
@@ -1591,10 +1591,10 @@ DEFAULT_CONFIG = {
     # curated model lists for OpenRouter and JARVIS Managed from this URL,
     # falling back to the in-repo snapshot on network failure.  Lets us
     # update model picker lists without shipping a jarvis-agent release.
-    # The default URL is served from the repository docs/api manifest.
+    # The default URL is served from the repository ops/docs/api manifest.
     "model_catalog": {
         "enabled": True,
-        "url": "https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/docs/api/model-catalog.json",
+        "url": "https://raw.githubusercontent.com/SethyPagna/Secretary-Jarvis/main/ops/docs/api/model-catalog.json",
         # Disk cache TTL in hours.  Beyond this, the CLI refetches on the
         # next /model or `jarvis model` invocation; network failures
         # silently fall back to the stale cache.
@@ -3033,7 +3033,7 @@ def _normalize_custom_provider_entry(
         "rateLimitDelay": "rate_limit_delay",
     }
     # api_key_env is a documented snake_case alias for key_env (see
-    # docs/local-model-downloads.md).  Normalize it up front so the
+    # ops/docs/local-model-downloads.md).  Normalize it up front so the
     # rest of the normalizer treats it as the canonical field.
     if "api_key_env" in entry and "key_env" not in entry:
         entry["key_env"] = entry["api_key_env"]

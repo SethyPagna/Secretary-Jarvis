@@ -54,7 +54,7 @@ orphans) and the developer-guide page for the prose walkthrough.
 
 See `plugins/platforms/irc/`, `plugins/platforms/teams/`, and
 `plugins/platforms/google_chat/` for complete working examples, and
-`docs/jarvis/social-media-and-platforms.md` for the full
+`ops/docs/jarvis/social-media-and-platforms.md` for the full
 plugin guide with code examples and hook documentation.
 
 ---
@@ -333,8 +333,8 @@ identifiers are masked in ALL log output, not just your adapter's logs.
 |------|---------------|
 | `README.md` | Platform list in feature table + documentation table |
 | `AGENTS.md` | Gateway description + env var config section |
-| `docs/jarvis/social-media-and-platforms.md` | Full setup guide and platform notes |
-| `docs/jarvis/environment-variables.md` | All env vars for the platform |
+| `ops/docs/jarvis/social-media-and-platforms.md` | Full setup guide and platform notes |
+| `ops/docs/jarvis/environment-variables.md` | All env vars for the platform |
 
 ---
 

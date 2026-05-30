@@ -8,14 +8,14 @@ ROOT = Path(__file__).resolve().parents[2]
 VISIBLE_PRODUCT_FILES = [
     ROOT / "README.md",
     ROOT / "pyproject.toml",
-    ROOT / "docs" / "JARVIS_MASTER_BLUEPRINT.md",
-    ROOT / "docs" / "jarvis" / "index.md",
+    ROOT / "ops" / "docs" / "JARVIS_MASTER_BLUEPRINT.md",
+    ROOT / "ops" / "docs" / "jarvis" / "index.md",
     ROOT / "ops" / "config" / "acp_registry" / "agent.json",
     ROOT / "scripts" / "install.cmd",
     ROOT / "scripts" / "install.ps1",
     ROOT / "scripts" / "install.sh",
     ROOT / "scripts" / "jarvis-gateway",
-    ROOT / "docs" / "plans" / "jarvis-already-has-routines.md",
+    ROOT / "ops" / "docs" / "plans" / "jarvis-already-has-routines.md",
     ROOT / "jarvis_cli" / "data" / "default_SOUL.md",
     ROOT / "jarvis_cli" / "default_soul.py",
     ROOT / "jarvis_cli" / "data" / "souls" / "soul_manifest.json",
@@ -115,7 +115,7 @@ class DesktopIdentityContractTests(unittest.TestCase):
                 self.assertGreaterEqual(len(souls[required]["when_to_use"]), 24)
 
     def test_jarvis_docs_pack_imports_all_required_sections(self) -> None:
-        docs_dir = ROOT / "docs" / "jarvis"
+        docs_dir = ROOT / "ops" / "docs" / "jarvis"
         expected = {
             "index.md",
             "architecture.md",

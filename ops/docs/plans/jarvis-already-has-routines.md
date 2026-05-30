@@ -149,9 +149,9 @@ jarvis webhook subscribe pr-review \
   --deliver github_comment
 ```
 
-Full automation templates gallery: [JARVIS scheduling docs](docs/jarvis/scheduling.md)
+Full automation templates gallery: [JARVIS scheduling docs](ops/docs/jarvis/scheduling.md)
 
-Documentation: [JARVIS docs pack](docs/jarvis/index.md)
+Documentation: [JARVIS docs pack](ops/docs/jarvis/index.md)
 
 GitHub: [SethyPagna/Secretary-Jarvis](https://github.com/SethyPagna/Secretary-Jarvis)
 

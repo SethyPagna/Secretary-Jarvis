@@ -43,7 +43,6 @@ ROOT_DIR_ALLOWLIST = {
     "agent",
     "cron",
     "desktop",
-    "docs",
     "gateway",
     "jarvis_cli",
     "optional-skills",

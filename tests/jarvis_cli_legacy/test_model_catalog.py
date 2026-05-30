@@ -332,10 +332,10 @@ class TestIntegrationWithModelsModule:
 
 # -----------------------------------------------------------------------------
 # Drift guard — prevent the in-repo curated lists from going out of sync with
-# the repo-hosted manifest at docs/api/model-catalog.json.
+# the repo-hosted manifest at ops/docs/api/model-catalog.json.
 #
 # History: qwen/qwen3.6-plus was added to _PROVIDER_MODELS["jarvis_managed"] in commit
-# 9dd6e5510 but docs/api/model-catalog.json was not regenerated for
+# 9dd6e5510 but ops/docs/api/model-catalog.json was not regenerated for
 # weeks, so free-tier users on a new install fetched a stale manifest and the
 # free-tier picker showed "No free models currently available." even though
 # the Portal was serving qwen/qwen3.6-plus as free. CI must catch this.
@@ -356,11 +356,11 @@ class TestManifestMatchesInRepoLists:
         """``ops/scripts/catalog/build_model_catalog.py`` output must match the committed file.
 
         If this fails, run ``python ops/scripts/catalog/build_model_catalog.py`` and
-        commit the regenerated ``docs/api/model-catalog.json``.
+        commit the regenerated ``ops/docs/api/model-catalog.json``.
         """
         # Resolve the repo root from this test file's location.
         repo_root = Path(__file__).resolve().parents[2]
-        manifest_path = repo_root / "docs" / "api" / "model-catalog.json"
+        manifest_path = repo_root / "ops" / "docs" / "api" / "model-catalog.json"
 
         if not manifest_path.exists():
             pytest.skip(f"manifest missing at {manifest_path}")
@@ -378,8 +378,8 @@ class TestManifestMatchesInRepoLists:
             actual = json.load(fh)
 
         assert self._strip_volatile(actual) == self._strip_volatile(expected), (
-            "docs/api/model-catalog.json is out of sync with "
+            "ops/docs/api/model-catalog.json is out of sync with "
             "_PROVIDER_MODELS['jarvis_managed'] / OPENROUTER_MODELS. "
             "Run: python ops/scripts/catalog/build_model_catalog.py && "
-            "git add docs/api/model-catalog.json"
+            "git add ops/docs/api/model-catalog.json"
         )

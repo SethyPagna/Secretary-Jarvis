@@ -12,7 +12,7 @@ every other task_id collapses back to ``"default"``.
 If you change the collapse logic, update both the helper and these
 tests -- see `jarvis-agent-dev` skill, "Why do subagents get their own
 containers?" section, and the Container lifecycle paragraph under
-Docker Backend in ``docs/jarvis/tools-and-toolsets.md``.
+Docker Backend in ``ops/docs/jarvis/tools-and-toolsets.md``.
 """
 
 import pytest
