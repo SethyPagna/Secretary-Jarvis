@@ -1450,7 +1450,7 @@ class TestOptionalSkillSourceBinaryAssets:
         )
         pycache_dir = skill_dir / "assets" / "neutts-cli" / "src" / "neutts_cli" / "__pycache__"
         pycache_dir.mkdir(parents=True)
-        (pycache_dir / "cli.cpython-312.pyc").write_bytes(b"junk")
+        (pycache_dir / "jarvis_cli.terminal.cpython-312.pyc").write_bytes(b"junk")
 
         src = OptionalSkillSource()
         src._optional_dir = optional_root

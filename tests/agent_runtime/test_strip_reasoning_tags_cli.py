@@ -1,4 +1,4 @@
-"""Tests for cli.py::_strip_reasoning_tags — specifically the tool-call
+"""Tests for jarvis_cli/terminal.py::_strip_reasoning_tags — specifically the tool-call
 XML stripping added in openclaw/openclaw#67318 port.
 
 The CLI has its own copy of the stripper because it needs to run on the
@@ -8,7 +8,7 @@ for tool-call tag coverage."""
 
 import pytest
 
-from cli import _strip_reasoning_tags
+from jarvis_cli.terminal import _strip_reasoning_tags
 
 
 class TestToolCallStripping:

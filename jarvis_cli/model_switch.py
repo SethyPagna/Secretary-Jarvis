@@ -1,6 +1,6 @@
 """Shared model-switching logic for CLI and gateway /model commands.
 
-Both the CLI (cli.py) and gateway (gateway/run.py) /model handlers
+Both the CLI (jarvis_cli/terminal.py) and gateway (gateway/run.py) /model handlers
 share the same core pipeline:
 
   parse flags -> alias resolution -> provider resolution ->
@@ -76,7 +76,7 @@ def is_legacy_jarvis_non_agentic(model_name: str) -> bool:
     """Return True if *model_name* is a legacy Jarvis 3/4 chat model.
 
     Used to decide whether to surface the non-agentic warning at startup.
-    Callers in :mod:`cli.py` and here should go through this single helper
+    Callers in :mod:`jarvis_cli/terminal.py` and here should go through this single helper
     so the two sites don't drift.
     """
     if not model_name:

@@ -20,7 +20,7 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        Entry Points                                  │
 │                                                                      │
-│  CLI (cli.py)    Gateway (gateway/run.py)    ACP (acp_adapter/)     │
+│  CLI (jarvis_cli/terminal.py)    Gateway (gateway/run.py)    ACP (acp_adapter/)     │
 │  Batch Runner    API Server                  Python Library          │
 └──────────┬──────────────┬───────────────────────┬───────────────────┘
            │              │                       │
@@ -59,7 +59,7 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 ```text
 jarvis-agent/
 ├── agent/runtime.py              # AIAgent — core conversation loop (large file)
-├── cli.py                    # JarvisDesktopRuntime — interactive terminal UI (large file)
+├── jarvis_cli/terminal.py                    # JarvisDesktopRuntime — interactive terminal UI (large file)
 ├── tools/model_tools.py            # Tool discovery, schema collection, dispatch
 ├── tools/toolsets.py               # Tool groupings and platform presets
 ├── session_state.py           # SQLite session/state database with FTS5
@@ -276,7 +276,7 @@ tools/*.py  (each calls registry.register() at import time)
        ↑
 tools/model_tools.py  (imports tools/registry + triggers tool discovery)
        ↑
-agent/runtime.py, cli.py, tools/batch_runner.py, environments/
+agent/runtime.py, jarvis_cli/terminal.py, tools/batch_runner.py, environments/
 ```
 
 This chain means tool registration happens at import time, before any agent instance is created. Any `tools/*.py` file with a top-level `registry.register()` call is auto-discovered — no manual import list needed.

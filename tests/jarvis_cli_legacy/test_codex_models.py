@@ -233,8 +233,8 @@ def test_model_command_uses_existing_codex_session_without_relogin(monkeypatch):
 
 def _make_cli(model="anthropic/claude-opus-4.6", **kwargs):
     """Create a JarvisCLI with minimal mocking."""
-    import cli as _cli_mod
-    from cli import JarvisCLI
+    import jarvis_cli.terminal as _cli_mod
+    from jarvis_cli.terminal import JarvisCLI
 
     _clean_config = {
         "model": {
@@ -248,7 +248,7 @@ def _make_cli(model="anthropic/claude-opus-4.6", **kwargs):
     }
     clean_env = {"LLM_MODEL": "", "JARVIS_MAX_ITERATIONS": ""}
     with (
-        patch("cli.get_tool_definitions", return_value=[]),
+        patch("jarvis_cli.terminal.get_tool_definitions", return_value=[]),
         patch.dict("os.environ", clean_env, clear=False),
         patch.dict(_cli_mod.__dict__, {"CLI_CONFIG": _clean_config}),
     ):
@@ -331,7 +331,7 @@ class TestNormalizeModelForProvider:
 
     def test_default_model_replaced(self):
         """No model configured (empty default) gets swapped for codex."""
-        import cli as _cli_mod
+        import jarvis_cli.terminal as _cli_mod
         _clean_config = {
             "model": {
                 "default": "",
@@ -344,11 +344,11 @@ class TestNormalizeModelForProvider:
         }
         # Don't pass model= so _model_is_default is True
         with (
-            patch("cli.get_tool_definitions", return_value=[]),
+            patch("jarvis_cli.terminal.get_tool_definitions", return_value=[]),
             patch.dict("os.environ", {"LLM_MODEL": "", "JARVIS_MAX_ITERATIONS": ""}, clear=False),
             patch.dict(_cli_mod.__dict__, {"CLI_CONFIG": _clean_config}),
         ):
-            from cli import JarvisCLI
+            from jarvis_cli.terminal import JarvisCLI
             cli = JarvisCLI()
 
         assert cli._model_is_default is True
@@ -363,7 +363,7 @@ class TestNormalizeModelForProvider:
 
     def test_default_fallback_when_api_fails(self):
         """No model configured falls back to gpt-5.3-codex when API unreachable."""
-        import cli as _cli_mod
+        import jarvis_cli.terminal as _cli_mod
         _clean_config = {
             "model": {
                 "default": "",
@@ -375,11 +375,11 @@ class TestNormalizeModelForProvider:
             "terminal": {"env_type": "local"},
         }
         with (
-            patch("cli.get_tool_definitions", return_value=[]),
+            patch("jarvis_cli.terminal.get_tool_definitions", return_value=[]),
             patch.dict("os.environ", {"LLM_MODEL": "", "JARVIS_MAX_ITERATIONS": ""}, clear=False),
             patch.dict(_cli_mod.__dict__, {"CLI_CONFIG": _clean_config}),
         ):
-            from cli import JarvisCLI
+            from jarvis_cli.terminal import JarvisCLI
             cli = JarvisCLI()
 
         with patch(

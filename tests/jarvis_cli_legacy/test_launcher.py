@@ -22,7 +22,7 @@ def test_launcher_delegates_to_argparse_entrypoint(monkeypatch):
     fake_cli_module = types.ModuleType("cli")
 
     def legacy_cli_main(*args, **kwargs):
-        raise AssertionError("launcher should not import cli.main")
+        raise AssertionError("launcher should not import jarvis_cli.terminal as cli.main")
 
     fake_cli_module.main = legacy_cli_main
     monkeypatch.setitem(sys.modules, "cli", fake_cli_module)

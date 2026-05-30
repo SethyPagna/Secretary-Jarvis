@@ -95,7 +95,7 @@ class GatewayStreamConsumer:
     _MAX_FLOOD_STRIKES = 3
 
     # Reasoning/thinking tags that models emit inline in content.
-    # Must stay in sync with cli.py _OPEN_TAGS/_CLOSE_TAGS and
+    # Must stay in sync with jarvis_cli/terminal.py _OPEN_TAGS/_CLOSE_TAGS and
     # agent/runtime.py _strip_think_blocks() tag variants.
     _OPEN_THINK_TAGS = (
         "<REASONING_SCRATCHPAD>", "<think>", "<reasoning>",
@@ -335,7 +335,7 @@ class GatewayStreamConsumer:
                         idx = buf.find(tag, search_start)
                         if idx == -1:
                             break
-                        # Block-boundary check (mirrors cli.py logic)
+                        # Block-boundary check (mirrors jarvis_cli/terminal.py logic)
                         if idx == 0:
                             is_boundary = (
                                 not self._accumulated

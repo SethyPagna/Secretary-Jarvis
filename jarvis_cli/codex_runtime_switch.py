@@ -3,7 +3,7 @@
 Toggles `model.openai_runtime` between "auto" (= chat_completions, Jarvis'
 default) and "codex_app_server" (= hand turns to a codex subprocess).
 
-Both CLI (cli.py) and gateway (gateway/run.py) call into this module so the
+Both CLI (jarvis_cli/terminal.py) and gateway (gateway/run.py) call into this module so the
 behavior stays identical across surfaces.
 
 The actual runtime resolution happens in jarvis_cli.runtime_provider's

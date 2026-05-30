@@ -1,6 +1,6 @@
 """Oneshot (-z) mode: send a prompt, get the final content block, exit.
 
-Bypasses cli.py entirely.  No banner, no spinner, no session_id line,
+Bypasses jarvis_cli/terminal.py entirely.  No banner, no spinner, no session_id line,
 no stderr chatter.  Just the agent's final text to stdout.
 
 Toolsets = explicit --toolsets when provided, otherwise whatever the user has
@@ -303,7 +303,7 @@ def _run_agent(
     session_db = _create_session_db_for_oneshot()
     # Read fallback chain from profile config — supports both the new list
     # format (fallback_providers) and the legacy single-dict (fallback_model).
-    # Mirrors the same normalization in cli.py so oneshot workers (e.g. kanban
+    # Mirrors the same normalization in jarvis_cli/terminal.py so oneshot workers (e.g. kanban
     # workers spawned via `jarvis -p <profile> chat -q ...`) honour the
     # profile's fallback chain just like interactive sessions do.
     _fb = cfg.get("fallback_providers") or cfg.get("fallback_model") or []

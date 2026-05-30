@@ -10,7 +10,7 @@ Usage:
     python -m gateway.run
     
     # Or from CLI
-    python cli.py --gateway
+    python jarvis_cli/terminal.py --gateway
 """
 
 # IMPORTANT: jarvis_cli.bootstrap must be the very first import — UTF-8 stdio
@@ -538,7 +538,7 @@ def _restart_notification_pending() -> bool:
     return (_jarvis_home / ".restart_notify.json").exists()
 
 
-# Mark this process as a gateway so cli.py's module-level load_cli_config()
+# Mark this process as a gateway so jarvis_cli/terminal.py's module-level load_cli_config()
 # knows not to clobber TERMINAL_CWD if lazily imported.
 os.environ["_JARVIS_GATEWAY"] = "1"
 
@@ -1552,7 +1552,7 @@ class GatewayRunner:
             self._session_db = SessionDB()
         except Exception as e:
             # WARNING (not DEBUG) so the failure appears in errors.log — matches
-            # cli.py's handling of the same init path.  Users hitting NFS-mounted
+            # jarvis_cli/terminal.py's handling of the same init path.  Users hitting NFS-mounted
             # JARVIS_HOME silently lost /resume, /title, /history, /branch, and
             # session search without this.  The underlying cause (usually
             # "locking protocol" from NFS) is now also captured by
@@ -10219,7 +10219,7 @@ class GatewayRunner:
     async def _handle_codex_runtime_command(self, event: MessageEvent) -> str:
         """Handle /codex-runtime command in the gateway.
 
-        Same surface as the CLI handler in cli.py:
+        Same surface as the CLI handler in jarvis_cli/terminal.py:
             /codex-runtime                  — show current state
             /codex-runtime auto             — Jarvis default runtime
             /codex-runtime codex_app_server — codex subprocess runtime
@@ -12941,7 +12941,7 @@ class GatewayRunner:
             if choice == "always":
                 # Persist the opt-out and run the reload.
                 try:
-                    from cli import save_config_value
+                    from jarvis_cli.terminal import save_config_value
                     save_config_value("approvals.mcp_reload_confirm", False)
                     logger.info(
                         "User opted out of /reload-mcp confirmation (session=%s)",
@@ -13232,7 +13232,7 @@ class GatewayRunner:
                 return f"🟡 /{command} cancelled. Conversation unchanged."
             if choice == "always":
                 try:
-                    from cli import save_config_value
+                    from jarvis_cli.terminal import save_config_value
                     save_config_value("approvals.destructive_slash_confirm", False)
                     logger.info(
                         "User opted out of destructive slash confirm (session=%s)",

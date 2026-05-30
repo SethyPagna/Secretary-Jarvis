@@ -2459,13 +2459,13 @@ def _resolve_delegation_credentials(cfg: dict, parent_agent) -> dict:
 def _load_config() -> dict:
     """Load delegation config from CLI_CONFIG or persistent config.
 
-    Checks the runtime config (cli.py CLI_CONFIG) first, then falls back
+    Checks the runtime config (jarvis_cli/terminal.py CLI_CONFIG) first, then falls back
     to the persistent config (jarvis_cli/config.py load_config()) so that
     ``delegation.model`` / ``delegation.provider`` are picked up regardless
     of the entry point (CLI, gateway, cron).
     """
     try:
-        from cli import CLI_CONFIG
+        from jarvis_cli.terminal import CLI_CONFIG
 
         cfg = CLI_CONFIG.get("delegation") or {}
         if cfg:

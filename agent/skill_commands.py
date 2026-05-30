@@ -1,6 +1,6 @@
 """Shared slash command helpers for skills.
 
-Shared between CLI (cli.py) and gateway (gateway/run.py) so both surfaces
+Shared between CLI (jarvis_cli/terminal.py) and gateway (gateway/run.py) so both surfaces
 can invoke skills via /skill-name commands.
 """
 

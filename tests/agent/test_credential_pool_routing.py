@@ -32,7 +32,7 @@ class TestCliTurnRoutePool:
             service_tier=None,
         )
 
-        from cli import JarvisCLI
+        from jarvis_cli.terminal import JarvisCLI
         bound = JarvisCLI._resolve_turn_agent_config.__get__(shell)
         route = bound("test message")
 

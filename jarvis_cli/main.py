@@ -1160,7 +1160,7 @@ def cmd_chat(args):
     _pin_kanban_board_env()
 
     # Import and run the CLI
-    from cli import main as cli_main
+    from jarvis_cli.terminal import main as cli_main
 
     # Build kwargs from args
     kwargs = {
@@ -5663,7 +5663,7 @@ _UPDATE_CRITICAL_FILES = (
     "jarvis_cli/main.py",
     "jarvis_cli/config.py",
     "jarvis_cli/__init__.py",
-    "cli.py",
+    "jarvis_cli/terminal.py",
     "agent/runtime.py",
     "tools/model_tools.py",
     "tools/toolsets.py",
@@ -13067,7 +13067,7 @@ Examples:
     _prepare_agent_startup(args)
 
     # Handle top-level --oneshot / -z: single-shot mode, stdout = final
-    # response only, nothing else. Bypasses cli.py entirely.
+    # response only, nothing else. Bypasses jarvis_cli/terminal.py entirely.
     if getattr(args, "oneshot", None):
         from jarvis_cli.oneshot import run_oneshot
 

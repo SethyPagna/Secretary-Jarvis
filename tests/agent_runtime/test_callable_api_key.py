@@ -262,7 +262,7 @@ class TestBatchRunnerCallableHandling:
 
 
 class TestCliEnsureRuntimeCredentialsCallable:
-    """Regression: ``cli.py:_ensure_runtime_credentials`` previously
+    """Regression: ``jarvis_cli/terminal.py:_ensure_runtime_credentials`` previously
     treated a callable ``api_key`` as "not a string" and overwrote it
     with the ``"no-key-required"`` placeholder, which then got sent as
     ``Authorization: Bearer no-key-required`` and rejected by Azure
@@ -277,11 +277,11 @@ class TestCliEnsureRuntimeCredentialsCallable:
     def test_callable_predicate_present_in_cli_runtime_validation(self):
         from pathlib import Path
         src = (Path(__file__).resolve().parent.parent.parent
-               / "cli.py").read_text()
+               / "jarvis_cli" / "terminal.py").read_text()
         # The fix introduces ``_is_callable_provider`` which gates the
         # string-only check so callable token providers survive.
         assert "_is_callable_provider = callable(api_key)" in src, (
-            "cli.py:_ensure_runtime_credentials must preserve a callable "
+            "jarvis_cli.terminal.py:_ensure_runtime_credentials must preserve a callable "
             "api_key (Entra ID bearer provider). Without the guard, the "
             "callable is stringified to 'no-key-required' and Azure 401s."
         )
@@ -325,14 +325,14 @@ class TestInlinedDisplayMasks:
         run_agent banners."""
         from pathlib import Path
         src = (Path(__file__).resolve().parent.parent.parent
-               / "cli.py").read_text()
+               / "jarvis_cli" / "terminal.py").read_text()
         assert "is_token_provider(self.api_key)" in src, (
-            "cli.JarvisCLI.show_config must guard self.api_key via "
+            "jarvis_cli.terminal.JarvisCLI.show_config must guard self.api_key via "
             "is_token_provider so callable Entra ID providers don't "
             "crash /config."
         )
         assert '"Microsoft Entra ID"' in src, (
-            "cli.JarvisCLI.show_config must print the static "
+            "jarvis_cli.terminal.JarvisCLI.show_config must print the static "
             "'Microsoft Entra ID' label (matching run_agent banners) "
             "instead of attempting to slice the callable."
         )

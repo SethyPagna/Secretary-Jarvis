@@ -646,7 +646,7 @@ class TestGatewayProtection:
 
     def test_pkill_jarvis_detected(self):
         """pkill targeting jarvis/gateway processes must be caught."""
-        cmd = 'pkill -f "cli.py --gateway"'
+        cmd = 'pkill -f "jarvis_cli.terminal.py --gateway"'
         dangerous, key, desc = detect_dangerous_command(cmd)
         assert dangerous is True
         assert "self-termination" in desc

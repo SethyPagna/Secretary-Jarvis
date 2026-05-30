@@ -24,7 +24,7 @@ jarvis-agent/
 ├── agent/runtime.py          # AIAgent class — core conversation loop (~12k LOC)
 ├── tools/model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
 ├── tools/toolsets.py           # Toolset definitions, JARVIS core tool list
-├── cli.py                # JARVIS interactive shell orchestrator (~11k LOC)
+├── jarvis_cli/terminal.py                # JARVIS interactive shell orchestrator (~11k LOC)
 ├── session_state.py       # SessionDB — SQLite session store (FTS5 search)
 ├── jarvis_cli/constants.py   # get_jarvis_home(), display_jarvis_home() — profile-aware paths
 ├── jarvis_cli/logging_config.py     # setup_logging() — agent.log / errors.log / gateway.log (profile-aware)
@@ -71,7 +71,7 @@ tools/*.py  (each calls registry.register() at import time)
        ↑
 tools/model_tools.py  (imports tools/registry + triggers tool discovery)
        ↑
-agent/runtime.py, cli.py, tools/batch_runner.py, environments/
+agent/runtime.py, jarvis_cli/terminal.py, tools/batch_runner.py, environments/
 ```
 
 ---
@@ -136,11 +136,11 @@ Reasoning content is stored in `assistant_msg["reasoning"]`.
 
 ---
 
-## CLI Architecture (cli.py)
+## CLI Architecture (jarvis_cli/terminal.py)
 
 - **Rich** for banner/panels, **prompt_toolkit** for input with autocomplete
 - **KawaiiSpinner** (`agent/display.py`) — animated faces during API calls, `┊` activity feed for tool results
-- `load_cli_config()` in cli.py merges hardcoded defaults + user config YAML
+- `load_cli_config()` in jarvis_cli/terminal.py merges hardcoded defaults + user config YAML
 - **Skin engine** (`jarvis_cli/skin_engine.py`) — data-driven CLI theming; initialized from `display.skin` config key at startup; skins customize banner colors, spinner faces/verbs/wings, tool prefix, response box, branding text
 - `process_command()` is a method on the JARVIS shell — dispatches on canonical command name resolved via `resolve_command()` from the central registry
 - Skill slash commands: `agent/skill_commands.py` scans `~/.jarvis/skills/`, injects as **user message** (not system prompt) to preserve prompt caching
@@ -164,7 +164,7 @@ All slash commands are defined in a central `COMMAND_REGISTRY` list of `CommandD
 CommandDef("mycommand", "Description of what it does", "Session",
            aliases=("mc",), args_hint="[arg]"),
 ```
-2. Add handler in the JARVIS shell `process_command()` in `cli.py`:
+2. Add handler in the JARVIS shell `process_command()` in `jarvis_cli/terminal.py`:
 ```python
 elif canonical == "mycommand":
     self._handle_mycommand(cmd_original)
@@ -174,7 +174,7 @@ elif canonical == "mycommand":
 if canonical == "mycommand":
     return await self._handle_mycommand(event)
 ```
-4. For persistent settings, use `save_config_value()` in `cli.py`
+4. For persistent settings, use `save_config_value()` in `jarvis_cli/terminal.py`
 
 **CommandDef fields:**
 - `name` — canonical name without slash (e.g. `"background"`)
@@ -350,7 +350,7 @@ the env var in code (see `gateway_timeout`, `terminal.cwd` → `TERMINAL_CWD`).
 
 | Loader | Used by | Location |
 |--------|---------|----------|
-| `load_cli_config()` | CLI mode | `cli.py` — merges CLI-specific defaults + user YAML |
+| `load_cli_config()` | CLI mode | `jarvis_cli/terminal.py` — merges CLI-specific defaults + user YAML |
 | `load_config()` | `jarvis tools`, `jarvis setup`, most CLI subcommands | `jarvis_cli/config.py` — merges `DEFAULT_CONFIG` + user YAML |
 | Direct YAML load | Gateway runtime | `gateway/run.py` + `gateway/config.py` — reads user YAML raw |
 
@@ -393,17 +393,17 @@ jarvis_cli/skin_engine.py    # SkinConfig dataclass, built-in skins, YAML loader
 | Banner section headers | `colors.banner_accent` | `banner.py` |
 | Banner dim text | `colors.banner_dim` | `banner.py` |
 | Banner body text | `colors.banner_text` | `banner.py` |
-| Response box border | `colors.response_border` | `cli.py` |
+| Response box border | `colors.response_border` | `jarvis_cli/terminal.py` |
 | Spinner faces (waiting) | `spinner.waiting_faces` | `display.py` |
 | Spinner faces (thinking) | `spinner.thinking_faces` | `display.py` |
 | Spinner verbs | `spinner.thinking_verbs` | `display.py` |
 | Spinner wings (optional) | `spinner.wings` | `display.py` |
 | Tool output prefix | `tool_prefix` | `display.py` |
 | Per-tool emojis | `tool_emojis` | `display.py` → `get_tool_emoji()` |
-| Agent name | `branding.agent_name` | `banner.py`, `cli.py` |
-| Welcome message | `branding.welcome` | `cli.py` |
-| Response box label | `branding.response_label` | `cli.py` |
-| Prompt symbol | `branding.prompt_symbol` | `cli.py` |
+| Agent name | `branding.agent_name` | `banner.py`, `jarvis_cli/terminal.py` |
+| Welcome message | `branding.welcome` | `jarvis_cli/terminal.py` |
+| Response box label | `branding.response_label` | `jarvis_cli/terminal.py` |
+| Prompt symbol | `branding.prompt_symbol` | `jarvis_cli/terminal.py` |
 
 ### Built-in skins
 
@@ -493,7 +493,7 @@ and is orchestrated by `agent/memory_manager.py`. Lifecycle hooks include
 `sync_turn(turn_messages)`, `prefetch(query)`, `shutdown()`, and optional
 `post_setup(jarvis_home, config)` for setup-wizard integration.
 
-**CLI commands via `plugins/memory/<name>/cli.py`:** if a memory plugin
+**CLI commands via `plugins/memory/<name>/jarvis_cli/terminal.py`:** if a memory plugin
 defines `register_cli(subparser)`, `discover_plugin_cli_commands()` finds
 it at argparse setup time and wires it into `jarvis <plugin>`. The
 framework only exposes CLI commands for the **currently active** memory
@@ -501,7 +501,7 @@ provider (read from `memory.provider` in config.yaml), so disabled
 providers don't clutter `jarvis --help`.
 
 **Rule (Teknium, May 2026):** plugins MUST NOT modify core files
-(`agent/runtime.py`, `cli.py`, `gateway/run.py`, `jarvis_cli/main.py`, etc.).
+(`agent/runtime.py`, `jarvis_cli/terminal.py`, `gateway/run.py`, `jarvis_cli/main.py`, etc.).
 If a plugin needs a capability the framework doesn't expose, expand the
 generic plugin surface (new hook, new ctx method) — never hardcode
 plugin-specific logic into core. PR #5295 removed 95 lines of hardcoded

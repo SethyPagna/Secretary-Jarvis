@@ -387,7 +387,7 @@ class TestSessionOps:
             {
                 "role": "tool",
                 "tool_call_id": "call_search_1",
-                "content": '{"total_count":1,"matches":[{"path":"cli.py","line":42,"content":"slash commands"}]}',
+                "content": '{"total_count":1,"matches":[{"path":"jarvis_cli.terminal.py","line":42,"content":"slash commands"}]}',
             },
         ]
 
@@ -422,7 +422,7 @@ class TestSessionOps:
         assert isinstance(tool_updates[1], ToolCallProgress)
         assert tool_updates[1].tool_call_id == "call_search_1"
         assert "Search results" in tool_updates[1].content[0].content.text
-        assert "cli.py:42" in tool_updates[1].content[0].content.text
+        assert "jarvis_cli.terminal.py:42" in tool_updates[1].content[0].content.text
 
     @pytest.mark.asyncio
     async def test_load_session_replays_native_plan_for_persisted_todo_tool(self, agent):

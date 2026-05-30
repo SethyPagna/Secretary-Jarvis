@@ -521,7 +521,7 @@ def build_assistant_message(agent, assistant_message, finish_reason: str) -> dic
         # When streaming is NOT active, always fire so non-streaming modes
         # (gateway, batch, quiet) still get reasoning.
         # Any reasoning that wasn't shown during streaming is caught by the
-        # CLI post-response display fallback (cli.py _reasoning_shown_this_turn).
+        # CLI post-response display fallback (jarvis_cli/terminal.py _reasoning_shown_this_turn).
         if not agent.stream_delta_callback and not agent._stream_callback:
             try:
                 agent.reasoning_callback(reasoning_text)

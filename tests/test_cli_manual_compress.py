@@ -1,6 +1,6 @@
 from contextlib import nullcontext
 
-from cli import JarvisCLI
+from jarvis_cli.terminal import JarvisCLI
 
 
 class DummyAgent:

@@ -1,4 +1,4 @@
-"""Tests for plugins/memory/honcho/cli.py."""
+"""Tests for plugins/memory/honcho/jarvis_cli/terminal.py."""
 
 from types import SimpleNamespace
 

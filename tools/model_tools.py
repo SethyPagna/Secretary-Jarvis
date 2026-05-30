@@ -5,14 +5,14 @@ Model Tools Module
 Thin orchestration layer over the tool registry. Each tool file in tools/
 self-registers its schema, handler, and metadata via tools.registry.register().
 This module triggers discovery (by importing all tool modules), then provides
-the public API that agent/runtime.py, cli.py, tools/batch_runner.py, and the RL
+the public API that agent/runtime.py, jarvis_cli/terminal.py, tools/batch_runner.py, and the RL
 environments consume.
 
 Public API (signatures preserved from the original 2,400-line version):
     get_tool_definitions(enabled_toolsets, disabled_toolsets, quiet_mode) -> list
     handle_function_call(function_name, function_args, task_id, user_task) -> str
     TOOL_TO_TOOLSET_MAP: dict          (for tools/batch_runner.py)
-    TOOLSET_REQUIREMENTS: dict         (for cli.py, doctor.py)
+    TOOLSET_REQUIREMENTS: dict         (for jarvis_cli/terminal.py, doctor.py)
     get_all_tool_names() -> list
     get_toolset_for_tool(name) -> str
     get_available_toolsets() -> dict
@@ -188,7 +188,7 @@ discover_builtin_tools()
 #
 # Each entry point now runs discovery explicitly at its own startup:
 #   - gateway/run.py            -> start_gateway() uses run_in_executor
-#   - cli.py, jarvis_cli/*      -> inline on startup (no event loop)
+#   - jarvis_cli/terminal.py, jarvis_cli/*      -> inline on startup (no event loop)
 #   - desktop/gateway startup   -> inline on startup (no event loop)
 #   - acp_adapter/server.py     -> asyncio.to_thread on session init
 

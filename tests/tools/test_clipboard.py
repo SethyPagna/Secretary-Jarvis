@@ -3,7 +3,7 @@ and CLI integration.
 
 Coverage:
   jarvis_cli/clipboard.py  — platform-specific image extraction (macOS, WSL, Wayland, X11)
-  cli.py                   — _try_attach_clipboard_image, _build_multimodal_content,
+  jarvis_cli/terminal.py                   — _try_attach_clipboard_image, _build_multimodal_content,
                               image attachment state, queue tuple routing
 """
 
@@ -35,7 +35,7 @@ from jarvis_cli.clipboard import (
     _windows_has_image,
     _convert_to_png,
 )
-from cli import _should_auto_attach_clipboard_image_on_paste
+from jarvis_cli.terminal import _should_auto_attach_clipboard_image_on_paste
 
 FAKE_PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 100
 FAKE_BMP = b"BM" + b"\x00" * 100
@@ -882,7 +882,7 @@ class TestPreprocessImagesWithVision:
     @pytest.fixture
     def cli(self):
         """Minimal JarvisCLI with mocked internals."""
-        with patch("cli.load_cli_config") as mock_cfg:
+        with patch("jarvis_cli.terminal.load_cli_config") as mock_cfg:
             mock_cfg.return_value = {
                 "model": {"default": "test/model", "base_url": "http://x", "provider": "auto"},
                 "terminal": {"timeout": 60},
@@ -895,8 +895,8 @@ class TestPreprocessImagesWithVision:
                 "delegation": {},
             }
             with patch.dict("os.environ", {"OPENROUTER_API_KEY": "test-key"}):
-                with patch("cli.CLI_CONFIG", mock_cfg.return_value):
-                    from cli import JarvisCLI
+                with patch("jarvis_cli.terminal.CLI_CONFIG", mock_cfg.return_value):
+                    from jarvis_cli.terminal import JarvisCLI
                     cli_obj = JarvisCLI.__new__(JarvisCLI)
                     # Manually init just enough state
                     cli_obj._attached_images = []
@@ -994,7 +994,7 @@ class TestTryAttachClipboardImage:
 
     @pytest.fixture
     def cli(self):
-        from cli import JarvisCLI
+        from jarvis_cli.terminal import JarvisCLI
         cli_obj = JarvisCLI.__new__(JarvisCLI)
         cli_obj._attached_images = []
         cli_obj._image_counter = 0
@@ -1057,7 +1057,7 @@ class TestAutoAttachClipboardImageOnPaste:
 class TestVoiceSubmission:
     @pytest.fixture
     def cli(self):
-        from cli import JarvisCLI
+        from jarvis_cli.terminal import JarvisCLI
         cli_obj = JarvisCLI.__new__(JarvisCLI)
         cli_obj._attached_images = [Path("/tmp/stale.png")]
         cli_obj._pending_input = queue.Queue()
@@ -1075,7 +1075,7 @@ class TestVoiceSubmission:
         with patch("tools.voice_mode.play_beep"):
             with patch("tools.voice_mode.transcribe_recording", return_value={"success": True, "transcript": "hello"}):
                 with patch("os.path.isfile", return_value=False):
-                    with patch("cli._cprint"):
+                    with patch("jarvis_cli.terminal._cprint"):
                         cli._voice_stop_and_transcribe()
 
         assert cli._attached_images == []

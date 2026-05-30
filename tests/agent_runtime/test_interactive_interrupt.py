@@ -99,7 +99,7 @@ def main() -> int:
     agent_result = [None]
 
     def agent_thread_func():
-        """Simulates the agent_thread in cli.py's chat() method."""
+        """Simulates the agent_thread in jarvis_cli/terminal.py's chat() method."""
         log.info("🟢 agent_thread starting")
 
         with patch("agent.runtime.OpenAI") as MockOpenAI:

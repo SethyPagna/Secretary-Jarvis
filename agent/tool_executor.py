@@ -221,7 +221,7 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
         except Exception:
             pass
         # Propagate approval/sudo callbacks to this worker thread.
-        # Mirrors cli.py run_agent() pattern (GHSA-qg5c-hvr5-hjgr).
+        # Mirrors jarvis_cli/terminal.py run_agent() pattern (GHSA-qg5c-hvr5-hjgr).
         if _parent_approval_cb is not None:
             try:
                 _set_approval_callback(_parent_approval_cb)

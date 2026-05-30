@@ -2063,7 +2063,7 @@ def _has_openai_audio_backend() -> bool:
 # Sentence boundary pattern: punctuation followed by space or newline
 _SENTENCE_BOUNDARY_RE = re.compile(r'(?<=[.!?])(?:\s|\n)|(?:\n\n)')
 
-# Markdown stripping patterns (same as cli.py _voice_speak_response)
+# Markdown stripping patterns (same as jarvis_cli/terminal.py _voice_speak_response)
 _MD_CODE_BLOCK = re.compile(r'```[\s\S]*?```')
 _MD_LINK = re.compile(r'\[([^\]]+)\]\([^)]+\)')
 _MD_URL = re.compile(r'https?://\S+')

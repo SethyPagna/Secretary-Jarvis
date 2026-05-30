@@ -16,7 +16,6 @@ ROOT_FILE_ALLOWLIST = {
     "AGENTS.md",
     "MANIFEST.in",
     "README.md",
-    "cli.py",
     "package-lock.json",
     "package.json",
     "pyproject.toml",
