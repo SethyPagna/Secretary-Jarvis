@@ -282,7 +282,7 @@ def _scan_for_plugin_adapter_antipattern(source: str) -> list[str]:
                 _src_no_ws = "".join(call_src.split())
                 if (
                     "src/plugins/platforms" in call_src
-                    or "src\\src\plugins\\platforms" in call_src
+                    or r"src\src\plugins\platforms" in call_src
                     or "'plugins'/'platforms'" in _src_no_ws
                     or '"plugins"/"platforms"' in _src_no_ws
                 ):
