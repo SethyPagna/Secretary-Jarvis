@@ -183,6 +183,11 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn("border border-cyan", orb_source)
         self.assertIn("jarvis-cosmic-field", home_source)
         self.assertIn("radial-gradient(circle at 18% 20%", home_source)
+        self.assertIn("voiceEnergy", orb_source)
+        self.assertIn("tokens/s", home_source)
+        self.assertNotIn("lifetime tokens", home_source)
+        self.assertNotIn("Input tokens", (WEB_ROOT / "src" / "components" / "StatsPanel.tsx").read_text(encoding="utf-8"))
+        self.assertNotIn("Output tokens", (WEB_ROOT / "src" / "components" / "StatsPanel.tsx").read_text(encoding="utf-8"))
         self.assertNotIn("rounded-md border border-cyan-200/10 bg-[#080e14]/72", home_source)
 
 

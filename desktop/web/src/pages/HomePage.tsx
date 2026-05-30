@@ -742,7 +742,6 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!autoVoiceArmed || listening || voiceBusy || speaking) return;
-    if (!readiness?.stt?.ready) return;
 
     let cancelled = false;
     const requestInitialPermission = () => {
@@ -844,6 +843,12 @@ export default function HomePage() {
 
   const statusLabel = compactStatus(status, readiness);
   const activeVoice = readiness?.tts?.engine ?? "voice";
+  const micLabel = readiness?.stt?.ready
+    ? "mic ready"
+    : autoVoiceArmed
+      ? "mic enabled"
+      : "mic checking";
+  const tokenRateLabel = `${(stats?.tokens_per_second ?? 0).toFixed(2)} tokens/s`;
   const visibleSouls = teamSouls
     .filter((soul) => soul.id !== "jarvis")
     .slice(0, 7);
@@ -900,9 +905,9 @@ export default function HomePage() {
               <span className="text-cyan-100/25">|</span>
               <span>{activeVoice}</span>
               <span className="text-cyan-100/25">|</span>
-              <span>{readiness?.stt?.ready ? "mic ready" : "mic checking"}</span>
+              <span>{micLabel}</span>
               <span className="text-cyan-100/25">|</span>
-              <span>{stats?.tokens_total_lifetime ?? 0} lifetime tokens</span>
+              <span>{tokenRateLabel}</span>
             </div>
           </div>
 
@@ -1056,21 +1061,27 @@ function TeamSoulOrbit({
 }) {
   if (souls.length === 0) return null;
 
+  const orbitPoints = [
+    { x: 28, y: 24 },
+    { x: 50, y: 17 },
+    { x: 72, y: 24 },
+    { x: 80, y: 48 },
+    { x: 67, y: 73 },
+    { x: 33, y: 73 },
+    { x: 20, y: 48 },
+  ];
+
   return (
     <div className="pointer-events-none absolute inset-0 z-20">
       {souls.map((soul, index) => {
-        const angle = -118 + index * (236 / Math.max(1, souls.length - 1));
-        const radiusX = 44;
-        const radiusY = 38;
-        const x = 50 + Math.cos((angle * Math.PI) / 180) * radiusX;
-        const y = 52 + Math.sin((angle * Math.PI) / 180) * radiusY;
+        const point = orbitPoints[index % orbitPoints.length];
         const isActive = soul.id === activeSoul;
 
         return (
           <div
             key={soul.id}
             className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
-            style={{ left: `${x}%`, top: `${y}%` }}
+            style={{ left: `${point.x}%`, top: `${point.y}%` }}
             title={`${soul.name}: ${soul.when_to_use}`}
           >
             <span

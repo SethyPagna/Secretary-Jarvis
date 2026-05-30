@@ -148,14 +148,6 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
       </div>
 
       <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-white/10 pt-2 text-[0.7rem] text-slate-200/78">
-        <div>
-          <div className="text-slate-300/58">Input tokens</div>
-          <div className="font-mono text-white">{stats?.tokens_input ?? 0}</div>
-        </div>
-        <div>
-          <div className="text-slate-300/58">Output tokens</div>
-          <div className="font-mono text-white">{stats?.tokens_output ?? 0}</div>
-        </div>
         <div title="Live token throughput from the current desktop chat counter.">
           <div className="text-slate-300/58">Tokens/s</div>
           <div className="font-mono text-white">{formatRate(stats?.tokens_per_second)}</div>

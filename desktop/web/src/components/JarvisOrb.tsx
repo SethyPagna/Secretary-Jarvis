@@ -237,6 +237,12 @@ function OrbMesh({ audioLevel = 0, state }: JarvisOrbProps) {
     const elapsed = clock.getElapsedTime();
     const speed = state === "thinking" || state === "executing" ? 0.9 : 0.25;
     const speechPulse = state === "speaking" ? 10.5 : state === "listening" ? 7.5 : 2.4;
+    const voiceEnergy =
+      state === "speaking"
+        ? Math.max(audioLevel, 0.2)
+        : state === "listening"
+          ? audioLevel
+          : 0;
     const audioPulse = audioLevel * (state === "listening" || state === "speaking" ? 0.16 : 0.06);
     const pulse =
       1 +
@@ -246,6 +252,9 @@ function OrbMesh({ audioLevel = 0, state }: JarvisOrbProps) {
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.005 + speed * 0.004;
       groupRef.current.rotation.x = Math.sin(elapsed * 0.36) * 0.075;
+      groupRef.current.position.x = Math.sin(elapsed * 44) * voiceEnergy * 0.045;
+      groupRef.current.position.y = Math.cos(elapsed * 39) * voiceEnergy * 0.035;
+      groupRef.current.position.z = Math.sin(elapsed * 31) * voiceEnergy * 0.02;
     }
 
     if (coreRef.current) {
