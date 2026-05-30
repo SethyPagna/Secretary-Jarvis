@@ -464,6 +464,7 @@ export interface RuntimeStatsResponse {
   hardware_status?: Record<string, string | null | undefined>;
   tokens_input: number;
   tokens_output: number;
+  tokens_per_second: number;
   tokens_total_lifetime: number;
   active_skills: number;
   listed_skills?: number;
@@ -471,17 +472,17 @@ export interface RuntimeStatsResponse {
   gateway_connections: number;
   souls_online?: number;
   souls_total?: number;
-    active_soul?: string;
-    delegate_souls?: string[];
-    llm_runtime?: {
-      running?: boolean;
-      model?: string;
-      backend?: string;
-      endpoint?: string;
-    };
-    uptime_seconds: number;
-    warnings: string[];
-  }
+  active_soul?: string;
+  delegate_souls?: string[];
+  llm_runtime?: {
+    running?: boolean;
+    model?: string;
+    backend?: string;
+    endpoint?: string;
+  };
+  uptime_seconds: number;
+  warnings: string[];
+}
 
 export interface IntegrationLiveProbe {
   ok?: boolean;

@@ -66,6 +66,7 @@ class RuntimeStatsTests(unittest.TestCase):
         self.assertEqual(stats["cpu_temp_c"], 52.4)
         self.assertEqual(stats["tokens_input"], 120)
         self.assertEqual(stats["tokens_output"], 34)
+        self.assertEqual(stats["tokens_per_second"], 0.0)
         self.assertEqual(stats["tokens_total_lifetime"], 123456)
         self.assertEqual(stats["active_skills"], 9)
         self.assertEqual(stats["gateway_connections"], 3)
@@ -106,6 +107,28 @@ class RuntimeStatsTests(unittest.TestCase):
         self.assertEqual(stats["tokens_input"], 12)
         self.assertEqual(stats["tokens_output"], 8)
         self.assertEqual(stats["tokens_total_lifetime"], 99)
+
+    def test_collect_runtime_stats_reports_live_token_throughput(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home = Path(temp_dir)
+
+            first = collect_runtime_stats(
+                home,
+                token_counter={"input": 10, "output": 5},
+                psutil_module=None,
+                started_at=0.0,
+                now=lambda: 100.0,
+            )
+            second = collect_runtime_stats(
+                home,
+                token_counter={"input": 40, "output": 25},
+                psutil_module=None,
+                started_at=0.0,
+                now=lambda: 105.0,
+            )
+
+        self.assertEqual(first["tokens_per_second"], 0.0)
+        self.assertEqual(second["tokens_per_second"], 10.0)
 
     def test_desktop_chat_records_current_and_lifetime_tokens(self) -> None:
         from jarvis_cli.desktop_chat import _record_desktop_tokens

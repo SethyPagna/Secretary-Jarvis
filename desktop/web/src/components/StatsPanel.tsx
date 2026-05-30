@@ -67,6 +67,11 @@ function cleanRuntimeLabel(value: unknown): string {
     .replace(/whisper-large-v3-turbo/i, "whisper v3 turbo");
 }
 
+function formatRate(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "0.00/s";
+  return `${Number(value).toFixed(2)}/s`;
+}
+
 export function StatsPanel({ readiness, stats }: StatsPanelProps) {
   const llm = readiness?.llm;
   const tts = readiness?.tts;
@@ -150,6 +155,10 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         <div>
           <div className="text-slate-300/58">Output tokens</div>
           <div className="font-mono text-white">{stats?.tokens_output ?? 0}</div>
+        </div>
+        <div title="Live token throughput from the current desktop chat counter.">
+          <div className="text-slate-300/58">Tokens/s</div>
+          <div className="font-mono text-white">{formatRate(stats?.tokens_per_second)}</div>
         </div>
         <div>
           <div className="text-slate-300/58">Skills</div>

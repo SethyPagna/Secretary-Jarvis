@@ -20,6 +20,7 @@ _HARDWARE_CACHE: dict[str, Any] = {
     "warnings": [],
 }
 _HARDWARE_CACHE_TTL_SECONDS = 8.0
+_TOKEN_RATE_CACHE: dict[str, dict[str, float]] = {}
 
 
 def _utc_timestamp() -> str:
@@ -101,6 +102,25 @@ def _read_current_tokens(jarvis_home: Path) -> dict[str, int]:
         "input": _counter_value(current, "input", "tokens_input", "input_tokens"),
         "output": _counter_value(current, "output", "tokens_output", "output_tokens"),
     }
+
+
+def _tokens_per_second(jarvis_home: Path, current_time: float, total_tokens: int) -> float:
+    cache_key = str(jarvis_home.resolve())
+    previous = _TOKEN_RATE_CACHE.get(cache_key)
+    _TOKEN_RATE_CACHE[cache_key] = {
+        "timestamp": float(current_time),
+        "total": float(total_tokens),
+    }
+    if not previous:
+        return 0.0
+
+    elapsed = max(0.0, current_time - float(previous.get("timestamp") or 0.0))
+    if elapsed <= 0:
+        return 0.0
+
+    previous_total = int(previous.get("total") or 0)
+    delta = max(0, int(total_tokens) - previous_total)
+    return round(delta / elapsed, 2)
 
 
 def _read_json_mapping(path: Path) -> dict[str, Any]:
@@ -401,6 +421,17 @@ def collect_runtime_stats(
     uptime_seconds = int(max(0, current_time - started_at)) if started_at else 0
     soul_status = _read_soul_status()
     current_tokens = _read_current_tokens(home) if token_counter is None else {}
+    tokens_input = (
+        _counter_value(token_counter, "input", "tokens_input")
+        if token_counter is not None
+        else current_tokens["input"]
+    )
+    tokens_output = (
+        _counter_value(token_counter, "output", "tokens_output")
+        if token_counter is not None
+        else current_tokens["output"]
+    )
+    tokens_per_second = _tokens_per_second(home, current_time, tokens_input + tokens_output)
 
     return {
         "type": "stats",
@@ -421,12 +452,9 @@ def collect_runtime_stats(
             "gpu_temp_source": "nvidia-smi" if gpu_stats.get("gpu_temp_c") is not None else "unavailable",
             "cpu_temp_source": "psutil/wmi" if cpu_temp_c is not None else "unavailable",
         },
-        "tokens_input": _counter_value(token_counter, "input", "tokens_input")
-        if token_counter is not None
-        else current_tokens["input"],
-        "tokens_output": _counter_value(token_counter, "output", "tokens_output")
-        if token_counter is not None
-        else current_tokens["output"],
+        "tokens_input": tokens_input,
+        "tokens_output": tokens_output,
+        "tokens_per_second": tokens_per_second,
         "tokens_total_lifetime": _read_lifetime_tokens(home),
         "active_skills": int(active_skills or 0),
         "gateway_connections": _active_gateway_connections(gateway_status),
