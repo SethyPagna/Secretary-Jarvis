@@ -12,12 +12,12 @@ Usage:
     python cli.py --list-tools             # List available tools and exit
 """
 
-# IMPORTANT: jarvis_bootstrap must be the very first import — UTF-8 stdio
-# on Windows.  No-op on POSIX.  See jarvis_bootstrap.py for full rationale.
+# IMPORTANT: jarvis_cli.bootstrap must be the very first import — UTF-8 stdio
+# on Windows.  No-op on POSIX.  See jarvis_cli/bootstrap.py for full rationale.
 try:
-    import jarvis_bootstrap  # noqa: F401
+    import jarvis_cli.bootstrap  # noqa: F401
 except ModuleNotFoundError:
-    # Graceful fallback when jarvis_bootstrap isn't registered in the venv
+    # Graceful fallback when jarvis_cli.bootstrap isn't registered in the venv
     # yet — happens during partial ``jarvis update`` where git-reset landed
     # new code but ``uv pip install -e .`` didn't finish.  Missing bootstrap
     # means UTF-8 stdio setup is skipped on Windows; POSIX is unaffected.

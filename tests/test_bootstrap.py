@@ -1,4 +1,4 @@
-﻿"""Tests for jarvis_bootstrap — Windows UTF-8 stdio shim.
+"""Tests for jarvis_cli.bootstrap — Windows UTF-8 stdio shim.
 
 The bootstrap module is imported at the top of every Jarvis entry point
 (jarvis, jarvis-agent, jarvis-acp, gateway, batch_runner, cli.py).  It
@@ -12,7 +12,7 @@ Key invariants covered by these tests:
   3. Idempotent: safe to call multiple times
   4. Respects user opt-out: if the user explicitly sets PYTHONUTF8=0 or
      PYTHONIOENCODING=something-else, we leave those alone
-  5. Load order: every Jarvis entry point imports jarvis_bootstrap as its
+  5. Load order: every Jarvis entry point imports jarvis_cli.bootstrap as its
      first non-docstring import (before anything that might do file I/O
      or print to stdout)
 """
@@ -24,8 +24,6 @@ import os
 import subprocess
 import sys
 import textwrap
-import unittest.mock as mock
-
 import pytest
 
 
@@ -33,14 +31,14 @@ import pytest
 # We need to be able to reset its state between tests, so we import it
 # fresh in each test that manipulates _IS_WINDOWS.
 def _fresh_import():
-    """Return a freshly-imported jarvis_bootstrap module.
+    """Return a freshly-imported jarvis_cli.bootstrap module.
 
     Drops any cached copy from sys.modules first so module-level code
     runs again and the platform check re-evaluates.
     """
-    sys.modules.pop("jarvis_bootstrap", None)
-    import jarvis_bootstrap  # noqa: WPS433
-    return jarvis_bootstrap
+    sys.modules.pop("jarvis_cli.bootstrap", None)
+    import jarvis_cli.bootstrap  # noqa: WPS433
+    return jarvis_cli.bootstrap
 
 
 class TestWindowsBehavior:
@@ -233,13 +231,13 @@ class TestStdioReconfigureErrorHandling:
 
 
 class TestEntryPointsImportBootstrap:
-    """Every Jarvis entry point must import jarvis_bootstrap as its
+    """Every Jarvis entry point must import jarvis_cli.bootstrap as its
     first non-docstring import.  We check this by scanning source files
     rather than invoking the entry points (which would require a full
     agent context)."""
 
     # Entry points that invoke Jarvis as a process.  Each one must
-    # import jarvis_bootstrap before doing any file I/O or stdout writes.
+    # import jarvis_cli.bootstrap before doing any file I/O or stdout writes.
     ENTRY_POINTS = [
         "jarvis_cli/main.py",   # jarvis CLI (console_script)
         "run_agent.py",          # jarvis-agent (console_script)
@@ -251,7 +249,7 @@ class TestEntryPointsImportBootstrap:
 
     @pytest.mark.parametrize("path", ENTRY_POINTS)
     def test_entry_point_imports_bootstrap(self, path):
-        """The file must contain 'import jarvis_bootstrap' and that
+        """The file must contain 'import jarvis_cli.bootstrap' and that
         line must appear before the first 'import' of anything else.
 
         We're lenient about the docstring (can be arbitrarily long) and
@@ -262,13 +260,13 @@ class TestEntryPointsImportBootstrap:
         points may guard the import against ``ModuleNotFoundError`` so a
         half-finished ``jarvis update`` (git-reset landed new code but
         ``uv pip install -e .`` didn't finish re-registering
-        ``jarvis_bootstrap`` as a top-level module) leaves jarvis
+        ``jarvis_cli.bootstrap`` as a top-level module) leaves jarvis
         recoverable instead of crashing on every invocation.  When the
         first top-level node is such a guarded-import block, we peek
         inside it to verify bootstrap is the imported module.
         """
         # Resolve relative to the jarvis-agent repo root.  Tests live
-        # at tests/test_jarvis_bootstrap.py, so go up one dir.
+        # at tests/test_bootstrap.py, so go up one dir.
         import pathlib
         here = pathlib.Path(__file__).resolve()
         repo_root = here.parent.parent  # tests/ -> repo root
@@ -289,7 +287,7 @@ class TestEntryPointsImportBootstrap:
                 break
             # Accept a guarded-import Try block where the body is a lone
             # Import node — this is the recovery-friendly form that lets
-            # jarvis start even when jarvis_bootstrap hasn't been
+            # jarvis start even when jarvis_cli.bootstrap hasn't been
             # re-registered in the venv yet.
             if isinstance(node, ast.Try) and len(node.body) == 1 and isinstance(
                 node.body[0], (ast.Import, ast.ImportFrom)
@@ -306,10 +304,9 @@ class TestEntryPointsImportBootstrap:
         else:  # ImportFrom
             first_import_name = first_import_node.module or ""
 
-        assert first_import_name == "jarvis_bootstrap", (
+        assert first_import_name == "jarvis_cli.bootstrap", (
             f"{path}: first top-level import is {first_import_name!r}, "
-            f"but it must be 'jarvis_bootstrap' so UTF-8 stdio is "
+            f"but it must be 'jarvis_cli.bootstrap' so UTF-8 stdio is "
             f"configured before anything else initializes.  Move the "
-            f"'import jarvis_bootstrap' line to be the first import."
+            f"'import jarvis_cli.bootstrap' line to be the first import."
         )
-

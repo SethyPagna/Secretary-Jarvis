@@ -43,21 +43,21 @@ Usage:
     jarvis claw migrate --dry-run  # Preview migration without changes
 """
 
-# IMPORTANT: jarvis_bootstrap must be the very first import — it sets up
+# IMPORTANT: jarvis_cli.bootstrap must be the very first import — it sets up
 # UTF-8 stdio on Windows so print()/subprocess children don't hit
 # UnicodeEncodeError with non-ASCII characters.  No-op on POSIX.
 #
-# Guarded against ModuleNotFoundError because ``jarvis_bootstrap`` is a
-# top-level module registered via pyproject.toml's ``py-modules`` list.
+# Guarded against ModuleNotFoundError because older editable installs may not
+# have the packaged bootstrap module registered yet.
 # When the user upgrades code via ``git pull`` (or ``jarvis update``
 # crashes between ``git reset --hard`` and ``uv pip install -e .``), the
-# new code references ``jarvis_bootstrap`` but the editable install's
-# ``.pth`` file still points at the old set of top-level modules.  Without
+# new code references ``jarvis_cli.bootstrap`` but package metadata can still
+# point at the old module set.  Without
 # this guard, jarvis crashes on import and the user can't run
 # ``jarvis update`` to recover.  Missing the bootstrap means UTF-8 stdio
 # setup is skipped on Windows — degraded, not broken.  POSIX is unaffected.
 try:
-    import jarvis_bootstrap  # noqa: F401
+    import jarvis_cli.bootstrap  # noqa: F401
 except ModuleNotFoundError:
     pass
 

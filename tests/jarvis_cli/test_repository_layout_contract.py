@@ -17,7 +17,6 @@ ROOT_FILE_ALLOWLIST = {
     "MANIFEST.in",
     "README.md",
     "cli.py",
-    "jarvis_bootstrap.py",
     "jarvis_constants.py",
     "jarvis_logging.py",
     "jarvis_state.py",
@@ -52,7 +51,6 @@ ROOT_DIR_ALLOWLIST = {
 }
 
 ROOT_PY_MODULES = {
-    "jarvis_bootstrap",
     "jarvis_constants",
     "jarvis_logging",
     "jarvis_state",
