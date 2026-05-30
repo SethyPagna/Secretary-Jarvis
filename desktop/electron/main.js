@@ -22,15 +22,18 @@ const DESKTOP_WARMUP_ENDPOINTS = [
   '/api/skills'
 ]
 const DESKTOP_WARMUP_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_DESKTOP_WARMUP_TIMEOUT_MS || '10000', 10)
+const APP_USER_MODEL_ID = 'com.sethypagna.jarvis'
 
 if (/^\d+$/.test(REMOTE_DEBUGGING_PORT)) {
   app.commandLine.appendSwitch('remote-debugging-port', REMOTE_DEBUGGING_PORT)
 }
 
-const HAS_SINGLE_INSTANCE_LOCK = app.requestSingleInstanceLock()
+app.setAppUserModelId(APP_USER_MODEL_ID)
+
+const HAS_SINGLE_INSTANCE_LOCK = app.requestSingleInstanceLock({ appId: APP_USER_MODEL_ID })
 
 if (!HAS_SINGLE_INSTANCE_LOCK) {
-  app.quit()
+  app.exit(0)
 }
 
 app.on('second-instance', () => {
