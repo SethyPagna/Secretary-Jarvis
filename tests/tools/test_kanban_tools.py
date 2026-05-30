@@ -71,7 +71,7 @@ def test_kanban_worker_env_overrides_profile_toolset_filter(monkeypatch, tmp_pat
     monkeypatch.setenv("JARVIS_HOME", str(home))
 
     import tools.kanban_tools  # ensure registered
-    from model_tools import _clear_tool_defs_cache, get_tool_definitions
+    from tools.model_tools import _clear_tool_defs_cache, get_tool_definitions
     from tools.registry import invalidate_check_fn_cache
 
     invalidate_check_fn_cache()
@@ -1094,7 +1094,7 @@ def test_kanban_guidance_not_in_normal_prompt(monkeypatch, tmp_path):
     monkeypatch.setattr(_P, "home", lambda: tmp_path)
 
     from tools.registry import invalidate_check_fn_cache
-    from model_tools import _clear_tool_defs_cache
+    from tools.model_tools import _clear_tool_defs_cache
     invalidate_check_fn_cache()
     _clear_tool_defs_cache()
 
@@ -1122,7 +1122,7 @@ def test_kanban_guidance_in_worker_prompt(monkeypatch, tmp_path):
     monkeypatch.setattr(_P, "home", lambda: tmp_path)
 
     from tools.registry import invalidate_check_fn_cache
-    from model_tools import _clear_tool_defs_cache
+    from tools.model_tools import _clear_tool_defs_cache
     invalidate_check_fn_cache()
     _clear_tool_defs_cache()
 

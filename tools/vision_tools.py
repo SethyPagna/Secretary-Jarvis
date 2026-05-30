@@ -643,7 +643,7 @@ async def vision_analyze_tool(
     and processed using Gemini 3 Flash Preview via OpenRouter API.
     
     The user_prompt parameter is expected to be pre-formatted by the calling
-    function (typically model_tools.py) to include both full description
+    function (typically tools/model_tools.py) to include both full description
     requests and specific questions.
     
     Args:
@@ -755,7 +755,7 @@ async def vision_analyze_tool(
 
         debug_call_data["image_size_bytes"] = image_size_bytes
         
-        # Use the prompt as provided (model_tools.py now handles full description formatting)
+        # Use the prompt as provided (tools/model_tools.py now handles full description formatting)
         comprehensive_prompt = user_prompt
         
         # Prepare the message with base64-encoded image

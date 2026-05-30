@@ -3743,7 +3743,7 @@ class GatewayRunner:
         # decisions take precedence in tie cases.  The CLI startup path
         # does this via an explicit call in jarvis_cli/main.py; the
         # gateway lazily imports run_agent inside per-request handlers,
-        # so the discover_plugins() side-effect in model_tools.py is NOT
+        # so the discover_plugins() side-effect in tools/model_tools.py is NOT
         # guaranteed to have run by the time we reach this point.
         try:
             from jarvis_cli.plugins import discover_plugins

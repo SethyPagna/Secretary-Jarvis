@@ -267,7 +267,7 @@ def test_registry_get_schema_returns_schema():
     from tools.registry import registry
 
     # Import to trigger discovery
-    import model_tools  # noqa: F401
+    import tools.model_tools as model_tools  # noqa: F401
 
     schema = registry.get_schema("terminal")
     assert schema is not None

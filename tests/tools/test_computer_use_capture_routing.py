@@ -180,7 +180,7 @@ class TestCaptureResponseRoutedToAuxVision:
 
         with patch.object(cu_tool, "_should_route_through_aux_vision",
                           return_value=True), \
-             patch("model_tools._run_async", side_effect=_fake_run_async), \
+             patch("tools.model_tools._run_async", side_effect=_fake_run_async), \
              patch("tools.vision_tools.vision_analyze_tool",
                    new_callable=lambda: fake_vat):
             resp = cu_tool._capture_response(cap)
@@ -234,7 +234,7 @@ class TestCaptureResponseRoutedToAuxVision:
 
         with patch.object(cu_tool, "_should_route_through_aux_vision",
                           return_value=True), \
-             patch("model_tools._run_async", side_effect=_fake_run_async), \
+             patch("tools.model_tools._run_async", side_effect=_fake_run_async), \
              patch("tools.vision_tools.vision_analyze_tool",
                    new_callable=lambda: fake_vat):
             cu_tool._capture_response(cap)
@@ -262,7 +262,7 @@ class TestCaptureResponseRoutedToAuxVision:
 
         with patch.object(cu_tool, "_should_route_through_aux_vision",
                           return_value=True), \
-             patch("model_tools._run_async", side_effect=_fake_run_async), \
+             patch("tools.model_tools._run_async", side_effect=_fake_run_async), \
              patch("tools.vision_tools.vision_analyze_tool",
                    new_callable=lambda: fake_vat):
             resp = cu_tool._capture_response(cap)
@@ -287,7 +287,7 @@ class TestCaptureResponseRoutedToAuxVision:
 
         with patch.object(cu_tool, "_should_route_through_aux_vision",
                           return_value=True), \
-             patch("model_tools._run_async", side_effect=_fake_run_async), \
+             patch("tools.model_tools._run_async", side_effect=_fake_run_async), \
              patch("tools.vision_tools.vision_analyze_tool",
                    new_callable=lambda: fake_vat):
             resp = cu_tool._capture_response(cap)
@@ -309,7 +309,7 @@ class TestCaptureResponseRoutedToAuxVision:
 
         with patch.object(cu_tool, "_should_route_through_aux_vision",
                           return_value=True), \
-             patch("model_tools._run_async", side_effect=_fake_run_async), \
+             patch("tools.model_tools._run_async", side_effect=_fake_run_async), \
              patch("tools.vision_tools.vision_analyze_tool",
                    new_callable=lambda: fake_vat):
             resp = cu_tool._capture_response(cap)
@@ -417,7 +417,7 @@ class TestBugReproductionAnchor:
 
         with patch.object(cu_tool, "_should_route_through_aux_vision",
                           return_value=True), \
-             patch("model_tools._run_async", side_effect=_fake_run_async), \
+             patch("tools.model_tools._run_async", side_effect=_fake_run_async), \
              patch("tools.vision_tools.vision_analyze_tool",
                    new_callable=lambda: fake_vat):
             resp = cu_tool._capture_response(cap)

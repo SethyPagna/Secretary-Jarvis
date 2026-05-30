@@ -101,7 +101,7 @@ else:
 
 
 # Import our tool system
-from model_tools import (
+from tools.model_tools import (
     get_tool_definitions,
     get_toolset_for_tool,
     handle_function_call,
@@ -4068,7 +4068,7 @@ def main(
     
     # Handle tool listing
     if list_tools:
-        from model_tools import get_all_tool_names, get_available_toolsets
+        from tools.model_tools import get_all_tool_names, get_available_toolsets
         from tools.toolsets import get_all_toolsets, get_toolset_info
         
         print("📋 Available Tools & Toolsets:")

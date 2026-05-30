@@ -20,7 +20,6 @@ ROOT_FILE_ALLOWLIST = {
     "jarvis_constants.py",
     "jarvis_logging.py",
     "jarvis_state.py",
-    "model_tools.py",
     "package-lock.json",
     "package.json",
     "pyproject.toml",
@@ -53,7 +52,6 @@ ROOT_PY_MODULES = {
     "jarvis_constants",
     "jarvis_logging",
     "jarvis_state",
-    "model_tools",
     "run_agent",
     "utils",
 }

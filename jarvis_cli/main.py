@@ -5665,7 +5665,7 @@ _UPDATE_CRITICAL_FILES = (
     "jarvis_cli/__init__.py",
     "cli.py",
     "run_agent.py",
-    "model_tools.py",
+    "tools/model_tools.py",
     "tools/toolsets.py",
     "jarvis_constants.py",
 )
@@ -10150,7 +10150,7 @@ def _prepare_agent_startup(args) -> None:
         )
     try:
         # MCP tool discovery — no event loop running in CLI startup,
-        # so inline is safe.  Moved here from model_tools.py module scope
+        # so inline is safe.  Moved here from tools/model_tools.py module scope
         # to avoid freezing the gateway's event loop on its first message
         # via the same lazy import path (#16856).
         from tools.mcp_tool import discover_mcp_tools

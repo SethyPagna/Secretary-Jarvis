@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import jarvis_cli.plugins as plugins_mod
-import model_tools
+import tools.model_tools as model_tools
 
 
 _UNSET = object()

@@ -444,7 +444,7 @@ def _run_review_in_thread(
             review_agent.session_start = agent.session_start
             review_agent.session_id = agent.session_id
 
-            from model_tools import get_tool_definitions
+            from tools.model_tools import get_tool_definitions
             from jarvis_cli.plugins import (
                 set_thread_tool_whitelist,
                 clear_thread_tool_whitelist,

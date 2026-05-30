@@ -244,7 +244,7 @@ def main(argv: list[str] | None = None) -> None:
     # MCP tool discovery from config.yaml — run before asyncio.run() so
     # it's safe to use blocking waits.  (ACP also registers per-session
     # MCP servers dynamically via asyncio.to_thread inside the event
-    # loop; that path is unaffected.)  Moved from model_tools.py module
+    # loop; that path is unaffected.)  Moved from tools/model_tools.py module
     # scope to avoid freezing the gateway's loop on lazy import (#16856).
     try:
         from tools.mcp_tool import discover_mcp_tools

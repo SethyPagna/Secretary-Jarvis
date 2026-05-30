@@ -597,7 +597,7 @@ def _route_capture_through_aux_vision(
         import uuid as _uuid
 
         from jarvis_constants import get_jarvis_dir
-        from model_tools import _run_async
+        from tools.model_tools import _run_async
         from tools.vision_tools import vision_analyze_tool
     except Exception as exc:  # pragma: no cover - defensive
         logger.debug("computer_use: aux-vision import failed: %s", exc)

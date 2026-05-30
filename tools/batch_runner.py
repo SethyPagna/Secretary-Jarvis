@@ -52,13 +52,13 @@ from tools.toolset_distributions import (
     sample_toolsets_from_distribution,
     validate_distribution
 )
-from model_tools import TOOL_TO_TOOLSET_MAP
+from tools.model_tools import TOOL_TO_TOOLSET_MAP
 
 
 # Global configuration for worker processes
 _WORKER_CONFIG = {}
 
-# All possible tools - auto-derived from the master mapping in model_tools.py.
+# All possible tools - auto-derived from the master mapping in tools/model_tools.py.
 # This stays in sync automatically when new tools are added to TOOL_TO_TOOLSET_MAP.
 # Used for consistent schema in Arrow/Parquet (HuggingFace datasets) and for
 # filtering corrupted entries during trajectory combination.
@@ -1029,7 +1029,7 @@ class BatchRunner:
         combined_file = self.output_dir / "trajectories.jsonl"
         print(f"\n📦 Combining ALL batch files into {combined_file.name}...")
         
-        # Valid tools auto-derived from model_tools.py — no manual updates needed
+        # Valid tools auto-derived from tools/model_tools.py — no manual updates needed
         VALID_TOOLS = ALL_POSSIBLE_TOOLS
         
         total_entries = 0

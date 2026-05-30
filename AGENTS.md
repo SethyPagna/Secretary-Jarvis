@@ -22,7 +22,7 @@ entry points you'll actually edit.
 ```
 jarvis-agent/
 ├── run_agent.py          # AIAgent class — core conversation loop (~12k LOC)
-├── model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
+├── tools/model_tools.py        # Tool orchestration, discover_builtin_tools(), handle_function_call()
 ├── tools/toolsets.py           # Toolset definitions, JARVIS core tool list
 ├── cli.py                # JARVIS interactive shell orchestrator (~11k LOC)
 ├── jarvis_state.py       # SessionDB — SQLite session store (FTS5 search)
@@ -69,7 +69,7 @@ tools/registry.py  (no deps — imported by all tool files)
        ↑
 tools/*.py  (each calls registry.register() at import time)
        ↑
-model_tools.py  (imports tools/registry + triggers tool discovery)
+tools/model_tools.py  (imports tools/registry + triggers tool discovery)
        ↑
 run_agent.py, cli.py, tools/batch_runner.py, environments/
 ```
@@ -476,10 +476,10 @@ can:
   plugin's argparse tree is wired into `jarvis` at startup so
   `jarvis <pluginname> <subcmd>` works with no change to `main.py`
 
-Hooks are invoked from `model_tools.py` (pre/post tool) and `run_agent.py`
+Hooks are invoked from `tools/model_tools.py` (pre/post tool) and `run_agent.py`
 (lifecycle). **Discovery timing pitfall:** `discover_plugins()` only runs
-as a side effect of importing `model_tools.py`. Code paths that read plugin
-state without importing `model_tools.py` first must call `discover_plugins()`
+as a side effect of importing `tools/model_tools.py`. Code paths that read plugin
+state without importing `tools/model_tools.py` first must call `discover_plugins()`
 explicitly (it's idempotent).
 
 ### Memory-provider plugins (`plugins/memory/<name>/`)
@@ -933,11 +933,11 @@ interactive menus must use `jarvis_cli/curses_ui.py` — see
 ### DO NOT use `\033[K` (ANSI erase-to-EOL) in spinner/display code
 Leaks as literal `?[K` text under `prompt_toolkit`'s `patch_stdout`. Use space-padding: `f"\r{line}{' ' * pad}"`.
 
-### `_last_resolved_tool_names` is a process-global in `model_tools.py`
+### `_last_resolved_tool_names` is a process-global in `tools/model_tools.py`
 `_run_single_child()` in `delegate_tool.py` saves and restores this global around subagent execution. If you add new code that reads this global, be aware it may be temporarily stale during child agent runs.
 
 ### DO NOT hardcode cross-tool references in schema descriptions
-Tool schema descriptions must not mention tools from other toolsets by name (e.g., `browser_navigate` saying "prefer web_search"). Those tools may be unavailable (missing API keys, disabled toolset), causing the model to hallucinate calls to non-existent tools. If a cross-reference is needed, add it dynamically in `get_tool_definitions()` in `model_tools.py` — see the `browser_navigate` / `execute_code` post-processing blocks for the pattern.
+Tool schema descriptions must not mention tools from other toolsets by name (e.g., `browser_navigate` saying "prefer web_search"). Those tools may be unavailable (missing API keys, disabled toolset), causing the model to hallucinate calls to non-existent tools. If a cross-reference is needed, add it dynamically in `get_tool_definitions()` in `tools/model_tools.py` — see the `browser_navigate` / `execute_code` post-processing blocks for the pattern.
 
 ### The gateway has TWO message guards — both must bypass approval/control commands
 When an agent is running, messages pass through two sequential guards:

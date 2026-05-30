@@ -60,7 +60,7 @@ This page is the top-level map of JARVIS internals. Use it to orient yourself in
 jarvis-agent/
 ├── run_agent.py              # AIAgent — core conversation loop (large file)
 ├── cli.py                    # JarvisDesktopRuntime — interactive terminal UI (large file)
-├── model_tools.py            # Tool discovery, schema collection, dispatch
+├── tools/model_tools.py            # Tool discovery, schema collection, dispatch
 ├── tools/toolsets.py               # Tool groupings and platform presets
 ├── jarvis_state.py           # SQLite session/state database with FTS5
 ├── jarvis_constants.py       # JARVIS_HOME, profile-aware paths
@@ -274,7 +274,7 @@ tools/registry.py  (no deps — imported by all tool files)
        ↑
 tools/*.py  (each calls registry.register() at import time)
        ↑
-model_tools.py  (imports tools/registry + triggers tool discovery)
+tools/model_tools.py  (imports tools/registry + triggers tool discovery)
        ↑
 run_agent.py, cli.py, tools/batch_runner.py, environments/
 ```
@@ -513,7 +513,7 @@ After each turn:
 | `agent/context_compressor.py` | Default engine — lossy summarization algorithm |
 | `agent/prompt_caching.py` | Anthropic prompt caching markers and cache metrics |
 | `agent/auxiliary_client.py` | Auxiliary LLM client for side tasks (vision, summarization) |
-| `model_tools.py` | Tool schema collection, `handle_function_call()` dispatch |
+| `tools/model_tools.py` | Tool schema collection, `handle_function_call()` dispatch |
 
 ## Related Docs
 
@@ -803,7 +803,7 @@ Jarvis tools are self-registering functions grouped into toolsets and executed t
 Primary files:
 
 - `tools/registry.py`
-- `model_tools.py`
+- `tools/model_tools.py`
 - `tools/toolsets.py`
 - `tools/terminal_tool.py`
 - `tools/environments/*`
@@ -812,7 +812,7 @@ Primary files:
 
 Each tool module calls `registry.register(...)` at import time.
 
-`model_tools.py` is responsible for importing/discovering tool modules and building the schema list used by the model.
+`tools/model_tools.py` is responsible for importing/discovering tool modules and building the schema list used by the model.
 
 ### How `registry.register()` works
 
@@ -836,7 +836,7 @@ Each call creates a `ToolEntry` stored in the singleton `ToolRegistry._tools` di
 
 ### Discovery: `discover_builtin_tools()`
 
-When `model_tools.py` is imported, it calls `discover_builtin_tools()` from `tools/registry.py`. This function scans every `tools/*.py` file using AST parsing to find modules that contain top-level `registry.register()` calls, then imports them:
+When `tools/model_tools.py` is imported, it calls `discover_builtin_tools()` from `tools/registry.py`. This function scans every `tools/*.py` file using AST parsing to find modules that contain top-level `registry.register()` calls, then imports them:
 
 ```python
 # tools/registry.py (simplified)

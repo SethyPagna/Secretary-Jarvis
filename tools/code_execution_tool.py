@@ -448,7 +448,7 @@ def _rpc_server_loop(
     Accept one client connection and dispatch tool-call requests until
     the client disconnects or the call limit is reached.
     """
-    from model_tools import handle_function_call
+    from tools.model_tools import handle_function_call
 
     conn = None
     try:
@@ -712,7 +712,7 @@ def _rpc_poll_loop(
     independent process, so these calls run safely concurrent with the
     script-execution thread.
     """
-    from model_tools import handle_function_call
+    from tools.model_tools import handle_function_call
 
     poll_interval = 0.1  # 100 ms
 
@@ -1761,7 +1761,7 @@ def build_execute_code_schema(enabled_sandbox_tools: set = None,
 
 
 # Default schema used at registration time (all sandbox tools listed,
-# current configured mode).  model_tools.py rebuilds per-session anyway.
+# current configured mode).  tools/model_tools.py rebuilds per-session anyway.
 EXECUTE_CODE_SCHEMA = build_execute_code_schema()
 
 

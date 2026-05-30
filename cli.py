@@ -784,13 +784,13 @@ def AIAgent(*args, **kwargs):
 
 
 def get_tool_definitions(*args, **kwargs):
-    from model_tools import get_tool_definitions as _get_tool_definitions
+    from tools.model_tools import get_tool_definitions as _get_tool_definitions
 
     return _get_tool_definitions(*args, **kwargs)
 
 
 def get_toolset_for_tool(*args, **kwargs):
-    from model_tools import get_toolset_for_tool as _get_toolset_for_tool
+    from tools.model_tools import get_toolset_for_tool as _get_toolset_for_tool
 
     return _get_toolset_for_tool(*args, **kwargs)
 
@@ -5707,7 +5707,7 @@ class JarvisCLI:
     def _show_tool_availability_warnings(self):
         """Show warnings about disabled tools due to missing API keys."""
         try:
-            from model_tools import check_tool_availability
+            from tools.model_tools import check_tool_availability
             
             available, unavailable = check_tool_availability()
             

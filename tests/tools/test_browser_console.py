@@ -130,7 +130,7 @@ class TestBrowserConsoleToolsetWiring:
         assert "browser_console" in _JARVIS_CORE_TOOLS
 
     def test_in_legacy_toolset_map(self):
-        from model_tools import _LEGACY_TOOLSET_MAP
+        from tools.model_tools import _LEGACY_TOOLSET_MAP
         assert "browser_console" in _LEGACY_TOOLSET_MAP["browser_tools"]
 
     def test_in_registry(self):
