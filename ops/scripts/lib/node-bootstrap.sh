@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# scripts/lib/node-bootstrap.sh
+# ops/scripts/lib/node-bootstrap.sh
 # ----------------------------------------------------------------------------
 # Sourceable helper: ensure Node.js >= MIN_VERSION is available for the TUI
 # (React + Ink), browser tools, and the WhatsApp bridge.
@@ -13,7 +13,7 @@
 #   5. pinned nodejs.org tarball into ~/.jarvis/node/ (always works, zero shell rc edits)
 #
 # Usage:
-#   source scripts/lib/node-bootstrap.sh
+#   source ops/scripts/lib/node-bootstrap.sh
 #   ensure_node   # returns 0 on success, non-zero on failure
 #   if [ "$JARVIS_NODE_AVAILABLE" = true ]; then ...; fi
 #

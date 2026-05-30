@@ -2,7 +2,7 @@
 #
 # Run from a PowerShell prompt:
 #
-#   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tests/test-install-ps1-stage-protocol.ps1
+#   powershell -NoProfile -ExecutionPolicy Bypass -File ops/scripts/tests/test-install-ps1-stage-protocol.ps1
 #
 # These tests only exercise the metadata surface (-ProtocolVersion, -Manifest,
 # unknown -Stage handling).  They DO NOT actually run any install stages --

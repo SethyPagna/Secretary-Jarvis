@@ -104,7 +104,7 @@ Goals:
 
 Required files:
 
-- `scripts/rebrand.py`
+- `ops/scripts/rebrand.py`
 - `jarvis_cli/data/default_SOUL.md`
 - `jarvis_cli/jarvis_constants.py`
 - `scripts/install.sh`
@@ -114,7 +114,7 @@ Required files:
 Verification:
 
 - `python -m unittest tests.jarvis_cli.test_jarvis_rebrand_contract`
-- `python -m py_compile jarvis_constants.py jarvis_cli/__init__.py scripts/rebrand.py`
+- `python -m py_compile jarvis_constants.py jarvis_cli/__init__.py ops/scripts/rebrand.py`
 
 ## Part 2 - Desktop Application Architecture
 

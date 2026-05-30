@@ -9,6 +9,6 @@ and runtime helper processes used by the packaged app.
 - `acp_registry/` contains Agent Client Protocol registry metadata used by
   release automation.
 
-Public installer, gateway, rebrand, and test-runner entrypoints stay in the
-root `scripts/` folder because release docs, raw GitHub install URLs, and
+Public installer, gateway, and test-runner entrypoints stay in the root
+`scripts/` folder because release docs, raw GitHub install URLs, and
 contributor workflows point there.

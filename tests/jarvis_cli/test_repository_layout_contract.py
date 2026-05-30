@@ -87,6 +87,15 @@ APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
     "web/eslint.config.js",
 }
 
+ROOT_SCRIPT_ALLOWLIST = {
+    "install.cmd",
+    "install.ps1",
+    "install.sh",
+    "install_psutil_android.py",
+    "jarvis-gateway",
+    "run_tests.sh",
+}
+
 LEGACY_BRAND_SOURCE_EXCLUDES = {
     "package-lock.json",
     "uv.lock",
@@ -215,6 +224,15 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         }
 
         self.assertEqual(tracked_js, APP_RUNTIME_JAVASCRIPT_ALLOWLIST)
+
+    def test_root_scripts_are_public_entrypoints_only(self) -> None:
+        tracked_root_scripts = {
+            path.parts[1]
+            for path in _tracked_paths()
+            if len(path.parts) == 2 and path.parts[0] == "scripts"
+        }
+
+        self.assertEqual(tracked_root_scripts, ROOT_SCRIPT_ALLOWLIST)
 
     def test_tracked_plugin_bundles_use_jarvis_runtime_bridge(self) -> None:
         bundle_paths = [
