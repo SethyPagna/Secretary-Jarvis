@@ -31,7 +31,6 @@ ROOT_FILE_ALLOWLIST = {
     "setup-jarvis.cmd",
     "setup.py",
     "stop-jarvis.cmd",
-    "toolset_distributions.py",
     "toolsets.py",
     "utils.py",
     "uv.lock",
@@ -61,7 +60,6 @@ ROOT_PY_MODULES = {
     "jarvis_time",
     "model_tools",
     "run_agent",
-    "toolset_distributions",
     "toolsets",
     "utils",
 }

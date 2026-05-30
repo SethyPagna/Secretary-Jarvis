@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 import fire
 
 from run_agent import AIAgent
-from toolset_distributions import (
+from tools.toolset_distributions import (
     list_distributions, 
     sample_toolsets_from_distribution,
     validate_distribution
@@ -1220,7 +1220,7 @@ def main(
     """
     # Handle list distributions
     if list_distributions:
-        from toolset_distributions import print_distribution_info
+        from tools.toolset_distributions import print_distribution_info
 
         print("📊 Available Toolset Distributions")
         print("=" * 70)

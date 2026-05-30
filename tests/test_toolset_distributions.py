@@ -1,9 +1,9 @@
-"""Tests for toolset_distributions.py — distribution CRUD, sampling, validation."""
+"""Tests for tools/toolset_distributions.py — distribution CRUD, sampling, validation."""
 
 import pytest
 from unittest.mock import patch
 
-from toolset_distributions import (
+from tools.toolset_distributions import (
     DISTRIBUTIONS,
     get_distribution,
     list_distributions,

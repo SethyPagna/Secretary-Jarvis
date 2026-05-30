@@ -1039,5 +1039,5 @@ OPTIONAL_ENV_VARS = {
 - [ ] Confirmed this really should be a built-in/core tool and not a plugin
 - [ ] Handler returns JSON strings, errors returned as `{"error": "..."}`
 - [ ] Optional: API key added to `OPTIONAL_ENV_VARS` in `jarvis_cli/config.py`
-- [ ] Optional: Added to `toolset_distributions.py` for batch processing
+- [ ] Optional: Added to `tools/toolset_distributions.py` for batch processing
 - [ ] Tested with `jarvis chat -q "Use the weather tool for London"`
