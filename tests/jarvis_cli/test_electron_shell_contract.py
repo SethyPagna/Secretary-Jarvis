@@ -27,6 +27,9 @@ class ElectronShellContractTests(unittest.TestCase):
         source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
         self.assertIn("const { app, BrowserWindow, ipcMain, Menu, Tray } = require('electron')", source)
+        self.assertIn("app.requestSingleInstanceLock()", source)
+        self.assertIn("second-instance", source)
+        self.assertIn("showMainWindow()", source)
         self.assertIn("spawn(", source)
         self.assertIn("jarvis_cli.desktop_entry", source)
         self.assertIn("WindowStyle Hidden", source)

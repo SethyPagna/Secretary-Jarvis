@@ -27,6 +27,18 @@ if (/^\d+$/.test(REMOTE_DEBUGGING_PORT)) {
   app.commandLine.appendSwitch('remote-debugging-port', REMOTE_DEBUGGING_PORT)
 }
 
+const HAS_SINGLE_INSTANCE_LOCK = app.requestSingleInstanceLock()
+
+if (!HAS_SINGLE_INSTANCE_LOCK) {
+  app.quit()
+}
+
+app.on('second-instance', () => {
+  if (!shutdownStarted) {
+    showMainWindow()
+  }
+})
+
 let mainWindow = null
 let backendProcess = null
 let tray = null
