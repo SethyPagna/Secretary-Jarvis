@@ -82,7 +82,7 @@ def _read_rgba_png(path: Path) -> tuple[int, int, bytes]:
 
 class OrbIconContractTests(unittest.TestCase):
     def test_icon_png_is_large_transparent_orb_without_background_frame(self) -> None:
-        icon = ROOT / "assets" / "icon.png"
+        icon = ROOT / "desktop" / "assets" / "icon.png"
         width, height, rgba = _read_rgba_png(icon)
 
         self.assertEqual((width, height), (1024, 1024))
@@ -97,7 +97,7 @@ class OrbIconContractTests(unittest.TestCase):
         self.assertGreaterEqual(alpha_at(width // 2, height // 2), 240)
 
     def test_windows_icon_is_generated_for_packaging(self) -> None:
-        ico = ROOT / "assets" / "icon.ico"
+        ico = ROOT / "desktop" / "assets" / "icon.ico"
         data = ico.read_bytes()
         self.assertTrue(ico.is_file())
         self.assertGreater(ico.stat().st_size, 1000)
@@ -105,13 +105,13 @@ class OrbIconContractTests(unittest.TestCase):
         self.assertGreaterEqual(struct.unpack("<H", data[4:6])[0], 7)
 
     def test_icon_generator_is_committed(self) -> None:
-        generator = ROOT / "scripts" / "generate-orb-icon.ps1"
+        generator = ROOT / "ops" / "scripts" / "build" / "generate-orb-icon.ps1"
         source = generator.read_text(encoding="utf-8")
 
         self.assertIn("System.Drawing", source)
         self.assertIn("Transparent", source)
-        self.assertIn("assets/icon.png", source)
-        self.assertIn("assets/icon.ico", source)
+        self.assertIn("desktop/assets/icon.png", source)
+        self.assertIn("desktop/assets/icon.ico", source)
         self.assertIn("$iconSizes = @(16, 24, 32, 48, 64, 128, 256)", source)
 
 

@@ -136,7 +136,7 @@ Focused checks used during the desktop remake:
 python -m unittest tests.jarvis_cli.test_jarvis_rebrand_contract
 python -m unittest tests.jarvis_cli.test_desktop_home_contract
 python -m unittest tests.jarvis_cli.test_desktop_identity_contract
-cd web && npm run build
+cd desktop/web && npm run build
 ```
 
 Packaging checks also require FastAPI, Uvicorn, Pydantic, and PyInstaller to be

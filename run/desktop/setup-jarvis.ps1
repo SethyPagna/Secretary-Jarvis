@@ -97,8 +97,8 @@ try {
             Write-Host "Root Node dependencies already installed."
         }
 
-        if (-not (Test-Path (Join-Path $RepoRoot "web/node_modules"))) {
-            Invoke-Checked $npm.Source --prefix web install
+        if (-not (Test-Path (Join-Path $RepoRoot "desktop/web/node_modules"))) {
+            Invoke-Checked $npm.Source --prefix desktop/web install
         }
         else {
             Write-Host "Web Node dependencies already installed."

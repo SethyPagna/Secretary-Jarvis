@@ -123,8 +123,8 @@ function resolveBackendLaunch() {
 function backendEnv() {
   const resourceRoot = app.isPackaged && process.resourcesPath
     ? process.resourcesPath
-    : path.resolve(__dirname, '..')
-  const exeDir = app.isPackaged ? path.dirname(app.getPath('exe')) : path.resolve(__dirname, '..')
+    : path.resolve(__dirname, '..', '..')
+  const exeDir = app.isPackaged ? path.dirname(app.getPath('exe')) : path.resolve(__dirname, '..', '..')
   const portableDir = process.env.PORTABLE_EXECUTABLE_DIR
     || (process.env.PORTABLE_EXECUTABLE_FILE ? path.dirname(process.env.PORTABLE_EXECUTABLE_FILE) : '')
   const candidateModelsDirs = [
@@ -166,11 +166,11 @@ function runBackendPreflight() {
   appendDesktopLog('[jarvis-backend] preflight starting', JSON.stringify({
     command: launch.command,
     args: launch.preflightArgs,
-    cwd: launch.options?.cwd || path.resolve(__dirname, '..'),
+    cwd: launch.options?.cwd || path.resolve(__dirname, '..', '..'),
     exists: fs.existsSync(launch.command)
   }))
   const result = spawnSync(launch.command, launch.preflightArgs, {
-    cwd: path.resolve(__dirname, '..'),
+    cwd: path.resolve(__dirname, '..', '..'),
     env: backendEnv(),
     encoding: 'utf8',
     windowsHide: true,
@@ -210,11 +210,11 @@ function startBackendProcess() {
   appendDesktopLog('[jarvis-backend] starting', JSON.stringify({
     command: launch.command,
     args: launch.args,
-    cwd: launch.options?.cwd || path.resolve(__dirname, '..'),
+    cwd: launch.options?.cwd || path.resolve(__dirname, '..', '..'),
     exists: fs.existsSync(launch.command)
   }))
   backendProcess = spawn(launch.command, launch.args, {
-    cwd: path.resolve(__dirname, '..'),
+    cwd: path.resolve(__dirname, '..', '..'),
     env: backendEnv(),
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
@@ -292,7 +292,7 @@ async function waitForBackend(timeoutMs = 20000) {
 function rendererIndexCandidates() {
   const candidates = [
     path.join(__dirname, '..', 'web', 'dist', 'index.html'),
-    path.join(__dirname, '..', 'jarvis_cli', 'web_dist', 'index.html')
+    path.join(__dirname, '..', '..', 'jarvis_cli', 'web_dist', 'index.html')
   ]
 
   if (process.resourcesPath) {

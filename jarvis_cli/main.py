@@ -5782,11 +5782,11 @@ def _web_ui_build_needed(web_dir: Path) -> bool:
     """Return True if the web UI dist is missing or stale.
 
     The Vite build outputs to ``jarvis_cli/web_dist/`` (per config/vite.config.ts
-    outDir: "../jarvis_cli/web_dist"), NOT to ``web/dist/``.  Uses the Vite
+    outDir: "../../jarvis_cli/web_dist"), NOT to ``desktop/web/dist/``.  Uses the Vite
     manifest as the sentinel because it is written last and therefore has the
     newest mtime of any build output.
     """
-    dist_dir = web_dir.parent / "jarvis_cli" / "web_dist"
+    dist_dir = PROJECT_ROOT / "jarvis_cli" / "web_dist"
     sentinel = dist_dir / ".vite" / "manifest.json"
     if not sentinel.exists():
         sentinel = dist_dir / "index.html"
@@ -5862,7 +5862,7 @@ def _build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
     """Build the web UI frontend if npm is available.
 
     Args:
-        web_dir: Path to the ``web/`` source directory.
+        web_dir: Path to the ``desktop/web/`` source directory.
         fatal: If True, print error guidance and return False on failure
                instead of a soft warning (used by ``jarvis web``).
 
@@ -5890,7 +5890,7 @@ def _build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
     if not npm:
         if fatal:
             _say("Web UI frontend not built and npm is not available.")
-            _say("Install Node.js, then run:  cd web && npm install && npm run build")
+            _say("Install Node.js, then run:  npm --prefix desktop/web install && npm --prefix desktop/web run build")
         return not fatal
     _say("→ Building web UI...")
 
@@ -5917,7 +5917,7 @@ def _build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
         )
         _relay(r1)
         if fatal:
-            _say("  Run manually:  cd web && npm install && npm run build")
+            _say("  Run manually:  npm --prefix desktop/web install && npm --prefix desktop/web run build")
         return False
     # First attempt
     r2 = subprocess.run(
@@ -5945,7 +5945,7 @@ def _build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
     if r2.returncode != 0:
         stderr_preview = (r2.stderr or "").strip()
         stderr_tail = "\n  ".join(stderr_preview.splitlines()[-10:]) if stderr_preview else ""
-        dist_dir = web_dir.parent / "jarvis_cli" / "web_dist"
+        dist_dir = PROJECT_ROOT / "jarvis_cli" / "web_dist"
         dist_index = dist_dir / "index.html"
 
         # If a stale dist exists, serve it as a fallback instead of failing.
@@ -5963,7 +5963,7 @@ def _build_web_ui(web_dir: Path, *, fatal: bool = False) -> bool:
         )
         _relay(r2)
         if fatal:
-            _say("  Run manually:  cd web && npm install && npm run build")
+            _say("  Run manually:  npm --prefix desktop/web install && npm --prefix desktop/web run build")
         return False
     _say("  ✓ Web UI built")
     return True
@@ -9934,7 +9934,7 @@ def cmd_dashboard(args):
         sys.exit(1)
 
     if "JARVIS_WEB_DIST" not in os.environ and not getattr(args, "skip_build", False):
-        if not _build_web_ui(PROJECT_ROOT / "web", fatal=True):
+        if not _build_web_ui(PROJECT_ROOT / "desktop" / "web", fatal=True):
             sys.exit(1)
     elif getattr(args, "skip_build", False):
         # --skip-build trusts the caller to have pre-built the web UI.
@@ -9947,7 +9947,7 @@ def cmd_dashboard(args):
         )
         if not (_dist_root / "index.html").exists():
             print(f"✗ --skip-build was passed but no web dist found at: {_dist_root}")
-            print("  Pre-build first:  cd web && npm install && npm run build")
+            print("  Pre-build first:  npm --prefix desktop/web install && npm --prefix desktop/web run build")
             print("  Or drop --skip-build to build automatically.")
             sys.exit(1)
         print(f"→ Skipping web UI build (--skip-build); using dist at {_dist_root}")
@@ -12907,7 +12907,7 @@ Examples:
         help=(
             "Skip the web UI build step and serve the existing dist directly. "
             "Useful for non-interactive contexts (Windows Scheduled Tasks, CI) "
-            "where npm may not be available. Pre-build with: cd web && npm run build"
+            "where npm may not be available. Pre-build with: npm --prefix desktop/web run build"
         ),
     )
     # Lifecycle flags — mutually exclusive with each other and with the

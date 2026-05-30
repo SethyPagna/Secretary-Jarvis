@@ -5,7 +5,7 @@
   "description": "JARVIS desktop agent with an embedded Python backend, local model orchestration, and voice readiness checks.",
   "author": "SethyPagna",
   "private": true,
-  "main": "electron/main.js",
+  "main": "desktop/electron/main.js",
   "scripts": {
     "postinstall": "echo 'JARVIS desktop dependencies ready.'",
     "jarvis:setup": "powershell -ExecutionPolicy Bypass -File run/desktop/setup-jarvis.ps1",
@@ -40,7 +40,7 @@
       "output": "release"
     },
     "files": [
-      "electron/**/*",
+      "desktop/electron/**/*",
       "jarvis_cli/web_dist/**/*",
       "package.json"
     ],
@@ -50,7 +50,7 @@
         "to": "backend"
       },
       {
-        "from": "assets",
+        "from": "desktop/assets",
         "to": "assets"
       },
       {
@@ -70,7 +70,7 @@
       "target": [
         "portable"
       ],
-      "icon": "assets/icon.ico",
+      "icon": "desktop/assets/icon.ico",
       "signAndEditExecutable": false
     },
     "portable": {
@@ -81,14 +81,14 @@
       "target": [
         "dmg"
       ],
-      "icon": "assets/icon.icns",
+      "icon": "desktop/assets/icon.icns",
       "category": "public.app-category.productivity"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "icon": "assets/icon.png"
+      "icon": "desktop/assets/icon.png"
     }
   },
   "overrides": {

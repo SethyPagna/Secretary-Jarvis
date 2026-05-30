@@ -17,10 +17,10 @@ module.exports = async function afterPack(context) {
     context.packager?.appInfo?.productName ||
     "JARVIS";
   const exePath = path.join(context.appOutDir, `${productFilename}.exe`);
-  const iconPath = path.join(repoRoot, "assets", "icon.ico");
+  const iconPath = path.join(repoRoot, "desktop", "assets", "icon.ico");
   const rceditPath =
     process.env.JARVIS_RCEDIT ||
-    path.join(repoRoot, "vendor", "rcedit", "win32", "rcedit-x64.exe");
+    path.join(repoRoot, "desktop", "vendor", "rcedit", "win32", "rcedit-x64.exe");
 
   for (const requiredPath of [exePath, iconPath, rceditPath]) {
     if (!fs.existsSync(requiredPath)) {

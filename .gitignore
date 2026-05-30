@@ -64,9 +64,9 @@ node_modules/
 # Web UI build output
 /jarvis_cli/web_dist/
 
-# Web UI assets synced at build time via `npm run sync-assets`.
-/web/public/fonts/
-/web/public/ds-assets/
+# Web UI assets synced at build time.
+/desktop/web/public/fonts/
+/desktop/web/public/ds-assets/
 
 # Root-level export scratch folders/files. Do not hide skill assets named
 # export-* under skills/ or optional-skills/.

@@ -54,13 +54,13 @@ try {
     $dependencyCheck = Join-Path $PSScriptRoot "check-desktop-python-deps.ps1"
     & $dependencyCheck -Python $Python
 
-    if (-not (Test-Path "web/node_modules")) {
-        Invoke-Checked $npm.Source --prefix web install
+    if (-not (Test-Path "desktop/web/node_modules")) {
+        Invoke-Checked $npm.Source --prefix desktop/web install
     }
 
-    Invoke-Checked $npm.Source --prefix web run build
+    Invoke-Checked $npm.Source --prefix desktop/web run build
 
-    $webDist = Join-Path $RepoRoot "web/dist"
+    $webDist = Join-Path $RepoRoot "desktop/web/dist"
     $embeddedDist = Join-Path $RepoRoot "jarvis_cli/web_dist"
     $viteEmbeddedDist = $embeddedDist
     if (Test-Path (Join-Path $webDist "index.html")) {
@@ -74,7 +74,7 @@ try {
         Write-Host "Vite already emitted the web app into $viteEmbeddedDist"
     }
     else {
-        throw "Vite build output not found. Expected web/dist or jarvis_cli/web_dist."
+        throw "Vite build output not found. Expected desktop/web/dist or jarvis_cli/web_dist."
     }
 
     Invoke-Checked $Python -m PyInstaller $PyInstallerSpec --noconfirm --clean

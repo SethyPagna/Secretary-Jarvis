@@ -144,18 +144,18 @@ Process model:
 
 Implemented shell files:
 
-- `electron/main.js` starts `jarvis_cli.desktop_entry` in development or the packaged `dist/jarvis-backend` resource in production.
-- `electron/main.js` creates a frameless, offline-capable desktop window and loads `JARVIS_RENDERER_URL`, built web assets, or the backend web surface.
-- `electron/main.js` calls `/api/shutdown` before sending `SIGTERM`, with `SIGKILL` as the fixed-timeout fallback.
-- `electron/preload.js` exposes only `jarvisDesktop.getBackendStatus()` and `jarvisDesktop.windowControl(...)` to the renderer.
+- `desktop/electron/main.js` starts `jarvis_cli.desktop_entry` in development or the packaged `dist/jarvis-backend` resource in production.
+- `desktop/electron/main.js` creates a frameless, offline-capable desktop window and loads `JARVIS_RENDERER_URL`, built web assets, or the backend web surface.
+- `desktop/electron/main.js` calls `/api/shutdown` before sending `SIGTERM`, with `SIGKILL` as the fixed-timeout fallback.
+- `desktop/electron/preload.js` exposes only `jarvisDesktop.getBackendStatus()` and `jarvisDesktop.windowControl(...)` to the renderer.
 - `package.json` declares the Electron 33+ app entrypoint, electron-builder resources, and desktop packaging scripts.
 - The title bar owns desktop sidebar minimization: the sidebar collapses to an icon rail on desktop and opens as a drawer on small screens.
 
 Verification:
 
 - `python -m unittest tests.jarvis_cli.test_electron_shell_contract`
-- `node --check electron/main.js`
-- `node --check electron/preload.js`
+- `node --check desktop/electron/main.js`
+- `node --check desktop/electron/preload.js`
 
 ## Part 3 - Home Page
 
@@ -217,10 +217,10 @@ Voice engines:
 
 Voice asset locations:
 
-- `assets/voices`
-- `assets/voice`
-- `vendor/voices`
-- `vendor/voice`
+- `desktop/assets/voices`
+- `desktop/assets/voice`
+- `desktop/vendor/voices`
+- `desktop/vendor/voice`
 - `models/hexgrad__Kokoro-82M/voices`
 - `models/k2-fsa__OmniVoice`
 

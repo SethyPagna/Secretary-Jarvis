@@ -1,6 +1,6 @@
 param(
-    [string]$PngPath = "assets/icon.png",
-    [string]$IcoPath = "assets/icon.ico",
+    [string]$PngPath = "desktop/assets/icon.png",
+    [string]$IcoPath = "desktop/assets/icon.ico",
     [int]$Size = 1024
 )
 

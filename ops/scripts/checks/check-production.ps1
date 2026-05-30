@@ -53,9 +53,9 @@ function Test-OwnedRuntimeProcesses {
 function Test-NodeRuntimeScripts {
     $node = Get-Command node -ErrorAction Stop
     $runtimeScripts = @(
-        "electron/main.js",
-        "electron/preload.js",
-        "web/config/eslint.config.js",
+        "desktop/electron/main.js",
+        "desktop/electron/preload.js",
+        "desktop/web/config/eslint.config.js",
         "ops/scripts/build/after-pack-icon.cjs",
         "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
         "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
@@ -92,7 +92,7 @@ try {
 
     if (-not $SkipWebBuild) {
         Invoke-Checked "Web production build" {
-            npm.cmd --prefix web run build
+            npm.cmd --prefix desktop/web run build
         }
     }
 

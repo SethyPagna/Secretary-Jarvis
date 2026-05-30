@@ -41,10 +41,9 @@ ROOT_DIR_ALLOWLIST = {
     ".github",
     "acp_adapter",
     "agent",
-    "assets",
     "cron",
+    "desktop",
     "docs",
-    "electron",
     "gateway",
     "jarvis_cli",
     "optional-skills",
@@ -56,8 +55,6 @@ ROOT_DIR_ALLOWLIST = {
     "skills",
     "tests",
     "tools",
-    "vendor",
-    "web",
 }
 
 ROOT_PY_MODULES = {
@@ -74,15 +71,15 @@ ROOT_PY_MODULES = {
 }
 
 APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
-    "electron/main.js",
-    "electron/preload.js",
+    "desktop/electron/main.js",
+    "desktop/electron/preload.js",
     "optional-skills/research/gitnexus-explorer/scripts/proxy.mjs",
     "ops/scripts/build/after-pack-icon.cjs",
     "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
     "ops/scripts/checks/whatsapp-bridge/allowlist.test.mjs",
     "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
     "skills/creative/p5js/scripts/export-frames.js",
-    "web/config/eslint.config.js",
+    "desktop/web/config/eslint.config.js",
 }
 
 ROOT_SCRIPT_ALLOWLIST = {
@@ -97,8 +94,8 @@ ROOT_SCRIPT_ALLOWLIST = {
 LEGACY_BRAND_SOURCE_EXCLUDES = {
     "package-lock.json",
     "uv.lock",
-    "web/package-lock.json",
-    "vendor/jarvis-managed-ui/package-lock.json",
+    "desktop/web/package-lock.json",
+    "desktop/vendor/jarvis-managed-ui/package-lock.json",
 }
 
 LEGACY_BRAND_SCAN_DIR_EXCLUDES = {
@@ -182,12 +179,12 @@ class RepositoryLayoutContractTests(unittest.TestCase):
 
     def test_gitignore_still_ignores_generated_dependency_and_release_dirs(self) -> None:
         self.assertTrue(_is_git_ignored("node_modules/example-package/index.js"))
-        self.assertTrue(_is_git_ignored("web/node_modules/example-package/index.js"))
+        self.assertTrue(_is_git_ignored("desktop/web/node_modules/example-package/index.js"))
         self.assertTrue(_is_git_ignored("release/JARVIS 1.0.0.exe"))
         self.assertTrue(_is_git_ignored("runtime/llama.cpp/llama-server.exe"))
         self.assertTrue(_is_git_ignored("jarvis_cli/web_dist/index.html"))
-        self.assertTrue(_is_git_ignored("web/public/fonts/Collapse-Regular.woff2"))
-        self.assertTrue(_is_git_ignored("web/public/ds-assets/crest.svg"))
+        self.assertTrue(_is_git_ignored("desktop/web/public/fonts/Collapse-Regular.woff2"))
+        self.assertTrue(_is_git_ignored("desktop/web/public/ds-assets/crest.svg"))
 
     def test_skill_and_plugin_assets_referenced_by_manifests_are_tracked(self) -> None:
         tracked = {path.as_posix() for path in _tracked_paths()}
@@ -213,7 +210,11 @@ class RepositoryLayoutContractTests(unittest.TestCase):
             path.as_posix()
             for path in _tracked_paths()
             if path.suffix in {".js", ".jsx", ".mjs", ".cjs"}
-            and path.parts[0] != "vendor"
+            and not (
+                len(path.parts) >= 2
+                and path.parts[0] == "desktop"
+                and path.parts[1] == "vendor"
+            )
             and not (
                 len(path.parts) >= 4
                 and path.parts[0] == "plugins"

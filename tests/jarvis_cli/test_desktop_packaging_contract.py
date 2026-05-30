@@ -30,12 +30,12 @@ class DesktopPackagingContractTests(unittest.TestCase):
         build_script = (ROOT / "ops" / "scripts" / "build" / "build-desktop.ps1").read_text(
             encoding="utf-8",
         )
-        vite_config = (ROOT / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
+        vite_config = (ROOT / "desktop" / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
 
-        self.assertIn('outDir: "../jarvis_cli/web_dist"', vite_config)
+        self.assertIn('outDir: "../../jarvis_cli/web_dist"', vite_config)
         self.assertIn("$viteEmbeddedDist", build_script)
         self.assertIn("Vite already emitted", build_script)
-        self.assertIn("web/dist", build_script)
+        self.assertIn("desktop/web/dist", build_script)
 
     def test_smoke_script_starts_hidden_backend_and_shuts_down(self) -> None:
         smoke_script = (ROOT / "ops" / "scripts" / "checks" / "smoke-desktop-backend.ps1").read_text(
@@ -84,7 +84,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertNotIn("nsis", package["build"])
         self.assertIn("portable", package["build"]["win"]["target"])
         self.assertNotIn("nsis", package["build"]["win"]["target"])
-        self.assertIn({"from": "assets", "to": "assets"}, package["build"]["extraResources"])
+        self.assertIn({"from": "desktop/assets", "to": "assets"}, package["build"]["extraResources"])
         self.assertIn({"from": "skills", "to": "skills"}, package["build"]["extraResources"])
         self.assertIn({"from": "optional-skills", "to": "optional-skills"}, package["build"]["extraResources"])
         self.assertNotIn(
@@ -102,7 +102,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("FileDescription", hook)
 
     def test_vite_build_uses_relative_asset_paths_for_file_fallback(self) -> None:
-        vite_config = (ROOT / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
+        vite_config = (ROOT / "desktop" / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
         built_index = (ROOT / "jarvis_cli" / "web_dist" / "index.html").read_text(
             encoding="utf-8",
         )
@@ -148,12 +148,12 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("test_desktop_packaging_contract", checker)
         self.assertIn("test_runtime_smoke", checker)
         self.assertIn("Test-NodeRuntimeScripts", checker)
-        self.assertIn("electron/main.js", checker)
-        self.assertIn("electron/preload.js", checker)
+        self.assertIn("desktop/electron/main.js", checker)
+        self.assertIn("desktop/electron/preload.js", checker)
         self.assertIn("ops/scripts/checks/whatsapp-bridge/bridge.mjs", checker)
         self.assertIn("skills/creative/p5js/scripts/export-frames.js", checker)
         self.assertIn("--check", checker)
-        self.assertIn("npm.cmd --prefix web run build", checker)
+        self.assertIn("npm.cmd --prefix desktop/web run build", checker)
         self.assertIn("Resolve-DesktopPython", checker)
         self.assertIn('@("3.11", "3.12")', checker)
         self.assertIn(' "-$version"', checker)

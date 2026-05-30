@@ -338,7 +338,7 @@ export const setupItems: KnowledgeItem[] = [
     detail:
       "The renderer must type-check and bundle cleanly. UI routes should avoid hidden runtime-only imports that break packaged startup.",
     badges: ["React", "Vite"],
-    command: "npm --prefix web run build",
+    command: "npm --prefix desktop/web run build",
   },
   {
     id: "llm-models",

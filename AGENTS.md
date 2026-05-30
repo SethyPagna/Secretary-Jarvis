@@ -1,4 +1,4 @@
-﻿# JARVIS - Development Guide
+# JARVIS - Development Guide
 
 Instructions for AI coding assistants and developers working on the jarvis-agent codebase.
 
@@ -204,7 +204,7 @@ and local terminal execution.
 ```text
 JARVIS.exe
   ├─ Electron main process
-  ├─ React desktop renderer from web/
+  ├─ React desktop renderer from desktop/web/
   └─ jarvis-desktop-backend child process
        ├─ REST/SSE API on localhost
        ├─ /ws/stats live telemetry
@@ -221,7 +221,7 @@ status, stats, and gateway state must use the FastAPI desktop endpoints.
 
 | Surface | Frontend | Backend |
 |---------|----------|---------|
-| Streaming chat | `web/src/pages/HomePage.tsx` | `POST /api/desktop/chat/stream` |
+| Streaming chat | `desktop/web/src/pages/HomePage.tsx` | `POST /api/desktop/chat/stream` |
 | Terminal command | Home terminal panel | `POST /api/terminal/run` |
 | Voice input | Web Audio/MediaRecorder | `POST /api/voice/transcribe` |
 | Voice output | Desktop audio playback | `POST /api/voice/synthesize` |

@@ -1,4 +1,4 @@
-import json
+﻿import json
 import unittest
 from pathlib import Path
 
@@ -11,7 +11,7 @@ class ElectronShellContractTests(unittest.TestCase):
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
 
         self.assertEqual(package["productName"], "JARVIS")
-        self.assertEqual(package["main"], "electron/main.js")
+        self.assertEqual(package["main"], "desktop/electron/main.js")
         self.assertEqual(package["scripts"]["desktop:dev"], "electron .")
         self.assertIn("stage_llamacpp_runtime.py", package["scripts"]["desktop:pack"])
         self.assertIn("electron-builder", package["scripts"]["desktop:pack"])
@@ -24,7 +24,7 @@ class ElectronShellContractTests(unittest.TestCase):
         )
 
     def test_main_process_starts_backend_and_uses_frameless_window(self) -> None:
-        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+        source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
         self.assertIn("const { app, BrowserWindow, ipcMain, Menu, Tray } = require('electron')", source)
         self.assertIn("spawn(", source)
@@ -40,7 +40,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("console-message", source)
 
     def test_main_process_runs_backend_preflight_before_launch(self) -> None:
-        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+        source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
         self.assertIn("spawnSync", source)
         self.assertIn("runBackendPreflight", source)
@@ -49,7 +49,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertLess(source.index("runBackendPreflight()"), source.index("startBackendProcess()"))
 
     def test_main_process_shutdown_calls_backend_before_kill(self) -> None:
-        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+        source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
         self.assertIn("/api/shutdown", source)
         self.assertIn("SIGTERM", source)
@@ -64,7 +64,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertNotIn("!processToStop.killed) {\n        processToStop.kill('SIGKILL')", source)
 
     def test_main_process_supports_explicit_minimize_to_tray(self) -> None:
-        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+        source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
         self.assertIn("Tray", source)
         self.assertIn("Menu", source)
@@ -75,7 +75,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("runAppShutdown()", source)
 
     def test_packaged_app_uses_local_model_folder_without_docker_autostart(self) -> None:
-        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+        source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
         self.assertIn("JARVIS_MODELS_DIR", source)
         self.assertIn("defaultModelsDir", source)
@@ -85,7 +85,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertNotIn("/api/runtime/docker/start", source)
 
     def test_main_process_warms_desktop_services_after_backend_ready(self) -> None:
-        source = (ROOT / "electron" / "main.js").read_text(encoding="utf-8")
+        source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
         self.assertIn("DESKTOP_WARMUP_ENDPOINTS", source)
         self.assertIn("warmBackendServices", source)
@@ -98,7 +98,7 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertLess(source.index("await waitForBackend()"), source.index("void warmBackendServices()"))
 
     def test_preload_exposes_limited_desktop_bridge(self) -> None:
-        source = (ROOT / "electron" / "preload.js").read_text(encoding="utf-8")
+        source = (ROOT / "desktop" / "electron" / "preload.js").read_text(encoding="utf-8")
 
         self.assertIn("contextBridge.exposeInMainWorld('jarvisDesktop'", source)
         self.assertIn("getBackendStatus", source)

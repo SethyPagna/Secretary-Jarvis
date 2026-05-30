@@ -84,7 +84,7 @@ installer launches without leaving idle child processes behind.
 python -m unittest tests.jarvis_cli.test_desktop_identity_contract
 python -m unittest tests.jarvis_cli.test_desktop_home_contract
 python -m unittest tests.jarvis_cli.test_runtime_smoke
-cd web && npm run build
+npm --prefix desktop/web run build
 ```
 
 Use focused tests first, then run broader suites before a release candidate.

@@ -4577,7 +4577,7 @@ def mount_spa(application: FastAPI):
         @application.get("/{full_path:path}")
         async def no_frontend(full_path: str):
             return JSONResponse(
-                {"error": "Frontend not built. Run: cd web && npm run build"},
+                {"error": "Frontend not built. Run: npm --prefix desktop/web run build"},
                 status_code=404,
             )
         return

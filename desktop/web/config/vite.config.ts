@@ -79,7 +79,7 @@ export default defineConfig({
     ],
   },
   build: {
-    outDir: "../jarvis_cli/web_dist",
+    outDir: "../../jarvis_cli/web_dist",
     emptyOutDir: true,
     rollupOptions: {
       output: {
