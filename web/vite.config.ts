@@ -81,6 +81,37 @@ export default defineConfig({
   build: {
     outDir: "../jarvis_cli/web_dist",
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) {
+            return;
+          }
+
+          if (
+            id.includes("/three/") ||
+            id.includes("@react-three") ||
+            id.includes("/leva/") ||
+            id.includes("/gsap/")
+          ) {
+            return "orb-runtime";
+          }
+
+          if (id.includes("@xterm/")) {
+            return "terminal-runtime";
+          }
+
+          if (
+            id.includes("/react/") ||
+            id.includes("/react-dom/") ||
+            id.includes("/react-router-dom/")
+          ) {
+            return "react-runtime";
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1100,
   },
   server: {
     proxy: {
