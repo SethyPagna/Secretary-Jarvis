@@ -84,7 +84,7 @@ APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
     "ops/scripts/checks/whatsapp-bridge/allowlist.test.mjs",
     "ops/scripts/checks/whatsapp-bridge/bridge.mjs",
     "skills/creative/p5js/scripts/export-frames.js",
-    "web/eslint.config.js",
+    "web/config/eslint.config.js",
 }
 
 ROOT_SCRIPT_ALLOWLIST = {

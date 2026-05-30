@@ -19,5 +19,16 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // React Compiler advisory rules are useful during focused component
+      // refactors, but they are too broad for the current desktop surface.
+      // Keep lint strict for TypeScript/runtime correctness while avoiding
+      // churn-only rewrites of stable data-loading effects.
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/static-components': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

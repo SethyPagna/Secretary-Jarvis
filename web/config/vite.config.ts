@@ -57,7 +57,7 @@ export default defineConfig({
   resolve: {
     preserveSymlinks: true,
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "..", "src"),
     },
     // When @jarvis_managed-research/ui is symlinked via `file:../../design-language`,
     // Node's module resolution would pick up shared deps from

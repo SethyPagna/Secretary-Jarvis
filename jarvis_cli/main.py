@@ -5781,7 +5781,7 @@ def _gateway_prompt(prompt_text: str, default: str = "", timeout: float = 300.0)
 def _web_ui_build_needed(web_dir: Path) -> bool:
     """Return True if the web UI dist is missing or stale.
 
-    The Vite build outputs to ``jarvis_cli/web_dist/`` (per vite.config.ts
+    The Vite build outputs to ``jarvis_cli/web_dist/`` (per config/vite.config.ts
     outDir: "../jarvis_cli/web_dist"), NOT to ``web/dist/``.  Uses the Vite
     manifest as the sentinel because it is written last and therefore has the
     newest mtime of any build output.
@@ -5805,8 +5805,8 @@ def _web_ui_build_needed(web_dir: Path) -> bool:
         "package-lock.json",
         "yarn.lock",
         "pnpm-lock.yaml",
-        "vite.config.ts",
-        "vite.config.js",
+        "config/vite.config.ts",
+        "config/vite.config.js",
     ):
         mp = web_dir / meta
         if mp.exists() and mp.stat().st_mtime > dist_mtime:
@@ -13122,4 +13122,3 @@ Examples:
 
 if __name__ == "__main__":
     main()
-

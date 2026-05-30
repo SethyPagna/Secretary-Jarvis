@@ -30,7 +30,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         build_script = (ROOT / "ops" / "scripts" / "build" / "build-desktop.ps1").read_text(
             encoding="utf-8",
         )
-        vite_config = (ROOT / "web" / "vite.config.ts").read_text(encoding="utf-8")
+        vite_config = (ROOT / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
 
         self.assertIn('outDir: "../jarvis_cli/web_dist"', vite_config)
         self.assertIn("$viteEmbeddedDist", build_script)
@@ -102,7 +102,7 @@ class DesktopPackagingContractTests(unittest.TestCase):
         self.assertIn("FileDescription", hook)
 
     def test_vite_build_uses_relative_asset_paths_for_file_fallback(self) -> None:
-        vite_config = (ROOT / "web" / "vite.config.ts").read_text(encoding="utf-8")
+        vite_config = (ROOT / "web" / "config" / "vite.config.ts").read_text(encoding="utf-8")
         built_index = (ROOT / "jarvis_cli" / "web_dist" / "index.html").read_text(
             encoding="utf-8",
         )

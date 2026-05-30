@@ -55,7 +55,7 @@ function Test-NodeRuntimeScripts {
     $runtimeScripts = @(
         "electron/main.js",
         "electron/preload.js",
-        "web/eslint.config.js",
+        "web/config/eslint.config.js",
         "ops/scripts/build/after-pack-icon.cjs",
         "ops/scripts/checks/whatsapp-bridge/allowlist.mjs",
         "ops/scripts/checks/whatsapp-bridge/bridge.mjs",

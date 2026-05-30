@@ -609,7 +609,7 @@ export default function HomePage() {
         setVoiceBusy(false);
       }
     },
-    [appendTerminalOutput, handleDesktopChatDone, queueVoiceDelta, voiceOutput],
+    [appendTerminalOutput, handleDesktopChatDone, queueVoiceDelta],
   );
 
   const handleRecordedVoice = useCallback(
