@@ -11,10 +11,10 @@
     "jarvis:setup": "powershell -ExecutionPolicy Bypass -File run/desktop/setup-jarvis.ps1",
     "jarvis:run": "powershell -ExecutionPolicy Bypass -File run/desktop/run-jarvis.ps1",
     "jarvis:stop": "powershell -ExecutionPolicy Bypass -File run/desktop/stop-jarvis.ps1",
-    "desktop:check": "powershell -ExecutionPolicy Bypass -File scripts/check-production.ps1",
+    "desktop:check": "powershell -ExecutionPolicy Bypass -File ops/scripts/check-production.ps1",
     "desktop:dev": "electron .",
-    "desktop:build": "powershell -ExecutionPolicy Bypass -File scripts/build-desktop.ps1 -PyInstallerSpec packaging/jarvis-backend.spec",
-    "desktop:pack": "python scripts/stage_llamacpp_runtime.py && electron-builder"
+    "desktop:build": "powershell -ExecutionPolicy Bypass -File ops/scripts/build-desktop.ps1 -PyInstallerSpec ops/packaging/jarvis-backend.spec",
+    "desktop:pack": "python ops/scripts/stage_llamacpp_runtime.py && electron-builder"
   },
   "repository": {
     "type": "git",
@@ -35,7 +35,7 @@
   "build": {
     "appId": "com.sethypagna.jarvis",
     "productName": "JARVIS",
-    "afterPack": "scripts/after-pack-icon.cjs",
+    "afterPack": "ops/scripts/after-pack-icon.cjs",
     "directories": {
       "output": "release"
     },

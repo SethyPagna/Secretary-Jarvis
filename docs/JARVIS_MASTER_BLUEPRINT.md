@@ -43,7 +43,7 @@ Implemented checkpoints:
 | Desktop shutdown token | Done | Electron and package smoke use `X-Jarvis-Desktop-Shutdown-Token`; shutdown stays protected from generic unauthenticated API calls |
 | Optional close-to-tray lifecycle | Done | Default window close still runs full shutdown; `JARVIS_MINIMIZE_TO_TRAY=1` hides to tray and tray Quit runs the same shutdown path |
 | Desktop Python dependency gate | Done | Build script checks backend modules plus PyInstaller first and prints online/offline wheelhouse recovery commands before packaging starts |
-| Packaged backend smoke gate | Done | `scripts/build-desktop.ps1` builds the PyInstaller backend and `scripts/smoke-desktop-backend.ps1` verifies `/api/status`, `/api/shutdown`, and process cleanup |
+| Packaged backend smoke gate | Done | `ops/scripts/build-desktop.ps1` builds the PyInstaller backend and `ops/scripts/smoke-desktop-backend.ps1` verifies `/api/status`, `/api/shutdown`, and process cleanup |
 | React home page/orb UI | In progress | Unified Home route, title bar, orb, stats panel, voice controls, and terminal input shell build successfully |
 | Home quick actions | Done | Voice, Quick Task, Attach, Tools, Mute, and Stats controls now mutate UI state or dispatch into the embedded terminal instead of being placeholders |
 | Home browser voice bridge | Done | Microphone uses MediaRecorder, posts raw audio to `/api/voice/transcribe`, dispatches transcript into embedded PTY, and can synthesize live terminal output through `/api/voice/synthesize` |
@@ -55,7 +55,7 @@ Implemented checkpoints:
 | Models page | Not started | Planned phase 4 |
 | Souls and voices page | Not started | Planned phase 5 |
 | Permissions/platforms/workflows/settings | Not started | Planned phases 6-8 |
-| Packaging/installers | Done for local Windows build | `scripts/build-desktop.ps1` now produces one visible portable artifact: `release/JARVIS 1.0.0.exe`; setup/unpacked outputs are removed after packaging |
+| Packaging/installers | Done for local Windows build | `ops/scripts/build-desktop.ps1` now produces one visible portable artifact: `release/JARVIS 1.0.0.exe`; setup/unpacked outputs are removed after packaging |
 
 ## Production Readiness Gates
 
@@ -347,8 +347,8 @@ Production packaging:
 
 Packaging rules:
 
-- `scripts/build-desktop.ps1` is the Windows build entrypoint.
-- `packaging/jarvis-backend.spec` is the backend PyInstaller spec.
+- `ops/scripts/build-desktop.ps1` is the Windows build entrypoint.
+- `ops/packaging/jarvis-backend.spec` is the backend PyInstaller spec.
 - The packaged app launches the backend from Electron resources with hidden child windows.
 - The user-facing process should be a single JARVIS desktop app entry. Backend/model helper children are owned by the app lifecycle and terminated during `/api/shutdown`.
 
@@ -464,4 +464,4 @@ Latest autoconfig result from this workspace:
 - Preferred STT target: faster-whisper local with `tiny.en`/CPU/int8 on CPU-only machines for instant startup; use `large-v3`/float16 when NVIDIA is present.
 - STT dependency status: `faster-whisper==1.2.1` is installed. Non-interactive pip flags were required: `PIP_NO_INPUT=1` and `PIP_DISABLE_PIP_VERSION_CHECK=1`.
 - STT model cache status: `Systran/faster-whisper-tiny.en` is downloaded. The Hugging Face Xet path stalled on larger model blobs, so first-run downloads should set `HF_HUB_DISABLE_XET=1`.
-- Packaging status: Electron/web/native-runtime configuration checks pass, FastAPI/Uvicorn/Kokoro/soundfile are packaged deps, and `scripts/build-desktop.ps1` completed locally with Python 3.11. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced one visible portable executable at `release/JARVIS 1.0.0.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.
+- Packaging status: Electron/web/native-runtime configuration checks pass, FastAPI/Uvicorn/Kokoro/soundfile are packaged deps, and `ops/scripts/build-desktop.ps1` completed locally with Python 3.11. It produced `dist/jarvis-backend/jarvis-backend.exe`, passed the packaged backend smoke at `127.0.0.1:18765`, and produced one visible portable executable at `release/JARVIS 1.0.0.exe`. The local build is unsigned; signed release packaging still belongs in a cert-enabled environment.

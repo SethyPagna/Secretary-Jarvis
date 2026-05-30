@@ -1,4 +1,4 @@
-﻿"""
+"""
 JARVIS - Web UI server.
 
 Provides a FastAPI backend serving the Vite/React frontend and REST API
@@ -1401,7 +1401,7 @@ def _whatsapp_status_payload() -> dict[str, Any]:
         "session_path": str(session_path),
         "bridge_dir": str(bridge_dir),
         "qr_login_available": bridge_ready,
-        "start_command": "node scripts/whatsapp-bridge/bridge.mjs",
+        "start_command": "node ops/scripts/whatsapp-bridge/bridge.mjs",
     }
 
 

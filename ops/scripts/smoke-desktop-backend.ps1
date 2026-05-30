@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $BaseUrl = "http://${BindHost}:$Port"
 $LogId = [Guid]::NewGuid().ToString("N")
 $StdoutLog = Join-Path ([IO.Path]::GetTempPath()) "jarvis-backend-smoke-$LogId.out.log"

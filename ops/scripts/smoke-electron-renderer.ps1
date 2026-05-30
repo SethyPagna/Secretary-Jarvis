@@ -10,7 +10,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $DefaultElectronCmd = Join-Path $RepoRoot "node_modules/.bin/electron.cmd"
 if (-not $AppPath) {
     $AppPath = $DefaultElectronCmd

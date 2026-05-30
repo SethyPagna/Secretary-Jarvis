@@ -1,5 +1,5 @@
 param(
-    [string]$PyInstallerSpec = "packaging/jarvis-backend.spec",
+    [string]$PyInstallerSpec = "ops/packaging/jarvis-backend.spec",
     [string]$Python = "",
     [switch]$SkipInstaller,
     [switch]$SkipSmoke,
@@ -10,7 +10,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 Push-Location $RepoRoot
 
 function Invoke-Checked {

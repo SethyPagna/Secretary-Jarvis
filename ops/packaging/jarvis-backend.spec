@@ -4,7 +4,7 @@ from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files
 
 
-repo_root = Path(SPECPATH).parent
+repo_root = Path(SPECPATH).parents[1]
 entrypoint = repo_root / "jarvis_cli" / "desktop_entry.py"
 data_files = [
     (str(repo_root / "jarvis_cli" / "data" / "default_SOUL.md"), "jarvis_cli/data"),
