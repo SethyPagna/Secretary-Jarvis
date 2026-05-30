@@ -7,10 +7,10 @@ where terminals can collapse, intercept, or silently remap key combinations.
 
 Usage:
     # POSIX
-    python scripts/keystroke_diagnostic.py
+    python ops/scripts/keystroke_diagnostic.py
 
     # Windows (PowerShell / git-bash / cmd)
-    python scripts\\keystroke_diagnostic.py
+    python ops\\scripts\\keystroke_diagnostic.py
 
 Press the key combinations you care about. Each keystroke prints the
 prompt_toolkit `Keys.*` identifier and the raw escape bytes the terminal

@@ -10,7 +10,7 @@ set -euo pipefail
 # - optionally installs a user service (launchd on macOS, systemd --user on Linux)
 #
 # Usage:
-#   bash scripts/setup_open_webui.sh
+#   bash ops/scripts/setup_open_webui.sh
 #
 # Optional environment overrides:
 #   OPEN_WEBUI_PORT=8080

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Sample and Compress HuggingFace Datasets
 
@@ -6,13 +6,13 @@ Downloads trajectories from multiple HuggingFace datasets, randomly samples them
 and runs trajectory compression to fit within a target token budget.
 
 Usage:
-    python scripts/sample_and_compress.py
+    python ops/scripts/sample_and_compress.py
     
     # Custom sample size
-    python scripts/sample_and_compress.py --total_samples=5000
+    python ops/scripts/sample_and_compress.py --total_samples=5000
     
     # Custom output name
-    python scripts/sample_and_compress.py --output_name=compressed_16k
+    python ops/scripts/sample_and_compress.py --output_name=compressed_16k
 """
 
 import json
