@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import tomllib
@@ -86,6 +87,25 @@ APP_RUNTIME_JAVASCRIPT_ALLOWLIST = {
     "skills/creative/p5js/scripts/export-frames.js",
     "web/eslint.config.js",
 }
+
+LEGACY_BRAND_SOURCE_EXCLUDES = {
+    "package-lock.json",
+    "uv.lock",
+    "web/package-lock.json",
+    "vendor/jarvis-managed-ui/package-lock.json",
+}
+
+LEGACY_BRAND_SCAN_DIR_EXCLUDES = {
+    ".github",
+    "jarvis_cli/web_dist",
+    "release",
+    "tests",
+}
+
+LEGACY_BRAND_PATTERN = re.compile(
+    r"\bhermes\b|hermes-agent|nousresearch|\bnous\b|__hermes|x-hermes",
+    re.IGNORECASE,
+)
 
 
 def _tracked_paths() -> list[Path]:
@@ -225,6 +245,30 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         self.assertIn("X-Jarvis-Session-Token", bundle_text)
         self.assertIn("/api/plugins/jarvis-achievements", bundle_text)
         self.assertIn('register("jarvis-achievements"', bundle_text)
+
+    def test_app_authored_sources_do_not_contain_legacy_brand_tokens(self) -> None:
+        offenders: list[str] = []
+
+        for path in _tracked_paths():
+            normalized = path.as_posix()
+            if normalized in LEGACY_BRAND_SOURCE_EXCLUDES:
+                continue
+            if any(
+                normalized == directory or normalized.startswith(directory + "/")
+                for directory in LEGACY_BRAND_SCAN_DIR_EXCLUDES
+            ):
+                continue
+
+            try:
+                content = (ROOT / path).read_text(encoding="utf-8").lower()
+            except UnicodeDecodeError:
+                continue
+
+            match = LEGACY_BRAND_PATTERN.search(content)
+            if match:
+                offenders.append(f"{normalized}: {match.group(0)}")
+
+        self.assertEqual(offenders, [])
 
 
 if __name__ == "__main__":
