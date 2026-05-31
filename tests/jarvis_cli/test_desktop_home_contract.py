@@ -111,9 +111,12 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("api.transcribeVoice", source)
         self.assertNotIn("setTerminalInput(transcript)", source)
         self.assertIn('runDesktopAgentTurn(transcript, "voice")', source)
+        self.assertNotIn("text: transcript", source)
         self.assertIn("JARVIS is hearing you", source)
         self.assertIn("Voice is live", source)
         self.assertIn("I did not catch that. Listening again.", source)
+        self.assertIn("const VOICE_SPEECH_THRESHOLD = 0.035", source)
+        self.assertIn("const VOICE_MAX_NO_SPEECH_MS = 30_000", source)
         self.assertIn("requestInitialPermission", source)
         self.assertIn('permission.state === "granted"', source)
         self.assertNotIn('permission.state !== "granted"', source)
@@ -189,6 +192,8 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn("lifetime tokens", home_source)
         self.assertNotIn("Input tokens", (WEB_ROOT / "src" / "components" / "StatsPanel.tsx").read_text(encoding="utf-8"))
         self.assertNotIn("Output tokens", (WEB_ROOT / "src" / "components" / "StatsPanel.tsx").read_text(encoding="utf-8"))
+        self.assertIn("grid-cols-[minmax(0,1fr)_minmax(0,1fr)]", (WEB_ROOT / "src" / "components" / "StatsPanel.tsx").read_text(encoding="utf-8"))
+        self.assertIn("h-[clamp(190px,30dvh,340px)]", home_source)
         self.assertNotIn("rounded-md border border-cyan-200/10 bg-[#080e14]/72", home_source)
 
 

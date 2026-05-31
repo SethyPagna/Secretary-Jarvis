@@ -86,9 +86,9 @@ const TOOL_TOGGLES = [
   { key: "browser", label: "Browser" },
 ] as const;
 
-const VOICE_SPEECH_THRESHOLD = 0.06;
-const VOICE_AUTO_STOP_SILENCE_MS = 650;
-const VOICE_MAX_NO_SPEECH_MS = 7000;
+const VOICE_SPEECH_THRESHOLD = 0.035;
+const VOICE_AUTO_STOP_SILENCE_MS = 520;
+const VOICE_MAX_NO_SPEECH_MS = 30_000;
 const RUNTIME_POLL_VISIBLE_MS = 10_000;
 const RUNTIME_POLL_BACKGROUND_MS = 30_000;
 const STATS_POLL_VISIBLE_MS = 1_000;
@@ -635,14 +635,6 @@ export default function HomePage() {
           throw new Error(result.error || "STT returned an empty transcript.");
         }
 
-        voiceOutputBufferRef.current = "";
-        setTerminalEntries((entries) => [
-          ...entries,
-          {
-            kind: "input",
-            text: transcript,
-          },
-        ]);
         await runDesktopAgentTurn(transcript, "voice");
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -863,7 +855,7 @@ export default function HomePage() {
 
   return (
     <main
-      className="relative isolate flex min-h-0 min-w-0 w-full max-w-[calc(100vw-1.5rem)] flex-1 flex-col gap-3 overflow-hidden px-0 py-0 text-slate-100 lg:max-w-full"
+      className="relative isolate flex h-full max-h-full min-h-0 min-w-0 w-full max-w-[calc(100vw-1.5rem)] flex-1 flex-col gap-3 overflow-hidden px-0 py-0 text-slate-100 lg:max-w-full"
       style={{
         backgroundImage:
           "radial-gradient(circle at 18% 20%, rgba(0, 212, 255, 0.2), transparent 28%), radial-gradient(circle at 76% 16%, rgba(184, 108, 255, 0.14), transparent 30%), radial-gradient(circle at 52% 82%, rgba(255, 102, 0, 0.08), transparent 34%), linear-gradient(135deg, #080b10 0%, #111822 46%, #07090f 100%)",
@@ -888,7 +880,7 @@ export default function HomePage() {
           }}
         />
       </div>
-      <section className="grid min-h-0 min-w-0 w-full max-w-full flex-[1_1_0] grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(230px,280px)] 2xl:grid-cols-[minmax(0,1fr)_300px]">
+      <section className="grid min-h-0 min-w-0 w-full max-w-full flex-1 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(230px,280px)] 2xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="relative flex min-h-0 min-w-0 w-full max-w-full flex-col items-center justify-center overflow-hidden px-4 py-3 sm:px-5">
           <div
             className="pointer-events-none absolute inset-x-[8%] top-[8%] h-px opacity-60"
@@ -963,7 +955,7 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="grid min-h-[170px] min-w-0 w-full max-w-full shrink-0 gap-3 rounded-md border border-white/12 bg-[#0d1219]/94 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.25)]">
+      <section className="grid h-[clamp(190px,30dvh,340px)] min-h-0 min-w-0 w-full max-w-full shrink-0 gap-3 rounded-md border border-white/12 bg-[#0d1219]/94 p-3 shadow-[0_16px_60px_rgba(0,0,0,0.25)]">
         <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-2">
           <div className="flex items-center gap-2 text-[0.82rem] uppercase tracking-[0.08em] text-slate-200/76">
             <Activity className="h-4 w-4 text-cyan-200" />

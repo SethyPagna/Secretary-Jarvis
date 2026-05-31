@@ -86,7 +86,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
     : warnings;
 
   return (
-    <aside className="flex h-full min-h-0 min-w-0 w-full max-w-full flex-col gap-2 overflow-hidden rounded-md border border-white/12 bg-[#10151d]/90 p-3 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+    <aside className="flex h-full max-h-full min-h-0 min-w-0 w-full max-w-full flex-col gap-2 overflow-hidden rounded-md border border-white/12 bg-[#10151d]/90 p-3 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
       <div className="shrink-0">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-white">
@@ -147,33 +147,33 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         />
       </div>
 
-      <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-white/10 pt-2 text-[0.7rem] text-slate-200/78">
-        <div title="Live token throughput from the current desktop chat counter.">
+      <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-1.5 border-t border-white/10 pt-2 text-[0.7rem] text-slate-200/78">
+        <div className="min-w-0" title="Live token throughput from the current desktop chat counter.">
           <div className="text-slate-300/58">Tokens/s</div>
           <div className="font-mono text-white">{formatRate(stats?.tokens_per_second)}</div>
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="text-slate-300/58">Skills</div>
           <div
-            className="font-mono text-white"
+            className="truncate font-mono text-white"
             title={`${stats?.active_skills ?? 0} active, ${stats?.listed_skills ?? 0} listed, ${stats?.total_skill_assets ?? 0} total skill assets`}
           >
             {stats?.active_skills ?? 0} / {stats?.listed_skills ?? 0}
           </div>
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="text-slate-300/58">Gateways</div>
           <div className="font-mono text-white">
             {stats?.gateway_connections ?? 0}
           </div>
         </div>
-        <div title={`Active soul: ${stats?.active_soul ?? "jarvis"}`}>
+        <div className="min-w-0" title={`Active soul: ${stats?.active_soul ?? "jarvis"}`}>
           <div className="text-slate-300/58">Souls online</div>
           <div className="font-mono text-white">
             {stats?.souls_online ?? 1} / {stats?.souls_total ?? 1}
           </div>
         </div>
-        <div title={(stats?.delegate_souls ?? []).join(", ") || "Delegate souls ready"}>
+        <div className="min-w-0" title={(stats?.delegate_souls ?? []).join(", ") || "Delegate souls ready"}>
           <div className="text-slate-300/58">Active soul</div>
           <div className="truncate font-mono text-white">{stats?.active_soul ?? "jarvis"}</div>
         </div>
