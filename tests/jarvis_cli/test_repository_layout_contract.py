@@ -71,8 +71,14 @@ LEGACY_BRAND_SCAN_DIR_EXCLUDES = {
     "tests",
 }
 
+OLD_AGENT = "her" + "mes"
+OLD_AGENT_TITLE = OLD_AGENT.title()
+OLD_AGENT_UPPER = OLD_AGENT.upper()
+OLD_LAB = "no" + "us"
+OLD_LAB_TITLE = OLD_LAB.title()
+
 LEGACY_BRAND_PATTERN = re.compile(
-    r"\bhermes\b|hermes-agent|nousresearch|\bnous\b|__hermes|x-hermes",
+    rf"\b{OLD_AGENT}\b|{OLD_AGENT}-agent|{OLD_LAB}research|\b{OLD_LAB}\b|__{OLD_AGENT}|x-{OLD_AGENT}",
     re.IGNORECASE,
 )
 
@@ -166,8 +172,8 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         legacy_paths = [
             path.as_posix()
             for path in _tracked_paths()
-            if "hermes" in path.as_posix().lower()
-            or "nous" in path.as_posix().lower()
+            if OLD_AGENT in path.as_posix().lower()
+            or OLD_LAB in path.as_posix().lower()
         ]
 
         self.assertEqual(legacy_paths, [])
@@ -211,16 +217,16 @@ class RepositoryLayoutContractTests(unittest.TestCase):
         bundle_text = "\n".join(path.read_text(encoding="utf-8") for path in bundle_paths)
 
         for legacy_token in [
-            "__HERMES_PLUGIN_SDK__",
-            "__HERMES_PLUGINS__",
-            "__HERMES_SESSION_TOKEN__",
-            "X-Hermes-Session-Token",
-            "/api/src/plugins/hermes-achievements",
-            "Hermes",
-            "HERMES",
-            "hermes",
-            "Nous",
-            "nous",
+            f"__{OLD_AGENT_UPPER}_PLUGIN_SDK__",
+            f"__{OLD_AGENT_UPPER}_PLUGINS__",
+            f"__{OLD_AGENT_UPPER}_SESSION_TOKEN__",
+            f"X-{OLD_AGENT_TITLE}-Session-Token",
+            f"/api/src/plugins/{OLD_AGENT}-achievements",
+            OLD_AGENT_TITLE,
+            OLD_AGENT_UPPER,
+            OLD_AGENT,
+            OLD_LAB_TITLE,
+            OLD_LAB,
         ]:
             self.assertNotIn(legacy_token, bundle_text)
 

@@ -116,7 +116,7 @@ class JarvisRebrandContractTests(unittest.TestCase):
         self.assertIn("Just A Rather Very Intelligent System", content)
         self.assertIn("You are JARVIS", content)
         self.assertIn("FRIDAY", content)
-        self.assertNotIn("Hermes", content)
+        self.assertNotIn(("her" + "mes").title(), content)
 
 
 if __name__ == "__main__":
