@@ -33,6 +33,8 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("second-instance", source)
         self.assertIn("showMainWindow()", source)
         self.assertIn("spawn(", source)
+        self.assertIn("probeExistingBackend", source)
+        self.assertIn("backend already running; not spawning child", source)
         self.assertIn("jarvis_cli.desktop_entry", source)
         self.assertIn("WindowStyle Hidden", source)
         self.assertIn("frame: false", source)

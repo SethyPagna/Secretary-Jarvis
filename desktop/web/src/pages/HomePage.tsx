@@ -645,18 +645,26 @@ export default function HomePage() {
         ]);
         await runDesktopAgentTurn(transcript, "voice");
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const shouldKeepListening =
+          autoVoiceArmed &&
+          (message.toLowerCase().includes("empty transcript") ||
+            message.toLowerCase().includes("no microphone audio") ||
+            message.toLowerCase().includes("not catch"));
         setTerminalEntries((entries) => [
           ...entries,
           {
             kind: "output",
-            text: error instanceof Error ? error.message : String(error),
+            text: shouldKeepListening
+              ? "I did not catch that. Listening again."
+              : message,
           },
         ]);
       } finally {
         setVoiceBusy(false);
       }
     },
-    [runDesktopAgentTurn],
+    [autoVoiceArmed, runDesktopAgentTurn],
   );
 
   const stopVoiceStream = useCallback(() => {

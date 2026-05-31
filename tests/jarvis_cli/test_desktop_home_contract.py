@@ -113,6 +113,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn('runDesktopAgentTurn(transcript, "voice")', source)
         self.assertIn("JARVIS is hearing you", source)
         self.assertIn("Voice is live", source)
+        self.assertIn("I did not catch that. Listening again.", source)
         self.assertIn("requestInitialPermission", source)
         self.assertIn('permission.state === "granted"', source)
         self.assertNotIn('permission.state !== "granted"', source)

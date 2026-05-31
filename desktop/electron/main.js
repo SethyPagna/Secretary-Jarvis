@@ -309,6 +309,16 @@ async function waitForBackend(timeoutMs = 20000) {
   throw lastError || new Error('JARVIS backend did not become ready')
 }
 
+async function probeExistingBackend(timeoutMs = 900) {
+  try {
+    await fetchJson('/api/status', { timeoutMs })
+    appendDesktopLog('[jarvis-desktop] reusing existing backend', BACKEND_BASE_URL)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function rendererIndexCandidates() {
   const candidates = [
     path.join(__dirname, '..', 'web', 'dist', 'index.html'),
@@ -698,7 +708,10 @@ app.whenReady().then(async () => {
     exePath: app.getPath('exe'),
     backendPort: BACKEND_PORT
   }))
-  if (runBackendPreflight()) {
+  const backendAlreadyRunning = await probeExistingBackend()
+  if (backendAlreadyRunning) {
+    appendDesktopLog('[jarvis-desktop] backend already running; not spawning child')
+  } else if (runBackendPreflight()) {
     startBackendProcess()
   } else {
     console.warn('[jarvis-desktop] backend preflight failed; opening offline-capable shell')
