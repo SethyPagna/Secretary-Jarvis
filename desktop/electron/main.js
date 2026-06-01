@@ -222,6 +222,18 @@ function runBackendPreflight() {
   return true
 }
 
+function shouldRunBackendPreflight() {
+  if (/^(1|true|yes)$/i.test(process.env.JARVIS_FORCE_BACKEND_PREFLIGHT || '')) {
+    return true
+  }
+
+  if (/^(1|true|yes)$/i.test(process.env.JARVIS_SKIP_BACKEND_PREFLIGHT || '')) {
+    return false
+  }
+
+  return !app.isPackaged
+}
+
 function startBackendProcess() {
   if (backendProcess && !backendProcess.killed) {
     return backendProcess
@@ -717,9 +729,13 @@ app.whenReady().then(async () => {
     backendPort: BACKEND_PORT
   }))
   const backendAlreadyRunning = await probeExistingBackend()
+  const needsBackendPreflight = shouldRunBackendPreflight()
   if (backendAlreadyRunning) {
     appendDesktopLog('[jarvis-desktop] backend already running; not spawning child')
-  } else if (runBackendPreflight()) {
+  } else if (!needsBackendPreflight || runBackendPreflight()) {
+    if (!needsBackendPreflight) {
+      appendDesktopLog('[jarvis-backend] packaged preflight skipped')
+    }
     startBackendProcess()
   } else {
     console.warn('[jarvis-desktop] backend preflight failed; opening offline-capable shell')
@@ -729,12 +745,10 @@ app.whenReady().then(async () => {
   createMainWindow()
   createTray()
 
-  if (process.env.JARVIS_RENDERER_URL) {
-    loadRenderer(mainWindow).catch((error) => {
-      console.error('[jarvis-desktop] failed to load renderer', error)
-    })
-    return
-  }
+  const rendererLoad = loadRenderer(mainWindow).catch((error) => {
+    console.error('[jarvis-desktop] failed to load renderer', error)
+  })
+  void rendererLoad
 
   let backendReady = false
   try {
@@ -745,10 +759,6 @@ app.whenReady().then(async () => {
     console.warn('[jarvis-desktop] backend readiness check failed; opening offline-capable shell', error)
     appendDesktopLog('[jarvis-desktop] backend readiness check failed', error.stack || String(error))
   }
-
-  loadRenderer(mainWindow).catch((error) => {
-    console.error('[jarvis-desktop] failed to load renderer', error)
-  })
 
   if (backendReady) {
     void warmBackendServices()

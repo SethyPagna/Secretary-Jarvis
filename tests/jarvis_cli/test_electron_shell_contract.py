@@ -51,9 +51,13 @@ class ElectronShellContractTests(unittest.TestCase):
 
         self.assertIn("spawnSync", source)
         self.assertIn("runBackendPreflight", source)
+        self.assertIn("shouldRunBackendPreflight", source)
+        self.assertIn("JARVIS_FORCE_BACKEND_PREFLIGHT", source)
+        self.assertIn("JARVIS_SKIP_BACKEND_PREFLIGHT", source)
         self.assertIn("'--preflight'", source)
         self.assertIn("backend preflight failed", source)
-        self.assertLess(source.index("runBackendPreflight()"), source.index("startBackendProcess()"))
+        app_block = source[source.index("app.whenReady().then") :]
+        self.assertLess(app_block.index("!needsBackendPreflight || runBackendPreflight()"), app_block.index("startBackendProcess()"))
 
     def test_main_process_shutdown_calls_backend_before_kill(self) -> None:
         source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
@@ -106,8 +110,10 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("/api/souls/team", source)
         self.assertIn("/api/skills", source)
         self.assertIn("backendReady", source)
-        self.assertLess(source.index("createMainWindow()"), source.index("await waitForBackend()"))
-        self.assertLess(source.index("await waitForBackend()"), source.index("void warmBackendServices()"))
+        app_block = source[source.index("app.whenReady().then") :]
+        self.assertLess(app_block.index("createMainWindow()"), app_block.index("loadRenderer(mainWindow)"))
+        self.assertLess(app_block.index("loadRenderer(mainWindow)"), app_block.index("await waitForBackend()"))
+        self.assertLess(app_block.index("await waitForBackend()"), app_block.index("void warmBackendServices()"))
 
     def test_preload_exposes_limited_desktop_bridge(self) -> None:
         source = (ROOT / "desktop" / "electron" / "preload.js").read_text(encoding="utf-8")
