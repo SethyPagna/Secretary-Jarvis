@@ -20,6 +20,8 @@
 - [x] Expose manifest status through `/api/runtime/warmup`.
 - [x] Use the manifest as the first source for `/api/models/list` when roots have not changed.
 - [x] Add tests proving manifest reuse, stale invalidation, and warmup persistence.
+- [x] Load the desktop renderer before backend readiness polling so the app never waits on model/STT/TTS warmup to show a usable surface.
+- [x] Skip duplicate packaged backend preflight by default, with `JARVIS_FORCE_BACKEND_PREFLIGHT=1` available for diagnostics.
 
 ## Permanent Startup Strategy
 
@@ -28,6 +30,31 @@
 3. **Background refresh:** Warmup refreshes model roots, souls, memory metadata, skills, stats, and voice readiness on a daemon thread.
 4. **Real readiness only:** UI can display cached/refreshing/live states separately; no fake GPU temperature, no fake model readiness.
 5. **Growth loop:** Memory and souls are treated as living local files. Warmup records their changed timestamps and sizes so JARVIS can detect growth and refresh context without making startup feel clunky.
+
+## Task 2: Unblock First Paint From Backend Warmup
+
+**Files:**
+- Modify: `desktop/electron/main.js`
+- Test: `tests/jarvis_cli/test_electron_shell_contract.py`
+
+- [x] **Step 1: Render first**
+
+Start `loadRenderer(mainWindow)` immediately after window/tray creation. Backend readiness still runs, but no longer blocks the real dashboard from replacing the loading shell.
+
+- [x] **Step 2: Avoid duplicate packaged preflight**
+
+Keep backend preflight for development and diagnostics, but skip it in packaged builds where the backend was already verified during build/smoke. Operators can force it with `JARVIS_FORCE_BACKEND_PREFLIGHT=1` or skip it in development with `JARVIS_SKIP_BACKEND_PREFLIGHT=1`.
+
+- [x] **Step 3: Verify**
+
+Run:
+
+```powershell
+py -3.11 -m unittest tests.jarvis_cli.test_electron_shell_contract tests.jarvis_cli.test_desktop_packaging_contract
+npm.cmd run desktop:check
+```
+
+Expected: the Electron shell contract confirms renderer-before-backend-wait ordering and production checks pass.
 
 ## Task 1: Persist Startup Manifest
 
