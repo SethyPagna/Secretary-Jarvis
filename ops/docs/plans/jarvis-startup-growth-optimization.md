@@ -20,7 +20,7 @@
 - [x] Expose manifest status through `/api/runtime/warmup`.
 - [x] Use the manifest as the first source for `/api/models/list` when roots have not changed.
 - [x] Add tests proving manifest reuse, stale invalidation, and warmup persistence.
-- [x] Load the desktop renderer before backend readiness polling so the app never waits on model/STT/TTS warmup to show a usable surface.
+- [x] Show the blurred desktop shell before backend readiness polling, then load the live renderer from the backend once it can inject the session token.
 - [x] Skip duplicate packaged backend preflight by default, with `JARVIS_FORCE_BACKEND_PREFLIGHT=1` available for diagnostics.
 
 ## Permanent Startup Strategy
@@ -37,9 +37,9 @@
 - Modify: `desktop/electron/main.js`
 - Test: `tests/jarvis_cli/test_electron_shell_contract.py`
 
-- [x] **Step 1: Render first**
+- [x] **Step 1: Paint first**
 
-Start `loadRenderer(mainWindow)` immediately after window/tray creation. Backend readiness still runs, but no longer blocks the real dashboard from replacing the loading shell.
+Show the blurred startup shell immediately after window creation. The live renderer still loads from the backend after readiness so the dashboard receives the server-injected session token and `/api/*` calls remain real.
 
 - [x] **Step 2: Avoid duplicate packaged preflight**
 
@@ -54,7 +54,7 @@ py -3.11 -m unittest tests.jarvis_cli.test_electron_shell_contract tests.jarvis_
 npm.cmd run desktop:check
 ```
 
-Expected: the Electron shell contract confirms renderer-before-backend-wait ordering and production checks pass.
+Expected: the Electron shell contract confirms shell-before-backend-wait ordering, renderer-after-backend-token ordering, and production checks pass.
 
 ## Task 1: Persist Startup Manifest
 
