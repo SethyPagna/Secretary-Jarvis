@@ -105,6 +105,7 @@ _DESKTOP_STREAM_COUNTER: Dict[str, Any] = {
 _PLANNED_LLM_RUNTIME_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": {}}
 _LOCAL_MODEL_PAYLOAD_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": None}
 _LOCAL_MODEL_PAYLOAD_CACHE_SECONDS = 30.0
+_RUNTIME_READINESS_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": None}
 _DESKTOP_WARMUP_LOCK = threading.Lock()
 _DESKTOP_WARMUP_STATE: Dict[str, Any] = {
     "started": False,
@@ -129,6 +130,7 @@ _DESKTOP_SHUTDOWN_HEADER_NAME = "X-Jarvis-Desktop-Shutdown-Token"
 _DESKTOP_TOKEN_API_PATHS: frozenset = frozenset({
     "/api/runtime/readiness",
     "/api/runtime/warmup",
+    "/api/desktop/bootstrap",
     "/api/models/list",
     "/api/stats",
     "/api/souls/team",
@@ -694,6 +696,113 @@ async def get_desktop_ready():
     }
 
 
+def _runtime_readiness_snapshot(*, force_refresh: bool = False) -> dict[str, Any]:
+    """Return production readiness with a short cache for startup hydration."""
+    now = time.time()
+    cached = _RUNTIME_READINESS_CACHE.get("value")
+    if (
+        not force_refresh
+        and isinstance(cached, Mapping)
+        and now < float(_RUNTIME_READINESS_CACHE.get("expires_at") or 0.0)
+    ):
+        return dict(cached)
+
+    try:
+        from jarvis_cli.runtime_readiness import build_runtime_readiness
+
+        config = load_config()
+        env = {**os.environ, **load_env()}
+        readiness = build_runtime_readiness(config, env=env)
+    except Exception as exc:
+        _log.exception("Runtime readiness snapshot failed")
+        readiness = {
+            "production_ready": False,
+            "blocking_issues": [f"{type(exc).__name__}: {exc}"],
+        }
+
+    _RUNTIME_READINESS_CACHE["value"] = dict(readiness)
+    _RUNTIME_READINESS_CACHE["expires_at"] = now + 10.0
+    return dict(readiness)
+
+
+def _desktop_status_snapshot() -> dict[str, Any]:
+    """Return status fields without remote health probes or session DB scans."""
+    try:
+        current_ver, latest_ver = check_config_version()
+    except Exception:
+        current_ver, latest_ver = 0, 0
+
+    runtime = read_runtime_status() or {}
+    desktop_gateway = _desktop_gateway_runtime_status()
+    merged_gateway = _merge_gateway_status(runtime, desktop_gateway)
+    platforms = merged_gateway.get("platforms")
+    gateway_platforms = dict(platforms) if isinstance(platforms, Mapping) else {}
+    gateway_running = any(
+        bool(value.get("running") or value.get("connected"))
+        for value in gateway_platforms.values()
+        if isinstance(value, Mapping)
+    )
+    gateway_state = str(merged_gateway.get("gateway_state") or ("running" if gateway_running else "stopped"))
+
+    return {
+        "version": __version__,
+        "release_date": __release_date__,
+        "jarvis_home": str(get_jarvis_home()),
+        "config_path": str(get_config_path()),
+        "env_path": str(get_env_path()),
+        "config_version": current_ver,
+        "latest_config_version": latest_ver,
+        "gateway_running": gateway_running,
+        "gateway_pid": get_running_pid(),
+        "gateway_health_url": _GATEWAY_HEALTH_URL,
+        "gateway_state": gateway_state,
+        "gateway_platforms": gateway_platforms,
+        "gateway_exit_reason": merged_gateway.get("exit_reason"),
+        "gateway_updated_at": merged_gateway.get("updated_at"),
+        "active_sessions": 0,
+    }
+
+
+def _cached_manifest_section(manifest: Mapping[str, Any], key: str) -> dict[str, Any] | None:
+    value = manifest.get(key)
+    return dict(value) if isinstance(value, Mapping) else None
+
+
+@app.get("/api/desktop/bootstrap")
+async def get_desktop_bootstrap():
+    """Hydrate the desktop from real cached startup facts, then live polling refreshes."""
+    manifest = load_startup_manifest(get_jarvis_home())
+    roots = [root for root in _candidate_model_roots() if root.exists()]
+    manifest_models_ok = bool(manifest and roots_match_manifest(manifest, roots))
+
+    model_payload = (
+        _clone_local_model_payload(manifest["model_payload"])
+        if manifest_models_ok and isinstance(manifest.get("model_payload"), Mapping)
+        else _local_model_payload()
+    )
+    if manifest_models_ok:
+        model_payload["cache"] = "startup-manifest"
+
+    readiness = _cached_manifest_section(manifest, "readiness") or _runtime_readiness_snapshot()
+    souls = _cached_manifest_section(manifest, "souls") or _team_souls_manifest()
+    stats = _cached_manifest_section(manifest, "stats")
+    stats_cache = "startup-manifest" if stats else "live"
+    if stats is None:
+        stats = _runtime_stats_snapshot()
+    stats["cache"] = stats_cache
+    stats["cached"] = stats_cache != "live"
+
+    return {
+        "status": _desktop_status_snapshot(),
+        "readiness": readiness,
+        "souls": souls,
+        "stats": stats,
+        "models": model_payload,
+        "manifest": manifest_summary(manifest),
+        "cache": "startup-manifest" if manifest else "live",
+    }
+
+
 @app.get("/api/status")
 async def get_status():
     current_ver, latest_ver = check_config_version()
@@ -832,11 +941,7 @@ async def post_telegram_bridge_stop():
 @app.get("/api/runtime/readiness")
 async def get_runtime_readiness():
     """Return production readiness for LLM, TTS, and STT runtime stacks."""
-    from jarvis_cli.runtime_readiness import build_runtime_readiness
-
-    config = load_config()
-    env = {**os.environ, **load_env()}
-    return build_runtime_readiness(config, env=env)
+    return _runtime_readiness_snapshot()
 
 
 @app.post("/api/runtime/smoke-test")
@@ -2148,6 +2253,7 @@ def _run_desktop_runtime_warmup(reason: str) -> None:
     for step_name, step in (
         ("models", lambda: _local_model_payload(force_refresh=True)),
         ("runtime_plan", lambda: _planned_llm_runtime_snapshot()),
+        ("readiness", lambda: _runtime_readiness_snapshot(force_refresh=True)),
         ("skills", _skill_count_snapshot),
         ("stats", _runtime_stats_snapshot),
         ("souls", _team_souls_manifest),
@@ -2184,6 +2290,7 @@ def _run_desktop_runtime_warmup(reason: str) -> None:
             "model_roots_fingerprint": root_fingerprint(roots),
             "model_payload": _clone_local_model_payload(model_payload) if isinstance(model_payload, Mapping) else {},
             "runtime_plan": warmup_payload.get("runtime_plan") or {},
+            "readiness": warmup_payload.get("readiness") or {},
             "skills": warmup_payload.get("skills") or {},
             "stats": warmup_payload.get("stats") or {},
             "souls": warmup_payload.get("souls") or {},
