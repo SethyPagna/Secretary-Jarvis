@@ -4,7 +4,7 @@
 
 **Goal:** Make JARVIS open quickly while real AI, STT, TTS, souls, skills, and memory services warm in the background and reuse verified local state across launches.
 
-**Architecture:** The desktop shell renders a blurred loading surface immediately, then shows Home while the backend performs idempotent warmup. The backend persists a startup manifest under `~/.jarvis/startup/` containing the last verified model map, runtime plan, skills count, souls manifest, and memory/context file metadata so the next launch can start from real cached facts and refresh asynchronously.
+**Architecture:** The desktop shell renders a blurred loading surface immediately, then shows Home while the backend performs idempotent warmup. The backend persists a startup manifest under `~/.jarvis/startup/` containing the last verified model map, runtime readiness, runtime plan, skills count, souls manifest, stats sample, and memory/context file metadata so the next launch can start from real cached facts and refresh asynchronously.
 
 **Tech Stack:** Electron, React/Vite/TypeScript, FastAPI/Python, llama.cpp, faster-whisper, Kokoro/System TTS, JSON manifest persistence.
 
@@ -23,14 +23,49 @@
 - [x] Show the blurred desktop shell before backend readiness polling, then load the live renderer from the backend once it can inject the session token.
 - [x] Skip duplicate packaged backend preflight by default, with `JARVIS_FORCE_BACKEND_PREFLIGHT=1` available for diagnostics.
 - [x] Use a lightweight `/api/desktop/ready` probe for Electron startup so gateway/session/status scans do not block the first live renderer load.
+- [x] Hydrate Home from `/api/desktop/bootstrap` so status, readiness, souls, and cached stats arrive in one request before live polling refreshes them.
 
 ## Permanent Startup Strategy
 
 1. **Immediate UI:** Electron loads the local blurred shell first, then swaps to the renderer as soon as files are available.
 2. **Fast cached facts:** Backend returns the last persisted model list and runtime summary when root directories match the manifest.
-3. **Background refresh:** Warmup refreshes model roots, souls, memory metadata, skills, stats, and voice readiness on a daemon thread.
-4. **Real readiness only:** UI can display cached/refreshing/live states separately; no fake GPU temperature, no fake model readiness.
-5. **Growth loop:** Memory and souls are treated as living local files. Warmup records their changed timestamps and sizes so JARVIS can detect growth and refresh context without making startup feel clunky.
+3. **One-call hydration:** Home uses `/api/desktop/bootstrap` for the first render, then switches to live status/readiness/stats polling.
+4. **Background refresh:** Warmup refreshes model roots, souls, memory metadata, skills, stats, and voice readiness on a daemon thread.
+5. **Real readiness only:** UI can display cached/refreshing/live states separately; no fake GPU temperature, no fake model readiness.
+6. **Growth loop:** Memory and souls are treated as living local files. Warmup records their changed timestamps and sizes so JARVIS can detect growth and refresh context without making startup feel clunky.
+
+## Task 4: Collapse Home Startup Waterfalls
+
+**Files:**
+- Modify: `src/jarvis_cli/web_server.py`
+- Modify: `desktop/web/src/lib/api.ts`
+- Modify: `desktop/web/src/pages/HomePage.tsx`
+- Modify: `desktop/web/src/components/StatsPanel.tsx`
+- Test: `tests/jarvis_cli/test_runtime_readiness_api_contract.py`
+- Test: `tests/jarvis_cli/test_desktop_home_contract.py`
+
+- [x] **Step 1: Add a desktop bootstrap endpoint**
+
+Expose `/api/desktop/bootstrap` behind the desktop session token. The endpoint returns status, readiness, souls, stats, models, and manifest metadata from the verified startup manifest when available, falling back to live collection when no cached fact exists.
+
+- [x] **Step 2: Persist runtime readiness during warmup**
+
+Warmup now records the production readiness snapshot beside model, soul, skills, stats, and memory metadata. This lets the next launch avoid recomputing the full readiness tree before Home can draw.
+
+- [x] **Step 3: Hydrate the Home page once**
+
+Home calls `api.getDesktopBootstrap()` for the first runtime payload and then returns to the normal live polling loops. The cached stats sample is marked as cached so the UI does not call it live data.
+
+- [x] **Step 4: Verify**
+
+Run:
+
+```powershell
+py -3.11 -m unittest tests.jarvis_cli.test_runtime_readiness_api_contract tests.jarvis_cli.test_desktop_startup_manifest tests.jarvis_cli.test_desktop_home_contract
+npm.cmd run desktop:check
+```
+
+Expected: the source contracts prove the bootstrap endpoint, manifest readiness persistence, and frontend bootstrap hydration exist; the desktop check still passes.
 
 ## Task 2: Unblock First Paint From Backend Warmup
 
