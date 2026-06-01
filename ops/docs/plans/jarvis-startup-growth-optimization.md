@@ -16,10 +16,10 @@
 - [x] Home route is eager-loaded so the first useful screen is not delayed by a lazy chunk.
 - [x] Electron calls backend warmup after `/api/status`.
 - [x] Backend warmup starts local runtime, model readiness, stats, souls, skills, and voice warmup.
-- [ ] Persist a startup manifest so fresh launches can reuse verified model/soul/memory facts before a full rescan.
-- [ ] Expose manifest status through `/api/runtime/warmup`.
-- [ ] Use the manifest as the first source for `/api/models/list` when roots have not changed.
-- [ ] Add tests proving manifest reuse, stale invalidation, and warmup persistence.
+- [x] Persist a startup manifest so fresh launches can reuse verified model/soul/memory facts before a full rescan.
+- [x] Expose manifest status through `/api/runtime/warmup`.
+- [x] Use the manifest as the first source for `/api/models/list` when roots have not changed.
+- [x] Add tests proving manifest reuse, stale invalidation, and warmup persistence.
 
 ## Permanent Startup Strategy
 
@@ -36,23 +36,23 @@
 - Modify: `src/jarvis_cli/web_server.py`
 - Test: `tests/jarvis_cli/test_desktop_startup_manifest.py`
 
-- [ ] **Step 1: Add manifest helpers**
+- [x] **Step 1: Add manifest helpers**
 
 Create a module with `load_startup_manifest`, `write_startup_manifest`, `roots_match_manifest`, and `collect_memory_context_snapshot`.
 
-- [ ] **Step 2: Reuse cached model payload**
+- [x] **Step 2: Reuse cached model payload**
 
 Update `_local_model_payload()` to read persisted `model_payload` when candidate roots still match the saved root mtimes.
 
-- [ ] **Step 3: Persist refreshed warmup**
+- [x] **Step 3: Persist refreshed warmup**
 
 Update `_run_desktop_runtime_warmup()` to write model payload, runtime plan, skills snapshot, souls manifest, memory snapshot, and warmup errors.
 
-- [ ] **Step 4: Surface manifest status**
+- [x] **Step 4: Surface manifest status**
 
 Return `manifest` metadata from `/api/runtime/warmup` so UI and smoke tests can distinguish cold, cached, and refreshed startup.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run:
 
@@ -62,4 +62,3 @@ npm.cmd run desktop:check
 ```
 
 Expected: all tests pass and `desktop:check` reports production readiness.
-

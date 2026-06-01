@@ -48,6 +48,14 @@ from jarvis_cli.config import (
     check_config_version,
     redact_key,
 )
+from jarvis_cli.desktop_startup_manifest import (
+    collect_memory_context_snapshot,
+    load_startup_manifest,
+    manifest_summary,
+    root_fingerprint,
+    roots_match_manifest,
+    write_startup_manifest,
+)
 from gateway.status import get_running_pid, read_runtime_status
 
 try:
@@ -2019,6 +2027,7 @@ def _clone_local_model_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
 def _local_model_payload(*, force_refresh: bool = False) -> Dict[str, Any]:
     """Return local model assets, including GGUF files directly in model roots."""
     now = time.time()
+    roots = [root for root in _candidate_model_roots() if root.exists()]
     cached = _LOCAL_MODEL_PAYLOAD_CACHE.get("value")
     if (
         not force_refresh
@@ -2027,9 +2036,17 @@ def _local_model_payload(*, force_refresh: bool = False) -> Dict[str, Any]:
     ):
         return _clone_local_model_payload(cached)
 
+    manifest = load_startup_manifest(get_jarvis_home())
+    manifest_payload = manifest.get("model_payload") if isinstance(manifest.get("model_payload"), Mapping) else None
+    if not force_refresh and manifest_payload and roots_match_manifest(manifest, roots):
+        payload = _clone_local_model_payload(manifest_payload)
+        payload["cache"] = "startup-manifest"
+        _LOCAL_MODEL_PAYLOAD_CACHE["value"] = _clone_local_model_payload(payload)
+        _LOCAL_MODEL_PAYLOAD_CACHE["expires_at"] = now + _LOCAL_MODEL_PAYLOAD_CACHE_SECONDS
+        return payload
+
     models: List[Dict[str, Any]] = []
     seen: set[str] = set()
-    roots = [root for root in _candidate_model_roots() if root.exists()]
 
     def add_model(entry: Path, files: List[Path], model_id: str | None = None) -> None:
         if not files:
@@ -2070,11 +2087,13 @@ def _local_model_payload(*, force_refresh: bool = False) -> Dict[str, Any]:
 
 def _desktop_warmup_snapshot() -> Dict[str, Any]:
     with _DESKTOP_WARMUP_LOCK:
-        return {
+        snapshot = {
             **_DESKTOP_WARMUP_STATE,
             "steps": dict(_DESKTOP_WARMUP_STATE.get("steps") or {}),
             "errors": list(_DESKTOP_WARMUP_STATE.get("errors") or []),
         }
+    snapshot["manifest"] = manifest_summary(load_startup_manifest(get_jarvis_home()))
+    return snapshot
 
 
 def _set_desktop_warmup_step(name: str, status: str, detail: Any = "") -> None:
@@ -2106,15 +2125,22 @@ def _run_desktop_runtime_warmup(reason: str) -> None:
             "errors": [],
         })
 
+    warmup_payload: Dict[str, Any] = {}
     for step_name, step in (
-        ("models", lambda: {"count": len(_local_model_payload(force_refresh=True).get("models") or [])}),
+        ("models", lambda: _local_model_payload(force_refresh=True)),
         ("runtime_plan", lambda: _planned_llm_runtime_snapshot()),
         ("skills", _skill_count_snapshot),
         ("stats", _runtime_stats_snapshot),
+        ("souls", _team_souls_manifest),
+        ("memory", lambda: collect_memory_context_snapshot(get_jarvis_home(), Path.cwd())),
     ):
         try:
             _set_desktop_warmup_step(step_name, "running")
-            _set_desktop_warmup_step(step_name, "ready", step())
+            detail = step()
+            warmup_payload[step_name] = detail
+            if step_name == "models" and isinstance(detail, Mapping):
+                detail = {"count": len(detail.get("models") or []), "cache": detail.get("cache", "refreshed")}
+            _set_desktop_warmup_step(step_name, "ready", detail)
         except Exception as exc:
             _record_desktop_warmup_error(step_name, exc)
 
@@ -2126,6 +2152,28 @@ def _run_desktop_runtime_warmup(reason: str) -> None:
         _set_desktop_warmup_step("voice", "warming", {"background": True})
     except Exception as exc:
         _record_desktop_warmup_error("voice", exc)
+
+    try:
+        model_payload = (
+            warmup_payload.get("models")
+            if isinstance(warmup_payload.get("models"), Mapping)
+            else _local_model_payload()
+        )
+        roots = [Path(root) for root in (model_payload.get("roots") or [])] if isinstance(model_payload, Mapping) else []
+        write_startup_manifest(get_jarvis_home(), {
+            "source": "desktop-warmup",
+            "model_roots_fingerprint": root_fingerprint(roots),
+            "model_payload": _clone_local_model_payload(model_payload) if isinstance(model_payload, Mapping) else {},
+            "runtime_plan": warmup_payload.get("runtime_plan") or {},
+            "skills": warmup_payload.get("skills") or {},
+            "stats": warmup_payload.get("stats") or {},
+            "souls": warmup_payload.get("souls") or {},
+            "memory_context": warmup_payload.get("memory") or {},
+            "errors": list(_DESKTOP_WARMUP_STATE.get("errors") or []),
+        })
+        _set_desktop_warmup_step("manifest", "ready", manifest_summary(load_startup_manifest(get_jarvis_home())))
+    except Exception as exc:
+        _record_desktop_warmup_error("manifest", exc)
 
     with _DESKTOP_WARMUP_LOCK:
         _DESKTOP_WARMUP_STATE["running"] = False
