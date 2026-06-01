@@ -22,6 +22,7 @@
 - [x] Add tests proving manifest reuse, stale invalidation, and warmup persistence.
 - [x] Show the blurred desktop shell before backend readiness polling, then load the live renderer from the backend once it can inject the session token.
 - [x] Skip duplicate packaged backend preflight by default, with `JARVIS_FORCE_BACKEND_PREFLIGHT=1` available for diagnostics.
+- [x] Use a lightweight `/api/desktop/ready` probe for Electron startup so gateway/session/status scans do not block the first live renderer load.
 
 ## Permanent Startup Strategy
 
@@ -55,6 +56,33 @@ npm.cmd run desktop:check
 ```
 
 Expected: the Electron shell contract confirms shell-before-backend-wait ordering, renderer-after-backend-token ordering, and production checks pass.
+
+## Task 3: Replace Heavy Startup Status Polling
+
+**Files:**
+- Modify: `src/jarvis_cli/web_server.py`
+- Modify: `desktop/electron/main.js`
+- Test: `tests/jarvis_cli/test_runtime_readiness_api_contract.py`
+- Test: `tests/jarvis_cli/test_electron_shell_contract.py`
+
+- [x] **Step 1: Add a real lightweight backend probe**
+
+Expose `/api/desktop/ready` as a public read-only endpoint that confirms FastAPI is bound, reports version and uptime, and avoids gateway/session/config scans.
+
+- [x] **Step 2: Use the lightweight probe from Electron**
+
+Update `waitForBackend()` and `probeExistingBackend()` to call `/api/desktop/ready` instead of `/api/status`. The dashboard still uses `/api/status` after it is live, so displayed system data remains real.
+
+- [x] **Step 3: Verify**
+
+Run:
+
+```powershell
+py -3.11 -m unittest tests.jarvis_cli.test_electron_shell_contract tests.jarvis_cli.test_runtime_readiness_api_contract
+npm.cmd run desktop:check
+```
+
+Expected: contracts prove the lightweight probe exists and Electron uses it for startup, while production readiness still passes.
 
 ## Task 1: Persist Startup Manifest
 
