@@ -312,7 +312,7 @@ async function waitForBackend(timeoutMs = 20000) {
 
   while (Date.now() < deadline) {
     try {
-      return await fetchJson('/api/status')
+      return await fetchJson('/api/desktop/ready')
     } catch (error) {
       lastError = error
       await delay(300)
@@ -324,7 +324,7 @@ async function waitForBackend(timeoutMs = 20000) {
 
 async function probeExistingBackend(timeoutMs = 900) {
   try {
-    await fetchJson('/api/status', { timeoutMs })
+    await fetchJson('/api/desktop/ready', { timeoutMs })
     appendDesktopLog('[jarvis-desktop] reusing existing backend', BACKEND_BASE_URL)
     return true
   } catch {

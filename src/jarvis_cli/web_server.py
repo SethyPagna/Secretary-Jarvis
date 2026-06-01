@@ -157,6 +157,7 @@ app.add_middleware(
 # only truly non-sensitive, read-only endpoints belong here.
 # ---------------------------------------------------------------------------
 _PUBLIC_API_PATHS: frozenset = frozenset({
+    "/api/desktop/ready",
     "/api/status",
     "/api/config/defaults",
     "/api/config/schema",
@@ -673,6 +674,24 @@ def _merge_gateway_status(primary: Mapping[str, Any] | None, secondary: Mapping[
         except (TypeError, ValueError):
             pass
     return merged
+
+
+@app.get("/api/desktop/ready")
+async def get_desktop_ready():
+    """Lightweight readiness probe for Electron first paint.
+
+    This endpoint only proves the FastAPI backend is bound and can serve the
+    dashboard HTML with an injected session token. It intentionally avoids the
+    heavier gateway/session/config scans performed by ``/api/status`` so the
+    desktop window can leave the blurred boot screen sooner.
+    """
+    return {
+        "ok": True,
+        "status": "ready",
+        "version": __version__,
+        "uptime_seconds": max(0.0, time.time() - _PROCESS_STARTED_AT),
+        "embedded": os.environ.get("JARVIS_DESKTOP_EMBEDDED") == "1",
+    }
 
 
 @app.get("/api/status")
