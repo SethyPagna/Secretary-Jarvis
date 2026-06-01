@@ -66,6 +66,7 @@ import { PluginPage, PluginSlot, usePlugins } from "@/plugins";
 import type { PluginManifest } from "@/plugins";
 import { useTheme } from "@/themes";
 import { api } from "@/lib/api";
+import HomePage from "@/pages/HomePage";
 
 type RouteComponent = ComponentType | LazyExoticComponent<ComponentType>;
 
@@ -76,7 +77,6 @@ const CronPage = lazy(() => import("@/pages/CronPage"));
 const DocsPage = lazy(() => import("@/pages/DocsPage"));
 const EnvPage = lazy(() => import("@/pages/EnvPage"));
 const GuidesPage = lazy(() => import("@/pages/GuidesPage"));
-const HomePage = lazy(() => import("@/pages/HomePage"));
 const LogsPage = lazy(() => import("@/pages/LogsPage"));
 const ModelsPage = lazy(() => import("@/pages/ModelsPage"));
 const PluginsPage = lazy(() => import("@/pages/PluginsPage"));

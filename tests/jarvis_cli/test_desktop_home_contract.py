@@ -10,7 +10,8 @@ class DesktopHomeContractTests(unittest.TestCase):
     def test_app_routes_to_unified_home_and_desktop_nav(self) -> None:
         source = (WEB_ROOT / "src" / "App.tsx").read_text(encoding="utf-8")
 
-        self.assertIn('const HomePage = lazy(() => import("@/pages/HomePage"))', source)
+        self.assertIn('import HomePage from "@/pages/HomePage";', source)
+        self.assertNotIn('const HomePage = lazy(() => import("@/pages/HomePage"))', source)
         self.assertIn("<Suspense", source)
         self.assertIn("function AppLoadingFallback", source)
         self.assertIn("Warming workspace, voice, and local models", source)
