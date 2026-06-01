@@ -78,12 +78,19 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
   const stt = readiness?.stt;
   const llmRuntime = stats?.llm_runtime;
   const hardware = stats?.hardware_status ?? {};
-  const warnings = stats?.warnings?.length ? stats.warnings.join(" ") : "Live hardware sample";
-  const live = Boolean(stats?.timestamp);
+  const cached = Boolean(stats?.cached || stats?.cache === "startup-manifest");
+  const warnings = cached
+    ? "Cached startup sample; live refresh follows."
+    : stats?.warnings?.length
+      ? stats.warnings.join(" ")
+      : "Live hardware sample";
+  const live = Boolean(stats?.timestamp) && !cached;
+  const waiting = !stats?.timestamp;
   const blockingIssues = readiness?.["blocking_issues"];
   const badgeTitle = blockingIssues
     ? JSON.stringify(blockingIssues)
     : warnings;
+  const badgeLabel = live ? "Live" : cached ? "Cached" : "Waiting";
 
   return (
     <aside className="flex h-full max-h-full min-h-0 min-w-0 w-full max-w-full flex-col gap-2 overflow-hidden rounded-md border border-white/12 bg-[#10151d]/90 p-3 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
@@ -97,11 +104,13 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
               "rounded-sm px-2 py-1 text-[0.68rem] uppercase tracking-[0.1em]",
               live
                 ? "bg-emerald-300/12 text-emerald-200"
-                : "bg-amber-300/12 text-amber-200",
+                : cached
+                  ? "bg-cyan-300/12 text-cyan-100"
+                  : "bg-amber-300/12 text-amber-200",
             )}
             title={badgeTitle}
           >
-            {live ? "Live" : "Waiting"}
+            {waiting ? "Waiting" : badgeLabel}
           </span>
         </div>
       </div>

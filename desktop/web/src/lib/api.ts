@@ -68,6 +68,8 @@ async function getSessionToken(): Promise<string> {
 
 export const api = {
   getStatus: () => fetchJSON<StatusResponse>("/api/status"),
+  getDesktopBootstrap: () =>
+    fetchJSON<DesktopBootstrapResponse>("/api/desktop/bootstrap"),
   getRuntimeStats: () => fetchJSON<RuntimeStatsResponse>("/api/stats"),
   getRuntimeReadiness: () =>
     fetchJSON<RuntimeReadinessResponse>("/api/runtime/readiness"),
@@ -447,9 +449,21 @@ export interface StatusResponse {
   version: string;
 }
 
+export interface DesktopBootstrapResponse {
+  status: StatusResponse;
+  readiness: RuntimeReadinessResponse;
+  stats: RuntimeStatsResponse | null;
+  souls: TeamSoulsResponse;
+  models?: LocalModelsResponse;
+  manifest?: Record<string, unknown>;
+  cache?: string;
+}
+
 export interface RuntimeStatsResponse {
   type: "stats";
   timestamp: string;
+  cache?: string;
+  cached?: boolean;
   cpu_percent: number | null;
   process_cpu_percent: number | null;
   ram_used_mb: number | null;

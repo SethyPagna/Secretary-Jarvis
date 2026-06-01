@@ -259,14 +259,15 @@ export default function HomePage() {
   useEffect(() => {
     let cancelled = false;
     let runtimeTimer: number | null = null;
+    let bootstrapped = false;
 
     const runtimePollDelay = () =>
       document.visibilityState === "visible"
         ? RUNTIME_POLL_VISIBLE_MS
         : RUNTIME_POLL_BACKGROUND_MS;
 
-    const refreshStaticRuntime = () => {
-      void Promise.allSettled([
+    const refreshLiveRuntime = () =>
+      Promise.allSettled([
         api.getStatus(),
         api.getRuntimeReadiness(),
         api.getTeamSouls(),
@@ -281,7 +282,28 @@ export default function HomePage() {
             setTeamSouls(soulsResult.value.souls);
           }
         },
-      ).finally(() => {
+      );
+
+    const refreshStaticRuntime = () => {
+      const runtimeRequest = bootstrapped
+        ? refreshLiveRuntime()
+        : api
+            .getDesktopBootstrap()
+            .then((bootstrap) => {
+              bootstrapped = true;
+              if (cancelled) return;
+              setStatus(bootstrap.status);
+              setReadiness(bootstrap.readiness);
+              setTeamSouls(bootstrap.souls.souls);
+              if (bootstrap.stats) setStats(bootstrap.stats);
+              void refreshLiveRuntime();
+            })
+            .catch(() => {
+              bootstrapped = true;
+              return refreshLiveRuntime();
+            });
+
+      void runtimeRequest.finally(() => {
         if (!cancelled) {
           runtimeTimer = window.setTimeout(refreshStaticRuntime, runtimePollDelay());
         }
