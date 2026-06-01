@@ -111,8 +111,8 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("/api/skills", source)
         self.assertIn("backendReady", source)
         app_block = source[source.index("app.whenReady().then") :]
-        self.assertLess(app_block.index("createMainWindow()"), app_block.index("loadRenderer(mainWindow)"))
-        self.assertLess(app_block.index("loadRenderer(mainWindow)"), app_block.index("await waitForBackend()"))
+        self.assertLess(app_block.index("createMainWindow()"), app_block.index("await waitForBackend()"))
+        self.assertLess(app_block.index("await waitForBackend()"), app_block.index("loadRenderer(mainWindow)"))
         self.assertLess(app_block.index("await waitForBackend()"), app_block.index("void warmBackendServices()"))
 
     def test_preload_exposes_limited_desktop_bridge(self) -> None:

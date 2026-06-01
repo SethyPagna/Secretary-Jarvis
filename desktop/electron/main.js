@@ -745,11 +745,6 @@ app.whenReady().then(async () => {
   createMainWindow()
   createTray()
 
-  const rendererLoad = loadRenderer(mainWindow).catch((error) => {
-    console.error('[jarvis-desktop] failed to load renderer', error)
-  })
-  void rendererLoad
-
   let backendReady = false
   try {
     await waitForBackend()
@@ -759,6 +754,10 @@ app.whenReady().then(async () => {
     console.warn('[jarvis-desktop] backend readiness check failed; opening offline-capable shell', error)
     appendDesktopLog('[jarvis-desktop] backend readiness check failed', error.stack || String(error))
   }
+
+  loadRenderer(mainWindow).catch((error) => {
+    console.error('[jarvis-desktop] failed to load renderer', error)
+  })
 
   if (backendReady) {
     void warmBackendServices()
