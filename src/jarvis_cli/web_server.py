@@ -95,6 +95,19 @@ _DESKTOP_STREAM_COUNTER: Dict[str, Any] = {
     "started_at": 0.0,
 }
 _PLANNED_LLM_RUNTIME_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": {}}
+_LOCAL_MODEL_PAYLOAD_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": None}
+_LOCAL_MODEL_PAYLOAD_CACHE_SECONDS = 30.0
+_DESKTOP_WARMUP_LOCK = threading.Lock()
+_DESKTOP_WARMUP_STATE: Dict[str, Any] = {
+    "started": False,
+    "running": False,
+    "completed": False,
+    "reason": "",
+    "started_at": 0.0,
+    "finished_at": 0.0,
+    "steps": {},
+    "errors": [],
+}
 
 # ---------------------------------------------------------------------------
 # Session token for protecting sensitive endpoints (reveal).
@@ -105,6 +118,14 @@ _SESSION_TOKEN = secrets.token_urlsafe(32)
 _SESSION_HEADER_NAME = "X-Jarvis-Session-Token"
 _DESKTOP_SHUTDOWN_TOKEN = os.environ.get("JARVIS_DESKTOP_SHUTDOWN_TOKEN", "")
 _DESKTOP_SHUTDOWN_HEADER_NAME = "X-Jarvis-Desktop-Shutdown-Token"
+_DESKTOP_TOKEN_API_PATHS: frozenset = frozenset({
+    "/api/runtime/readiness",
+    "/api/runtime/warmup",
+    "/api/models/list",
+    "/api/stats",
+    "/api/souls/team",
+    "/api/skills",
+})
 
 # Simple rate limiter for the reveal endpoint
 _reveal_timestamps: List[float] = []
@@ -274,6 +295,7 @@ async def auth_middleware(request: Request, call_next):
         if (
             path == "/api/shutdown"
             or path.startswith("/api/runtime/local")
+            or path in _DESKTOP_TOKEN_API_PATHS
         ) and _has_valid_desktop_shutdown_token(request):
             return await call_next(request)
         if not _has_valid_session_token(request):
@@ -1987,8 +2009,24 @@ def _sum_file_sizes(files: List[Path]) -> int:
     return total
 
 
-def _local_model_payload() -> Dict[str, Any]:
+def _clone_local_model_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    return {
+        "roots": list(payload.get("roots") or []),
+        "models": [dict(item) for item in payload.get("models") or [] if isinstance(item, Mapping)],
+    }
+
+
+def _local_model_payload(*, force_refresh: bool = False) -> Dict[str, Any]:
     """Return local model assets, including GGUF files directly in model roots."""
+    now = time.time()
+    cached = _LOCAL_MODEL_PAYLOAD_CACHE.get("value")
+    if (
+        not force_refresh
+        and isinstance(cached, Mapping)
+        and now < float(_LOCAL_MODEL_PAYLOAD_CACHE.get("expires_at") or 0.0)
+    ):
+        return _clone_local_model_payload(cached)
+
     models: List[Dict[str, Any]] = []
     seen: set[str] = set()
     roots = [root for root in _candidate_model_roots() if root.exists()]
@@ -2024,7 +2062,105 @@ def _local_model_payload() -> Dict[str, Any]:
                 continue
             add_model(entry, _iter_local_model_files(entry))
 
-    return {"roots": [str(root) for root in roots], "models": models}
+    payload = {"roots": [str(root) for root in roots], "models": models}
+    _LOCAL_MODEL_PAYLOAD_CACHE["value"] = _clone_local_model_payload(payload)
+    _LOCAL_MODEL_PAYLOAD_CACHE["expires_at"] = now + _LOCAL_MODEL_PAYLOAD_CACHE_SECONDS
+    return payload
+
+
+def _desktop_warmup_snapshot() -> Dict[str, Any]:
+    with _DESKTOP_WARMUP_LOCK:
+        return {
+            **_DESKTOP_WARMUP_STATE,
+            "steps": dict(_DESKTOP_WARMUP_STATE.get("steps") or {}),
+            "errors": list(_DESKTOP_WARMUP_STATE.get("errors") or []),
+        }
+
+
+def _set_desktop_warmup_step(name: str, status: str, detail: Any = "") -> None:
+    with _DESKTOP_WARMUP_LOCK:
+        steps = dict(_DESKTOP_WARMUP_STATE.get("steps") or {})
+        steps[name] = {"status": status, "detail": detail, "updated_at": time.time()}
+        _DESKTOP_WARMUP_STATE["steps"] = steps
+
+
+def _record_desktop_warmup_error(name: str, exc: Exception) -> None:
+    detail = f"{type(exc).__name__}: {exc}"
+    _set_desktop_warmup_step(name, "error", detail)
+    with _DESKTOP_WARMUP_LOCK:
+        errors = list(_DESKTOP_WARMUP_STATE.get("errors") or [])
+        errors.append({"step": name, "error": detail})
+        _DESKTOP_WARMUP_STATE["errors"] = errors[-8:]
+
+
+def _run_desktop_runtime_warmup(reason: str) -> None:
+    with _DESKTOP_WARMUP_LOCK:
+        _DESKTOP_WARMUP_STATE.update({
+            "started": True,
+            "running": True,
+            "completed": False,
+            "reason": reason,
+            "started_at": time.time(),
+            "finished_at": 0.0,
+            "steps": {},
+            "errors": [],
+        })
+
+    for step_name, step in (
+        ("models", lambda: {"count": len(_local_model_payload(force_refresh=True).get("models") or [])}),
+        ("runtime_plan", lambda: _planned_llm_runtime_snapshot()),
+        ("skills", _skill_count_snapshot),
+        ("stats", _runtime_stats_snapshot),
+    ):
+        try:
+            _set_desktop_warmup_step(step_name, "running")
+            _set_desktop_warmup_step(step_name, "ready", step())
+        except Exception as exc:
+            _record_desktop_warmup_error(step_name, exc)
+
+    try:
+        _set_desktop_warmup_step("voice", "starting")
+        from jarvis_cli.desktop_voice import start_desktop_voice_warmup
+
+        start_desktop_voice_warmup(get_jarvis_home() / "voice-warmup")
+        _set_desktop_warmup_step("voice", "warming", {"background": True})
+    except Exception as exc:
+        _record_desktop_warmup_error("voice", exc)
+
+    with _DESKTOP_WARMUP_LOCK:
+        _DESKTOP_WARMUP_STATE["running"] = False
+        _DESKTOP_WARMUP_STATE["completed"] = True
+        _DESKTOP_WARMUP_STATE["finished_at"] = time.time()
+
+
+def start_desktop_runtime_warmup(reason: str = "api") -> Dict[str, Any]:
+    """Start non-blocking desktop warmup for model, voice, memory, and stats."""
+    with _DESKTOP_WARMUP_LOCK:
+        if bool(_DESKTOP_WARMUP_STATE.get("running")):
+            return {
+                **_DESKTOP_WARMUP_STATE,
+                "steps": dict(_DESKTOP_WARMUP_STATE.get("steps") or {}),
+                "errors": list(_DESKTOP_WARMUP_STATE.get("errors") or []),
+            }
+        _DESKTOP_WARMUP_STATE.update({
+            "started": True,
+            "running": True,
+            "completed": False,
+            "reason": reason,
+            "started_at": time.time(),
+            "finished_at": 0.0,
+            "steps": {},
+            "errors": [],
+        })
+
+    thread = threading.Thread(
+        target=_run_desktop_runtime_warmup,
+        args=(reason,),
+        name="jarvis-desktop-runtime-warmup",
+        daemon=True,
+    )
+    thread.start()
+    return _desktop_warmup_snapshot()
 
 
 @app.get("/api/models/local")
@@ -2037,6 +2173,18 @@ def list_local_models():
 def list_models_alias():
     """Compatibility endpoint for the desktop app's model browser."""
     return _local_model_payload()
+
+
+@app.get("/api/runtime/warmup")
+def get_desktop_runtime_warmup():
+    """Return the current desktop warmup state."""
+    return _desktop_warmup_snapshot()
+
+
+@app.post("/api/runtime/warmup")
+def post_desktop_runtime_warmup():
+    """Prewarm desktop runtime caches without blocking first paint."""
+    return start_desktop_runtime_warmup("desktop")
 
 
 @app.post("/api/models/load")
@@ -5461,11 +5609,9 @@ def start_server(
 
     if os.environ.get("JARVIS_DESKTOP_EMBEDDED") == "1":
         try:
-            from jarvis_cli.desktop_voice import start_desktop_voice_warmup
-
-            start_desktop_voice_warmup(get_jarvis_home() / "voice-warmup")
+            start_desktop_runtime_warmup("startup")
         except Exception:
-            _log.warning("Desktop voice warmup skipped", exc_info=True)
+            _log.warning("Desktop runtime warmup skipped", exc_info=True)
 
     if open_browser:
         import webbrowser

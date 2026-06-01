@@ -14,6 +14,17 @@ class RuntimeReadinessApiContractTests(unittest.TestCase):
         self.assertIn("build_runtime_readiness", source)
         self.assertIn("load_env()", source)
 
+    def test_web_server_exposes_non_blocking_desktop_warmup(self) -> None:
+        source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
+
+        self.assertIn('@app.post("/api/runtime/warmup")', source)
+        self.assertIn('@app.get("/api/runtime/warmup")', source)
+        self.assertIn("start_desktop_runtime_warmup", source)
+        self.assertIn('name="jarvis-desktop-runtime-warmup"', source)
+        self.assertIn("_local_model_payload(force_refresh=True)", source)
+        self.assertIn("start_desktop_voice_warmup", source)
+        self.assertIn("_DESKTOP_TOKEN_API_PATHS", source)
+
 
 if __name__ == "__main__":
     unittest.main()

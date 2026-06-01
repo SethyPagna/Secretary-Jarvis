@@ -99,6 +99,8 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertIn("loadStartupShell", source)
         self.assertIn("warmBackendServices", source)
         self.assertIn("maybeStartLocalRuntime()", source)
+        self.assertIn("/api/runtime/warmup", source)
+        self.assertIn("'X-Jarvis-Desktop-Shutdown-Token': BACKEND_SHUTDOWN_TOKEN", source)
         self.assertIn("/api/runtime/readiness", source)
         self.assertIn("/api/models/list", source)
         self.assertIn("/api/souls/team", source)

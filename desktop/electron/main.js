@@ -15,11 +15,12 @@ const LOCAL_RUNTIME_START_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_
 const LOCAL_RUNTIME_STOP_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_LOCAL_RUNTIME_STOP_TIMEOUT_MS || '10000', 10)
 const REMOTE_DEBUGGING_PORT = process.env.JARVIS_REMOTE_DEBUGGING_PORT || ''
 const DESKTOP_WARMUP_ENDPOINTS = [
-  '/api/runtime/readiness',
-  '/api/models/list',
-  '/api/stats',
-  '/api/souls/team',
-  '/api/skills'
+  { endpoint: '/api/runtime/warmup', method: 'POST' },
+  { endpoint: '/api/runtime/readiness' },
+  { endpoint: '/api/models/list' },
+  { endpoint: '/api/stats' },
+  { endpoint: '/api/souls/team' },
+  { endpoint: '/api/skills' }
 ]
 const DESKTOP_WARMUP_TIMEOUT_MS = Number.parseInt(process.env.JARVIS_DESKTOP_WARMUP_TIMEOUT_MS || '10000', 10)
 const APP_USER_MODEL_ID = 'com.sethypagna.jarvis'
@@ -371,11 +372,18 @@ async function stopLocalRuntime() {
 
 async function warmBackendServices() {
   const localRuntime = await maybeStartLocalRuntime()
+  const warmupHeaders = {
+    'X-Jarvis-Desktop-Shutdown-Token': BACKEND_SHUTDOWN_TOKEN
+  }
   const results = await Promise.allSettled(
-    DESKTOP_WARMUP_ENDPOINTS.map((endpoint) => fetchJson(endpoint, { timeoutMs: DESKTOP_WARMUP_TIMEOUT_MS }))
+    DESKTOP_WARMUP_ENDPOINTS.map(({ endpoint, method = 'GET' }) => fetchJson(endpoint, {
+      method,
+      headers: warmupHeaders,
+      timeoutMs: DESKTOP_WARMUP_TIMEOUT_MS
+    }))
   )
   const summary = results.map((result, index) => ({
-    endpoint: DESKTOP_WARMUP_ENDPOINTS[index],
+    endpoint: DESKTOP_WARMUP_ENDPOINTS[index].endpoint,
     ok: result.status === 'fulfilled',
     error: result.status === 'rejected'
       ? result.reason instanceof Error ? result.reason.message : String(result.reason)
