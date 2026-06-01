@@ -61,6 +61,8 @@ class DesktopStartupManifestTests(unittest.TestCase):
         self.assertIn("write_startup_manifest", source)
         self.assertIn("roots_match_manifest(manifest, roots)", source)
         self.assertIn("collect_memory_context_snapshot", source)
+        self.assertIn('("readiness", lambda: _runtime_readiness_snapshot(force_refresh=True))', source)
+        self.assertIn('"readiness": warmup_payload.get("readiness") or {}', source)
         self.assertIn('"manifest"', source)
 
 

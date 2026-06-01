@@ -13,6 +13,7 @@ class RuntimeReadinessApiContractTests(unittest.TestCase):
         self.assertIn('@app.get("/api/runtime/readiness")', source)
         self.assertIn("build_runtime_readiness", source)
         self.assertIn("load_env()", source)
+        self.assertIn("_runtime_readiness_snapshot", source)
 
     def test_web_server_exposes_lightweight_desktop_ready_endpoint(self) -> None:
         source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
@@ -32,6 +33,15 @@ class RuntimeReadinessApiContractTests(unittest.TestCase):
         self.assertIn("_local_model_payload(force_refresh=True)", source)
         self.assertIn("start_desktop_voice_warmup", source)
         self.assertIn("_DESKTOP_TOKEN_API_PATHS", source)
+
+    def test_web_server_exposes_desktop_bootstrap_endpoint(self) -> None:
+        source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
+
+        self.assertIn('@app.get("/api/desktop/bootstrap")', source)
+        self.assertIn('"/api/desktop/bootstrap"', source)
+        self.assertIn('"readiness": readiness', source)
+        self.assertIn('"cache": "startup-manifest"', source)
+        self.assertIn('"cached"', source)
 
 
 if __name__ == "__main__":

@@ -56,6 +56,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("Steering", source)
         self.assertIn("Terminal / Chat Input", source)
         self.assertIn("api.getRuntimeReadiness", source)
+        self.assertIn("getDesktopBootstrap()", source)
         self.assertIn("api.getRuntimeSmokeTest", source)
 
     def test_home_quick_actions_are_stateful_not_placeholders(self) -> None:
@@ -100,6 +101,8 @@ class DesktopHomeContractTests(unittest.TestCase):
 
         self.assertIn("getRuntimeStats", source)
         self.assertIn('"/api/stats"', source)
+        self.assertIn("getDesktopBootstrap", source)
+        self.assertIn('"/api/desktop/bootstrap"', source)
         self.assertIn("getRuntimeReadiness", source)
         self.assertIn('"/api/runtime/readiness"', source)
         self.assertIn("getRuntimeSmokeTest", source)
