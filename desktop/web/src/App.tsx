@@ -93,6 +93,43 @@ function UnknownRouteFallback({ pluginsLoading }: { pluginsLoading: boolean }) {
   return <Navigate to="/" replace />;
 }
 
+function AppLoadingFallback() {
+  return (
+    <div
+      className="relative flex min-h-[280px] flex-1 items-center justify-center overflow-hidden rounded-md border border-cyan-200/12 bg-[#0b1118]/72 p-6 text-cyan-50 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="pointer-events-none absolute inset-0 opacity-70">
+        <div className="absolute inset-x-[-12%] top-[-28%] h-[70%] rotate-[-8deg] bg-[linear-gradient(110deg,transparent,rgba(0,212,255,0.24),rgba(184,108,255,0.18),transparent)] blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-28"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(232,246,255,0.9) 0 1px, transparent 1.3px), radial-gradient(circle, rgba(0,212,255,0.58) 0 1px, transparent 1.3px)",
+            backgroundPosition: "0 0, 34px 22px",
+            backgroundSize: "92px 92px, 148px 148px",
+          }}
+        />
+      </div>
+
+      <div className="relative flex flex-col items-center gap-4 text-center">
+        <div className="relative grid h-20 w-20 place-items-center rounded-full border border-cyan-100/30 bg-cyan-200/10 shadow-[0_0_42px_rgba(125,249,255,0.32)]">
+          <span className="h-10 w-10 animate-pulse rounded-full bg-cyan-100 shadow-[0_0_26px_rgba(125,249,255,0.62)]" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white">
+            JARVIS
+          </p>
+          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-cyan-50/58">
+            Warming workspace, voice, and local models
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const BUILTIN_ROUTES_CORE: Record<string, RouteComponent> = {
   "/": HomePage,
   "/sessions": SessionsPage,
@@ -575,11 +612,7 @@ export default function App() {
                 )}
               >
                 <Suspense
-                  fallback={
-                    <div className="flex min-h-[220px] items-center justify-center text-slate-300">
-                      <Spinner />
-                    </div>
-                  }
+                  fallback={<AppLoadingFallback />}
                 >
                   <Routes>
                     {routes.map(({ key, path, element }) => (

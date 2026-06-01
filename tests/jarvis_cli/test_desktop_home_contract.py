@@ -12,6 +12,9 @@ class DesktopHomeContractTests(unittest.TestCase):
 
         self.assertIn('const HomePage = lazy(() => import("@/pages/HomePage"))', source)
         self.assertIn("<Suspense", source)
+        self.assertIn("function AppLoadingFallback", source)
+        self.assertIn("Warming workspace, voice, and local models", source)
+        self.assertIn("backdrop-blur-xl", source)
         self.assertIn('"/": HomePage', source)
         self.assertIn('path: "/"', source)
         self.assertIn('label: "Home"', source)
