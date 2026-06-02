@@ -124,6 +124,14 @@ class DesktopVoiceTests(unittest.TestCase):
         self.assertEqual(result["provider"], "docker")
         self.assertIn("removed", result["error"].lower())
 
+    def test_start_desktop_voice_warmup_uses_short_default_delay(self) -> None:
+        source = (Path(__file__).resolve().parents[2] / "src" / "jarvis_cli" / "desktop_voice.py").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn('JARVIS_VOICE_WARMUP_DELAY_SECONDS", "0.25"', source)
+        self.assertIn("warm_desktop_voice_models(output_dir)", source)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2282,6 +2282,20 @@ def _run_desktop_runtime_warmup(reason: str) -> None:
         })
 
     warmup_payload: Dict[str, Any] = {}
+    try:
+        _set_desktop_warmup_step("voice", "running", {"phase": "prewarm"})
+        from jarvis_cli.desktop_voice import warm_desktop_voice_models
+
+        voice_detail = warm_desktop_voice_models(get_jarvis_home() / "voice-warmup")
+        warmup_payload["voice"] = voice_detail
+        _set_desktop_warmup_step(
+            "voice",
+            "ready" if voice_detail.get("success") else "partial",
+            voice_detail,
+        )
+    except Exception as exc:
+        _record_desktop_warmup_error("voice", exc)
+
     for step_name, step in (
         ("models", lambda: _local_model_payload(force_refresh=True)),
         ("runtime_plan", lambda: _planned_llm_runtime_snapshot()),
@@ -2302,15 +2316,6 @@ def _run_desktop_runtime_warmup(reason: str) -> None:
             _record_desktop_warmup_error(step_name, exc)
 
     try:
-        _set_desktop_warmup_step("voice", "starting")
-        from jarvis_cli.desktop_voice import start_desktop_voice_warmup
-
-        start_desktop_voice_warmup(get_jarvis_home() / "voice-warmup")
-        _set_desktop_warmup_step("voice", "warming", {"background": True})
-    except Exception as exc:
-        _record_desktop_warmup_error("voice", exc)
-
-    try:
         model_payload = (
             warmup_payload.get("models")
             if isinstance(warmup_payload.get("models"), Mapping)
@@ -2327,6 +2332,7 @@ def _run_desktop_runtime_warmup(reason: str) -> None:
             "stats": warmup_payload.get("stats") or {},
             "souls": warmup_payload.get("souls") or {},
             "memory_context": warmup_payload.get("memory") or {},
+            "voice": warmup_payload.get("voice") or {},
             "errors": list(_DESKTOP_WARMUP_STATE.get("errors") or []),
         })
         _set_desktop_warmup_step("manifest", "ready", manifest_summary(load_startup_manifest(get_jarvis_home())))

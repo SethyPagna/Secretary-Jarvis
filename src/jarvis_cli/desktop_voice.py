@@ -620,7 +620,7 @@ def start_desktop_voice_warmup(output_dir: Path | None = None) -> None:
     def run() -> None:
         try:
             # Let FastAPI bind first so the UI appears immediately.
-            time.sleep(float(os.getenv("JARVIS_VOICE_WARMUP_DELAY_SECONDS", "2") or "2"))
+            time.sleep(float(os.getenv("JARVIS_VOICE_WARMUP_DELAY_SECONDS", "0.25") or "0.25"))
             warm_desktop_voice_models(output_dir)
         except Exception:
             pass

@@ -31,7 +31,9 @@ class RuntimeReadinessApiContractTests(unittest.TestCase):
         self.assertIn("start_desktop_runtime_warmup", source)
         self.assertIn('name="jarvis-desktop-runtime-warmup"', source)
         self.assertIn("_local_model_payload(force_refresh=True)", source)
-        self.assertIn("start_desktop_voice_warmup", source)
+        self.assertIn("warm_desktop_voice_models", source)
+        self.assertIn('_set_desktop_warmup_step("voice", "running"', source)
+        self.assertIn('"voice": warmup_payload.get("voice") or {}', source)
         self.assertIn("_DESKTOP_TOKEN_API_PATHS", source)
 
     def test_web_server_exposes_desktop_bootstrap_endpoint(self) -> None:
