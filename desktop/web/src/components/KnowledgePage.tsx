@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useState } from "react";
-import { Copy, Info, MoreHorizontal, Search, X } from "lucide-react";
+import { Copy, Info, Search } from "lucide-react";
 import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
 import { Button } from "@jarvis_managed-research/ui/ui/components/button";
 import { Input } from "@/components/ui/input";
@@ -91,7 +91,7 @@ export function KnowledgePage({
         <p className="max-w-3xl text-sm leading-6 text-text-secondary">{subtitle}</p>
       </header>
 
-      <div className="grid min-h-0 gap-3 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,1fr)_20rem]">
+      <div className="grid min-h-0 gap-3 lg:grid-cols-[13rem_minmax(0,1fr)]">
         <aside
           aria-label={`${title} sections`}
           className="min-h-0 overflow-x-auto border border-current/15 bg-background-base/45 p-2 lg:overflow-y-auto"
@@ -151,12 +151,15 @@ export function KnowledgePage({
               {visibleItems.map((item) => (
                 <article
                   className={cn(
-                    "group border border-current/15 bg-card/45 p-3 transition-colors",
+                    "group cursor-pointer border border-current/15 bg-card/45 p-3 transition-colors",
                     selectedItem?.id === item.id
                       ? "border-midground/60 bg-midground/10"
                       : "hover:border-midground/40 hover:bg-card/65",
                   )}
                   key={item.id}
+                  onClick={() =>
+                    setSelectedItem((current) => current?.id === item.id ? null : item)
+                  }
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -170,25 +173,9 @@ export function KnowledgePage({
                         {item.summary}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        ghost
-                        size="icon"
-                        className="h-7 w-7 text-text-tertiary hover:text-midground"
-                        title={item.detail}
-                      >
-                        <Info className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        ghost
-                        size="icon"
-                        aria-label={`Show details for ${item.title}`}
-                        className="h-7 w-7 text-text-tertiary hover:text-midground"
-                        onClick={() => setSelectedItem(item)}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <span className="shrink-0 rounded-sm border border-current/10 px-2 py-1 text-[0.65rem] uppercase tracking-[0.1em] text-text-tertiary">
+                      {selectedItem?.id === item.id ? "Hide" : "Details"}
+                    </span>
                   </div>
 
                   {item.badges?.length ? (
@@ -211,7 +198,8 @@ export function KnowledgePage({
                         size="icon"
                         aria-label={`Copy ${item.title}`}
                         className="h-6 w-6 text-text-tertiary hover:text-midground"
-                        onClick={() => {
+                        onClick={(event) => {
+                          event.stopPropagation();
                           void navigator.clipboard?.writeText(item.command ?? "");
                         }}
                       >
@@ -219,82 +207,25 @@ export function KnowledgePage({
                       </Button>
                     </div>
                   ) : null}
+
+                  {selectedItem?.id === item.id ? (
+                    <div className="mt-3 border-t border-current/10 pt-3 text-sm leading-6 text-text-secondary">
+                      <p>{item.detail}</p>
+                      {item.source ? (
+                        <code className="mt-3 block break-all bg-background-base/35 px-2 py-1.5 font-mono text-xs text-text-tertiary">
+                          {item.source}
+                        </code>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </article>
               ))}
             </div>
           )}
         </main>
-
-        <DetailPanel
-          item={selectedItem ?? visibleItems[0] ?? null}
-          onClose={() => setSelectedItem(null)}
-        />
       </div>
 
       {slotName ? <PluginSlot name={`${slotName}:bottom`} /> : null}
     </div>
-  );
-}
-
-function DetailPanel({
-  item,
-  onClose,
-}: {
-  item: KnowledgeItem | null;
-  onClose: () => void;
-}) {
-  if (!item) {
-    return (
-      <aside className="hidden border border-current/15 bg-background-base/35 p-4 text-sm text-text-secondary xl:block">
-        Select an entry for details.
-      </aside>
-    );
-  }
-
-  return (
-    <aside className="border border-current/15 bg-background-base/45 p-4 xl:sticky xl:top-0 xl:max-h-[calc(100dvh-8rem)] xl:overflow-y-auto">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Typography
-            as="h2"
-            className="font-mondwest text-display text-sm uppercase tracking-[0.12em] text-midground"
-          >
-            {item.title}
-          </Typography>
-          <p className="mt-2 text-sm leading-6 text-text-secondary">{item.detail}</p>
-        </div>
-        <Button
-          ghost
-          size="icon"
-          aria-label="Close details"
-          className="h-7 w-7 shrink-0 text-text-tertiary hover:text-midground"
-          onClick={onClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {item.source ? (
-        <div className="mt-4 border border-current/10 bg-background-base/35 px-3 py-2">
-          <Typography className="font-mondwest text-display text-[0.65rem] uppercase tracking-[0.12em] text-text-tertiary">
-            Source
-          </Typography>
-          <code className="mt-1 block break-all font-mono text-xs text-text-secondary">
-            {item.source}
-          </code>
-        </div>
-      ) : null}
-
-      {item.command ? (
-        <div className="mt-4 border border-current/10 bg-background-base/35 px-3 py-2">
-          <Typography className="font-mondwest text-display text-[0.65rem] uppercase tracking-[0.12em] text-text-tertiary">
-            Prompt
-          </Typography>
-          <code className="mt-1 block break-words font-mono text-xs text-text-secondary">
-            {item.command}
-          </code>
-        </div>
-      ) : null}
-    </aside>
   );
 }
