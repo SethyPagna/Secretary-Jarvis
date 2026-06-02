@@ -91,6 +91,7 @@ const VOICE_AUTO_STOP_SILENCE_MS = 520;
 const VOICE_MAX_NO_SPEECH_MS = 30_000;
 const VOICE_EMPTY_RETRY_DELAY_MS = 3_500;
 const VOICE_MAX_EMPTY_RETRIES = 2;
+const VOICE_SILENT_MONITOR_RESTART_MS = 250;
 const RUNTIME_POLL_VISIBLE_MS = 10_000;
 const RUNTIME_POLL_BACKGROUND_MS = 30_000;
 const STATS_POLL_VISIBLE_MS = 1_000;
@@ -143,6 +144,7 @@ export default function HomePage() {
   const audioMeterFrameRef = useRef<number | null>(null);
   const audioMeterSourceRef = useRef<AudioNode | null>(null);
   const autoVoicePromptedRef = useRef(false);
+  const voiceLiveAnnouncedRef = useRef(false);
   const voiceHadSpeechRef = useRef(false);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
@@ -767,6 +769,7 @@ export default function HomePage() {
         }
       };
       recorder.onstop = () => {
+        const hadSpeech = voiceHadSpeechRef.current;
         const recordedAudio = new Blob(voiceChunksRef.current, {
           type: recorder.mimeType || preferredMime || "audio/webm",
         });
@@ -776,16 +779,24 @@ export default function HomePage() {
         setListening(false);
         voiceSilenceStartedAtRef.current = null;
         voiceRecordingStartedAtRef.current = null;
+        if (!hadSpeech) {
+          setVoiceRetryAt(Date.now() + VOICE_SILENT_MONITOR_RESTART_MS);
+          window.setTimeout(() => setVoiceRetryAt(0), VOICE_SILENT_MONITOR_RESTART_MS);
+          return;
+        }
         void handleRecordedVoice(recordedAudio);
       };
 
       mediaRecorderRef.current = recorder;
       recorder.start(250);
       setListening(true);
-      setTerminalEntries((entries) => [
-        ...entries,
-        { kind: "output", text: "Voice is live." },
-      ]);
+      if (!voiceLiveAnnouncedRef.current) {
+        voiceLiveAnnouncedRef.current = true;
+        setTerminalEntries((entries) => [
+          ...entries,
+          { kind: "output", text: "Voice is live." },
+        ]);
+      }
     } catch {
       stopVoiceStream();
       setListening(false);
@@ -878,6 +889,7 @@ export default function HomePage() {
 
     voiceEmptyCapturesRef.current = 0;
     autoVoicePromptedRef.current = false;
+    voiceLiveAnnouncedRef.current = false;
     setVoiceRetryAt(0);
     setAutoVoiceArmed(true);
     await startVoiceRecording();
