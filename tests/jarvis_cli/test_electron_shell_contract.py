@@ -26,7 +26,7 @@ class ElectronShellContractTests(unittest.TestCase):
     def test_main_process_starts_backend_and_uses_frameless_window(self) -> None:
         source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
 
-        self.assertIn("const { app, BrowserWindow, ipcMain, Menu, Tray } = require('electron')", source)
+        self.assertIn("const { app, BrowserWindow, ipcMain, Menu, Tray, session } = require('electron')", source)
         self.assertIn("app.setAppUserModelId(APP_USER_MODEL_ID)", source)
         self.assertIn("app.requestSingleInstanceLock({ appId: APP_USER_MODEL_ID })", source)
         self.assertIn("app.exit(0)", source)
@@ -46,6 +46,19 @@ class ElectronShellContractTests(unittest.TestCase):
         self.assertLess(source.index("window.loadURL(BACKEND_BASE_URL)"), source.index("window.loadFile(indexPath)"))
         self.assertIn("did-fail-load", source)
         self.assertIn("console-message", source)
+
+    def test_main_process_grants_local_microphone_capture_only_to_renderer(self) -> None:
+        source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")
+
+        self.assertIn("installLocalMediaPermissions", source)
+        self.assertIn("session.defaultSession.setPermissionRequestHandler", source)
+        self.assertIn("session.defaultSession.setPermissionCheckHandler", source)
+        self.assertIn("new Set(['media', 'audioCapture'])", source)
+        self.assertIn("trustedWindow && trustedUrl && audioOnly", source)
+        self.assertIn("isTrustedRendererUrl", source)
+        self.assertIn("parsed.hostname === '127.0.0.1'", source)
+        self.assertIn("parsed.hostname === 'localhost'", source)
+        self.assertIn("installLocalMediaPermissions()", source)
 
     def test_main_process_runs_backend_preflight_before_launch(self) -> None:
         source = (ROOT / "desktop" / "electron" / "main.js").read_text(encoding="utf-8")

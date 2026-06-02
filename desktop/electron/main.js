@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, Tray, session } = require('electron')
 const { spawn, spawnSync } = require('child_process')
 const crypto = require('crypto')
 const fs = require('fs')
@@ -421,6 +421,46 @@ function trayIconCandidates() {
   ]
 }
 
+function isTrustedRendererUrl(rawUrl = '') {
+  try {
+    const parsed = new URL(rawUrl)
+    if (parsed.protocol === 'file:' || parsed.protocol === 'data:') {
+      return true
+    }
+    return (
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && (parsed.hostname === BACKEND_HOST || parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost')
+      && (!parsed.port || Number.parseInt(parsed.port, 10) === BACKEND_PORT)
+    )
+  } catch {
+    return false
+  }
+}
+
+function installLocalMediaPermissions() {
+  const mediaPermissions = new Set(['media', 'audioCapture'])
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    if (!mediaPermissions.has(permission)) {
+      callback(false)
+      return
+    }
+
+    const trustedWindow = mainWindow && !mainWindow.isDestroyed() && webContents.id === mainWindow.webContents.id
+    const trustedUrl = isTrustedRendererUrl(details?.requestingUrl || webContents.getURL())
+    const audioOnly = !details?.mediaTypes || details.mediaTypes.includes('audio')
+    callback(Boolean(trustedWindow && trustedUrl && audioOnly))
+  })
+
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    if (!mediaPermissions.has(permission)) {
+      return false
+    }
+
+    const trustedWindow = mainWindow && !mainWindow.isDestroyed() && webContents.id === mainWindow.webContents.id
+    return Boolean(trustedWindow && isTrustedRendererUrl(requestingOrigin || webContents.getURL()))
+  })
+}
+
 function showMainWindow() {
   if (!mainWindow || mainWindow.isDestroyed()) {
     createMainWindow()
@@ -724,6 +764,7 @@ ipcMain.handle('jarvis:window-control', (_event, action) => {
 
 app.whenReady().then(async () => {
   desktopLogPath = path.join(app.getPath('userData'), 'desktop.log')
+  installLocalMediaPermissions()
   appendDesktopLog('[jarvis-desktop] ready', JSON.stringify({
     isPackaged: app.isPackaged,
     resourcesPath: process.resourcesPath,
