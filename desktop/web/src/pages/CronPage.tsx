@@ -4,9 +4,12 @@ import {
   CalendarClock,
   Clock,
   GitBranch,
+  Maximize2,
   MessageCircle,
+  Minus,
   Pause,
   Play,
+  Plus,
   Send,
   Trash2,
   X,
@@ -537,7 +540,8 @@ export default function CronPage() {
 }
 
 function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
-  const nodes = [
+  const [zoom, setZoom] = useState(1);
+  const [nodes, setNodes] = useState([
     {
       icon: MessageCircle,
       label: "Trigger",
@@ -562,8 +566,19 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
       title: "Voice, text, files, platform replies",
       tone: "amber",
     },
-  ] as const;
+  ]);
   const palette = ["Trigger", "LLM", "Soul", "Skill", "HTTP", "File", "TTS", "Approval"];
+  const addNode = (label: string) => {
+    setNodes((current) => [
+      ...current,
+      {
+        icon: Bot,
+        label,
+        title: `${label} node`,
+        tone: "cyan",
+      },
+    ]);
+  };
 
   return (
     <section className="overflow-hidden rounded-md border border-white/10 bg-[#10151d]/88 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
@@ -597,6 +612,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
               <button
                 key={item}
                 type="button"
+                onClick={() => addNode(item)}
                 className="flex h-8 items-center justify-between rounded-sm border border-white/8 bg-white/5 px-2 text-left text-xs text-slate-200/82 transition hover:border-cyan-200/28 hover:bg-cyan-200/10 hover:text-white"
                 title={`Add ${item} node`}
               >
@@ -608,6 +624,35 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
         </aside>
 
         <div className="relative overflow-hidden rounded-md border border-white/10 bg-[radial-gradient(circle_at_50%_38%,rgba(0,212,255,0.12),transparent_22rem),linear-gradient(135deg,rgba(0,0,0,0.32),rgba(255,255,255,0.03))] p-4">
+          <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-md border border-white/10 bg-black/42 p-1 backdrop-blur">
+            <button
+              type="button"
+              className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white"
+              onClick={() => setZoom((value) => Math.max(0.7, Number((value - 0.1).toFixed(2))))}
+              aria-label="Zoom workflow out"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <span className="w-10 text-center font-mono text-[0.68rem] text-slate-300/80">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              type="button"
+              className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white"
+              onClick={() => setZoom((value) => Math.min(1.4, Number((value + 0.1).toFixed(2))))}
+              aria-label="Zoom workflow in"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white"
+              onClick={() => setZoom(1)}
+              aria-label="Reset workflow zoom"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <div
             aria-hidden
             className="absolute inset-0 opacity-[0.18]"
@@ -617,12 +662,15 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
               backgroundSize: "28px 28px",
             }}
           />
-          <div className="relative grid h-full min-h-[260px] items-center gap-3 md:grid-cols-4">
+          <div
+            className="relative grid h-full min-h-[260px] origin-center items-center gap-3 transition-transform md:grid-cols-4"
+            style={{ transform: `scale(${zoom})` }}
+          >
             <div
               aria-hidden
               className="pointer-events-none absolute left-8 right-8 top-1/2 hidden h-px bg-gradient-to-r from-cyan-300/10 via-cyan-200/42 to-amber-200/10 md:block"
             />
-            {nodes.map((node, index) => {
+            {nodes.slice(0, 8).map((node, index) => {
               const Icon = node.icon;
               return (
                 <div
