@@ -877,7 +877,9 @@ export default function HomePage() {
     }
 
     voiceEmptyCapturesRef.current = 0;
+    autoVoicePromptedRef.current = false;
     setVoiceRetryAt(0);
+    setAutoVoiceArmed(true);
     await startVoiceRecording();
   };
 

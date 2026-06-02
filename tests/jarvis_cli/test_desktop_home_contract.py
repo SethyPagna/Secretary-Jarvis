@@ -137,6 +137,8 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("const VOICE_MAX_NO_SPEECH_MS = 30_000", source)
         self.assertIn("requestInitialPermission", source)
         self.assertIn('permission.state === "granted"', source)
+        self.assertIn("autoVoicePromptedRef.current = false", source)
+        self.assertIn("setAutoVoiceArmed(true)", source)
         self.assertNotIn('permission.state !== "granted"', source)
         self.assertNotIn("await navigator.mediaDevices?.getUserMedia({ audio: true });\n      setListening(true);", source)
 
