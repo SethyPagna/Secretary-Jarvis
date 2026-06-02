@@ -89,6 +89,8 @@ const TOOL_TOGGLES = [
 const VOICE_SPEECH_THRESHOLD = 0.035;
 const VOICE_AUTO_STOP_SILENCE_MS = 520;
 const VOICE_MAX_NO_SPEECH_MS = 30_000;
+const VOICE_EMPTY_RETRY_DELAY_MS = 3_500;
+const VOICE_MAX_EMPTY_RETRIES = 2;
 const RUNTIME_POLL_VISIBLE_MS = 10_000;
 const RUNTIME_POLL_BACKGROUND_MS = 30_000;
 const STATS_POLL_VISIBLE_MS = 1_000;
@@ -144,6 +146,8 @@ export default function HomePage() {
   const voiceHadSpeechRef = useRef(false);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
+  const voiceEmptyCapturesRef = useRef(0);
+  const voiceRetryTimerRef = useRef<number | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
   const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
@@ -163,6 +167,7 @@ export default function HomePage() {
     web: true,
   });
   const [voiceOutput, setVoiceOutput] = useState(true);
+  const [voiceRetryAt, setVoiceRetryAt] = useState(0);
   const [listening, setListening] = useState(false);
   const [voiceBusy, setVoiceBusy] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -355,6 +360,10 @@ export default function HomePage() {
 
   useEffect(() => {
     return () => {
+      if (voiceRetryTimerRef.current !== null) {
+        window.clearTimeout(voiceRetryTimerRef.current);
+        voiceRetryTimerRef.current = null;
+      }
       const recorder = mediaRecorderRef.current;
       if (recorder && recorder.state !== "inactive") {
         recorder.onstop = null;
@@ -657,6 +666,7 @@ export default function HomePage() {
           throw new Error(result.error || "STT returned an empty transcript.");
         }
 
+        voiceEmptyCapturesRef.current = 0;
         await runDesktopAgentTurn(transcript, "voice");
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -665,12 +675,30 @@ export default function HomePage() {
           (message.toLowerCase().includes("empty transcript") ||
             message.toLowerCase().includes("no microphone audio") ||
             message.toLowerCase().includes("not catch"));
+        if (shouldKeepListening) {
+          voiceEmptyCapturesRef.current += 1;
+          if (voiceEmptyCapturesRef.current >= VOICE_MAX_EMPTY_RETRIES) {
+            setAutoVoiceArmed(false);
+          } else {
+            const retryAt = Date.now() + VOICE_EMPTY_RETRY_DELAY_MS;
+            setVoiceRetryAt(retryAt);
+            if (voiceRetryTimerRef.current !== null) {
+              window.clearTimeout(voiceRetryTimerRef.current);
+            }
+            voiceRetryTimerRef.current = window.setTimeout(() => {
+              voiceRetryTimerRef.current = null;
+              setVoiceRetryAt(0);
+            }, VOICE_EMPTY_RETRY_DELAY_MS);
+          }
+        }
         setTerminalEntries((entries) => [
           ...entries,
           {
             kind: "output",
             text: shouldKeepListening
-              ? "I did not catch that. Listening again."
+              ? voiceEmptyCapturesRef.current >= VOICE_MAX_EMPTY_RETRIES
+                ? "I did not catch speech twice. Voice is paused until the microphone has a clear signal."
+                : "I did not catch that. Listening again shortly."
               : message,
           },
         ]);
@@ -700,6 +728,14 @@ export default function HomePage() {
   }, [stopVoiceStream]);
 
   const startVoiceRecording = useCallback(async () => {
+    if (!subsystemReady(readiness?.stt)) {
+      setTerminalEntries((entries) => [
+        ...entries,
+        { kind: "output", text: "STT is not ready yet. Waiting for the Whisper model." },
+      ]);
+      return;
+    }
+
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setTerminalEntries((entries) => [
         ...entries,
@@ -760,10 +796,12 @@ export default function HomePage() {
         { kind: "output", text: "Microphone permission unavailable." },
       ]);
     }
-  }, [handleRecordedVoice, startStreamAudioMeter, stopVoiceStream]);
+  }, [handleRecordedVoice, readiness?.stt, startStreamAudioMeter, stopVoiceStream]);
 
   useEffect(() => {
     if (!autoVoiceArmed || listening || voiceBusy || speaking) return;
+    if (!subsystemReady(readiness?.stt)) return;
+    if (voiceRetryAt && Date.now() < voiceRetryAt) return;
 
     let cancelled = false;
     const requestInitialPermission = () => {
@@ -801,6 +839,7 @@ export default function HomePage() {
     speaking,
     startVoiceRecording,
     voiceBusy,
+    voiceRetryAt,
   ]);
 
   useEffect(() => {
@@ -837,6 +876,8 @@ export default function HomePage() {
       return;
     }
 
+    voiceEmptyCapturesRef.current = 0;
+    setVoiceRetryAt(0);
     await startVoiceRecording();
   };
 
@@ -865,11 +906,12 @@ export default function HomePage() {
 
   const statusLabel = compactStatus(status, readiness);
   const activeVoice = readiness?.tts?.engine ?? "voice";
-  const micLabel = readiness?.stt?.ready
+  const sttReady = subsystemReady(readiness?.stt);
+  const micLabel = sttReady
     ? "mic ready"
     : autoVoiceArmed
-      ? "mic enabled"
-      : "mic checking";
+      ? "mic waiting"
+      : "mic paused";
   const tokenRateLabel = `${(stats?.tokens_per_second ?? 0).toFixed(2)} tokens/s`;
   const visibleSouls = teamSouls
     .filter((soul) => soul.id !== "jarvis")
