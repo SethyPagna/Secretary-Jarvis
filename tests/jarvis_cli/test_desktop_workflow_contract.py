@@ -17,7 +17,14 @@ class DesktopWorkflowContractTests(unittest.TestCase):
         self.assertIn("Workflow Builder", page_source)
         self.assertIn('const palette = ["Trigger", "LLM", "Soul", "Skill", "HTTP", "File", "TTS", "Approval"]', page_source)
         self.assertIn("JARVIS Router", page_source)
-        self.assertIn("Soul: auto-delegate", page_source)
+        self.assertIn("selectedNodeId", page_source)
+        self.assertIn("updateSelectedNode", page_source)
+        self.assertIn("removeSelectedNode", page_source)
+        self.assertIn("Node name", page_source)
+        self.assertIn("Purpose", page_source)
+        self.assertIn("Remove node", page_source)
+        self.assertIn("Zoom workflow in", page_source)
+        self.assertIn("Zoom workflow out", page_source)
         self.assertIn("manual, scheduled, platform trigger", page_source)
 
 

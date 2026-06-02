@@ -14,6 +14,7 @@ import {
   Trash2,
   X,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
 import { Button } from "@jarvis_managed-research/ui/ui/components/button";
@@ -540,44 +541,81 @@ export default function CronPage() {
 }
 
 function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
+  type WorkflowTone = "cyan" | "violet" | "emerald" | "amber";
+  type WorkflowNode = {
+    id: string;
+    icon: LucideIcon;
+    label: string;
+    title: string;
+    tone: WorkflowTone;
+  };
+
   const [zoom, setZoom] = useState(1);
-  const [nodes, setNodes] = useState([
+  const [selectedNodeId, setSelectedNodeId] = useState("router");
+  const [nodes, setNodes] = useState<WorkflowNode[]>([
     {
+      id: "trigger",
       icon: MessageCircle,
       label: "Trigger",
       title: "Voice, chat, WhatsApp, Telegram, schedule",
       tone: "cyan",
     },
     {
+      id: "router",
       icon: Bot,
       label: "JARVIS Router",
       title: "Chooses model, soul, memory, and tools",
       tone: "violet",
     },
     {
+      id: "decision",
       icon: GitBranch,
       label: "Decision",
       title: "Approvals, branches, retries, safety",
       tone: "emerald",
     },
     {
+      id: "output",
       icon: Send,
       label: "Output",
       title: "Voice, text, files, platform replies",
       tone: "amber",
     },
   ]);
+  const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? nodes[0];
   const palette = ["Trigger", "LLM", "Soul", "Skill", "HTTP", "File", "TTS", "Approval"];
   const addNode = (label: string) => {
+    const id = `${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`;
     setNodes((current) => [
       ...current,
       {
+        id,
         icon: Bot,
         label,
         title: `${label} node`,
         tone: "cyan",
       },
     ]);
+    setSelectedNodeId(id);
+  };
+  const updateSelectedNode = (patch: Partial<Pick<WorkflowNode, "label" | "title" | "tone">>) => {
+    if (!selectedNode) return;
+    setNodes((current) =>
+      current.map((node) =>
+        node.id === selectedNode.id
+          ? {
+              ...node,
+              ...patch,
+            }
+          : node,
+      ),
+    );
+  };
+  const removeSelectedNode = () => {
+    if (!selectedNode || nodes.length <= 1) return;
+    const nextNodes = nodes.filter((node) => node.id !== selectedNode.id);
+    setNodes(nextNodes);
+    setSelectedNodeId(nextNodes[0]?.id ?? "");
   };
 
   return (
@@ -672,10 +710,18 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
             />
             {nodes.slice(0, 8).map((node, index) => {
               const Icon = node.icon;
+              const selected = node.id === selectedNode?.id;
               return (
-                <div
-                  key={node.label}
-                  className="relative z-10 min-h-[122px] rounded-md border border-white/12 bg-black/42 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] backdrop-blur"
+                <button
+                  type="button"
+                  key={node.id}
+                  onClick={() => setSelectedNodeId(node.id)}
+                  className={cn(
+                    "relative z-10 min-h-[122px] rounded-md border bg-black/42 p-3 text-left shadow-[0_12px_32px_rgba(0,0,0,0.2)] backdrop-blur transition",
+                    selected
+                      ? "border-cyan-200/70 ring-1 ring-cyan-200/40"
+                      : "border-white/12 hover:border-cyan-200/38",
+                  )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span
@@ -700,7 +746,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
                   {index < nodes.length - 1 ? (
                     <span className="absolute -right-3 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-cyan-100 shadow-[0_0_14px_rgba(125,249,255,0.8)] md:block" />
                   ) : null}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -710,20 +756,60 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
           <div className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
             Inspector
           </div>
-          <div className="mt-3 space-y-2 text-xs text-slate-300/76">
-            <div className="rounded-sm border border-cyan-200/14 bg-cyan-200/8 p-2">
-              Active route: JARVIS Router
+          {selectedNode ? (
+            <div className="mt-3 space-y-3 text-xs text-slate-300/76">
+              <label className="grid gap-1">
+                <span className="text-[0.62rem] uppercase tracking-[0.12em] text-slate-400">
+                  Node name
+                </span>
+                <input
+                  value={selectedNode.label}
+                  onChange={(event) => updateSelectedNode({ label: event.target.value })}
+                  className="h-8 rounded-sm border border-white/10 bg-white/6 px-2 text-slate-100 outline-none focus:border-cyan-200/50"
+                />
+              </label>
+              <label className="grid gap-1">
+                <span className="text-[0.62rem] uppercase tracking-[0.12em] text-slate-400">
+                  Purpose
+                </span>
+                <textarea
+                  value={selectedNode.title}
+                  onChange={(event) => updateSelectedNode({ title: event.target.value })}
+                  rows={3}
+                  className="resize-none rounded-sm border border-white/10 bg-white/6 px-2 py-1.5 text-slate-100 outline-none focus:border-cyan-200/50"
+                />
+              </label>
+              <label className="grid gap-1">
+                <span className="text-[0.62rem] uppercase tracking-[0.12em] text-slate-400">
+                  Color
+                </span>
+                <select
+                  value={selectedNode.tone}
+                  onChange={(event) =>
+                    updateSelectedNode({ tone: event.target.value as WorkflowTone })
+                  }
+                  className="h-8 rounded-sm border border-white/10 bg-[#121923] px-2 text-slate-100 outline-none focus:border-cyan-200/50"
+                >
+                  <option value="cyan">Cyan</option>
+                  <option value="violet">Violet</option>
+                  <option value="emerald">Emerald</option>
+                  <option value="amber">Amber</option>
+                </select>
+              </label>
+              <div className="grid gap-1.5 rounded-sm border border-cyan-200/14 bg-cyan-200/8 p-2">
+                <span>Mode: live draft</span>
+                <span>Runs: manual, scheduled, platform trigger</span>
+              </div>
+              <button
+                type="button"
+                onClick={removeSelectedNode}
+                disabled={nodes.length <= 1}
+                className="h-8 w-full rounded-sm border border-red-200/18 bg-red-300/8 text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-red-100 transition hover:border-red-200/34 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Remove node
+              </button>
             </div>
-            <div className="rounded-sm border border-white/8 bg-white/5 p-2">
-              Model: local default
-            </div>
-            <div className="rounded-sm border border-white/8 bg-white/5 p-2">
-              Soul: auto-delegate
-            </div>
-            <div className="rounded-sm border border-white/8 bg-white/5 p-2">
-              Runs: manual, scheduled, platform trigger
-            </div>
-          </div>
+          ) : null}
         </aside>
       </div>
     </section>
