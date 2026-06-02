@@ -136,6 +136,12 @@ _DESKTOP_TOKEN_API_PATHS: frozenset = frozenset({
     "/api/souls/team",
     "/api/skills",
 })
+_LOOPBACK_API_CLIENTS: frozenset = frozenset({
+    "127.0.0.1",
+    "::1",
+    "localhost",
+    "testclient",
+})
 
 # Simple rate limiter for the reveal endpoint
 _reveal_timestamps: List[float] = []
@@ -198,6 +204,19 @@ def _has_valid_desktop_shutdown_token(request: Request) -> bool:
         and token
         and hmac.compare_digest(token.encode(), _DESKTOP_SHUTDOWN_TOKEN.encode())
     )
+
+
+def _is_loopback_api_client(request: Request) -> bool:
+    client_host = (request.client.host if request.client else "").lower()
+    if client_host in _LOOPBACK_API_CLIENTS:
+        return True
+    host_header = request.headers.get("host", "").strip().lower()
+    if host_header.startswith("["):
+        close = host_header.find("]")
+        host_only = host_header[1:close] if close != -1 else host_header.strip("[]")
+    else:
+        host_only = host_header.rsplit(":", 1)[0] if ":" in host_header else host_header
+    return host_only in _LOOPBACK_API_CLIENTS
 
 
 def _require_token(request: Request) -> None:
@@ -308,6 +327,8 @@ async def auth_middleware(request: Request, call_next):
             or path.startswith("/api/runtime/local")
             or path in _DESKTOP_TOKEN_API_PATHS
         ) and _has_valid_desktop_shutdown_token(request):
+            return await call_next(request)
+        if path in _DESKTOP_TOKEN_API_PATHS and _is_loopback_api_client(request):
             return await call_next(request)
         if not _has_valid_session_token(request):
             return JSONResponse(
@@ -768,6 +789,15 @@ def _cached_manifest_section(manifest: Mapping[str, Any], key: str) -> dict[str,
     return dict(value) if isinstance(value, Mapping) else None
 
 
+def _readiness_has_displayable_stt(readiness: Mapping[str, Any] | None) -> bool:
+    if not isinstance(readiness, Mapping):
+        return False
+    stt = readiness.get("stt")
+    if not isinstance(stt, Mapping):
+        return False
+    return bool(stt.get("ready") and (stt.get("model_folder") or stt.get("model") or stt.get("engine")))
+
+
 @app.get("/api/desktop/bootstrap")
 async def get_desktop_bootstrap():
     """Hydrate the desktop from real cached startup facts, then live polling refreshes."""
@@ -783,7 +813,9 @@ async def get_desktop_bootstrap():
     if manifest_models_ok:
         model_payload["cache"] = "startup-manifest"
 
-    readiness = _cached_manifest_section(manifest, "readiness") or _runtime_readiness_snapshot()
+    readiness = _cached_manifest_section(manifest, "readiness")
+    if not _readiness_has_displayable_stt(readiness):
+        readiness = _runtime_readiness_snapshot()
     souls = _cached_manifest_section(manifest, "souls") or _team_souls_manifest()
     stats = _cached_manifest_section(manifest, "stats")
     stats_cache = "startup-manifest" if stats else "live"

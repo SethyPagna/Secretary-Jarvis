@@ -42,6 +42,19 @@ class RuntimeReadinessApiContractTests(unittest.TestCase):
         self.assertIn('"readiness": readiness', source)
         self.assertIn('"cache": "startup-manifest"', source)
         self.assertIn('"cached"', source)
+        self.assertIn("_readiness_has_displayable_stt(readiness)", source)
+        self.assertIn('stt.get("ready")', source)
+        self.assertIn('stt.get("model")', source)
+
+    def test_desktop_readiness_paths_allow_loopback_without_leaking_config(self) -> None:
+        source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
+
+        self.assertIn("_is_loopback_api_client", source)
+        self.assertIn("_LOOPBACK_API_CLIENTS", source)
+        self.assertIn("path in _DESKTOP_TOKEN_API_PATHS and _is_loopback_api_client(request)", source)
+        self.assertIn('"/api/runtime/readiness"', source)
+        self.assertIn('"/api/desktop/bootstrap"', source)
+        self.assertIn('"/api/config/defaults"', source)
 
 
 if __name__ == "__main__":
