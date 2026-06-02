@@ -74,9 +74,7 @@ const AnalyticsPage = lazy(() => import("@/pages/AnalyticsPage"));
 const CommandsPage = lazy(() => import("@/pages/CommandsPage"));
 const ConfigPage = lazy(() => import("@/pages/ConfigPage"));
 const CronPage = lazy(() => import("@/pages/CronPage"));
-const DocsPage = lazy(() => import("@/pages/DocsPage"));
 const EnvPage = lazy(() => import("@/pages/EnvPage"));
-const GuidesPage = lazy(() => import("@/pages/GuidesPage"));
 const LogsPage = lazy(() => import("@/pages/LogsPage"));
 const ModelsPage = lazy(() => import("@/pages/ModelsPage"));
 const PluginsPage = lazy(() => import("@/pages/PluginsPage"));
@@ -137,7 +135,7 @@ const BUILTIN_ROUTES_CORE: Record<string, RouteComponent> = {
   "/models": ModelsPage,
   "/souls": ProfilesPage,
   "/commands": CommandsPage,
-  "/guides": GuidesPage,
+  "/guides": SetupPage,
   "/setup": SetupPage,
   "/permissions": ConfigPage,
   "/platforms": ConfigPage,
@@ -150,7 +148,7 @@ const BUILTIN_ROUTES_CORE: Record<string, RouteComponent> = {
   "/profiles": ProfilesPage,
   "/config": ConfigPage,
   "/env": EnvPage,
-  "/docs": DocsPage,
+  "/docs": SetupPage,
 };
 
 const BUILTIN_NAV_REST: NavItem[] = [
@@ -173,17 +171,15 @@ const BUILTIN_NAV_REST: NavItem[] = [
     section: "Core",
   },
   { path: "/commands", label: "Commands", icon: Terminal, section: "Operate" },
-  { path: "/guides", label: "Guides", icon: BookOpen, section: "Operate" },
   {
     path: "/setup",
-    label: "Setup",
+    label: "Setup & Guides",
     icon: SlidersHorizontal,
     section: "Library",
   },
   { path: "/skills", label: "Skills", icon: Package, section: "Library" },
   { path: "/workflow", label: "Workflow", icon: Zap, section: "Operate" },
   { path: "/settings", label: "Settings", icon: Settings, section: "Admin" },
-  { path: "/docs", label: "Reference", icon: FileText, section: "Library" },
 ];
 
 const ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
@@ -377,7 +373,6 @@ export default function App() {
     }
     setMobileOpen(true);
   }, []);
-  const isDocsRoute = pathname === "/docs" || pathname === "/docs/";
   const normalizedPath = pathname.replace(/\/$/, "") || "/";
   const isChatRoute = normalizedPath === "/chat";
   const isHomeRoute = normalizedPath === "/";
@@ -425,6 +420,10 @@ export default function App() {
   const routes = useMemo(
     () => buildRoutes(builtinRoutes, manifests),
     [builtinRoutes, manifests],
+  );
+  const routedPages = useMemo(
+    () => routes.filter((route) => route.path !== "/"),
+    [routes],
   );
   const pluginTabMeta = useMemo(
     () =>
@@ -597,7 +596,6 @@ export default function App() {
                   : isHomeRoute
                     ? "pt-0"
                   : "pt-2 sm:pt-4 lg:pt-6",
-                isDocsRoute && "min-h-0 flex-1",
               )}
             >
               <PluginSlot name="pre-main" />
@@ -607,15 +605,19 @@ export default function App() {
                   !isChatRoute &&
                     !isHomeRoute &&
                     "pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-8",
-                  (isDocsRoute || isChatRoute || isHomeRoute) &&
+                  (isChatRoute || isHomeRoute) &&
                     "min-h-0 flex flex-1 flex-col",
                 )}
               >
                 <Suspense
                   fallback={<AppLoadingFallback />}
                 >
+                  <div className={isHomeRoute ? "contents" : "hidden"}>
+                    <HomePage />
+                  </div>
                   <Routes>
-                    {routes.map(({ key, path, element }) => (
+                    <Route path="/" element={null} />
+                    {routedPages.map(({ key, path, element }) => (
                       <Route key={key} path={path} element={element} />
                     ))}
                     <Route

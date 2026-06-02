@@ -549,6 +549,7 @@ async function loadRenderer(window) {
 }
 
 function createMainWindow() {
+  const windowIcon = trayIconCandidates().find((candidate) => fs.existsSync(candidate))
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 860,
@@ -557,6 +558,7 @@ function createMainWindow() {
     frame: false,
     titleBarStyle: 'hidden',
     backgroundColor: '#0a0a0f',
+    icon: windowIcon || undefined,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
