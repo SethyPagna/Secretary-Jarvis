@@ -356,13 +356,15 @@ function UseAsMenu({
         outlined
         onClick={() => setOpen((v) => !v)}
         disabled={busy}
-        className="h-6 px-2 text-xs uppercase"
+        className="h-7 min-w-0 max-w-full px-2 text-[0.68rem] uppercase"
         prefix={busy ? <Spinner /> : null}
+        title="Assign model role"
       >
-        Use as <ChevronDown className="h-3 w-3" />
+        <span className="hidden sm:inline">Use</span>
+        <ChevronDown className="h-3 w-3" />
       </Button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 min-w-[220px] border border-border bg-card shadow-lg">
+        <div className="absolute right-0 top-full mt-1 z-50 max-h-[min(22rem,70vh)] w-[min(16rem,calc(100vw-2rem))] overflow-y-auto rounded-md border border-border bg-card shadow-lg">
           <button
             type="button"
             onClick={() => assign("main", "")}
