@@ -168,6 +168,10 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("api.synthesizeSpeech", home_source)
         self.assertIn("queueVoiceDelta", home_source)
         self.assertIn("audioPlayerRef", home_source)
+        self.assertIn("new Promise<void>", home_source)
+        self.assertIn("audio.onended = () => finish()", home_source)
+        self.assertIn('audio.onerror = () => finish(new Error("TTS playback failed."))', home_source)
+        self.assertIn("audio.play().catch(finish)", home_source)
         self.assertIn("api.streamDesktopChat", home_source)
         self.assertNotIn("awaitingVoiceResponseRef", home_source)
 

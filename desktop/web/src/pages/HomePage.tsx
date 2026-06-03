@@ -533,20 +533,30 @@ export default function HomePage() {
         objectUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(objectUrl);
         audioPlayerRef.current = audio;
-        audio.onended = () => {
-          if (objectUrl) URL.revokeObjectURL(objectUrl);
-          if (audioPlayerRef.current === audio) audioPlayerRef.current = null;
-          stopAudioMeter();
-          setSpeaking(false);
-        };
-        audio.onerror = () => {
-          if (objectUrl) URL.revokeObjectURL(objectUrl);
-          if (audioPlayerRef.current === audio) audioPlayerRef.current = null;
-          stopAudioMeter();
-          setSpeaking(false);
-        };
-        startPlaybackAudioMeter(audio);
-        await audio.play();
+        await new Promise<void>((resolve, reject) => {
+          let settled = false;
+          const finish = (error?: unknown) => {
+            if (settled) return;
+            settled = true;
+            if (objectUrl) {
+              URL.revokeObjectURL(objectUrl);
+              objectUrl = null;
+            }
+            if (audioPlayerRef.current === audio) audioPlayerRef.current = null;
+            stopAudioMeter();
+            setSpeaking(false);
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          };
+
+          audio.onended = () => finish();
+          audio.onerror = () => finish(new Error("TTS playback failed."));
+          startPlaybackAudioMeter(audio);
+          audio.play().catch(finish);
+        });
       } catch (error) {
         if (objectUrl) URL.revokeObjectURL(objectUrl);
         stopAudioMeter();
