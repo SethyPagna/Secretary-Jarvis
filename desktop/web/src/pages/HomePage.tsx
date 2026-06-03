@@ -92,6 +92,7 @@ const VOICE_MAX_NO_SPEECH_MS = 30_000;
 const VOICE_EMPTY_RETRY_DELAY_MS = 3_500;
 const VOICE_MAX_EMPTY_RETRIES = 2;
 const VOICE_SILENT_MONITOR_RESTART_MS = 250;
+const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 1_600;
 const RUNTIME_POLL_VISIBLE_MS = 10_000;
 const RUNTIME_POLL_BACKGROUND_MS = 30_000;
 const STATS_POLL_VISIBLE_MS = 1_000;
@@ -145,6 +146,9 @@ export default function HomePage() {
   const audioMeterSourceRef = useRef<AudioNode | null>(null);
   const autoVoicePromptedRef = useRef(false);
   const voiceLiveAnnouncedRef = useRef(false);
+  const voiceLiveTranscriptRef = useRef("");
+  const voiceLastSnapshotAtRef = useRef(0);
+  const voiceSnapshotInFlightRef = useRef(false);
   const voiceHadSpeechRef = useRef(false);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
@@ -610,6 +614,9 @@ export default function HomePage() {
     async (prompt: string, source: "typed" | "voice") => {
       const cleanPrompt = prompt.trim();
       if (!cleanPrompt) return;
+      if (source === "voice") {
+        setTerminalInput("");
+      }
       const agentPrompt =
         source === "voice"
           ? `Spoken user message: ${cleanPrompt}\n\nRespond naturally, briefly, and directly. Do not echo disfluent transcription artifacts.`
@@ -645,6 +652,46 @@ export default function HomePage() {
     [appendTerminalOutput, handleDesktopChatDone, queueVoiceDelta],
   );
 
+  const transcribeVoiceSnapshot = useCallback(
+    async (audio: Blob, mode: "live" | "final"): Promise<string> => {
+      if (audio.size === 0) return "";
+      const result = await api.transcribeVoice(audio);
+      const transcript = result.transcript?.trim() ?? "";
+      if (!result.success || !transcript) {
+        if (mode === "final") {
+          throw new Error(result.error || "STT returned an empty transcript.");
+        }
+        return "";
+      }
+
+      voiceLiveTranscriptRef.current = transcript;
+      setTerminalInput(transcript);
+      return transcript;
+    },
+    [],
+  );
+
+  const queueLiveVoiceTranscription = useCallback(
+    (mimeType: string) => {
+      const now = Date.now();
+      if (voiceSnapshotInFlightRef.current) return;
+      if (now - voiceLastSnapshotAtRef.current < VOICE_LIVE_TRANSCRIBE_INTERVAL_MS) return;
+      if (!voiceHadSpeechRef.current || voiceChunksRef.current.length < 2) return;
+
+      const audio = new Blob([...voiceChunksRef.current], { type: mimeType || "audio/webm" });
+      if (audio.size < 1024) return;
+
+      voiceSnapshotInFlightRef.current = true;
+      voiceLastSnapshotAtRef.current = now;
+      void transcribeVoiceSnapshot(audio, "live")
+        .catch(() => undefined)
+        .finally(() => {
+          voiceSnapshotInFlightRef.current = false;
+        });
+    },
+    [transcribeVoiceSnapshot],
+  );
+
   const handleRecordedVoice = useCallback(
     async (audio: Blob) => {
       if (audio.size === 0) {
@@ -662,11 +709,7 @@ export default function HomePage() {
       ]);
 
       try {
-        const result = await api.transcribeVoice(audio);
-        const transcript = result.transcript?.trim() ?? "";
-        if (!result.success || !transcript) {
-          throw new Error(result.error || "STT returned an empty transcript.");
-        }
+        const transcript = await transcribeVoiceSnapshot(audio, "final");
 
         voiceEmptyCapturesRef.current = 0;
         await runDesktopAgentTurn(transcript, "voice");
@@ -708,7 +751,7 @@ export default function HomePage() {
         setVoiceBusy(false);
       }
     },
-    [autoVoiceArmed, runDesktopAgentTurn],
+    [autoVoiceArmed, runDesktopAgentTurn, transcribeVoiceSnapshot],
   );
 
   const stopVoiceStream = useCallback(() => {
@@ -749,6 +792,9 @@ export default function HomePage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       voiceStreamRef.current = stream;
+      voiceLiveTranscriptRef.current = "";
+      voiceLastSnapshotAtRef.current = 0;
+      voiceSnapshotInFlightRef.current = false;
       voiceHadSpeechRef.current = false;
       voiceSilenceStartedAtRef.current = null;
       voiceRecordingStartedAtRef.current = Date.now();
@@ -766,10 +812,12 @@ export default function HomePage() {
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           voiceChunksRef.current.push(event.data);
+          queueLiveVoiceTranscription(recorder.mimeType || preferredMime || "audio/webm");
         }
       };
       recorder.onstop = () => {
         const hadSpeech = voiceHadSpeechRef.current;
+        const liveTranscript = voiceLiveTranscriptRef.current.trim();
         const recordedAudio = new Blob(voiceChunksRef.current, {
           type: recorder.mimeType || preferredMime || "audio/webm",
         });
@@ -782,6 +830,12 @@ export default function HomePage() {
         if (!hadSpeech) {
           setVoiceRetryAt(Date.now() + VOICE_SILENT_MONITOR_RESTART_MS);
           window.setTimeout(() => setVoiceRetryAt(0), VOICE_SILENT_MONITOR_RESTART_MS);
+          return;
+        }
+        if (liveTranscript) {
+          voiceEmptyCapturesRef.current = 0;
+          setTerminalInput("");
+          void runDesktopAgentTurn(liveTranscript, "voice");
           return;
         }
         void handleRecordedVoice(recordedAudio);
@@ -807,7 +861,14 @@ export default function HomePage() {
         { kind: "output", text: "Microphone permission unavailable." },
       ]);
     }
-  }, [handleRecordedVoice, readiness?.stt, startStreamAudioMeter, stopVoiceStream]);
+  }, [
+    handleRecordedVoice,
+    queueLiveVoiceTranscription,
+    readiness?.stt,
+    runDesktopAgentTurn,
+    startStreamAudioMeter,
+    stopVoiceStream,
+  ]);
 
   useEffect(() => {
     if (!autoVoiceArmed || listening || voiceBusy || speaking) return;
@@ -890,6 +951,7 @@ export default function HomePage() {
     voiceEmptyCapturesRef.current = 0;
     autoVoicePromptedRef.current = false;
     voiceLiveAnnouncedRef.current = false;
+    voiceLiveTranscriptRef.current = "";
     setVoiceRetryAt(0);
     setAutoVoiceArmed(true);
     await startVoiceRecording();
