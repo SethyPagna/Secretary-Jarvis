@@ -203,6 +203,7 @@ class DesktopHomeContractTests(unittest.TestCase):
 
         self.assertIn('@app.post("/api/voice/transcribe")', source)
         self.assertIn("await request.body()", source)
+        self.assertIn("await asyncio.to_thread(", source)
         self.assertIn("transcribe_desktop_audio", source)
         self.assertIn('@app.post("/api/voice/synthesize")', source)
         self.assertIn("synthesize_desktop_speech", source)

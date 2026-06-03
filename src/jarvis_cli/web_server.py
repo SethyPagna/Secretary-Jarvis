@@ -1002,7 +1002,8 @@ async def post_voice_transcribe(request: Request):
         len(audio_bytes),
         content_type or "",
     )
-    result = transcribe_desktop_audio(
+    result = await asyncio.to_thread(
+        transcribe_desktop_audio,
         audio_bytes,
         content_type,
         get_jarvis_home() / "voice-input",
@@ -1024,7 +1025,8 @@ async def post_voice_synthesize(body: VoiceSynthesizeRequest):
     """Synthesize assistant text for desktop voice playback."""
     from jarvis_cli.desktop_voice import synthesize_desktop_speech
 
-    return synthesize_desktop_speech(
+    return await asyncio.to_thread(
+        synthesize_desktop_speech,
         body.text,
         get_jarvis_home() / "voice-output",
     )
