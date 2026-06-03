@@ -93,6 +93,7 @@ const VOICE_EMPTY_RETRY_DELAY_MS = 3_500;
 const VOICE_MAX_EMPTY_RETRIES = 2;
 const VOICE_SILENT_MONITOR_RESTART_MS = 250;
 const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 1_600;
+const VOICE_LIVE_TRANSCRIPT_FRESH_MS = 4_000;
 const RUNTIME_POLL_VISIBLE_MS = 10_000;
 const RUNTIME_POLL_BACKGROUND_MS = 30_000;
 const STATS_POLL_VISIBLE_MS = 1_000;
@@ -147,8 +148,11 @@ export default function HomePage() {
   const autoVoicePromptedRef = useRef(false);
   const voiceLiveAnnouncedRef = useRef(false);
   const voiceLiveTranscriptRef = useRef("");
+  const voiceLiveTranscriptAtRef = useRef(0);
   const voiceLastSnapshotAtRef = useRef(0);
   const voiceSnapshotInFlightRef = useRef(false);
+  const voiceCaptureIdRef = useRef(0);
+  const voiceTurnDispatchedRef = useRef(false);
   const voiceHadSpeechRef = useRef(false);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
@@ -653,9 +657,10 @@ export default function HomePage() {
   );
 
   const transcribeVoiceSnapshot = useCallback(
-    async (audio: Blob, mode: "live" | "final"): Promise<string> => {
+    async (audio: Blob, mode: "live" | "final", captureId: number): Promise<string> => {
       if (audio.size === 0) return "";
       const result = await api.transcribeVoice(audio);
+      if (captureId !== voiceCaptureIdRef.current) return "";
       const transcript = result.transcript?.trim() ?? "";
       if (!result.success || !transcript) {
         if (mode === "final") {
@@ -665,6 +670,7 @@ export default function HomePage() {
       }
 
       voiceLiveTranscriptRef.current = transcript;
+      voiceLiveTranscriptAtRef.current = Date.now();
       setTerminalInput(transcript);
       return transcript;
     },
@@ -678,12 +684,13 @@ export default function HomePage() {
       if (now - voiceLastSnapshotAtRef.current < VOICE_LIVE_TRANSCRIBE_INTERVAL_MS) return;
       if (!voiceHadSpeechRef.current || voiceChunksRef.current.length < 2) return;
 
+      const captureId = voiceCaptureIdRef.current;
       const audio = new Blob([...voiceChunksRef.current], { type: mimeType || "audio/webm" });
       if (audio.size < 1024) return;
 
       voiceSnapshotInFlightRef.current = true;
       voiceLastSnapshotAtRef.current = now;
-      void transcribeVoiceSnapshot(audio, "live")
+      void transcribeVoiceSnapshot(audio, "live", captureId)
         .catch(() => undefined)
         .finally(() => {
           voiceSnapshotInFlightRef.current = false;
@@ -709,8 +716,11 @@ export default function HomePage() {
       ]);
 
       try {
-        const transcript = await transcribeVoiceSnapshot(audio, "final");
+        const captureId = voiceCaptureIdRef.current;
+        const transcript = await transcribeVoiceSnapshot(audio, "final", captureId);
+        if (!transcript || voiceTurnDispatchedRef.current) return;
 
+        voiceTurnDispatchedRef.current = true;
         voiceEmptyCapturesRef.current = 0;
         await runDesktopAgentTurn(transcript, "voice");
       } catch (error) {
@@ -792,7 +802,10 @@ export default function HomePage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       voiceStreamRef.current = stream;
+      voiceCaptureIdRef.current += 1;
+      voiceTurnDispatchedRef.current = false;
       voiceLiveTranscriptRef.current = "";
+      voiceLiveTranscriptAtRef.current = 0;
       voiceLastSnapshotAtRef.current = 0;
       voiceSnapshotInFlightRef.current = false;
       voiceHadSpeechRef.current = false;
@@ -818,6 +831,9 @@ export default function HomePage() {
       recorder.onstop = () => {
         const hadSpeech = voiceHadSpeechRef.current;
         const liveTranscript = voiceLiveTranscriptRef.current.trim();
+        const liveTranscriptFresh =
+          liveTranscript &&
+          Date.now() - voiceLiveTranscriptAtRef.current <= VOICE_LIVE_TRANSCRIPT_FRESH_MS;
         const recordedAudio = new Blob(voiceChunksRef.current, {
           type: recorder.mimeType || preferredMime || "audio/webm",
         });
@@ -832,7 +848,10 @@ export default function HomePage() {
           window.setTimeout(() => setVoiceRetryAt(0), VOICE_SILENT_MONITOR_RESTART_MS);
           return;
         }
-        if (liveTranscript) {
+        if (liveTranscriptFresh && !voiceTurnDispatchedRef.current) {
+          voiceTurnDispatchedRef.current = true;
+          voiceCaptureIdRef.current += 1;
+          voiceSnapshotInFlightRef.current = false;
           voiceEmptyCapturesRef.current = 0;
           setTerminalInput("");
           void runDesktopAgentTurn(liveTranscript, "voice");
@@ -951,7 +970,10 @@ export default function HomePage() {
     voiceEmptyCapturesRef.current = 0;
     autoVoicePromptedRef.current = false;
     voiceLiveAnnouncedRef.current = false;
+    voiceCaptureIdRef.current += 1;
+    voiceTurnDispatchedRef.current = false;
     voiceLiveTranscriptRef.current = "";
+    voiceLiveTranscriptAtRef.current = 0;
     setVoiceRetryAt(0);
     setAutoVoiceArmed(true);
     await startVoiceRecording();
