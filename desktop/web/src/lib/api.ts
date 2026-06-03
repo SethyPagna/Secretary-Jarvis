@@ -528,8 +528,10 @@ export interface RuntimeReadinessCheck {
   ready?: boolean;
   status?: string;
   backend?: string;
+  configured_model?: string;
   engine?: string;
   model?: string;
+  model_folder?: string;
   provider?: string;
   blockers?: string[];
   recommendations?: string[];

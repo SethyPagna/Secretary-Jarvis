@@ -201,7 +201,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         <RuntimeLine label="TTS" value={tts?.engine ?? tts?.model} />
         <RuntimeLine
           label="STT"
-          value={stt?.model_folder ?? stt?.model ?? stt?.engine}
+          value={stt?.model_folder ?? stt?.model ?? stt?.configured_model ?? stt?.engine}
         />
       </div>
     </aside>
