@@ -143,7 +143,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn('if (source === "voice")', source)
         self.assertIn('setTerminalInput("")', source)
         self.assertNotIn("text: transcript", source)
-        self.assertIn("JARVIS is hearing you", source)
+        self.assertNotIn("JARVIS is hearing you", source)
         self.assertIn("Voice is live", source)
         self.assertIn("VOICE_EMPTY_RETRY_DELAY_MS", source)
         self.assertIn("VOICE_MAX_EMPTY_RETRIES", source)

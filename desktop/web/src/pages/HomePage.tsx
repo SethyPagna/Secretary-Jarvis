@@ -726,10 +726,6 @@ export default function HomePage() {
       }
 
       setVoiceBusy(true);
-      setTerminalEntries((entries) => [
-        ...entries,
-        { kind: "output", text: "JARVIS is hearing you..." },
-      ]);
 
       try {
         const captureId = voiceCaptureIdRef.current;
