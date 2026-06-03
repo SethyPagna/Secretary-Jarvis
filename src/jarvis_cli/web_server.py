@@ -799,7 +799,15 @@ def _readiness_has_displayable_stt(readiness: Mapping[str, Any] | None) -> bool:
     stt = readiness.get("stt")
     if not isinstance(stt, Mapping):
         return False
-    return bool(stt.get("ready") and (stt.get("model_folder") or stt.get("model") or stt.get("engine")))
+    return bool(
+        stt.get("ready")
+        and (
+            stt.get("model_folder")
+            or stt.get("model")
+            or stt.get("configured_model")
+            or stt.get("engine")
+        )
+    )
 
 
 @app.get("/api/desktop/bootstrap")

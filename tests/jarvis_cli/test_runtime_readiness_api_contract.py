@@ -51,6 +51,7 @@ class RuntimeReadinessApiContractTests(unittest.TestCase):
         self.assertIn("_readiness_has_displayable_stt(readiness)", source)
         self.assertIn('stt.get("ready")', source)
         self.assertIn('stt.get("model")', source)
+        self.assertIn('stt.get("configured_model")', source)
 
     def test_desktop_readiness_paths_allow_loopback_without_leaking_config(self) -> None:
         source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
