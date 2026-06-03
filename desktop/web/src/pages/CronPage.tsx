@@ -541,56 +541,37 @@ export default function CronPage() {
 }
 
 function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
-  type WorkflowTone = "cyan" | "violet" | "emerald" | "amber";
-  type WorkflowNode = {
-    id: string;
-    icon: LucideIcon;
-    label: string;
-    title: string;
-    tone: WorkflowTone;
-  };
-
-  const [zoom, setZoom] = useState(1);
-  const [selectedNodeId, setSelectedNodeId] = useState("router");
-  const [nodes, setNodes] = useState<WorkflowNode[]>([
-    {
-      id: "trigger",
-      icon: MessageCircle,
-      label: "Trigger",
-      title: "Voice, chat, WhatsApp, Telegram, schedule",
-      tone: "cyan",
-    },
-    {
-      id: "router",
-      icon: Bot,
-      label: "JARVIS Router",
-      title: "Chooses model, soul, memory, and tools",
-      tone: "violet",
-    },
-    {
-      id: "decision",
-      icon: GitBranch,
-      label: "Decision",
-      title: "Approvals, branches, retries, safety",
-      tone: "emerald",
-    },
-    {
-      id: "output",
-      icon: Send,
-      label: "Output",
-      title: "Voice, text, files, platform replies",
-      tone: "amber",
-    },
-  ]);
+  const [initialCanvas] = useState(loadWorkflowCanvasState);
+  const [zoom, setZoom] = useState(initialCanvas.zoom);
+  const [selectedNodeId, setSelectedNodeId] = useState(initialCanvas.selectedNodeId);
+  const [nodes, setNodes] = useState<WorkflowNode[]>(initialCanvas.nodes);
   const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? nodes[0];
   const palette = ["Trigger", "LLM", "Soul", "Skill", "HTTP", "File", "TTS", "Approval"];
+
+  useEffect(() => {
+    const serializableNodes: StoredWorkflowNode[] = nodes.map(({ id, label, title, tone }) => ({
+      id,
+      label,
+      title,
+      tone,
+    }));
+    window.localStorage.setItem(
+      WORKFLOW_CANVAS_STORAGE_KEY,
+      JSON.stringify({
+        nodes: serializableNodes,
+        selectedNodeId: selectedNode?.id ?? selectedNodeId,
+        zoom,
+      }),
+    );
+  }, [nodes, selectedNode?.id, selectedNodeId, zoom]);
+
   const addNode = (label: string) => {
     const id = `${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`;
     setNodes((current) => [
       ...current,
       {
         id,
-        icon: Bot,
+        icon: workflowIconForLabel(label),
         label,
         title: `${label} node`,
         tone: "cyan",
@@ -814,4 +795,124 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
       </div>
     </section>
   );
+}
+
+const WORKFLOW_CANVAS_STORAGE_KEY = "jarvis.workflow.canvas.v1";
+
+type WorkflowTone = "cyan" | "violet" | "emerald" | "amber";
+
+type WorkflowNode = {
+  id: string;
+  icon: LucideIcon;
+  label: string;
+  title: string;
+  tone: WorkflowTone;
+};
+
+type StoredWorkflowNode = Pick<WorkflowNode, "id" | "label" | "title" | "tone">;
+
+interface WorkflowCanvasState {
+  nodes: WorkflowNode[];
+  selectedNodeId: string;
+  zoom: number;
+}
+
+function workflowIconForLabel(label: string): LucideIcon {
+  const normalized = label.toLowerCase();
+  if (normalized.includes("trigger") || normalized.includes("voice") || normalized.includes("message")) {
+    return MessageCircle;
+  }
+  if (normalized.includes("decision") || normalized.includes("approval") || normalized.includes("branch")) {
+    return GitBranch;
+  }
+  if (normalized.includes("output") || normalized.includes("send") || normalized.includes("reply")) {
+    return Send;
+  }
+  return Bot;
+}
+
+function defaultWorkflowNodes(): WorkflowNode[] {
+  return [
+    {
+      id: "trigger",
+      icon: MessageCircle,
+      label: "Trigger",
+      title: "Voice, chat, WhatsApp, Telegram, schedule",
+      tone: "cyan",
+    },
+    {
+      id: "router",
+      icon: Bot,
+      label: "JARVIS Router",
+      title: "Chooses model, soul, memory, and tools",
+      tone: "violet",
+    },
+    {
+      id: "decision",
+      icon: GitBranch,
+      label: "Decision",
+      title: "Approvals, branches, retries, safety",
+      tone: "emerald",
+    },
+    {
+      id: "output",
+      icon: Send,
+      label: "Output",
+      title: "Voice, text, files, platform replies",
+      tone: "amber",
+    },
+  ];
+}
+
+function normalizeStoredWorkflowNode(node: unknown): WorkflowNode | null {
+  if (!node || typeof node !== "object") return null;
+  const record = node as Partial<StoredWorkflowNode>;
+  if (
+    typeof record.id !== "string" ||
+    typeof record.label !== "string" ||
+    typeof record.title !== "string" ||
+    !["cyan", "violet", "emerald", "amber"].includes(String(record.tone))
+  ) {
+    return null;
+  }
+  return {
+    id: record.id,
+    icon: workflowIconForLabel(record.label),
+    label: record.label,
+    title: record.title,
+    tone: record.tone as WorkflowTone,
+  };
+}
+
+function loadWorkflowCanvasState(): WorkflowCanvasState {
+  const fallbackNodes = defaultWorkflowNodes();
+  if (typeof window === "undefined") {
+    return { nodes: fallbackNodes, selectedNodeId: "router", zoom: 1 };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(WORKFLOW_CANVAS_STORAGE_KEY);
+    if (!raw) return { nodes: fallbackNodes, selectedNodeId: "router", zoom: 1 };
+    const parsed = JSON.parse(raw) as {
+      nodes?: unknown[];
+      selectedNodeId?: unknown;
+      zoom?: unknown;
+    };
+    const nodes = Array.isArray(parsed.nodes)
+      ? parsed.nodes.map(normalizeStoredWorkflowNode).filter((node): node is WorkflowNode => Boolean(node))
+      : [];
+    const selectedNodeId =
+      typeof parsed.selectedNodeId === "string" && nodes.some((node) => node.id === parsed.selectedNodeId)
+        ? parsed.selectedNodeId
+        : nodes[0]?.id ?? "router";
+    const parsedZoom = typeof parsed.zoom === "number" ? parsed.zoom : 1;
+    const zoom = Math.max(0.7, Math.min(1.4, Number(parsedZoom.toFixed(2))));
+    return {
+      nodes: nodes.length ? nodes : fallbackNodes,
+      selectedNodeId,
+      zoom,
+    };
+  } catch {
+    return { nodes: fallbackNodes, selectedNodeId: "router", zoom: 1 };
+  }
 }
