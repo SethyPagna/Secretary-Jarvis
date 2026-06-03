@@ -174,6 +174,9 @@ class DesktopHomeContractTests(unittest.TestCase):
 
         self.assertIn("api.synthesizeSpeech", home_source)
         self.assertIn("queueVoiceDelta", home_source)
+        self.assertIn("const VOICE_TTS_STREAM_CHUNK_CHARS = 88", home_source)
+        self.assertIn("buffered.length > VOICE_TTS_STREAM_CHUNK_CHARS", home_source)
+        self.assertNotIn("buffered.length > 140", home_source)
         self.assertIn("audioPlayerRef", home_source)
         self.assertIn("new Promise<void>", home_source)
         self.assertIn("audio.onended = () => finish()", home_source)

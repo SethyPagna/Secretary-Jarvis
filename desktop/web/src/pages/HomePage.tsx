@@ -94,6 +94,7 @@ const VOICE_MAX_EMPTY_RETRIES = 2;
 const VOICE_SILENT_MONITOR_RESTART_MS = 4_000;
 const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 1_600;
 const VOICE_LIVE_TRANSCRIPT_FRESH_MS = 4_000;
+const VOICE_TTS_STREAM_CHUNK_CHARS = 88;
 const RUNTIME_POLL_VISIBLE_MS = 10_000;
 const RUNTIME_POLL_BACKGROUND_MS = 30_000;
 const STATS_POLL_VISIBLE_MS = 1_000;
@@ -605,7 +606,7 @@ export default function HomePage() {
       const buffered = voiceOutputBufferRef.current;
       if (
         force ||
-        buffered.length > 140 ||
+        buffered.length > VOICE_TTS_STREAM_CHUNK_CHARS ||
         /[.!?]["')\]]?\s$/.test(buffered) ||
         /\n\n$/.test(buffered)
       ) {
