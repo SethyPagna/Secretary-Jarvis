@@ -87,11 +87,11 @@ const TOOL_TOGGLES = [
 ] as const;
 
 const VOICE_SPEECH_THRESHOLD = 0.035;
-const VOICE_AUTO_STOP_SILENCE_MS = 520;
+const VOICE_AUTO_STOP_SILENCE_MS = 900;
 const VOICE_MAX_NO_SPEECH_MS = 30_000;
-const VOICE_EMPTY_RETRY_DELAY_MS = 3_500;
+const VOICE_EMPTY_RETRY_DELAY_MS = 8_000;
 const VOICE_MAX_EMPTY_RETRIES = 2;
-const VOICE_SILENT_MONITOR_RESTART_MS = 250;
+const VOICE_SILENT_MONITOR_RESTART_MS = 4_000;
 const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 1_600;
 const VOICE_LIVE_TRANSCRIPT_FRESH_MS = 4_000;
 const RUNTIME_POLL_VISIBLE_MS = 10_000;
@@ -762,8 +762,8 @@ export default function HomePage() {
             kind: "output",
             text: shouldKeepListening
               ? voiceEmptyCapturesRef.current >= VOICE_MAX_EMPTY_RETRIES
-                ? "I did not catch speech twice. Voice is paused until the microphone has a clear signal."
-                : "I did not catch that. Listening again shortly."
+                ? "Voice is paused until the microphone has a clear signal."
+                : "Listening for a clearer phrase."
               : message,
           },
         ]);
