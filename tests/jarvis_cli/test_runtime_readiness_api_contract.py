@@ -22,6 +22,10 @@ class RuntimeReadinessApiContractTests(unittest.TestCase):
         self.assertIn('"/api/desktop/ready"', source)
         self.assertIn('"status": "ready"', source)
         self.assertIn("_PROCESS_STARTED_AT", source)
+        self.assertIn('"pid": os.getpid()', source)
+        self.assertIn('"parent_pid": os.environ.get("JARVIS_DESKTOP_PARENT_PID", "")', source)
+        self.assertIn('"desktop_shutdown_token_bound": bool(_DESKTOP_SHUTDOWN_TOKEN)', source)
+        self.assertIn('"desktop_shutdown_token_valid": _has_valid_desktop_shutdown_token(request)', source)
 
     def test_web_server_exposes_non_blocking_desktop_warmup(self) -> None:
         source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")

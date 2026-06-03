@@ -700,7 +700,7 @@ def _merge_gateway_status(primary: Mapping[str, Any] | None, secondary: Mapping[
 
 
 @app.get("/api/desktop/ready")
-async def get_desktop_ready():
+async def get_desktop_ready(request: Request):
     """Lightweight readiness probe for Electron first paint.
 
     This endpoint only proves the FastAPI backend is bound and can serve the
@@ -714,6 +714,10 @@ async def get_desktop_ready():
         "version": __version__,
         "uptime_seconds": max(0.0, time.time() - _PROCESS_STARTED_AT),
         "embedded": os.environ.get("JARVIS_DESKTOP_EMBEDDED") == "1",
+        "pid": os.getpid(),
+        "parent_pid": os.environ.get("JARVIS_DESKTOP_PARENT_PID", ""),
+        "desktop_shutdown_token_bound": bool(_DESKTOP_SHUTDOWN_TOKEN),
+        "desktop_shutdown_token_valid": _has_valid_desktop_shutdown_token(request),
     }
 
 
@@ -1457,8 +1461,18 @@ async def stats_ws(ws: WebSocket) -> None:
         return
 
 
+def _schedule_embedded_desktop_exit(delay_seconds: float = 0.35) -> None:
+    if os.environ.get("JARVIS_DESKTOP_EMBEDDED") != "1":
+        return
+
+    def _exit_process() -> None:
+        os._exit(0)
+
+    threading.Timer(delay_seconds, _exit_process).start()
+
+
 @app.post("/api/shutdown")
-async def post_shutdown():
+async def post_shutdown(request: Request):
     """Persist backend state before Electron terminates the child process."""
     from jarvis_cli.shutdown import perform_graceful_shutdown
 
@@ -1468,7 +1482,10 @@ async def post_shutdown():
         stop_telegram_bridge(timeout=2.0)
     except Exception:
         _log.debug("Telegram desktop bridge shutdown skipped", exc_info=True)
-    return perform_graceful_shutdown(get_jarvis_home())
+    result = perform_graceful_shutdown(get_jarvis_home())
+    if _has_valid_desktop_shutdown_token(request):
+        _schedule_embedded_desktop_exit()
+    return result
 
 
 # ---------------------------------------------------------------------------

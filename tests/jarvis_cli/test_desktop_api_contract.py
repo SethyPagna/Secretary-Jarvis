@@ -22,6 +22,10 @@ class DesktopApiContractTests(unittest.TestCase):
         self.assertIn("JARVIS_DESKTOP_SHUTDOWN_TOKEN", source)
         self.assertIn("X-Jarvis-Desktop-Shutdown-Token", source)
         self.assertIn("_has_valid_desktop_shutdown_token", source)
+        self.assertIn("_schedule_embedded_desktop_exit", source)
+        self.assertIn("os._exit(0)", source)
+        self.assertIn("threading.Timer(delay_seconds, _exit_process).start()", source)
+        self.assertIn("if _has_valid_desktop_shutdown_token(request):", source)
         self.assertIn('path == "/api/shutdown"', source)
         self.assertNotIn('"/api/shutdown",\n}', source)
 

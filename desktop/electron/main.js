@@ -322,11 +322,89 @@ async function waitForBackend(timeoutMs = 20000) {
   throw lastError || new Error('JARVIS backend did not become ready')
 }
 
+function parsePid(value) {
+  const pid = Number.parseInt(String(value || ''), 10)
+  return Number.isFinite(pid) && pid > 0 ? pid : 0
+}
+
+function isPidRunning(pid) {
+  if (!pid) {
+    return false
+  }
+
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return error && error.code === 'EPERM'
+  }
+}
+
+function stopStaleProcessTree(pid) {
+  if (!pid || pid === process.pid) {
+    return false
+  }
+
+  try {
+    if (process.platform === 'win32') {
+      const result = spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], {
+        encoding: 'utf8',
+        windowsHide: true
+      })
+      appendDesktopLog('[jarvis-desktop] stale backend taskkill', JSON.stringify({
+        pid,
+        status: result.status,
+        stdout: (result.stdout || '').trim(),
+        stderr: (result.stderr || '').trim()
+      }))
+      return result.status === 0
+    }
+
+    process.kill(pid, 'SIGTERM')
+    appendDesktopLog('[jarvis-desktop] stale backend SIGTERM', String(pid))
+    return true
+  } catch (error) {
+    appendDesktopLog('[jarvis-desktop] stale backend stop failed', error.stack || String(error))
+    return false
+  }
+}
+
 async function probeExistingBackend(timeoutMs = 900) {
   try {
-    await fetchJson('/api/desktop/ready', { timeoutMs })
-    appendDesktopLog('[jarvis-desktop] reusing existing backend', BACKEND_BASE_URL)
-    return true
+    const ready = await fetchJson('/api/desktop/ready', {
+      timeoutMs,
+      headers: {
+        'X-Jarvis-Desktop-Shutdown-Token': BACKEND_SHUTDOWN_TOKEN
+      }
+    })
+
+    if (ready?.desktop_shutdown_token_valid === true) {
+      appendDesktopLog('[jarvis-desktop] reusing owned backend', BACKEND_BASE_URL)
+      return true
+    }
+
+    const backendPid = parsePid(ready?.pid)
+    const parentPid = parsePid(ready?.parent_pid)
+    const staleEmbeddedBackend =
+      ready?.embedded === true &&
+      backendPid &&
+      parentPid &&
+      !isPidRunning(parentPid)
+
+    appendDesktopLog('[jarvis-desktop] existing backend is not owned', JSON.stringify({
+      baseUrl: BACKEND_BASE_URL,
+      embedded: ready?.embedded === true,
+      backendPid,
+      parentPid,
+      parentRunning: parentPid ? isPidRunning(parentPid) : false,
+      tokenBound: ready?.desktop_shutdown_token_bound === true
+    }))
+
+    if (staleEmbeddedBackend && stopStaleProcessTree(backendPid)) {
+      await delay(700)
+    }
+
+    return false
   } catch {
     return false
   }
