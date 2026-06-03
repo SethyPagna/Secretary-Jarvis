@@ -44,6 +44,10 @@ type TerminalEntry = {
   text: string;
 };
 
+type SynthesizedSpeechChunk = {
+  audioBlob: Blob;
+};
+
 function base64ToAudioBlob(base64: string, mimeType: string): Blob {
   const binary = window.atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -141,7 +145,8 @@ export default function HomePage() {
   const voiceChunksRef = useRef<Blob[]>([]);
   const voiceStreamRef = useRef<MediaStream | null>(null);
   const voiceOutputBufferRef = useRef("");
-  const speechQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const speechSynthesisTailRef = useRef<Promise<void>>(Promise.resolve());
+  const speechPlaybackQueueRef = useRef<Promise<void>>(Promise.resolve());
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const audioMeterContextRef = useRef<AudioContext | null>(null);
   const audioMeterFrameRef = useRef<number | null>(null);
@@ -511,33 +516,42 @@ export default function HomePage() {
     void runDesktopAgentTurn(command, "typed");
   };
 
-  const playSynthesizedSpeech = useCallback(
-    async (rawText: string) => {
-      if (!voiceOutput) return;
+  const synthesizeSpeechChunk = useCallback(
+    async (rawText: string): Promise<SynthesizedSpeechChunk | null> => {
+      if (!voiceOutput) return null;
       const text = terminalTextForSpeech(rawText);
-      if (!text) return;
+      if (!text) return null;
 
-      setSpeaking(true);
-      let objectUrl: string | null = null;
-      try {
-        const result = await api.synthesizeSpeech(text);
-        if (!result.success || !result.audio_base64) {
-          throw new Error(result.error || "TTS did not return audio.");
-        }
+      const result = await api.synthesizeSpeech(text);
+      if (!result.success || !result.audio_base64) {
+        throw new Error(result.error || "TTS did not return audio.");
+      }
 
-        const currentAudio = audioPlayerRef.current;
-        if (currentAudio) {
-          currentAudio.pause();
-          if (currentAudio.src.startsWith("blob:")) {
-            URL.revokeObjectURL(currentAudio.src);
-          }
-        }
-
-        const audioBlob = base64ToAudioBlob(
+      return {
+        audioBlob: base64ToAudioBlob(
           result.audio_base64,
           result.mime_type || "audio/mpeg",
-        );
-        objectUrl = URL.createObjectURL(audioBlob);
+        ),
+      };
+    },
+    [voiceOutput],
+  );
+
+  const playSynthesizedSpeech = useCallback(
+    async (speech: SynthesizedSpeechChunk | null) => {
+      if (!speech || !voiceOutput) return;
+      let objectUrl: string | null = null;
+      const currentAudio = audioPlayerRef.current;
+      if (currentAudio) {
+        currentAudio.pause();
+        if (currentAudio.src.startsWith("blob:")) {
+          URL.revokeObjectURL(currentAudio.src);
+        }
+      }
+
+      try {
+        setSpeaking(true);
+        objectUrl = URL.createObjectURL(speech.audioBlob);
         const audio = new Audio(objectUrl);
         audioPlayerRef.current = audio;
         await new Promise<void>((resolve, reject) => {
@@ -584,11 +598,30 @@ export default function HomePage() {
     (rawText: string) => {
       const text = terminalTextForSpeech(rawText);
       if (!text || !voiceOutput) return;
-      speechQueueRef.current = speechQueueRef.current
+
+      const synthesisPromise = speechSynthesisTailRef.current
         .catch(() => undefined)
-        .then(() => playSynthesizedSpeech(text));
+        .then(() => synthesizeSpeechChunk(text));
+
+      speechSynthesisTailRef.current = synthesisPromise
+        .then(() => undefined)
+        .catch(() => undefined);
+
+      speechPlaybackQueueRef.current = speechPlaybackQueueRef.current
+        .catch(() => undefined)
+        .then(() => synthesisPromise)
+        .then((speech) => playSynthesizedSpeech(speech))
+        .catch((error: unknown) => {
+          setTerminalEntries((entries) => [
+            ...entries,
+            {
+              kind: "output",
+              text: error instanceof Error ? error.message : String(error),
+            },
+          ]);
+        });
     },
-    [playSynthesizedSpeech, voiceOutput],
+    [playSynthesizedSpeech, synthesizeSpeechChunk, voiceOutput],
   );
 
   const flushVoiceOutputBuffer = useCallback(() => {
