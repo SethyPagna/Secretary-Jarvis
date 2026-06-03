@@ -110,6 +110,11 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn('"/api/stats"', source)
         self.assertIn("getDesktopBootstrap", source)
         self.assertIn('"/api/desktop/bootstrap"', source)
+        home_source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
+            encoding="utf-8",
+        )
+        self.assertIn("currentStats?.timestamp && !currentStats.cached", home_source)
+        self.assertIn('currentStats.cache !== "startup-manifest"', home_source)
         self.assertIn("getRuntimeReadiness", source)
         self.assertIn('"/api/runtime/readiness"', source)
         self.assertIn("getRuntimeSmokeTest", source)

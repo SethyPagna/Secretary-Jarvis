@@ -310,7 +310,13 @@ export default function HomePage() {
               setStatus(bootstrap.status);
               setReadiness(bootstrap.readiness);
               setTeamSouls(bootstrap.souls.souls);
-              if (bootstrap.stats) setStats(bootstrap.stats);
+              if (bootstrap.stats) {
+                setStats((currentStats) =>
+                  currentStats?.timestamp && !currentStats.cached && currentStats.cache !== "startup-manifest"
+                    ? currentStats
+                    : bootstrap.stats ?? currentStats,
+                );
+              }
               void refreshLiveRuntime();
             })
             .catch(() => {
