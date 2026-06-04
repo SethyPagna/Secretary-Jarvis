@@ -139,6 +139,10 @@ function smokeSummary(smoke: RuntimeSmokeResponse): string {
   return [llm, tts, stt].filter(Boolean).join(" | ") || "runtime checked";
 }
 
+function estimateStreamingTokens(textLength: number): number {
+  return Math.max(0, Math.round(textLength / 4));
+}
+
 export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -164,8 +168,13 @@ export default function HomePage() {
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
   const voiceEmptyCapturesRef = useRef(0);
   const voiceRetryTimerRef = useRef<number | null>(null);
+  const liveTurnStartedAtRef = useRef<number | null>(null);
+  const liveOutputCharsRef = useRef(0);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
+  const [liveTokensPerSecond, setLiveTokensPerSecond] = useState<number | null>(
+    null,
+  );
   const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
     null,
   );
@@ -649,9 +658,28 @@ export default function HomePage() {
     [flushVoiceOutputBuffer, voiceOutput],
   );
 
+  const updateLiveTokenRate = useCallback((chunk: string) => {
+    const startedAt = liveTurnStartedAtRef.current;
+    if (startedAt === null) return;
+
+    liveOutputCharsRef.current += chunk.length;
+    const elapsedSeconds = Math.max(
+      0.1,
+      (window.performance.now() - startedAt) / 1000,
+    );
+    const nextRate =
+      estimateStreamingTokens(liveOutputCharsRef.current) / elapsedSeconds;
+    setLiveTokensPerSecond(Number(nextRate.toFixed(2)));
+  }, []);
+
   const handleDesktopChatDone = useCallback(
     (result: DesktopChatResponse) => {
       queueVoiceDelta("", true);
+      const finalRate =
+        result.latency_ms > 0
+          ? result.output_tokens / (result.latency_ms / 1000)
+          : 0;
+      setLiveTokensPerSecond(Number(finalRate.toFixed(2)));
       setTerminalEntries((entries) => [
         ...entries,
         {
@@ -659,7 +687,13 @@ export default function HomePage() {
           text: `\n[${result.input_tokens} in / ${result.output_tokens} out | ${Math.round(result.latency_ms)} ms]`,
         },
       ]);
-      void api.getRuntimeStats().then(setStats).catch(() => undefined);
+      void api
+        .getRuntimeStats()
+        .then((nextStats) => {
+          setStats(nextStats);
+          setLiveTokensPerSecond(null);
+        })
+        .catch(() => undefined);
     },
     [queueVoiceDelta],
   );
@@ -676,6 +710,9 @@ export default function HomePage() {
           ? `Spoken user message: ${cleanPrompt}\n\nRespond naturally, briefly, and directly. Do not echo disfluent transcription artifacts.`
           : cleanPrompt;
       setVoiceBusy(true);
+      liveTurnStartedAtRef.current = window.performance.now();
+      liveOutputCharsRef.current = 0;
+      setLiveTokensPerSecond(0);
       voiceOutputBufferRef.current = "";
       setTerminalEntries((entries) => [
         ...entries,
@@ -687,6 +724,7 @@ export default function HomePage() {
         await api.streamDesktopChat(agentPrompt, {
           onDelta: (text) => {
             appendTerminalOutput(text);
+            updateLiveTokenRate(text);
             queueVoiceDelta(text);
           },
           onDone: handleDesktopChatDone,
@@ -695,15 +733,17 @@ export default function HomePage() {
           },
         });
       } catch (error) {
+        setLiveTokensPerSecond(null);
         appendTerminalOutput(
           `\n${error instanceof Error ? error.message : String(error)}`,
         );
       } finally {
         queueVoiceDelta("", true);
+        liveTurnStartedAtRef.current = null;
         setVoiceBusy(false);
       }
     },
-    [appendTerminalOutput, handleDesktopChatDone, queueVoiceDelta],
+    [appendTerminalOutput, handleDesktopChatDone, queueVoiceDelta, updateLiveTokenRate],
   );
 
   const transcribeVoiceSnapshot = useCallback(
@@ -1049,6 +1089,13 @@ export default function HomePage() {
   };
 
   const statusLabel = compactStatus(status, readiness);
+  const displayStats = useMemo<RuntimeStatsResponse | null>(() => {
+    if (liveTokensPerSecond === null || !stats) return stats;
+    return {
+      ...stats,
+      tokens_per_second: liveTokensPerSecond,
+    };
+  }, [liveTokensPerSecond, stats]);
   const activeVoice = readiness?.tts?.engine ?? "voice";
   const sttReady = subsystemReady(readiness?.stt);
   const micLabel = sttReady
@@ -1056,7 +1103,7 @@ export default function HomePage() {
     : autoVoiceArmed
       ? "mic waiting"
       : "mic paused";
-  const tokenRateLabel = `${(stats?.tokens_per_second ?? 0).toFixed(2)} tokens/s`;
+  const tokenRateLabel = `${(displayStats?.tokens_per_second ?? 0).toFixed(2)} tokens/s`;
   const visibleSouls = teamSouls
     .filter((soul) => soul.id !== "jarvis")
     .slice(0, 7);
@@ -1098,7 +1145,7 @@ export default function HomePage() {
             }}
           />
           <div className="relative grid min-h-[210px] w-full max-w-[620px] place-items-center overflow-visible">
-            <TeamSoulOrbit souls={visibleSouls} activeSoul={stats?.active_soul ?? "jarvis"} />
+            <TeamSoulOrbit souls={visibleSouls} activeSoul={displayStats?.active_soul ?? "jarvis"} />
             <Suspense fallback={<OrbLoadingFallback />}>
               <JarvisOrb audioLevel={audioLevel} state={orbState} className="z-10" />
             </Suspense>
@@ -1151,7 +1198,7 @@ export default function HomePage() {
         </div>
 
         {statsVisible ? (
-          <StatsPanel readiness={readiness} stats={stats} />
+          <StatsPanel readiness={readiness} stats={displayStats} />
         ) : (
           <button
             type="button"

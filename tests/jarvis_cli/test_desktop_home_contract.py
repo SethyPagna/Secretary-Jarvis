@@ -191,6 +191,24 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("api.streamDesktopChat", home_source)
         self.assertNotIn("awaitingVoiceResponseRef", home_source)
 
+    def test_home_stats_show_live_streaming_token_rate(self) -> None:
+        home_source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
+            encoding="utf-8",
+        )
+
+        self.assertIn("estimateStreamingTokens", home_source)
+        self.assertIn("liveTurnStartedAtRef", home_source)
+        self.assertIn("liveOutputCharsRef", home_source)
+        self.assertIn("liveTokensPerSecond", home_source)
+        self.assertIn("updateLiveTokenRate(text)", home_source)
+        self.assertIn("setLiveTokensPerSecond(0)", home_source)
+        self.assertIn("setLiveTokensPerSecond(Number(nextRate.toFixed(2)))", home_source)
+        self.assertIn("setLiveTokensPerSecond(null)", home_source)
+        self.assertIn("const displayStats = useMemo<RuntimeStatsResponse | null>", home_source)
+        self.assertIn("tokens_per_second: liveTokensPerSecond", home_source)
+        self.assertIn("stats={displayStats}", home_source)
+        self.assertIn("displayStats?.tokens_per_second", home_source)
+
     def test_home_uses_desktop_agent_stream_for_plain_language(self) -> None:
         home_source = (WEB_ROOT / "src" / "pages" / "HomePage.tsx").read_text(
             encoding="utf-8",
