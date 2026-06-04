@@ -282,7 +282,7 @@ def run_desktop_chat_turn(
     from jarvis_cli.config import load_config
     from jarvis_cli.models import detect_provider_for_model
     from jarvis_cli.runtime_provider import resolve_runtime_provider
-    from jarvis_cli.team_souls import (
+    from jarvis_cli.soul_registry import (
         build_soul_routed_prompt,
         classify_prompt_soul,
         team_souls_by_id,

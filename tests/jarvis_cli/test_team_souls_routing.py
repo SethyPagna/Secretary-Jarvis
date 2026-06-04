@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from jarvis_cli.runtime_stats import collect_runtime_stats
-from jarvis_cli.team_souls import build_soul_routed_prompt, classify_prompt_soul
+from jarvis_cli.soul_registry import build_soul_routed_prompt, classify_prompt_soul
 
 
 class TeamSoulsRoutingTests(unittest.TestCase):

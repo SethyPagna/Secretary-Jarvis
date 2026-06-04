@@ -1049,7 +1049,7 @@ async def post_voice_synthesize(body: VoiceSynthesizeRequest):
 async def post_desktop_chat(body: DesktopChatRequest):
     """Run one desktop-native agent chat turn."""
     from jarvis_cli.desktop_chat import run_desktop_chat_turn
-    from jarvis_cli.team_souls import classify_prompt_soul
+    from jarvis_cli.soul_registry import classify_prompt_soul
 
     selected_soul = classify_prompt_soul(body.prompt)
     result = await asyncio.to_thread(
@@ -1073,7 +1073,7 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
     import queue
 
     from jarvis_cli.desktop_chat import run_desktop_chat_turn
-    from jarvis_cli.team_souls import classify_prompt_soul
+    from jarvis_cli.soul_registry import classify_prompt_soul
 
     def estimate_tokens(text: str) -> int:
         stripped = (text or "").strip()
@@ -4430,7 +4430,7 @@ def _profile_setup_command(name: str) -> str:
 
 
 def _team_souls_manifest() -> Dict[str, Any]:
-    from jarvis_cli.team_souls import load_team_souls_manifest
+    from jarvis_cli.soul_registry import load_team_souls_manifest
 
     return load_team_souls_manifest()
 
