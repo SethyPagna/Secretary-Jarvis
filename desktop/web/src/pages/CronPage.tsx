@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import type { WheelEvent } from "react";
 import {
   Bot,
   CalendarClock,
@@ -598,6 +599,18 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
     setNodes(nextNodes);
     setSelectedNodeId(nextNodes[0]?.id ?? "");
   };
+  const zoomWorkflow = (step: number) => {
+    setZoom((value) => clampWorkflowZoom(Number((value + step).toFixed(2))));
+  };
+  const fitWorkflowView = () => {
+    const fittedZoom = nodes.length > 8 ? 0.72 : nodes.length > 5 ? 0.82 : 1;
+    setZoom(clampWorkflowZoom(fittedZoom));
+  };
+  const handleWorkflowWheel = (event: WheelEvent<HTMLDivElement>) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    zoomWorkflow(event.deltaY > 0 ? -0.08 : 0.08);
+  };
 
   return (
     <section className="overflow-hidden rounded-md border border-white/10 bg-[#10151d]/88 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
@@ -642,12 +655,16 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
           </div>
         </aside>
 
-        <div className="relative overflow-hidden rounded-md border border-white/10 bg-[radial-gradient(circle_at_50%_38%,rgba(0,212,255,0.12),transparent_22rem),linear-gradient(135deg,rgba(0,0,0,0.32),rgba(255,255,255,0.03))] p-4">
+        <div
+          className="relative overflow-auto rounded-md border border-white/10 bg-[radial-gradient(circle_at_50%_38%,rgba(0,212,255,0.12),transparent_22rem),linear-gradient(135deg,rgba(0,0,0,0.32),rgba(255,255,255,0.03))] p-4"
+          onWheel={handleWorkflowWheel}
+        >
           <div className="absolute right-3 top-3 z-20 flex items-center gap-1 rounded-md border border-white/10 bg-black/42 p-1 backdrop-blur">
             <button
               type="button"
-              className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white"
-              onClick={() => setZoom((value) => Math.max(0.7, Number((value - 0.1).toFixed(2))))}
+              className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white disabled:opacity-35"
+              onClick={() => zoomWorkflow(-0.1)}
+              disabled={zoom <= WORKFLOW_ZOOM_MIN}
               aria-label="Zoom workflow out"
             >
               <Minus className="h-3.5 w-3.5" />
@@ -657,8 +674,9 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
             </span>
             <button
               type="button"
-              className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white"
-              onClick={() => setZoom((value) => Math.min(1.4, Number((value + 0.1).toFixed(2))))}
+              className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white disabled:opacity-35"
+              onClick={() => zoomWorkflow(0.1)}
+              disabled={zoom >= WORKFLOW_ZOOM_MAX}
               aria-label="Zoom workflow in"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -666,8 +684,8 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
             <button
               type="button"
               className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white"
-              onClick={() => setZoom(1)}
-              aria-label="Reset workflow zoom"
+              onClick={fitWorkflowView}
+              aria-label="Fit workflow view"
             >
               <Maximize2 className="h-3.5 w-3.5" />
             </button>
@@ -682,14 +700,14 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
             }}
           />
           <div
-            className="relative grid h-full min-h-[260px] origin-center items-center gap-3 transition-transform md:grid-cols-4"
-            style={{ transform: `scale(${zoom})` }}
+            className="relative grid min-h-[260px] min-w-[720px] origin-top-left items-center gap-3 transition-transform md:grid-cols-4"
+            style={{ transform: `scale(${zoom})`, width: `${100 / zoom}%` }}
           >
             <div
               aria-hidden
               className="pointer-events-none absolute left-8 right-8 top-1/2 hidden h-px bg-gradient-to-r from-cyan-300/10 via-cyan-200/42 to-amber-200/10 md:block"
             />
-            {nodes.slice(0, 8).map((node, index) => {
+            {nodes.map((node, index) => {
               const Icon = node.icon;
               const selected = node.id === selectedNode?.id;
               return (
@@ -798,6 +816,12 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
 }
 
 const WORKFLOW_CANVAS_STORAGE_KEY = "jarvis.workflow.canvas.v1";
+const WORKFLOW_ZOOM_MIN = 0.6;
+const WORKFLOW_ZOOM_MAX = 1.5;
+
+function clampWorkflowZoom(value: number): number {
+  return Math.max(WORKFLOW_ZOOM_MIN, Math.min(WORKFLOW_ZOOM_MAX, value));
+}
 
 type WorkflowTone = "cyan" | "violet" | "emerald" | "amber";
 
@@ -906,7 +930,7 @@ function loadWorkflowCanvasState(): WorkflowCanvasState {
         ? parsed.selectedNodeId
         : nodes[0]?.id ?? "router";
     const parsedZoom = typeof parsed.zoom === "number" ? parsed.zoom : 1;
-    const zoom = Math.max(0.7, Math.min(1.4, Number(parsedZoom.toFixed(2))));
+    const zoom = clampWorkflowZoom(Number(parsedZoom.toFixed(2)));
     return {
       nodes: nodes.length ? nodes : fallbackNodes,
       selectedNodeId,

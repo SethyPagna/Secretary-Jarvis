@@ -30,6 +30,15 @@ class DesktopWorkflowContractTests(unittest.TestCase):
         self.assertIn("Remove node", page_source)
         self.assertIn("Zoom workflow in", page_source)
         self.assertIn("Zoom workflow out", page_source)
+        self.assertIn("Fit workflow view", page_source)
+        self.assertIn("handleWorkflowWheel", page_source)
+        self.assertIn("clampWorkflowZoom", page_source)
+        self.assertIn("WORKFLOW_ZOOM_MIN", page_source)
+        self.assertIn("WORKFLOW_ZOOM_MAX", page_source)
+        self.assertIn("onWheel={handleWorkflowWheel}", page_source)
+        self.assertIn("nodes.map((node, index)", page_source)
+        self.assertNotIn("nodes.slice(0, 8)", page_source)
+        self.assertIn("overflow-auto", page_source)
         self.assertIn("manual, scheduled, platform trigger", page_source)
 
 
