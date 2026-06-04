@@ -647,6 +647,17 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
     """Transcribe using faster-whisper (local, free)."""
     global _local_model, _local_model_name, _local_model_runtime
 
+    normalized_model = _normalize_local_model(model_name)
+    downloaded_model_dir = _find_local_whisper_transformers_dir(normalized_model)
+    prefer_downloaded = is_truthy_value(
+        os.getenv("JARVIS_STT_PREFER_DOWNLOADED_WHISPER", "0"),
+        default=False,
+    )
+    if downloaded_model_dir is not None and (prefer_downloaded or not _HAS_FASTER_WHISPER):
+        downloaded_result = _transcribe_local_transformers(file_path, downloaded_model_dir)
+        if downloaded_result.get("success") or not _HAS_FASTER_WHISPER:
+            return downloaded_result
+
     if not _HAS_FASTER_WHISPER:
         if not _try_lazy_install_stt():
             return {"success": False, "transcript": "", "error": "faster-whisper not installed"}
@@ -657,21 +668,21 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
         # Lazy-load the model (downloads on first use, ~150 MB for 'base')
         if (
             _local_model is None
-            or _local_model_name != model_name
+            or _local_model_name != normalized_model
             or _local_model_runtime != (device, compute_type)
         ):
             logger.info(
                 "Loading faster-whisper model '%s' on %s/%s (first load downloads the model)...",
-                model_name,
+                normalized_model,
                 device,
                 compute_type,
             )
             _local_model = _load_local_whisper_model(
-                model_name,
+                normalized_model,
                 device=device,
                 compute_type=compute_type,
             )
-            _local_model_name = model_name
+            _local_model_name = normalized_model
             _local_model_runtime = (device, compute_type)
 
         # Language: config.yaml (stt.local.language) > env var > auto-detect.
@@ -714,8 +725,8 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
             _local_model_name = None
             _local_model_runtime = None
             from faster_whisper import WhisperModel
-            _local_model = WhisperModel(model_name, device="cpu", compute_type="int8")
-            _local_model_name = model_name
+            _local_model = WhisperModel(normalized_model, device="cpu", compute_type="int8")
+            _local_model_name = normalized_model
             _local_model_runtime = ("cpu", "int8")
             try:
                 segments, info = _local_model.transcribe(file_path, **transcribe_kwargs)
@@ -732,7 +743,7 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
 
         logger.info(
             "Transcribed %s via local whisper (%s, lang=%s, %.1fs audio)",
-            Path(file_path).name, model_name, info.language, info.duration,
+            Path(file_path).name, normalized_model, info.language, info.duration,
         )
 
         return {"success": True, "transcript": transcript, "provider": "local"}

@@ -43,8 +43,8 @@ class RuntimeAutoconfigTests(unittest.TestCase):
         self.assertIn("Install Kokoro runtime", plan["tts"]["actions"][0])
         self.assertEqual(plan["tts"]["fallback_chain"], ["kokoro", "omnivoice", "system"])
         self.assertEqual(plan["stt"]["provider"], "local")
-        self.assertEqual(plan["stt"]["selected_model"], "tiny.en")
-        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "tiny.en")
+        self.assertEqual(plan["stt"]["selected_model"], "base")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "base")
         self.assertEqual(plan["config_patch"]["stt"]["local"]["device"], "cpu")
         self.assertEqual(plan["config_patch"]["stt"]["local"]["compute_type"], "int8")
         self.assertEqual(plan["config_patch"]["stt"]["local"]["language"], "en")
@@ -66,7 +66,7 @@ class RuntimeAutoconfigTests(unittest.TestCase):
         self.assertEqual(plan["config_patch"]["providers"]["ollama_local"]["base_url"], "http://127.0.0.1:11434/v1")
         self.assertEqual(plan["config_patch"]["model"], "qwen2.5:7b")
         self.assertTrue(plan["stt"]["dependency_ready"])
-        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "tiny.en")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "base")
 
     def test_autoconfig_prefers_llama_cpp_over_registered_ollama_models(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

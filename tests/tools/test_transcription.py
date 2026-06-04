@@ -45,7 +45,8 @@ class TestGetProvider:
         monkeypatch.delenv("GROQ_API_KEY", raising=False)
         with patch("tools.transcription_tools._HAS_FASTER_WHISPER", False), \
              patch("tools.transcription_tools._HAS_OPENAI", True), \
-             patch("tools.transcription_tools._has_local_command", return_value=False):
+             patch("tools.transcription_tools._has_local_command", return_value=False), \
+             patch("tools.transcription_tools._has_local_whisper_transformers", return_value=False):
             from tools.transcription_tools import _get_provider
             assert _get_provider({"provider": "local"}) == "none"
 
@@ -53,7 +54,8 @@ class TestGetProvider:
         monkeypatch.delenv("VOICE_TOOLS_OPENAI_KEY", raising=False)
         with patch("tools.transcription_tools._HAS_FASTER_WHISPER", False), \
              patch("tools.transcription_tools._HAS_OPENAI", False), \
-             patch("tools.transcription_tools._has_local_command", return_value=False):
+             patch("tools.transcription_tools._has_local_command", return_value=False), \
+             patch("tools.transcription_tools._has_local_whisper_transformers", return_value=False):
             from tools.transcription_tools import _get_provider
             assert _get_provider({"provider": "local"}) == "none"
 
@@ -150,6 +152,7 @@ class TestTranscribeLocal:
              patch.dict("sys.modules", {"faster_whisper": fake_fw}), \
              patch("tools.transcription_tools._local_model", None), \
              patch("tools.transcription_tools._local_model_runtime", None), \
+             patch("tools.transcription_tools._find_local_whisper_transformers_dir", return_value=None), \
              patch("tools.transcription_tools._load_stt_config", return_value={}):
             from tools.transcription_tools import _transcribe_local
             result = _transcribe_local(str(audio_file), "base")
@@ -182,6 +185,7 @@ class TestTranscribeLocal:
              patch.dict("sys.modules", {"faster_whisper": fake_fw}), \
              patch("tools.transcription_tools._local_model", None), \
              patch("tools.transcription_tools._local_model_runtime", None), \
+             patch("tools.transcription_tools._find_local_whisper_transformers_dir", return_value=None), \
              patch("tools.transcription_tools._load_stt_config", return_value=stt_config):
             from tools.transcription_tools import _transcribe_local
             result = _transcribe_local(str(audio_file), "base")
@@ -191,15 +195,49 @@ class TestTranscribeLocal:
             device="cpu",
             compute_type="int8",
         )
-        mock_model.transcribe.assert_called_once_with(str(audio_file), beam_size=5, language="en")
+        mock_model.transcribe.assert_called_once_with(
+            str(audio_file),
+            beam_size=1,
+            vad_filter=True,
+            condition_on_previous_text=False,
+            language="en",
+        )
         assert result["success"] is True
 
     def test_not_installed(self):
-        with patch("tools.transcription_tools._HAS_FASTER_WHISPER", False):
+        with patch("tools.transcription_tools._HAS_FASTER_WHISPER", False), \
+             patch("tools.transcription_tools._find_local_whisper_transformers_dir", return_value=None):
             from tools.transcription_tools import _transcribe_local
             result = _transcribe_local("/tmp/test.ogg", "base")
         assert result["success"] is False
         assert "not installed" in result["error"]
+
+    def test_downloaded_whisper_folder_is_used_when_faster_whisper_is_missing(self, tmp_path):
+        audio_file = tmp_path / "test.ogg"
+        audio_file.write_bytes(b"fake audio")
+        model_dir = tmp_path / "openai__whisper-large-v3-turbo"
+        model_dir.mkdir()
+
+        with patch("tools.transcription_tools._HAS_FASTER_WHISPER", False), \
+             patch("tools.transcription_tools._find_local_whisper_transformers_dir", return_value=model_dir), \
+             patch(
+                 "tools.transcription_tools._transcribe_local_transformers",
+                 return_value={
+                     "success": True,
+                     "transcript": "local downloaded model works",
+                     "provider": "local_transformers",
+                     "model_path": str(model_dir),
+                 },
+             ) as downloaded_transcribe, \
+             patch("tools.transcription_tools._try_lazy_install_stt") as lazy_install:
+            from tools.transcription_tools import _transcribe_local
+            result = _transcribe_local(str(audio_file), "whisper-large-v3-turbo")
+
+        downloaded_transcribe.assert_called_once_with(str(audio_file), model_dir)
+        lazy_install.assert_not_called()
+        assert result["success"] is True
+        assert result["provider"] == "local_transformers"
+        assert result["transcript"] == "local downloaded model works"
 
 
 # ---------------------------------------------------------------------------
@@ -310,8 +348,8 @@ class TestNormalizeLocalModel:
         assert _normalize_local_model("whisper-1") == DEFAULT_LOCAL_MODEL
 
     def test_groq_model_name_maps_to_default(self):
-        from tools.transcription_tools import _normalize_local_model, DEFAULT_LOCAL_MODEL
-        assert _normalize_local_model("whisper-large-v3-turbo") == DEFAULT_LOCAL_MODEL
+        from tools.transcription_tools import _normalize_local_model
+        assert _normalize_local_model("whisper-large-v3-turbo") == "large-v3-turbo"
 
     def test_valid_local_model_preserved(self):
         from tools.transcription_tools import _normalize_local_model
