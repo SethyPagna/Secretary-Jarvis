@@ -689,11 +689,9 @@ export default function HomePage() {
       ]);
       void api
         .getRuntimeStats()
-        .then((nextStats) => {
-          setStats(nextStats);
-          setLiveTokensPerSecond(null);
-        })
-        .catch(() => undefined);
+        .then((nextStats) => setStats(nextStats))
+        .catch(() => undefined)
+        .finally(() => setLiveTokensPerSecond(null));
     },
     [queueVoiceDelta],
   );

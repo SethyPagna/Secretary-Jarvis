@@ -204,6 +204,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("setLiveTokensPerSecond(0)", home_source)
         self.assertIn("setLiveTokensPerSecond(Number(nextRate.toFixed(2)))", home_source)
         self.assertIn("setLiveTokensPerSecond(null)", home_source)
+        self.assertIn(".finally(() => setLiveTokensPerSecond(null))", home_source)
         self.assertIn("const displayStats = useMemo<RuntimeStatsResponse | null>", home_source)
         self.assertIn("tokens_per_second: liveTokensPerSecond", home_source)
         self.assertIn("stats={displayStats}", home_source)
