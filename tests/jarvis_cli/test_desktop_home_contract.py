@@ -226,6 +226,14 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("/api/desktop/chat/stream", api_source)
         self.assertIn('@app.post("/api/desktop/chat/stream")', server_source)
         self.assertIn("run_desktop_chat_turn", server_source)
+        self.assertIn("onReady?: (result: DesktopChatReady) => void", api_source)
+        self.assertIn('if (event === "ready") handlers.onReady', api_source)
+        self.assertIn("active_soul", api_source)
+        self.assertIn("classify_prompt_soul", server_source)
+        self.assertIn('"active_soul": active_soul', server_source)
+        self.assertIn("activeTurnSoul", home_source)
+        self.assertIn("setActiveTurnSoul(nextSoul)", home_source)
+        self.assertIn("displayActiveSoul", home_source)
 
     def test_api_client_exposes_voice_stt_and_tts_endpoints(self) -> None:
         source = (WEB_ROOT / "src" / "lib" / "api.ts").read_text(encoding="utf-8")

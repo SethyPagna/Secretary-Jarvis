@@ -99,6 +99,7 @@ export const api = {
   streamDesktopChat: (
     prompt: string,
     handlers: {
+      onReady?: (result: DesktopChatReady) => void;
       onDelta?: (text: string) => void;
       onDone?: (result: DesktopChatResponse) => void;
       onError?: (message: string) => void;
@@ -600,6 +601,19 @@ export interface DesktopChatResponse {
   model: string;
   provider: string;
   latency_ms: number;
+  active_soul: string;
+  delegate_souls: string[];
+}
+
+export interface DesktopChatReady {
+  ok: boolean;
+  active_soul: string;
+  delegate_souls: string[];
+  soul?: {
+    id: string;
+    name: string;
+    role: string;
+  };
 }
 
 export interface TerminalCommandResponse {
@@ -611,6 +625,7 @@ export interface TerminalCommandResponse {
 async function streamDesktopChat(
   prompt: string,
   handlers: {
+    onReady?: (result: DesktopChatReady) => void;
     onDelta?: (text: string) => void;
     onDone?: (result: DesktopChatResponse) => void;
     onError?: (message: string) => void;
@@ -643,6 +658,7 @@ async function streamDesktopChat(
     const payloadText = data.join("\n");
     if (!payloadText) return;
     const payload = JSON.parse(payloadText);
+    if (event === "ready") handlers.onReady?.(payload as DesktopChatReady);
     if (event === "delta") handlers.onDelta?.(String(payload.text ?? ""));
     if (event === "done") handlers.onDone?.(payload as DesktopChatResponse);
     if (event === "error") handlers.onError?.(String(payload.error ?? "Desktop chat failed."));

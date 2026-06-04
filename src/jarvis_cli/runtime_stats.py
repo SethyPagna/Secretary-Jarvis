@@ -360,7 +360,7 @@ def _windows_hardware_monitor_temperatures() -> dict[str, Any]:
     return result
 
 
-def _read_soul_status() -> dict[str, Any]:
+def _read_soul_status(jarvis_home: Path) -> dict[str, Any]:
     manifest_path = Path(__file__).with_name("data") / "souls" / "soul_manifest.json"
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -370,7 +370,20 @@ def _read_soul_status() -> dict[str, Any]:
     if not isinstance(souls, list):
         souls = []
     active = str(manifest.get("primary") or "jarvis")
-    delegates = [
+    persisted = _read_json_mapping(jarvis_home / "stats.json")
+    current_tokens = persisted.get("desktop_current_tokens")
+    if isinstance(current_tokens, Mapping):
+        candidate = str(current_tokens.get("active_soul") or "").strip().lower()
+        if candidate:
+            active = candidate
+    persisted_delegates = []
+    if isinstance(current_tokens, Mapping) and isinstance(current_tokens.get("delegate_souls"), list):
+        persisted_delegates = [
+            str(item).strip().lower()
+            for item in current_tokens.get("delegate_souls", [])
+            if str(item).strip()
+        ]
+    delegates = persisted_delegates or [
         str(item.get("id"))
         for item in souls
         if isinstance(item, Mapping) and item.get("id") and item.get("id") != active
@@ -500,7 +513,7 @@ def collect_runtime_stats(
         _HARDWARE_CACHE["warnings"] = list(hardware_warnings)
         _HARDWARE_CACHE["expires_at"] = current_time + _HARDWARE_CACHE_TTL_SECONDS
     uptime_seconds = int(max(0, current_time - started_at)) if started_at else 0
-    soul_status = _read_soul_status()
+    soul_status = _read_soul_status(home)
     current_tokens = _read_current_tokens(home) if token_counter is None else {}
     tokens_input = (
         _counter_value(token_counter, "input", "tokens_input")

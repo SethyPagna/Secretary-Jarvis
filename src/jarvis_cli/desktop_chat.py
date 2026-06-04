@@ -33,6 +33,8 @@ class DesktopChatResult:
     model: str
     provider: str
     latency_ms: int
+    active_soul: str
+    delegate_souls: list[str]
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -42,6 +44,8 @@ class DesktopChatResult:
             "model": self.model,
             "provider": self.provider,
             "latency_ms": self.latency_ms,
+            "active_soul": self.active_soul,
+            "delegate_souls": self.delegate_souls,
         }
 
 
@@ -85,6 +89,8 @@ def _record_desktop_tokens(
     output_tokens: int,
     model: str,
     provider: str,
+    active_soul: str = "jarvis",
+    delegate_souls: list[str] | None = None,
 ) -> None:
     """Persist current and lifetime desktop token counters for live stats."""
     try:
@@ -112,6 +118,8 @@ def _record_desktop_tokens(
         "total": turn_total,
         "model": model,
         "provider": provider,
+        "active_soul": active_soul,
+        "delegate_souls": list(delegate_souls or []),
         "updated_at": time.time(),
     }
     tmp_path = stats_path.with_suffix(".json.tmp")
@@ -261,6 +269,7 @@ def run_desktop_chat_turn(
     model: Optional[str] = None,
     provider: Optional[str] = None,
     toolsets: object = None,
+    soul: Optional[str] = None,
 ) -> DesktopChatResult:
     """Run one desktop assistant turn and optionally stream text deltas."""
     clean_prompt = prompt.strip()
@@ -273,10 +282,26 @@ def run_desktop_chat_turn(
     from jarvis_cli.config import load_config
     from jarvis_cli.models import detect_provider_for_model
     from jarvis_cli.runtime_provider import resolve_runtime_provider
+    from jarvis_cli.team_souls import (
+        build_soul_routed_prompt,
+        classify_prompt_soul,
+        team_souls_by_id,
+    )
     from jarvis_cli.tools_config import _get_platform_tools
     from agent.runtime import AIAgent
 
     cfg = load_config()
+    selected_soul = classify_prompt_soul(clean_prompt)
+    if soul:
+        by_id = team_souls_by_id()
+        selected_soul = by_id.get(str(soul).strip().lower(), selected_soul)
+    routed_prompt = build_soul_routed_prompt(clean_prompt, selected_soul)
+    active_soul = str(selected_soul.get("id") or "jarvis").lower()
+    delegate_souls = [
+        str(item)
+        for item in selected_soul.get("delegates", [])
+        if str(item).strip() and str(item).strip().lower() != active_soul
+    ][:12]
     model_cfg = cfg.get("model") or {}
     if isinstance(model_cfg, str):
         cfg_model = model_cfg
@@ -371,7 +396,7 @@ def run_desktop_chat_turn(
     started = time.perf_counter()
     with open(os.devnull, "w", encoding="utf-8") as devnull:
         with redirect_stdout(devnull), redirect_stderr(devnull):
-            response = agent.chat(clean_prompt, stream_callback=on_delta) or ""
+            response = agent.chat(routed_prompt, stream_callback=on_delta) or ""
     latency_ms = int((time.perf_counter() - started) * 1000)
 
     input_tokens = int(getattr(agent, "session_input_tokens", 0) or 0)
@@ -389,6 +414,8 @@ def run_desktop_chat_turn(
         output_tokens=output_tokens,
         model=model_name,
         provider=provider_name,
+        active_soul=active_soul,
+        delegate_souls=delegate_souls,
     )
     return DesktopChatResult(
         response=response,
@@ -397,4 +424,6 @@ def run_desktop_chat_turn(
         model=model_name,
         provider=provider_name,
         latency_ms=latency_ms,
+        active_soul=active_soul,
+        delegate_souls=delegate_souls,
     )

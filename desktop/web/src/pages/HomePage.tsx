@@ -180,6 +180,7 @@ export default function HomePage() {
   );
   const [smoke, setSmoke] = useState<RuntimeSmokeResponse | null>(null);
   const [teamSouls, setTeamSouls] = useState<TeamSoulInfo[]>([]);
+  const [activeTurnSoul, setActiveTurnSoul] = useState<string | null>(null);
   const [autoVoiceArmed, setAutoVoiceArmed] = useState(true);
   const [smokeRunning, setSmokeRunning] = useState(false);
   const [terminalInput, setTerminalInput] = useState("");
@@ -711,6 +712,7 @@ export default function HomePage() {
       liveTurnStartedAtRef.current = window.performance.now();
       liveOutputCharsRef.current = 0;
       setLiveTokensPerSecond(0);
+      setActiveTurnSoul(null);
       voiceOutputBufferRef.current = "";
       setTerminalEntries((entries) => [
         ...entries,
@@ -720,12 +722,20 @@ export default function HomePage() {
 
       try {
         await api.streamDesktopChat(agentPrompt, {
+          onReady: (result) => {
+            const nextSoul = (result.active_soul || result.soul?.id || "jarvis").toLowerCase();
+            setActiveTurnSoul(nextSoul);
+            appendTerminalOutput(`\n[${nextSoul.toUpperCase()} online]\n`);
+          },
           onDelta: (text) => {
             appendTerminalOutput(text);
             updateLiveTokenRate(text);
             queueVoiceDelta(text);
           },
-          onDone: handleDesktopChatDone,
+          onDone: (result) => {
+            setActiveTurnSoul(result.active_soul || null);
+            handleDesktopChatDone(result);
+          },
           onError: (message) => {
             appendTerminalOutput(`\n${message}`);
           },
@@ -1102,6 +1112,7 @@ export default function HomePage() {
       ? "mic waiting"
       : "mic paused";
   const tokenRateLabel = `${(displayStats?.tokens_per_second ?? 0).toFixed(2)} tokens/s`;
+  const displayActiveSoul = activeTurnSoul ?? displayStats?.active_soul ?? "jarvis";
   const visibleSouls = teamSouls
     .filter((soul) => soul.id !== "jarvis")
     .slice(0, 7);
@@ -1143,7 +1154,7 @@ export default function HomePage() {
             }}
           />
           <div className="relative grid min-h-[210px] w-full max-w-[620px] place-items-center overflow-visible">
-            <TeamSoulOrbit souls={visibleSouls} activeSoul={displayStats?.active_soul ?? "jarvis"} />
+            <TeamSoulOrbit souls={visibleSouls} activeSoul={displayActiveSoul} />
             <Suspense fallback={<OrbLoadingFallback />}>
               <JarvisOrb audioLevel={audioLevel} state={orbState} className="z-10" />
             </Suspense>
@@ -1161,6 +1172,8 @@ export default function HomePage() {
               <span>{micLabel}</span>
               <span className="text-cyan-100/25">|</span>
               <span>{tokenRateLabel}</span>
+              <span className="text-cyan-100/25">|</span>
+              <span>{displayActiveSoul}</span>
             </div>
           </div>
 

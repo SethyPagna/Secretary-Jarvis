@@ -574,6 +574,7 @@ class DesktopChatRequest(BaseModel):
     prompt: str
     model: str = ""
     provider: str = ""
+    soul: str = ""
 
 
 class TerminalCommandRequest(BaseModel):
@@ -1048,13 +1049,16 @@ async def post_voice_synthesize(body: VoiceSynthesizeRequest):
 async def post_desktop_chat(body: DesktopChatRequest):
     """Run one desktop-native agent chat turn."""
     from jarvis_cli.desktop_chat import run_desktop_chat_turn
+    from jarvis_cli.team_souls import classify_prompt_soul
 
+    selected_soul = classify_prompt_soul(body.prompt)
     result = await asyncio.to_thread(
         run_desktop_chat_turn,
         body.prompt,
         jarvis_home=get_jarvis_home(),
         model=body.model or getattr(app.state, "active_desktop_model", "") or None,
         provider=body.provider or getattr(app.state, "active_desktop_provider", "") or None,
+        soul=body.soul or selected_soul.get("id"),
     )
     return {"ok": True, **result.as_dict()}
 
@@ -1069,6 +1073,7 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
     import queue
 
     from jarvis_cli.desktop_chat import run_desktop_chat_turn
+    from jarvis_cli.team_souls import classify_prompt_soul
 
     def estimate_tokens(text: str) -> int:
         stripped = (text or "").strip()
@@ -1079,6 +1084,13 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
     def stream_events():
         events: "queue.Queue[tuple[str, dict[str, Any]]]" = queue.Queue()
         output_chars = 0
+        selected_soul = classify_prompt_soul(body.prompt)
+        active_soul = str(body.soul or selected_soul.get("id") or "jarvis").strip().lower()
+        delegate_souls = [
+            str(item)
+            for item in selected_soul.get("delegates", [])
+            if str(item).strip() and str(item).strip().lower() != active_soul
+        ]
         with _DESKTOP_STREAM_LOCK:
             _DESKTOP_STREAM_COUNTER.update(
                 {
@@ -1087,6 +1099,8 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
                     "output": 0,
                     "model": body.model or getattr(app.state, "active_desktop_model", "") or "",
                     "provider": body.provider or getattr(app.state, "active_desktop_provider", "") or "",
+                    "active_soul": active_soul,
+                    "delegate_souls": delegate_souls,
                     "started_at": time.time(),
                 }
             )
@@ -1107,6 +1121,7 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
                     on_delta=on_delta,
                     model=body.model or getattr(app.state, "active_desktop_model", "") or None,
                     provider=body.provider or getattr(app.state, "active_desktop_provider", "") or None,
+                    soul=active_soul,
                 )
                 with _DESKTOP_STREAM_LOCK:
                     _DESKTOP_STREAM_COUNTER.update(
@@ -1115,6 +1130,8 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
                             "output": int(result.output_tokens or 0),
                             "model": result.model,
                             "provider": result.provider,
+                            "active_soul": result.active_soul,
+                            "delegate_souls": result.delegate_souls,
                         }
                     )
                 events.put(("done", result.as_dict()))
@@ -1123,7 +1140,19 @@ async def post_desktop_chat_stream(body: DesktopChatRequest):
 
         thread = threading.Thread(target=worker, name="jarvis-desktop-chat", daemon=True)
         thread.start()
-        yield _sse_event("ready", {"ok": True})
+        yield _sse_event(
+            "ready",
+            {
+                "ok": True,
+                "active_soul": active_soul,
+                "delegate_souls": delegate_souls,
+                "soul": {
+                    "id": active_soul,
+                    "name": selected_soul.get("name") or active_soul.upper(),
+                    "role": selected_soul.get("role") or "specialist",
+                },
+            },
+        )
         while True:
             event, payload = events.get()
             yield _sse_event(event, payload)
@@ -1425,6 +1454,13 @@ def _runtime_stats_snapshot() -> dict:
     )
     stats["listed_skills"] = int(skills.get("listed") or 0)
     stats["total_skill_assets"] = int(skills.get("total_assets") or 0)
+    with _DESKTOP_STREAM_LOCK:
+        stream_soul = str(_DESKTOP_STREAM_COUNTER.get("active_soul") or "").strip().lower()
+        stream_delegates = _DESKTOP_STREAM_COUNTER.get("delegate_souls")
+    if stream_soul:
+        stats["active_soul"] = stream_soul
+    if isinstance(stream_delegates, list):
+        stats["delegate_souls"] = [str(item) for item in stream_delegates if str(item).strip()]
     try:
         from jarvis_cli.local_runtime import status_local_runtime
 
@@ -4394,29 +4430,9 @@ def _profile_setup_command(name: str) -> str:
 
 
 def _team_souls_manifest() -> Dict[str, Any]:
-    souls_dir = Path(__file__).parent / "data" / "souls"
-    manifest_path = souls_dir / "soul_manifest.json"
-    if manifest_path.exists():
-        try:
-            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            if isinstance(manifest, dict):
-                return manifest
-        except (OSError, json.JSONDecodeError):
-            _log.exception("Could not read bundled soul manifest")
+    from jarvis_cli.team_souls import load_team_souls_manifest
 
-    souls = []
-    for soul_file in sorted(souls_dir.glob("*_SOUL.md")):
-        soul_id = soul_file.stem.replace("_SOUL", "")
-        souls.append({
-            "id": soul_id,
-            "name": soul_id.upper(),
-            "role": "specialist",
-            "template": str(soul_file),
-            "when_to_use": "Specialist JARVIS team soul.",
-            "responsibilities": [],
-            "keywords": [],
-        })
-    return {"primary": "jarvis", "souls": souls}
+    return load_team_souls_manifest()
 
 
 @app.get("/api/souls/team")
