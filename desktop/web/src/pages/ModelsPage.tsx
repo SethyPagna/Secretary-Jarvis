@@ -350,13 +350,13 @@ function UseAsMenu({
   }, [open]);
 
   return (
-    <div className="relative" data-use-as-menu>
+    <div className="relative min-w-0 shrink-0" data-use-as-menu>
       <Button
         size="sm"
         outlined
         onClick={() => setOpen((v) => !v)}
         disabled={busy}
-        className="h-7 min-w-0 max-w-full px-2 text-[0.68rem] uppercase"
+        className="h-7 min-w-0 max-w-full whitespace-nowrap px-2 text-[0.68rem] uppercase"
         prefix={busy ? <Spinner /> : null}
         title="Assign model role"
       >
@@ -364,14 +364,14 @@ function UseAsMenu({
         <ChevronDown className="h-3 w-3" />
       </Button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 max-h-[min(22rem,70vh)] w-[min(16rem,calc(100vw-2rem))] overflow-y-auto rounded-md border border-border bg-card shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-1 max-h-[min(22rem,70vh)] w-[min(15rem,calc(100vw-3rem))] max-w-[calc(100vw-3rem)] overflow-y-auto rounded-md border border-border bg-card shadow-lg">
           <button
             type="button"
             onClick={() => assign("main", "")}
             disabled={busy}
-            className="flex w-full items-center justify-between px-3 py-2 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
+            className="flex w-full min-w-0 items-center justify-between gap-3 px-3 py-2 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
           >
-            <span className="flex items-center gap-2">
+            <span className="flex min-w-0 items-center gap-2 truncate">
               <Star className="h-3 w-3" />
               Main model
             </span>
@@ -390,9 +390,9 @@ function UseAsMenu({
             type="button"
             onClick={() => assign("auxiliary", "")}
             disabled={busy}
-            className="flex w-full items-center justify-between px-3 py-1.5 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
+            className="flex w-full min-w-0 items-center justify-between gap-3 px-3 py-1.5 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
           >
-            <span>All auxiliary tasks</span>
+            <span className="truncate">All auxiliary tasks</span>
           </button>
 
           {AUX_TASKS.map((t) => (
@@ -401,9 +401,9 @@ function UseAsMenu({
               type="button"
               onClick={() => assign("auxiliary", t.key)}
               disabled={busy}
-              className="flex w-full items-center justify-between px-3 py-1.5 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
+              className="flex w-full min-w-0 items-center justify-between gap-3 px-3 py-1.5 text-xs uppercase hover:bg-muted/50 disabled:opacity-40"
             >
-              <span>{t.label}</span>
+              <span className="truncate">{t.label}</span>
               {mainAuxTask === t.key && (
                 <span className="text-display text-xs tracking-wider text-primary">
                   current
