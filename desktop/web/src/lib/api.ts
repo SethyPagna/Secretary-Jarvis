@@ -214,6 +214,23 @@ export const api = {
   deleteCronJob: (id: string, profile = "default") =>
     fetchJSON<{ ok: boolean }>(`/api/src/cron/jobs/${encodeURIComponent(id)}?profile=${encodeURIComponent(profile)}`, { method: "DELETE" }),
 
+  // Workflows
+  listWorkflows: () => fetchJSON<WorkflowListResponse>("/api/workflows"),
+  getWorkflowCanvas: (id = "desktop-canvas") =>
+    fetchJSON<WorkflowCanvasResponse>(`/api/workflows/${encodeURIComponent(id)}`),
+  saveWorkflowCanvas: (id: string, canvas: WorkflowCanvasPayload) =>
+    fetchJSON<WorkflowCanvasResponse>(`/api/workflows/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(canvas),
+    }),
+  runWorkflowCanvas: (id: string, canvas: WorkflowCanvasPayload) =>
+    fetchJSON<WorkflowRunResponse>(`/api/workflows/${encodeURIComponent(id)}/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(canvas),
+    }),
+
   // Profiles (minimal)
   getProfiles: () =>
     fetchJSON<{ profiles: ProfileInfo[] }>("/api/profiles"),
@@ -979,6 +996,52 @@ export interface CronJob {
   last_run_at?: string | null;
   next_run_at?: string | null;
   last_error?: string | null;
+}
+
+export interface WorkflowCanvasNode {
+  id: string;
+  label: string;
+  title: string;
+  tone: "cyan" | "violet" | "emerald" | "amber";
+}
+
+export interface WorkflowCanvasPayload {
+  id?: string;
+  nodes: WorkflowCanvasNode[];
+  selectedNodeId: string;
+  zoom: number;
+}
+
+export interface WorkflowLastRun {
+  active_soul: NonNullable<DesktopChatReady["soul"]>;
+  executed_nodes: Array<{ id: string; label: string; status: string }>;
+  message: string;
+  ran_at: number;
+}
+
+export interface WorkflowCanvasResponse extends WorkflowCanvasPayload {
+  id: string;
+  schema_version: number;
+  updated_at: number;
+  last_run: WorkflowLastRun | null;
+}
+
+export interface WorkflowListResponse {
+  workflows: Array<{
+    id: string;
+    node_count: number;
+    updated_at?: number;
+    last_run?: WorkflowLastRun | null;
+  }>;
+}
+
+export interface WorkflowRunResponse {
+  ok: boolean;
+  workflow_id: string;
+  active_soul: NonNullable<DesktopChatReady["soul"]>;
+  executed_nodes: Array<{ id: string; label: string; status: string }>;
+  message: string;
+  canvas: WorkflowCanvasResponse;
 }
 
 export interface SkillInfo {

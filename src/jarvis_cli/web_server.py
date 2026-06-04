@@ -136,6 +136,9 @@ _DESKTOP_TOKEN_API_PATHS: frozenset = frozenset({
     "/api/souls/team",
     "/api/skills",
 })
+_DESKTOP_TOKEN_API_PREFIXES: frozenset = frozenset({
+    "/api/workflows",
+})
 _LOOPBACK_API_CLIENTS: frozenset = frozenset({
     "127.0.0.1",
     "::1",
@@ -217,6 +220,13 @@ def _is_loopback_api_client(request: Request) -> bool:
     else:
         host_only = host_header.rsplit(":", 1)[0] if ":" in host_header else host_header
     return host_only in _LOOPBACK_API_CLIENTS
+
+
+def _is_desktop_token_api_path(path: str) -> bool:
+    return path in _DESKTOP_TOKEN_API_PATHS or any(
+        path == prefix or path.startswith(f"{prefix}/")
+        for prefix in _DESKTOP_TOKEN_API_PREFIXES
+    )
 
 
 def _require_token(request: Request) -> None:
@@ -325,10 +335,10 @@ async def auth_middleware(request: Request, call_next):
         if (
             path == "/api/shutdown"
             or path.startswith("/api/runtime/local")
-            or path in _DESKTOP_TOKEN_API_PATHS
+            or _is_desktop_token_api_path(path)
         ) and _has_valid_desktop_shutdown_token(request):
             return await call_next(request)
-        if path in _DESKTOP_TOKEN_API_PATHS and _is_loopback_api_client(request):
+        if _is_desktop_token_api_path(path) and _is_loopback_api_client(request):
             return await call_next(request)
         if not _has_valid_session_token(request):
             return JSONResponse(
@@ -589,6 +599,13 @@ class WhatsAppSendRequest(BaseModel):
     to: str = ""
     message: str = ""
     mock: bool = False
+
+
+class WorkflowCanvasRequest(BaseModel):
+    nodes: List[Dict[str, Any]] = []
+    selectedNodeId: str = ""
+    zoom: float = 1.0
+    id: str = "desktop-canvas"
 
 
 _GATEWAY_HEALTH_URL = os.getenv("GATEWAY_HEALTH_URL")
@@ -4232,6 +4249,73 @@ def _find_cron_job_profile(job_id: str) -> Optional[str]:
         if any(j.get("id") == job_id or j.get("name") == job_id for j in jobs):
             return name
     return None
+
+
+@app.get("/api/workflows")
+async def list_workflows():
+    from jarvis_cli.workflow_store import load_workflow_canvas, normalize_workflow_id, workflow_root
+
+    home = get_jarvis_home()
+    root = workflow_root(home)
+    workflows: List[Dict[str, Any]] = []
+    if root.is_dir():
+        for path in sorted(root.glob("*.json")):
+            workflow_id = normalize_workflow_id(path.stem)
+            canvas = load_workflow_canvas(home, workflow_id)
+            workflows.append({
+                "id": workflow_id,
+                "node_count": len(canvas.get("nodes") or []),
+                "updated_at": canvas.get("updated_at"),
+                "last_run": canvas.get("last_run"),
+            })
+    if not workflows:
+        canvas = load_workflow_canvas(home, "desktop-canvas")
+        workflows.append({
+            "id": "desktop-canvas",
+            "node_count": len(canvas.get("nodes") or []),
+            "updated_at": canvas.get("updated_at"),
+            "last_run": canvas.get("last_run"),
+        })
+    return {"workflows": workflows}
+
+
+@app.get("/api/workflows/{workflow_id}")
+async def get_workflow(workflow_id: str):
+    from jarvis_cli.workflow_store import load_workflow_canvas
+
+    return load_workflow_canvas(get_jarvis_home(), workflow_id)
+
+
+@app.put("/api/workflows/{workflow_id}")
+async def save_workflow(workflow_id: str, body: WorkflowCanvasRequest):
+    from jarvis_cli.workflow_store import save_workflow_canvas
+
+    try:
+        return save_workflow_canvas(get_jarvis_home(), workflow_id, body.model_dump())
+    except Exception as e:
+        _log.exception("PUT /api/workflows/%s failed", workflow_id)
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/workflows/{workflow_id}/run")
+async def run_workflow(workflow_id: str, body: Optional[WorkflowCanvasRequest] = None):
+    from jarvis_cli.workflow_store import load_workflow_canvas, record_workflow_run, run_workflow_canvas
+
+    try:
+        canvas = body.model_dump() if body is not None else load_workflow_canvas(get_jarvis_home(), workflow_id)
+        run = run_workflow_canvas(get_jarvis_home(), workflow_id, canvas)
+        saved = record_workflow_run(get_jarvis_home(), workflow_id, canvas, run)
+        return {
+            "ok": True,
+            "workflow_id": run.workflow_id,
+            "active_soul": run.active_soul,
+            "executed_nodes": run.executed_nodes,
+            "message": run.message,
+            "canvas": saved,
+        }
+    except Exception as e:
+        _log.exception("POST /api/workflows/%s/run failed", workflow_id)
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/api/src/cron/jobs")

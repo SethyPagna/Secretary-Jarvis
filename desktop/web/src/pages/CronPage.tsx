@@ -11,6 +11,7 @@ import {
   Pause,
   Play,
   Plus,
+  Save,
   Send,
   Trash2,
   X,
@@ -23,7 +24,7 @@ import { Select, SelectOption } from "@jarvis_managed-research/ui/ui/components/
 import { Spinner } from "@jarvis_managed-research/ui/ui/components/spinner";
 import { H2 } from "@/components/NouiTypography";
 import { api } from "@/lib/api";
-import type { CronJob, ProfileInfo } from "@/lib/api";
+import type { CronJob, ProfileInfo, WorkflowCanvasPayload, WorkflowLastRun } from "@/lib/api";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
@@ -546,8 +547,47 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
   const [zoom, setZoom] = useState(initialCanvas.zoom);
   const [selectedNodeId, setSelectedNodeId] = useState(initialCanvas.selectedNodeId);
   const [nodes, setNodes] = useState<WorkflowNode[]>(initialCanvas.nodes);
+  const [saving, setSaving] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [syncState, setSyncState] = useState<"local" | "loading" | "saved" | "error">("loading");
+  const [lastRun, setLastRun] = useState<WorkflowLastRun | null>(null);
+  const [lastMessage, setLastMessage] = useState("");
   const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? nodes[0];
   const palette = ["Trigger", "LLM", "Soul", "Skill", "HTTP", "File", "TTS", "Approval"];
+
+  const canvasPayload = useCallback((): WorkflowCanvasPayload => ({
+    id: "desktop-canvas",
+    nodes: nodes.map(({ id, label, title, tone }) => ({ id, label, title, tone })),
+    selectedNodeId: selectedNode?.id ?? selectedNodeId,
+    zoom,
+  }), [nodes, selectedNode?.id, selectedNodeId, zoom]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .getWorkflowCanvas("desktop-canvas")
+      .then((canvas) => {
+        if (cancelled) return;
+        const backendNodes = canvas.nodes
+          .map(normalizeStoredWorkflowNode)
+          .filter((node): node is WorkflowNode => Boolean(node));
+        if (backendNodes.length) {
+          setNodes(backendNodes);
+          setSelectedNodeId(canvas.selectedNodeId);
+          setZoom(clampWorkflowZoom(canvas.zoom));
+          setLastRun(canvas.last_run);
+          setSyncState("saved");
+        } else {
+          setSyncState("local");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSyncState("local");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const serializableNodes: StoredWorkflowNode[] = nodes.map(({ id, label, title, tone }) => ({
@@ -568,6 +608,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
 
   const addNode = (label: string) => {
     const id = `${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`;
+    setSyncState("local");
     setNodes((current) => [
       ...current,
       {
@@ -582,6 +623,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
   };
   const updateSelectedNode = (patch: Partial<Pick<WorkflowNode, "label" | "title" | "tone">>) => {
     if (!selectedNode) return;
+    setSyncState("local");
     setNodes((current) =>
       current.map((node) =>
         node.id === selectedNode.id
@@ -593,16 +635,49 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
       ),
     );
   };
+  const saveWorkflow = async () => {
+    setSaving(true);
+    setSyncState("loading");
+    try {
+      const saved = await api.saveWorkflowCanvas("desktop-canvas", canvasPayload());
+      setLastRun(saved.last_run);
+      setSyncState("saved");
+      setLastMessage("Workflow saved to JARVIS.");
+    } catch (error) {
+      setSyncState("error");
+      setLastMessage(error instanceof Error ? error.message : "Workflow save failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const runWorkflow = async () => {
+    setRunning(true);
+    setSyncState("loading");
+    try {
+      const result = await api.runWorkflowCanvas("desktop-canvas", canvasPayload());
+      setLastRun(result.canvas.last_run);
+      setSyncState("saved");
+      setLastMessage(result.message);
+    } catch (error) {
+      setSyncState("error");
+      setLastMessage(error instanceof Error ? error.message : "Workflow run failed.");
+    } finally {
+      setRunning(false);
+    }
+  };
   const removeSelectedNode = () => {
     if (!selectedNode || nodes.length <= 1) return;
+    setSyncState("local");
     const nextNodes = nodes.filter((node) => node.id !== selectedNode.id);
     setNodes(nextNodes);
     setSelectedNodeId(nextNodes[0]?.id ?? "");
   };
   const zoomWorkflow = (step: number) => {
+    setSyncState("local");
     setZoom((value) => clampWorkflowZoom(Number((value + step).toFixed(2))));
   };
   const fitWorkflowView = () => {
+    setSyncState("local");
     const fittedZoom = nodes.length > 8 ? 0.72 : nodes.length > 5 ? 0.82 : 1;
     setZoom(clampWorkflowZoom(fittedZoom));
   };
@@ -624,14 +699,34 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
             Build automations from inputs, JARVIS reasoning, skills, approvals, and replies.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="inline-flex h-9 shrink-0 items-center justify-center gap-2 border border-cyan-200/20 bg-cyan-200/10 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-cyan-50 transition hover:border-cyan-200/40 hover:bg-cyan-200/16"
-        >
-          <CalendarClock className="h-4 w-4" />
-          Schedule
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={saveWorkflow}
+            disabled={saving}
+            className="inline-flex h-9 items-center justify-center gap-2 border border-cyan-200/20 bg-cyan-200/10 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-cyan-50 transition hover:border-cyan-200/40 hover:bg-cyan-200/16 disabled:cursor-wait disabled:opacity-55"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? "Saving" : "Save"}
+          </button>
+          <button
+            type="button"
+            onClick={runWorkflow}
+            disabled={running}
+            className="inline-flex h-9 items-center justify-center gap-2 border border-emerald-200/22 bg-emerald-200/10 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-emerald-50 transition hover:border-emerald-200/42 hover:bg-emerald-200/16 disabled:cursor-wait disabled:opacity-55"
+          >
+            <Play className="h-4 w-4" />
+            {running ? "Running" : "Run"}
+          </button>
+          <button
+            type="button"
+            onClick={onCreate}
+            className="inline-flex h-9 items-center justify-center gap-2 border border-cyan-200/20 bg-cyan-200/10 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-cyan-50 transition hover:border-cyan-200/40 hover:bg-cyan-200/16"
+          >
+            <CalendarClock className="h-4 w-4" />
+            Schedule
+          </button>
+        </div>
       </div>
 
       <div className="grid min-h-[310px] gap-3 p-4 lg:grid-cols-[11rem_minmax(0,1fr)_14rem]">
@@ -796,8 +891,14 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
                 </select>
               </label>
               <div className="grid gap-1.5 rounded-sm border border-cyan-200/14 bg-cyan-200/8 p-2">
-                <span>Mode: live draft</span>
-                <span>Runs: manual, scheduled, platform trigger</span>
+                <span>Sync: {syncState === "saved" ? "saved" : syncState === "loading" ? "working" : syncState}</span>
+                <span>Run: manual, scheduled, platform trigger</span>
+                {lastRun?.active_soul ? (
+                  <span>Routed: {lastRun.active_soul.name}</span>
+                ) : null}
+                {lastMessage ? (
+                  <span className="text-cyan-50/82">{lastMessage}</span>
+                ) : null}
               </div>
               <button
                 type="button"

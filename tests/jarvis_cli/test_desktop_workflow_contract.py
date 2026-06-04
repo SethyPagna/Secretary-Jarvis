@@ -12,6 +12,10 @@ class DesktopWorkflowContractTests(unittest.TestCase):
         page_source = (WEB_ROOT / "src" / "pages" / "CronPage.tsx").read_text(
             encoding="utf-8",
         )
+        api_source = (WEB_ROOT / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
+        server_source = (ROOT / "src" / "jarvis_cli" / "web_server.py").read_text(
+            encoding="utf-8",
+        )
 
         self.assertIn('"/workflow": CronPage', app_source)
         self.assertIn("Workflow Builder", page_source)
@@ -24,10 +28,15 @@ class DesktopWorkflowContractTests(unittest.TestCase):
         self.assertIn("loadWorkflowCanvasState", page_source)
         self.assertIn("normalizeStoredWorkflowNode", page_source)
         self.assertIn("window.localStorage.setItem", page_source)
+        self.assertIn(".getWorkflowCanvas", page_source)
+        self.assertIn(".saveWorkflowCanvas", page_source)
+        self.assertIn(".runWorkflowCanvas", page_source)
+        self.assertIn("Workflow saved to JARVIS.", page_source)
         self.assertIn("workflowIconForLabel(label)", page_source)
         self.assertIn("Node name", page_source)
         self.assertIn("Purpose", page_source)
         self.assertIn("Remove node", page_source)
+        self.assertIn("Routed:", page_source)
         self.assertIn("Zoom workflow in", page_source)
         self.assertIn("Zoom workflow out", page_source)
         self.assertIn("Fit workflow view", page_source)
@@ -40,6 +49,16 @@ class DesktopWorkflowContractTests(unittest.TestCase):
         self.assertNotIn("nodes.slice(0, 8)", page_source)
         self.assertIn("overflow-auto", page_source)
         self.assertIn("manual, scheduled, platform trigger", page_source)
+
+        self.assertIn("getWorkflowCanvas", api_source)
+        self.assertIn("saveWorkflowCanvas", api_source)
+        self.assertIn("runWorkflowCanvas", api_source)
+        self.assertIn("WorkflowRunResponse", api_source)
+
+        self.assertIn('@app.get("/api/workflows")', server_source)
+        self.assertIn('@app.get("/api/workflows/{workflow_id}")', server_source)
+        self.assertIn('@app.put("/api/workflows/{workflow_id}")', server_source)
+        self.assertIn('@app.post("/api/workflows/{workflow_id}/run")', server_source)
 
 
 if __name__ == "__main__":
