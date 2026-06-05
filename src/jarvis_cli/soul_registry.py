@@ -165,6 +165,15 @@ def classify_prompt_soul(task_text: str, registry: SoulRegistry | None = None) -
 
 def build_soul_routed_prompt(prompt: str, soul: Mapping[str, Any]) -> str:
     """Attach concise team-routing context to a desktop model turn."""
+    return (
+        build_soul_system_context(soul)
+        + "\n\n"
+        f"User request:\n{prompt}"
+    )
+
+
+def build_soul_system_context(soul: Mapping[str, Any]) -> str:
+    """Build per-turn system context for a selected JARVIS team soul."""
     soul_id = str(soul.get("id") or "jarvis")
     name = str(soul.get("name") or soul_id.upper())
     role = str(soul.get("role") or "specialist").replace("_", " ")
@@ -180,6 +189,5 @@ def build_soul_routed_prompt(prompt: str, soul: Mapping[str, Any]) -> str:
         f"Active soul: {name} ({role}).\n"
         f"When to use: {when_to_use or 'Handle the current user request.'}\n"
         f"Responsibilities:\n{responsibility_text or '- Respond clearly and complete the task.'}\n"
-        "Answer as JARVIS coordinating this specialist. Do not mention routing unless it helps the user.\n\n"
-        f"User request:\n{prompt}"
+        "Answer as JARVIS coordinating this specialist. Do not mention routing unless it helps the user."
     )

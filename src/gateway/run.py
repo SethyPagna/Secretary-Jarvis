@@ -2214,6 +2214,23 @@ class GatewayRunner:
         route["request_overrides"] = overrides or {}
         return route
 
+    @staticmethod
+    def _build_team_routing_context(user_message: str) -> tuple[str, dict]:
+        """Return per-turn JARVIS team context for gateway-delivered messages."""
+        if os.getenv("JARVIS_GATEWAY_TEAM_ROUTING", "1").strip().lower() in {"0", "false", "no", "off"}:
+            return "", {"id": "jarvis", "delegate_souls": []}
+        try:
+            from jarvis_cli.soul_registry import (
+                build_soul_system_context,
+                classify_prompt_soul,
+            )
+
+            selected_soul = classify_prompt_soul(user_message or "")
+            return build_soul_system_context(selected_soul), selected_soul
+        except Exception as exc:
+            logger.debug("Gateway team routing context unavailable: %s", exc)
+            return "", {"id": "jarvis", "delegate_souls": []}
+
     async def _handle_adapter_fatal_error(self, adapter: BasePlatformAdapter) -> None:
         """React to an adapter failure after startup.
 
@@ -11414,6 +11431,14 @@ class GatewayRunner:
                     except Exception as e:
                         logger.warning("Background task vision enrichment failed: %s", e)
 
+            team_context, selected_team_soul = self._build_team_routing_context(enriched_prompt)
+            if team_context:
+                logger.debug(
+                    "Background task %s routed through JARVIS soul %s",
+                    task_id,
+                    selected_team_soul.get("id"),
+                )
+
             def run_sync():
                 agent = AIAgent(
                     model=turn_route["model"],
@@ -11423,6 +11448,7 @@ class GatewayRunner:
                     verbose_logging=False,
                     enabled_toolsets=enabled_toolsets,
                     disabled_toolsets=disabled_toolsets,
+                    ephemeral_system_prompt=team_context or None,
                     reasoning_config=reasoning_config,
                     service_tier=self._service_tier,
                     request_overrides=turn_route.get("request_overrides"),
@@ -16110,6 +16136,15 @@ class GatewayRunner:
             event_channel_prompt = (channel_prompt or "").strip()
             if event_channel_prompt:
                 combined_ephemeral = (combined_ephemeral + "\n\n" + event_channel_prompt).strip()
+            team_context, selected_team_soul = self._build_team_routing_context(message)
+            if team_context:
+                combined_ephemeral = (combined_ephemeral + "\n\n" + team_context).strip()
+                logger.debug(
+                    "Gateway routed %s session %s through JARVIS soul %s",
+                    platform_key,
+                    session_key,
+                    selected_team_soul.get("id"),
+                )
             if self._ephemeral_system_prompt:
                 combined_ephemeral = (combined_ephemeral + "\n\n" + self._ephemeral_system_prompt).strip()
 
