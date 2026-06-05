@@ -513,6 +513,7 @@ export interface RuntimeStatsResponse {
   listed_skills?: number;
   total_skill_assets?: number;
   skills_summary?: SkillsRuntimeSummary;
+  memory_context?: MemoryContextSummary;
   gateway_connections: number;
   souls_online?: number;
   souls_total?: number;
@@ -1118,6 +1119,21 @@ export interface SkillsRuntimeSummary {
   categories: Record<string, number>;
   ready_names: string[];
   setup_names: string[];
+}
+
+export interface MemoryContextFileSummary {
+  name: string;
+  title: string;
+  size: number;
+}
+
+export interface MemoryContextSummary {
+  available: number;
+  missing: number;
+  total_bytes: number;
+  latest_mtime_ns: number;
+  files: MemoryContextFileSummary[];
+  missing_files: string[];
 }
 
 export interface ToolsetInfo {

@@ -106,6 +106,7 @@ _PLANNED_LLM_RUNTIME_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": {}}
 _LOCAL_MODEL_PAYLOAD_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": None}
 _LOCAL_MODEL_PAYLOAD_CACHE_SECONDS = 30.0
 _RUNTIME_READINESS_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": None}
+_MEMORY_CONTEXT_CACHE: Dict[str, Any] = {"expires_at": 0.0, "value": None}
 _DESKTOP_WARMUP_LOCK = threading.Lock()
 _DESKTOP_WARMUP_STATE: Dict[str, Any] = {
     "started": False,
@@ -1547,6 +1548,45 @@ def _skills_runtime_summary() -> dict[str, Any]:
     return summary
 
 
+def _memory_context_summary() -> dict[str, Any]:
+    now = time.time()
+    cached = _MEMORY_CONTEXT_CACHE.get("value")
+    if isinstance(cached, dict) and now < float(_MEMORY_CONTEXT_CACHE.get("expires_at") or 0):
+        return dict(cached)
+    try:
+        snapshot = collect_memory_context_snapshot(get_jarvis_home(), Path.cwd())
+    except Exception:
+        snapshot = {"files": [], "available": 0, "total_bytes": 0, "latest_mtime_ns": 0}
+
+    files = snapshot.get("files") if isinstance(snapshot.get("files"), list) else []
+    available_files: list[dict[str, Any]] = []
+    missing_files: list[str] = []
+    for item in files:
+        if not isinstance(item, Mapping):
+            continue
+        name = str(item.get("name") or Path(str(item.get("path") or "")).name)
+        if item.get("exists"):
+            available_files.append({
+                "name": name,
+                "title": str(item.get("title") or name),
+                "size": int(item.get("size") or 0),
+            })
+        elif name:
+            missing_files.append(name)
+
+    summary = {
+        "available": int(snapshot.get("available") or len(available_files)),
+        "missing": len(missing_files),
+        "total_bytes": int(snapshot.get("total_bytes") or 0),
+        "latest_mtime_ns": int(snapshot.get("latest_mtime_ns") or 0),
+        "files": available_files[:10],
+        "missing_files": missing_files[:10],
+    }
+    _MEMORY_CONTEXT_CACHE["value"] = dict(summary)
+    _MEMORY_CONTEXT_CACHE["expires_at"] = now + 15.0
+    return summary
+
+
 def _skill_count_snapshot() -> dict[str, Any]:
     now = time.time()
     cached = _SKILL_COUNT_CACHE.get("snapshot")
@@ -1613,6 +1653,7 @@ def _runtime_stats_snapshot() -> dict:
     stats["listed_skills"] = int(skills.get("listed") or 0)
     stats["total_skill_assets"] = int(skills.get("total_assets") or 0)
     stats["skills_summary"] = _skills_runtime_summary()
+    stats["memory_context"] = _memory_context_summary()
     try:
         from jarvis_cli.team_runtime import enrich_team_souls_manifest
 

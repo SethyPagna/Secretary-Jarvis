@@ -72,6 +72,13 @@ function formatRate(value: number | null | undefined): string {
   return `${Number(value).toFixed(2)}/s`;
 }
 
+function formatBytes(value: number | null | undefined): string {
+  if (!value) return "0 B";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
+}
+
 function formatVoicePhase(value: string | null | undefined): string {
   if (!value) return "--";
   return value.replace(/_/g, " ");
@@ -98,6 +105,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
   const badgeLabel = live ? "Live" : cached ? "Cached" : "Waiting";
   const voice = stats?.voice_activity;
   const skillsSummary = stats?.skills_summary;
+  const memorySummary = stats?.memory_context;
   const skillsDetail = skillsSummary
     ? [
         `${skillsSummary.ready} ready`,
@@ -110,6 +118,18 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         .filter(Boolean)
         .join(" | ")
     : `${stats?.active_skills ?? 0} active, ${stats?.listed_skills ?? 0} listed, ${stats?.total_skill_assets ?? 0} total skill assets`;
+  const memoryDetail = memorySummary
+    ? [
+        `${memorySummary.available} available`,
+        `${memorySummary.missing} missing`,
+        formatBytes(memorySummary.total_bytes),
+        memorySummary.files.length
+          ? `loaded: ${memorySummary.files.map((file) => file.name).join(", ")}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" | ")
+    : "Memory/context snapshot is warming up";
 
   return (
     <aside className="flex h-full max-h-full min-h-0 min-w-0 w-full max-w-full flex-col gap-2 overflow-hidden rounded-md border border-white/12 bg-[#10151d]/90 p-3 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
@@ -199,6 +219,12 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
           <div className="text-slate-300/58">Souls online</div>
           <div className="font-mono text-white">
             {stats?.souls_online ?? 1} / {stats?.souls_total ?? 1}
+          </div>
+        </div>
+        <div className="min-w-0" title={memoryDetail}>
+          <div className="text-slate-300/58">Memory</div>
+          <div className="truncate font-mono text-white">
+            {memorySummary?.available ?? 0} files
           </div>
         </div>
         <div className="min-w-0" title={(stats?.delegate_souls ?? []).join(", ") || "Delegate souls ready"}>
