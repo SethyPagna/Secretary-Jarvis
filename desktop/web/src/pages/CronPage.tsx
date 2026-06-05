@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { WheelEvent } from "react";
 import {
   Bot,
@@ -560,6 +560,11 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
   const [lastTeamState, setLastTeamState] = useState<WorkflowTeamState | null>(null);
   const [lastMessage, setLastMessage] = useState("");
   const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? nodes[0];
+  const executedNodeById = useMemo(
+    () => new Map((lastRun?.executed_nodes ?? []).map((node) => [node.id, node])),
+    [lastRun?.executed_nodes],
+  );
+  const selectedNodeRun = selectedNode ? executedNodeById.get(selectedNode.id) : undefined;
   const palette = ["Trigger", "LLM", "Soul", "Skill", "HTTP", "File", "TTS", "Approval"];
 
   const canvasPayload = useCallback((): WorkflowCanvasPayload => ({
@@ -813,6 +818,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
             {nodes.map((node, index) => {
               const Icon = node.icon;
               const selected = node.id === selectedNode?.id;
+              const executed = executedNodeById.get(node.id);
               return (
                 <button
                   type="button"
@@ -845,6 +851,12 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
                     {node.label}
                   </div>
                   <div className="mt-1 text-sm font-medium text-white">{node.title}</div>
+                  {executed ? (
+                    <div className="mt-3 inline-flex max-w-full items-center gap-1 rounded-sm border border-emerald-200/18 bg-emerald-200/10 px-2 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-emerald-100">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-200" />
+                      <span className="truncate">{executed.status}</span>
+                    </div>
+                  ) : null}
                   {index < nodes.length - 1 ? (
                     <span className="absolute -right-3 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-cyan-100 shadow-[0_0_14px_rgba(125,249,255,0.8)] md:block" />
                   ) : null}
@@ -900,6 +912,9 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
               </label>
               <div className="grid gap-1.5 rounded-sm border border-cyan-200/14 bg-cyan-200/8 p-2">
                 <span>Sync: {syncState === "saved" ? "saved" : syncState === "loading" ? "working" : syncState}</span>
+                {selectedNodeRun ? (
+                  <span>Node run: {selectedNodeRun.status}</span>
+                ) : null}
                 <span>Run: manual, scheduled, platform trigger</span>
                 {lastRun?.active_soul ? (
                   <span>Routed: {lastRun.active_soul.name}</span>
