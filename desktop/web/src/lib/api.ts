@@ -84,20 +84,28 @@ export const api = {
       `/api/models/load?model=${encodeURIComponent(model)}`,
       { method: "POST" },
     ),
-  transcribeVoice: (audio: Blob) =>
+  transcribeVoice: (audio: Blob, options: { turnId?: string } = {}) =>
     fetchJSON<VoiceTranscriptionResponse>("/api/voice/transcribe", {
       method: "POST",
-      headers: { "Content-Type": audio.type || "application/octet-stream" },
+      headers: {
+        "Content-Type": audio.type || "application/octet-stream",
+        ...(options.turnId ? { "X-Jarvis-Voice-Turn": options.turnId } : {}),
+      },
       body: audio,
     }),
   synthesizeSpeech: (
     text: string,
-    options: { soul?: string; phase?: string } = {},
+    options: { turnId?: string; soul?: string; phase?: string } = {},
   ) =>
     fetchJSON<VoiceSynthesisResponse>("/api/voice/synthesize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, ...options }),
+      body: JSON.stringify({
+        text,
+        turn_id: options.turnId,
+        soul: options.soul,
+        phase: options.phase,
+      }),
     }),
   streamDesktopChat: (
     prompt: string,
@@ -522,6 +530,7 @@ export interface RuntimeStatsResponse {
 
 export interface VoiceActivityInfo {
   phase?: string;
+  turn_id?: string;
   active_soul?: string;
   transcript_preview?: string;
   text_preview?: string;

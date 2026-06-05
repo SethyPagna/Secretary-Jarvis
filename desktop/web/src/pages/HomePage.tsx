@@ -178,6 +178,14 @@ function estimateStreamingTokens(textLength: number): number {
   return Math.max(0, Math.round(textLength / 4));
 }
 
+function createVoiceTurnId(): string {
+  const random =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+  return `voice-${Date.now().toString(36)}-${random}`;
+}
+
 export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -199,6 +207,8 @@ export default function HomePage() {
   const voiceLastSnapshotAtRef = useRef(0);
   const voiceSnapshotInFlightRef = useRef(false);
   const voiceCaptureIdRef = useRef(0);
+  const voiceTurnIdRef = useRef("");
+  const assistantTurnIdRef = useRef("");
   const voiceTurnDispatchedRef = useRef(false);
   const voiceHadSpeechRef = useRef(false);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
@@ -654,6 +664,7 @@ export default function HomePage() {
       if (!text) return null;
 
       const result = await api.synthesizeSpeech(text, {
+        turnId: assistantTurnIdRef.current,
         soul: activeTurnSoul ?? stats?.active_soul ?? "jarvis",
         phase: "synthesizing",
       });
@@ -832,6 +843,11 @@ export default function HomePage() {
         source === "voice"
           ? `Spoken user message: ${cleanPrompt}\n\nRespond naturally, briefly, and directly. Do not echo disfluent transcription artifacts.`
           : cleanPrompt;
+      const turnId =
+        source === "voice"
+          ? voiceTurnIdRef.current || createVoiceTurnId()
+          : `typed-${Date.now().toString(36)}`;
+      assistantTurnIdRef.current = turnId;
       setVoiceBusy(true);
       liveTurnStartedAtRef.current = window.performance.now();
       liveOutputCharsRef.current = 0;
@@ -881,7 +897,9 @@ export default function HomePage() {
   const transcribeVoiceSnapshot = useCallback(
     async (audio: Blob, mode: "live" | "final", captureId: number): Promise<string> => {
       if (audio.size === 0) return "";
-      const result = await api.transcribeVoice(audio);
+      const result = await api.transcribeVoice(audio, {
+        turnId: voiceTurnIdRef.current,
+      });
       if (captureId !== voiceCaptureIdRef.current) return "";
       const transcript = result.transcript?.trim() ?? "";
       if (!result.success || !transcript) {
@@ -1023,6 +1041,7 @@ export default function HomePage() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       voiceStreamRef.current = stream;
       voiceCaptureIdRef.current += 1;
+      voiceTurnIdRef.current = createVoiceTurnId();
       voiceTurnDispatchedRef.current = false;
       voiceLiveTranscriptRef.current = "";
       voiceLiveTranscriptAtRef.current = 0;
@@ -1193,6 +1212,7 @@ export default function HomePage() {
     autoVoicePromptedRef.current = false;
     voiceLiveAnnouncedRef.current = false;
     voiceCaptureIdRef.current += 1;
+    voiceTurnIdRef.current = createVoiceTurnId();
     voiceTurnDispatchedRef.current = false;
     voiceLiveTranscriptRef.current = "";
     voiceLiveTranscriptAtRef.current = 0;

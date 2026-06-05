@@ -62,6 +62,7 @@ class TeamRuntimeTests(unittest.TestCase):
             payload = record_voice_activity(
                 home,
                 phase="transcribed",
+                turn_id="voice-test-turn",
                 active_soul="friday",
                 transcript="debug the voice pipeline",
                 provider="faster-whisper",
@@ -75,6 +76,7 @@ class TeamRuntimeTests(unittest.TestCase):
             enriched = enrich_team_souls_manifest(home)
 
         self.assertEqual(payload["active_soul"], "friday")
+        self.assertEqual(payload["voice_activity"]["turn_id"], "voice-test-turn")
         self.assertEqual(loaded["voice_activity"]["phase"], "transcribed")
         self.assertEqual(loaded["voice_activity"]["provider"], "faster-whisper")
         self.assertEqual(enriched["voice_activity"]["active_soul"], "friday")

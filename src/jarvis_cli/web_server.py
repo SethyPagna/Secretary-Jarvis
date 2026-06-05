@@ -578,6 +578,7 @@ class ModelAssignment(BaseModel):
 
 class VoiceSynthesizeRequest(BaseModel):
     text: str
+    turn_id: str = ""
     soul: str = ""
     phase: str = "synthesizing"
 
@@ -1030,6 +1031,7 @@ async def post_voice_transcribe(request: Request):
 
     audio_bytes = await request.body()
     content_type = request.headers.get("content-type")
+    turn_id = request.headers.get("x-jarvis-voice-turn", "")
     _log.info(
         "desktop STT request: bytes=%d content_type=%s",
         len(audio_bytes),
@@ -1039,6 +1041,7 @@ async def post_voice_transcribe(request: Request):
         record_voice_activity(
             get_jarvis_home(),
             phase="transcribing",
+            turn_id=turn_id,
             audio_bytes=len(audio_bytes),
             content_type=content_type or "",
         )
@@ -1063,6 +1066,7 @@ async def post_voice_transcribe(request: Request):
         record_voice_activity(
             get_jarvis_home(),
             phase="transcribed" if result.get("success") else "stt_failed",
+            turn_id=turn_id,
             active_soul=active_soul,
             transcript=transcript,
             provider=str(result.get("provider") or ""),
@@ -1099,6 +1103,7 @@ async def post_voice_synthesize(body: VoiceSynthesizeRequest):
         record_voice_activity(
             get_jarvis_home(),
             phase=body.phase or "synthesizing",
+            turn_id=body.turn_id,
             active_soul=active_soul,
             text=body.text,
         )
@@ -1113,6 +1118,7 @@ async def post_voice_synthesize(body: VoiceSynthesizeRequest):
         record_voice_activity(
             get_jarvis_home(),
             phase="synthesized" if result.get("success") else "tts_failed",
+            turn_id=body.turn_id,
             active_soul=active_soul,
             text=body.text,
             provider=str(result.get("provider") or ""),

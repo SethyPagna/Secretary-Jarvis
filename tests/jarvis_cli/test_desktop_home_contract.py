@@ -132,6 +132,9 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("voiceLiveTranscriptRef", source)
         self.assertIn("voiceSnapshotInFlightRef", source)
         self.assertIn("voiceCaptureIdRef", source)
+        self.assertIn("voiceTurnIdRef", source)
+        self.assertIn("assistantTurnIdRef", source)
+        self.assertIn("createVoiceTurnId", source)
         self.assertIn("voiceTurnDispatchedRef", source)
         self.assertIn("getBrowserSpeechRecognitionConstructor", source)
         self.assertIn("startBrowserSpeechRecognition", source)
@@ -179,6 +182,7 @@ class DesktopHomeContractTests(unittest.TestCase):
         )
 
         self.assertIn("api.synthesizeSpeech", home_source)
+        self.assertIn("turnId: assistantTurnIdRef.current", home_source)
         self.assertIn("queueVoiceDelta", home_source)
         self.assertIn("const VOICE_TTS_STREAM_CHUNK_CHARS = 88", home_source)
         self.assertIn("buffered.length > VOICE_TTS_STREAM_CHUNK_CHARS", home_source)
@@ -252,6 +256,9 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("VoiceSynthesisResponse", source)
         self.assertIn("VoiceActivityInfo", source)
         self.assertIn("voice_activity?: VoiceActivityInfo", source)
+        self.assertIn("X-Jarvis-Voice-Turn", source)
+        self.assertIn("turn_id: options.turnId", source)
+        self.assertIn("turn_id?: string", source)
 
     def test_web_server_exposes_raw_voice_transcription_and_synthesis(self) -> None:
         source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
@@ -265,6 +272,8 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("record_voice_activity", source)
         self.assertIn('phase="transcribing"', source)
         self.assertIn('phase="synthesized"', source)
+        self.assertIn('request.headers.get("x-jarvis-voice-turn"', source)
+        self.assertIn("turn_id=body.turn_id", source)
 
     def test_orb_and_home_use_unframed_cosmic_scene(self) -> None:
         orb_source = (WEB_ROOT / "src" / "components" / "JarvisOrb.tsx").read_text(

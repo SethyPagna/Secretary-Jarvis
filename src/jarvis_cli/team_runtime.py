@@ -154,6 +154,7 @@ def record_voice_activity(
     jarvis_home: Path,
     *,
     phase: str,
+    turn_id: str = "",
     active_soul: str = "",
     transcript: str = "",
     text: str = "",
@@ -188,6 +189,7 @@ def record_voice_activity(
     )
     voice_activity = {
         "phase": str(phase or "").strip().lower(),
+        "turn_id": str(turn_id or "").strip(),
         "active_soul": active,
         "transcript_preview": _preview(transcript),
         "text_preview": _preview(text),
