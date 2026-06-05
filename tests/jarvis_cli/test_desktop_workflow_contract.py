@@ -46,6 +46,8 @@ class DesktopWorkflowContractTests(unittest.TestCase):
         self.assertIn("Zoom workflow in", page_source)
         self.assertIn("Zoom workflow out", page_source)
         self.assertIn("Fit workflow view", page_source)
+        self.assertIn("Reset workflow zoom", page_source)
+        self.assertIn("resetWorkflowView", page_source)
         self.assertIn("handleWorkflowWheel", page_source)
         self.assertIn("clampWorkflowZoom", page_source)
         self.assertIn("WORKFLOW_ZOOM_MIN", page_source)

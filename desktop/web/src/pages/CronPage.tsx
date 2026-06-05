@@ -11,6 +11,7 @@ import {
   Pause,
   Play,
   Plus,
+  RotateCcw,
   Save,
   Send,
   Trash2,
@@ -698,11 +699,18 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
     const fittedZoom = nodes.length > 8 ? 0.72 : nodes.length > 5 ? 0.82 : 1;
     setZoom(clampWorkflowZoom(fittedZoom));
   };
+  const resetWorkflowView = () => {
+    setSyncState("local");
+    setZoom(1);
+  };
   const handleWorkflowWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (!event.ctrlKey && !event.metaKey) return;
     event.preventDefault();
     zoomWorkflow(event.deltaY > 0 ? -0.08 : 0.08);
   };
+  const canvasColumns = Math.max(4, nodes.length);
+  const canvasMinWidth = Math.max(720, canvasColumns * 180);
+  const canvasMinHeight = Math.max(260, Math.ceil(nodes.length / 4) * 150);
 
   return (
     <section className="overflow-hidden rounded-md border border-white/10 bg-[#10151d]/88 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
@@ -798,8 +806,19 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
               className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white"
               onClick={fitWorkflowView}
               aria-label="Fit workflow view"
+              title="Fit workflow view"
             >
               <Maximize2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              className="grid h-7 w-7 place-items-center rounded-sm text-slate-200/78 transition hover:bg-cyan-200/12 hover:text-white disabled:opacity-35"
+              onClick={resetWorkflowView}
+              disabled={zoom === 1}
+              aria-label="Reset workflow zoom"
+              title="Reset workflow zoom"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
             </button>
           </div>
           <div
@@ -812,8 +831,12 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
             }}
           />
           <div
-            className="relative grid min-h-[260px] min-w-[720px] origin-top-left items-center gap-3 transition-transform md:grid-cols-4"
-            style={{ transform: `scale(${zoom})`, width: `${100 / zoom}%` }}
+            className="relative grid origin-top-left items-center gap-3 md:grid-flow-col md:auto-cols-[minmax(150px,1fr)]"
+            style={{
+              minHeight: canvasMinHeight,
+              minWidth: canvasMinWidth,
+              zoom,
+            }}
           >
             <div
               aria-hidden
