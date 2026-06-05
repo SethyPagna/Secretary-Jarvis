@@ -48,6 +48,41 @@ type SynthesizedSpeechChunk = {
   audioBlob: Blob;
 };
 
+type BrowserSpeechRecognitionResult = {
+  isFinal: boolean;
+  [index: number]: { transcript: string };
+};
+
+type BrowserSpeechRecognitionEvent = {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: BrowserSpeechRecognitionResult;
+  };
+};
+
+type BrowserSpeechRecognition = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  onresult: ((event: BrowserSpeechRecognitionEvent) => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
+
+function getBrowserSpeechRecognitionConstructor(): BrowserSpeechRecognitionConstructor | null {
+  const browserWindow = window as Window &
+    typeof globalThis & {
+      SpeechRecognition?: BrowserSpeechRecognitionConstructor;
+      webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;
+    };
+  return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition ?? null;
+}
+
 function base64ToAudioBlob(base64: string, mimeType: string): Blob {
   const binary = window.atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -155,6 +190,8 @@ export default function HomePage() {
   const audioMeterContextRef = useRef<AudioContext | null>(null);
   const audioMeterFrameRef = useRef<number | null>(null);
   const audioMeterSourceRef = useRef<AudioNode | null>(null);
+  const browserSpeechRef = useRef<BrowserSpeechRecognition | null>(null);
+  const browserSpeechStoppingRef = useRef(false);
   const autoVoicePromptedRef = useRef(false);
   const voiceLiveAnnouncedRef = useRef(false);
   const voiceLiveTranscriptRef = useRef("");
@@ -263,6 +300,74 @@ export default function HomePage() {
     },
     [monitorAnalyser, stopAudioMeter],
   );
+
+  const stopBrowserSpeechRecognition = useCallback(() => {
+    const recognition = browserSpeechRef.current;
+    browserSpeechRef.current = null;
+    if (!recognition) return;
+    browserSpeechStoppingRef.current = true;
+    recognition.onresult = null;
+    recognition.onerror = null;
+    recognition.onend = null;
+    try {
+      recognition.stop();
+    } catch {
+      // Browser recognition may already be stopped.
+    } finally {
+      browserSpeechStoppingRef.current = false;
+    }
+  }, []);
+
+  const startBrowserSpeechRecognition = useCallback(() => {
+    const Recognition = getBrowserSpeechRecognitionConstructor();
+    if (!Recognition) return false;
+
+    stopBrowserSpeechRecognition();
+    const recognition = new Recognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.onresult = (event) => {
+      let interim = "";
+      let finalText = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const transcript = result[0]?.transcript?.trim() ?? "";
+        if (!transcript) continue;
+        if (result.isFinal) {
+          finalText += `${transcript} `;
+        } else {
+          interim += `${transcript} `;
+        }
+      }
+      const nextTranscript = (finalText || interim).trim();
+      if (!nextTranscript) return;
+      voiceHadSpeechRef.current = true;
+      voiceLiveTranscriptRef.current = nextTranscript;
+      voiceLiveTranscriptAtRef.current = Date.now();
+      setTerminalInput(nextTranscript);
+      if (finalText.trim()) {
+        const recorder = mediaRecorderRef.current;
+        if (recorder && recorder.state !== "inactive") {
+          recorder.stop();
+        }
+      }
+    };
+    recognition.onerror = () => undefined;
+    recognition.onend = () => {
+      if (browserSpeechRef.current === recognition) {
+        browserSpeechRef.current = null;
+      }
+    };
+    try {
+      recognition.start();
+      browserSpeechRef.current = recognition;
+      return true;
+    } catch {
+      browserSpeechRef.current = null;
+      return false;
+    }
+  }, [stopBrowserSpeechRecognition]);
 
   const startPlaybackAudioMeter = useCallback(
     (audio: HTMLAudioElement) => {
@@ -402,12 +507,13 @@ export default function HomePage() {
         recorder.stop();
       }
       voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
+      stopBrowserSpeechRecognition();
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
       }
       stopAudioMeter();
     };
-  }, [stopAudioMeter]);
+  }, [stopAudioMeter, stopBrowserSpeechRecognition]);
 
   const orbState: OrbState = useMemo(() => {
     if (!status) return "offline";
@@ -859,10 +965,11 @@ export default function HomePage() {
   );
 
   const stopVoiceStream = useCallback(() => {
+    stopBrowserSpeechRecognition();
     voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
     voiceStreamRef.current = null;
     stopAudioMeter();
-  }, [stopAudioMeter]);
+  }, [stopAudioMeter, stopBrowserSpeechRecognition]);
 
   const stopVoiceRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
@@ -877,7 +984,8 @@ export default function HomePage() {
   }, [stopVoiceStream]);
 
   const startVoiceRecording = useCallback(async () => {
-    if (!subsystemReady(readiness?.stt)) {
+    const browserSpeechAvailable = Boolean(getBrowserSpeechRecognitionConstructor());
+    if (!subsystemReady(readiness?.stt) && !browserSpeechAvailable) {
       setTerminalEntries((entries) => [
         ...entries,
         { kind: "output", text: "STT is not ready yet. Waiting for the Whisper model." },
@@ -906,6 +1014,7 @@ export default function HomePage() {
       voiceSilenceStartedAtRef.current = null;
       voiceRecordingStartedAtRef.current = Date.now();
       startStreamAudioMeter(stream);
+      startBrowserSpeechRecognition();
       const preferredMime = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -937,11 +1046,6 @@ export default function HomePage() {
         setListening(false);
         voiceSilenceStartedAtRef.current = null;
         voiceRecordingStartedAtRef.current = null;
-        if (!hadSpeech) {
-          setVoiceRetryAt(Date.now() + VOICE_SILENT_MONITOR_RESTART_MS);
-          window.setTimeout(() => setVoiceRetryAt(0), VOICE_SILENT_MONITOR_RESTART_MS);
-          return;
-        }
         if (liveTranscriptFresh && !voiceTurnDispatchedRef.current) {
           voiceTurnDispatchedRef.current = true;
           voiceCaptureIdRef.current += 1;
@@ -949,6 +1053,11 @@ export default function HomePage() {
           voiceEmptyCapturesRef.current = 0;
           setTerminalInput("");
           void runDesktopAgentTurn(liveTranscript, "voice");
+          return;
+        }
+        if (!hadSpeech) {
+          setVoiceRetryAt(Date.now() + VOICE_SILENT_MONITOR_RESTART_MS);
+          window.setTimeout(() => setVoiceRetryAt(0), VOICE_SILENT_MONITOR_RESTART_MS);
           return;
         }
         void handleRecordedVoice(recordedAudio);
@@ -979,13 +1088,14 @@ export default function HomePage() {
     queueLiveVoiceTranscription,
     readiness?.stt,
     runDesktopAgentTurn,
+    startBrowserSpeechRecognition,
     startStreamAudioMeter,
     stopVoiceStream,
   ]);
 
   useEffect(() => {
     if (!autoVoiceArmed || listening || voiceBusy || speaking) return;
-    if (!subsystemReady(readiness?.stt)) return;
+    if (!subsystemReady(readiness?.stt) && !getBrowserSpeechRecognitionConstructor()) return;
     if (voiceRetryAt && Date.now() < voiceRetryAt) return;
 
     let cancelled = false;
