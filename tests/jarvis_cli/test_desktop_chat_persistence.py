@@ -135,6 +135,34 @@ class DesktopChatPersistenceTests(unittest.TestCase):
         self.assertEqual(state["platform"], "telegram")
         self.assertEqual(state["session_key"], "123456")
 
+    def test_desktop_token_stats_include_surface_and_team_route(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home = Path(temp_dir)
+            desktop_chat._record_desktop_tokens(
+                home,
+                input_tokens=40,
+                output_tokens=20,
+                model="qwen3.5-9b-q4_k_m",
+                provider="llama.cpp",
+                active_soul="argus",
+                delegate_souls=["jarvis", "sentinel"],
+                surface="gateway",
+                platform="telegram",
+                session_key="123456",
+                user_id="42",
+            )
+
+            stats = desktop_chat._read_json(home / "stats.json")
+
+        current = stats["desktop_current_tokens"]
+        self.assertEqual(stats["tokens_total_lifetime"], 60)
+        self.assertEqual(current["surface"], "gateway")
+        self.assertEqual(current["platform"], "telegram")
+        self.assertEqual(current["session_key"], "123456")
+        self.assertEqual(current["user_id"], "42")
+        self.assertEqual(current["active_soul"], "argus")
+        self.assertEqual(current["delegate_souls"], ["jarvis", "sentinel"])
+
     def test_status_counts_recent_desktop_and_gateway_session_files(self) -> None:
         from jarvis_cli.web_server import _desktop_surface_active_sessions
 

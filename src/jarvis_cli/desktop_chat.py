@@ -92,6 +92,10 @@ def _record_desktop_tokens(
     provider: str,
     active_soul: str = "jarvis",
     delegate_souls: list[str] | None = None,
+    surface: str = "desktop",
+    platform: str = "",
+    session_key: str = "",
+    user_id: str = "local-user",
 ) -> None:
     """Persist current and lifetime desktop token counters for live stats."""
     try:
@@ -121,6 +125,10 @@ def _record_desktop_tokens(
         "provider": provider,
         "active_soul": active_soul,
         "delegate_souls": list(delegate_souls or []),
+        "surface": surface,
+        "platform": platform,
+        "session_key": session_key,
+        "user_id": user_id or "local-user",
         "updated_at": time.time(),
     }
     tmp_path = stats_path.with_suffix(".json.tmp")
@@ -601,6 +609,10 @@ def run_desktop_chat_turn(
         provider=provider_name,
         active_soul=active_soul,
         delegate_souls=delegate_souls,
+        surface=surface,
+        platform=platform,
+        session_key=session_key,
+        user_id=user_id,
     )
     try:
         from jarvis_cli.team_runtime import record_team_activity
