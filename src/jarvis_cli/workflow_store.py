@@ -125,18 +125,21 @@ def run_workflow_canvas(
         if isinstance(node, Mapping)
     )
     soul = classify_prompt_soul(task_text)
-    executed_nodes = [
-        {
-            "id": str(node.get("id") or ""),
-            "label": str(node.get("label") or "Node"),
-            "status": "validated",
-        }
-        for node in nodes
-        if isinstance(node, Mapping)
-    ]
+    executed_nodes = []
+    for node in nodes:
+        if not isinstance(node, Mapping):
+            continue
+        label = str(node.get("label") or "Node")
+        executed_nodes.append(
+            {
+                "id": str(node.get("id") or ""),
+                "label": label,
+                "status": _workflow_node_status(label),
+            }
+        )
     message = (
-        f"Workflow '{normalize_workflow_id(workflow_id)}' validated "
-        f"with {len(executed_nodes)} nodes and routed through {soul['name']}."
+        f"Workflow '{normalize_workflow_id(workflow_id)}' ran "
+        f"{len(executed_nodes)} nodes through {soul['name']}."
     )
     team_state: dict[str, Any] = {}
     try:
@@ -229,3 +232,14 @@ def _normalize_node(node: Any) -> dict[str, str] | None:
         "title": title[:280],
         "tone": tone,
     }
+
+
+def _workflow_node_status(label: str) -> str:
+    text = str(label or "").strip().lower()
+    if any(marker in text for marker in ("approval", "permission", "confirm")):
+        return "awaiting_approval"
+    if any(marker in text for marker in ("trigger", "voice", "telegram", "whatsapp", "schedule")):
+        return "triggered"
+    if any(marker in text for marker in ("llm", "router", "soul", "skill", "tts", "http", "file", "output", "reply")):
+        return "executed"
+    return "validated"

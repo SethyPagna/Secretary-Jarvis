@@ -51,7 +51,11 @@ class WorkflowStoreTests(unittest.TestCase):
             run = run_workflow_canvas(home, "desktop-canvas", canvas)
             self.assertEqual(run.workflow_id, "desktop-canvas")
             self.assertEqual(len(run.executed_nodes), 3)
-            self.assertIn("routed through", run.message)
+            self.assertEqual(
+                [node["status"] for node in run.executed_nodes],
+                ["triggered", "executed", "executed"],
+            )
+            self.assertIn("ran 3 nodes", run.message)
             self.assertEqual(run.team_state["surface"], "workflow")
             self.assertEqual(run.team_state["workflow_id"], "desktop-canvas")
 

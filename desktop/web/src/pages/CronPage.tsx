@@ -835,7 +835,8 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
             style={{
               minHeight: canvasMinHeight,
               minWidth: canvasMinWidth,
-              zoom,
+              transform: `scale(${zoom})`,
+              transformOrigin: "top left",
             }}
           >
             <div
