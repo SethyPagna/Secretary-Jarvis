@@ -213,6 +213,7 @@ export default function HomePage() {
   const voiceHadSpeechRef = useRef(false);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
+  const voiceSilentRetryScheduledRef = useRef(false);
   const voiceEmptyCapturesRef = useRef(0);
   const voiceRetryTimerRef = useRef<number | null>(null);
   const liveTurnStartedAtRef = useRef<number | null>(null);
@@ -939,6 +940,39 @@ export default function HomePage() {
     [transcribeVoiceSnapshot],
   );
 
+  const scheduleVoiceRetry = useCallback(
+    (reason: "empty" | "silent") => {
+      if (!autoVoiceArmed) return;
+      voiceEmptyCapturesRef.current += 1;
+      const paused = voiceEmptyCapturesRef.current >= VOICE_MAX_EMPTY_RETRIES;
+      if (paused) {
+        setAutoVoiceArmed(false);
+      } else {
+        const retryAt = Date.now() + VOICE_EMPTY_RETRY_DELAY_MS;
+        setVoiceRetryAt(retryAt);
+        if (voiceRetryTimerRef.current !== null) {
+          window.clearTimeout(voiceRetryTimerRef.current);
+        }
+        voiceRetryTimerRef.current = window.setTimeout(() => {
+          voiceRetryTimerRef.current = null;
+          setVoiceRetryAt(0);
+        }, VOICE_EMPTY_RETRY_DELAY_MS);
+      }
+      setTerminalEntries((entries) => [
+        ...entries,
+        {
+          kind: "output",
+          text: paused
+            ? "Voice is paused until the microphone has a clear signal."
+            : reason === "silent"
+              ? "Voice is still live. Waiting for a clearer signal."
+              : "Listening for a clearer phrase.",
+        },
+      ]);
+    },
+    [autoVoiceArmed],
+  );
+
   const handleRecordedVoice = useCallback(
     async (audio: Blob) => {
       if (audio.size === 0) {
@@ -967,37 +1001,21 @@ export default function HomePage() {
             message.toLowerCase().includes("no microphone audio") ||
             message.toLowerCase().includes("not catch"));
         if (shouldKeepListening) {
-          voiceEmptyCapturesRef.current += 1;
-          if (voiceEmptyCapturesRef.current >= VOICE_MAX_EMPTY_RETRIES) {
-            setAutoVoiceArmed(false);
-          } else {
-            const retryAt = Date.now() + VOICE_EMPTY_RETRY_DELAY_MS;
-            setVoiceRetryAt(retryAt);
-            if (voiceRetryTimerRef.current !== null) {
-              window.clearTimeout(voiceRetryTimerRef.current);
-            }
-            voiceRetryTimerRef.current = window.setTimeout(() => {
-              voiceRetryTimerRef.current = null;
-              setVoiceRetryAt(0);
-            }, VOICE_EMPTY_RETRY_DELAY_MS);
-          }
+          scheduleVoiceRetry("empty");
+          return;
         }
         setTerminalEntries((entries) => [
           ...entries,
           {
             kind: "output",
-            text: shouldKeepListening
-              ? voiceEmptyCapturesRef.current >= VOICE_MAX_EMPTY_RETRIES
-                ? "Voice is paused until the microphone has a clear signal."
-                : "Listening for a clearer phrase."
-              : message,
+            text: message,
           },
         ]);
       } finally {
         setVoiceBusy(false);
       }
     },
-    [autoVoiceArmed, runDesktopAgentTurn, transcribeVoiceSnapshot],
+    [autoVoiceArmed, runDesktopAgentTurn, scheduleVoiceRetry, transcribeVoiceSnapshot],
   );
 
   const stopVoiceStream = useCallback(() => {
@@ -1048,6 +1066,7 @@ export default function HomePage() {
       voiceLastSnapshotAtRef.current = 0;
       voiceSnapshotInFlightRef.current = false;
       voiceHadSpeechRef.current = false;
+      voiceSilentRetryScheduledRef.current = false;
       voiceSilenceStartedAtRef.current = null;
       voiceRecordingStartedAtRef.current = Date.now();
       startStreamAudioMeter(stream);
@@ -1093,6 +1112,10 @@ export default function HomePage() {
           return;
         }
         if (!hadSpeech) {
+          if (voiceSilentRetryScheduledRef.current) {
+            voiceSilentRetryScheduledRef.current = false;
+            return;
+          }
           setVoiceRetryAt(Date.now() + VOICE_SILENT_MONITOR_RESTART_MS);
           window.setTimeout(() => setVoiceRetryAt(0), VOICE_SILENT_MONITOR_RESTART_MS);
           return;
@@ -1198,9 +1221,11 @@ export default function HomePage() {
     }
 
     if (now - voiceRecordingStartedAtRef.current >= VOICE_MAX_NO_SPEECH_MS) {
+      voiceSilentRetryScheduledRef.current = true;
+      scheduleVoiceRetry("silent");
       stopVoiceRecording();
     }
-  }, [audioLevel, listening, stopVoiceRecording]);
+  }, [audioLevel, listening, scheduleVoiceRetry, stopVoiceRecording]);
 
   const toggleMic = async () => {
     if (listening) {
