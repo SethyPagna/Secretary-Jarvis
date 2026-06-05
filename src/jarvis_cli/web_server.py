@@ -2798,6 +2798,16 @@ def load_local_model(model: str):
         os.environ["JARVIS_ACTIVE_GGUF_MODEL_PATH"] = str(primary)
         model_name = primary.stem
         endpoint = "http://127.0.0.1:8080/v1"
+        try:
+            from jarvis_cli.runtime_autoconfig import build_runtime_autoconfig_plan
+
+            plan = build_runtime_autoconfig_plan(cfg)
+            planned_llm = plan.get("llm") if isinstance(plan.get("llm"), Mapping) else {}
+            planned_endpoint = str(planned_llm.get("endpoint") or "").strip()
+            if planned_endpoint:
+                endpoint = planned_endpoint
+        except Exception:
+            _log.debug("Could not resolve llama.cpp endpoint from runtime autoconfig", exc_info=True)
         cfg["model"] = {
             "default": model_name,
             "provider": "llama_cpp_local",
