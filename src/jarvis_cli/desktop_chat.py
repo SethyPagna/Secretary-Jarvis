@@ -18,6 +18,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
+from uuid import uuid4
 
 from jarvis_cli.utils import atomic_replace
 
@@ -125,6 +126,127 @@ def _record_desktop_tokens(
     tmp_path = stats_path.with_suffix(".json.tmp")
     tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     atomic_replace(tmp_path, stats_path)
+
+
+def _desktop_session_state_path(jarvis_home: Path) -> Path:
+    return jarvis_home / "desktop" / "session.json"
+
+
+def _get_or_create_desktop_session_id(
+    jarvis_home: Path,
+    *,
+    model: str,
+    provider: str,
+    active_soul: str,
+    delegate_souls: list[str] | None = None,
+) -> str:
+    """Return the current desktop conversation id, creating it if needed.
+
+    The desktop app is a long-lived conversational surface. Keeping a rolling
+    session makes voice, typed chat, memory search, and analytics agree on the
+    same transcript instead of scattering every utterance into a new row.
+    """
+    state_path = _desktop_session_state_path(jarvis_home)
+    now = time.time()
+    payload = _read_json(state_path)
+    session_id = str(payload.get("session_id") or "").strip()
+    started_at = 0.0
+    try:
+        started_at = float(payload.get("started_at") or 0)
+    except (TypeError, ValueError):
+        started_at = 0.0
+    max_age_seconds = int(os.getenv("JARVIS_DESKTOP_SESSION_MAX_AGE_SECONDS", "43200") or "43200")
+    if not session_id or (started_at and now - started_at > max_age_seconds):
+        session_id = f"desktop-{time.strftime('%Y%m%d-%H%M%S')}-{uuid4().hex[:8]}"
+        payload = {"session_id": session_id, "started_at": now}
+
+    payload.update(
+        {
+            "updated_at": now,
+            "model": model,
+            "provider": provider,
+            "active_soul": active_soul,
+            "delegate_souls": list(delegate_souls or []),
+        }
+    )
+    try:
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = state_path.with_suffix(".json.tmp")
+        tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        atomic_replace(tmp_path, state_path)
+    except Exception as exc:
+        logging.debug("Desktop session state write failed: %s", exc)
+    return session_id
+
+
+def _record_desktop_session_turn(
+    jarvis_home: Path,
+    *,
+    prompt: str,
+    response: str,
+    input_tokens: int,
+    output_tokens: int,
+    model: str,
+    provider: str,
+    active_soul: str,
+    delegate_souls: list[str] | None = None,
+) -> str | None:
+    """Persist a desktop/voice turn to the shared SQLite session store."""
+    db = _create_session_db()
+    if db is None:
+        return None
+    session_id = _get_or_create_desktop_session_id(
+        jarvis_home,
+        model=model,
+        provider=provider,
+        active_soul=active_soul,
+        delegate_souls=delegate_souls,
+    )
+    model_config = {
+        "provider": provider,
+        "model": model,
+        "surface": "desktop",
+        "active_soul": active_soul,
+        "delegate_souls": list(delegate_souls or []),
+    }
+    try:
+        db.create_session(
+            session_id,
+            "desktop",
+            model=model,
+            model_config=model_config,
+            user_id="local-user",
+        )
+        db.append_message(
+            session_id,
+            "user",
+            prompt,
+            token_count=max(0, int(input_tokens or 0)),
+        )
+        db.append_message(
+            session_id,
+            "assistant",
+            response,
+            token_count=max(0, int(output_tokens or 0)),
+        )
+        db.update_token_counts(
+            session_id,
+            input_tokens=max(0, int(input_tokens or 0)),
+            output_tokens=max(0, int(output_tokens or 0)),
+            model=model,
+            billing_provider=provider,
+            billing_mode="desktop",
+            api_call_count=1,
+        )
+        return session_id
+    except Exception as exc:
+        logging.debug("Desktop session persistence failed: %s", exc)
+        return None
+    finally:
+        try:
+            db.close()
+        except Exception:
+            pass
 
 
 def _estimated_tokens(text: str) -> int:
@@ -410,6 +532,17 @@ def run_desktop_chat_turn(
 
     _record_desktop_tokens(
         jarvis_home,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        model=model_name,
+        provider=provider_name,
+        active_soul=active_soul,
+        delegate_souls=delegate_souls,
+    )
+    _record_desktop_session_turn(
+        jarvis_home,
+        prompt=clean_prompt,
+        response=response,
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         model=model_name,

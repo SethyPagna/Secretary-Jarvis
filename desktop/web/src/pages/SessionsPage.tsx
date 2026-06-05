@@ -51,6 +51,7 @@ import { PluginSlot } from "@/plugins";
 
 const SOURCE_CONFIG: Record<string, { icon: typeof Terminal; color: string }> =
   {
+    desktop: { icon: MessageSquare, color: "text-primary" },
     cli: { icon: Terminal, color: "text-primary" },
     telegram: { icon: MessageCircle, color: "text-[oklch(0.65_0.15_250)]" },
     discord: { icon: Hash, color: "text-[oklch(0.65_0.15_280)]" },
