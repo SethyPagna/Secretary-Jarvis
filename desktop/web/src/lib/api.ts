@@ -90,11 +90,14 @@ export const api = {
       headers: { "Content-Type": audio.type || "application/octet-stream" },
       body: audio,
     }),
-  synthesizeSpeech: (text: string) =>
+  synthesizeSpeech: (
+    text: string,
+    options: { soul?: string; phase?: string } = {},
+  ) =>
     fetchJSON<VoiceSynthesisResponse>("/api/voice/synthesize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, ...options }),
     }),
   streamDesktopChat: (
     prompt: string,
@@ -506,6 +509,7 @@ export interface RuntimeStatsResponse {
   souls_total?: number;
   active_soul?: string;
   delegate_souls?: string[];
+  voice_activity?: VoiceActivityInfo;
   llm_runtime?: {
     running?: boolean;
     model?: string;
@@ -514,6 +518,20 @@ export interface RuntimeStatsResponse {
   };
   uptime_seconds: number;
   warnings: string[];
+}
+
+export interface VoiceActivityInfo {
+  phase?: string;
+  active_soul?: string;
+  transcript_preview?: string;
+  text_preview?: string;
+  provider?: string;
+  engine?: string;
+  success?: boolean | null;
+  latency_ms?: number | null;
+  audio_bytes?: number | null;
+  content_type?: string;
+  updated_at?: number;
 }
 
 export interface IntegrationLiveProbe {

@@ -250,6 +250,8 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn('"/api/voice/synthesize"', source)
         self.assertIn("VoiceTranscriptionResponse", source)
         self.assertIn("VoiceSynthesisResponse", source)
+        self.assertIn("VoiceActivityInfo", source)
+        self.assertIn("voice_activity?: VoiceActivityInfo", source)
 
     def test_web_server_exposes_raw_voice_transcription_and_synthesis(self) -> None:
         source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")
@@ -260,6 +262,9 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertIn("transcribe_desktop_audio", source)
         self.assertIn('@app.post("/api/voice/synthesize")', source)
         self.assertIn("synthesize_desktop_speech", source)
+        self.assertIn("record_voice_activity", source)
+        self.assertIn('phase="transcribing"', source)
+        self.assertIn('phase="synthesized"', source)
 
     def test_orb_and_home_use_unframed_cosmic_scene(self) -> None:
         orb_source = (WEB_ROOT / "src" / "components" / "JarvisOrb.tsx").read_text(

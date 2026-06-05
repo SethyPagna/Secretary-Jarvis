@@ -516,15 +516,30 @@ export default function HomePage() {
   }, [stopAudioMeter, stopBrowserSpeechRecognition]);
 
   const orbState: OrbState = useMemo(() => {
+    const voicePhase = stats?.voice_activity?.phase ?? "";
+    const voicePhaseFresh =
+      typeof stats?.voice_activity?.updated_at === "number" &&
+      Date.now() - stats.voice_activity.updated_at * 1000 < 5_000;
     if (!status) return "offline";
     if (speaking) return "speaking";
+    if (voicePhaseFresh && voicePhase === "synthesizing") return "speaking";
     if (smokeRunning) return "thinking";
     if (listening) return "listening";
+    if (voicePhaseFresh && voicePhase === "transcribing") return "listening";
     if (voiceBusy) return "thinking";
     if (smoke && !smoke.production_ready) return "error";
     if (smoke?.tts && subsystemReady(smoke.tts)) return "speaking";
     return "idle";
-  }, [listening, smoke, smokeRunning, speaking, status, voiceBusy]);
+  }, [
+    listening,
+    smoke,
+    smokeRunning,
+    speaking,
+    stats?.voice_activity?.phase,
+    stats?.voice_activity?.updated_at,
+    status,
+    voiceBusy,
+  ]);
 
   const runTerminalCommand = useCallback(async (command: string) => {
     setTerminalEntries((entries) => [
@@ -638,7 +653,10 @@ export default function HomePage() {
       const text = terminalTextForSpeech(rawText);
       if (!text) return null;
 
-      const result = await api.synthesizeSpeech(text);
+      const result = await api.synthesizeSpeech(text, {
+        soul: activeTurnSoul ?? stats?.active_soul ?? "jarvis",
+        phase: "synthesizing",
+      });
       if (!result.success || !result.audio_base64) {
         throw new Error(result.error || "TTS did not return audio.");
       }
@@ -650,7 +668,7 @@ export default function HomePage() {
         ),
       };
     },
-    [voiceOutput],
+    [activeTurnSoul, stats?.active_soul, voiceOutput],
   );
 
   const playSynthesizedSpeech = useCallback(

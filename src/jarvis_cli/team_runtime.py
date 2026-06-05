@@ -83,6 +83,7 @@ def record_team_activity(
         "session_id": str(session_id or ""),
         "workflow_id": str(workflow_id or ""),
         "platform": str(platform or ""),
+        "voice_activity": previous.get("voice_activity") if isinstance(previous.get("voice_activity"), Mapping) else {},
         "souls": souls,
     }
     path = team_state_path(jarvis_home)
@@ -144,8 +145,66 @@ def enrich_team_souls_manifest(
             "platform": activity.get("platform") or "",
             "updated_at": activity.get("updated_at") or None,
         },
+        "voice_activity": activity.get("voice_activity") if isinstance(activity.get("voice_activity"), Mapping) else {},
         "souls": enriched_souls,
     }
+
+
+def record_voice_activity(
+    jarvis_home: Path,
+    *,
+    phase: str,
+    active_soul: str = "",
+    transcript: str = "",
+    text: str = "",
+    provider: str = "",
+    engine: str = "",
+    success: bool | None = None,
+    latency_ms: int | None = None,
+    audio_bytes: int | None = None,
+    content_type: str = "",
+) -> dict[str, Any]:
+    """Persist the latest voice phase alongside team routing state."""
+    current = load_team_activity(jarvis_home)
+    active = (
+        _normalize_id(active_soul)
+        or _normalize_id(current.get("active_soul"))
+        or str(load_team_souls_manifest().get("primary") or "jarvis")
+    )
+    prompt = transcript or text
+    payload = record_team_activity(
+        jarvis_home,
+        active_soul=active,
+        surface="voice",
+        prompt=prompt,
+        delegate_souls=[
+            item
+            for item in (_normalize_id(value) for value in current.get("delegate_souls", []))
+            if item and item != active
+        ],
+        model=str(current.get("model") or ""),
+        provider=str(current.get("provider") or provider or ""),
+        session_id=str(current.get("session_id") or ""),
+    )
+    voice_activity = {
+        "phase": str(phase or "").strip().lower(),
+        "active_soul": active,
+        "transcript_preview": _preview(transcript),
+        "text_preview": _preview(text),
+        "provider": str(provider or ""),
+        "engine": str(engine or ""),
+        "success": success,
+        "latency_ms": latency_ms,
+        "audio_bytes": audio_bytes,
+        "content_type": str(content_type or ""),
+        "updated_at": time.time(),
+    }
+    payload["voice_activity"] = voice_activity
+    path = team_state_path(jarvis_home)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    atomic_replace(tmp, path)
+    return payload
 
 
 def _normalize_id(value: object) -> str:

@@ -72,6 +72,11 @@ function formatRate(value: number | null | undefined): string {
   return `${Number(value).toFixed(2)}/s`;
 }
 
+function formatVoicePhase(value: string | null | undefined): string {
+  if (!value) return "--";
+  return value.replace(/_/g, " ");
+}
+
 export function StatsPanel({ readiness, stats }: StatsPanelProps) {
   const llm = readiness?.llm;
   const tts = readiness?.tts;
@@ -91,6 +96,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
     ? JSON.stringify(blockingIssues)
     : warnings;
   const badgeLabel = live ? "Live" : cached ? "Cached" : "Waiting";
+  const voice = stats?.voice_activity;
 
   return (
     <aside className="flex h-full max-h-full min-h-0 min-w-0 w-full max-w-full flex-col gap-2 overflow-hidden rounded-md border border-white/12 bg-[#10151d]/90 p-3 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
@@ -202,6 +208,15 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         <RuntimeLine
           label="STT"
           value={stt?.model_folder ?? stt?.model ?? stt?.configured_model ?? stt?.engine}
+        />
+        <RuntimeLine
+          label="Voice"
+          value={formatVoicePhase(voice?.phase)}
+          detail={
+            voice
+              ? `${voice.active_soul ?? "jarvis"} | ${voice.provider || voice.engine || "local"} | ${voice.latency_ms ?? 0} ms`
+              : undefined
+          }
         />
       </div>
     </aside>

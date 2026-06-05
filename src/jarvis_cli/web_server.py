@@ -578,6 +578,8 @@ class ModelAssignment(BaseModel):
 
 class VoiceSynthesizeRequest(BaseModel):
     text: str
+    soul: str = ""
+    phase: str = "synthesizing"
 
 
 class DesktopChatRequest(BaseModel):
@@ -1024,6 +1026,7 @@ async def post_runtime_smoke_test():
 async def post_voice_transcribe(request: Request):
     """Transcribe raw browser microphone audio with the configured STT stack."""
     from jarvis_cli.desktop_voice import transcribe_desktop_audio
+    from jarvis_cli.team_runtime import record_voice_activity
 
     audio_bytes = await request.body()
     content_type = request.headers.get("content-type")
@@ -1032,12 +1035,45 @@ async def post_voice_transcribe(request: Request):
         len(audio_bytes),
         content_type or "",
     )
+    try:
+        record_voice_activity(
+            get_jarvis_home(),
+            phase="transcribing",
+            audio_bytes=len(audio_bytes),
+            content_type=content_type or "",
+        )
+    except Exception as exc:
+        _log.debug("desktop STT activity start update failed: %s", exc)
     result = await asyncio.to_thread(
         transcribe_desktop_audio,
         audio_bytes,
         content_type,
         get_jarvis_home() / "voice-input",
     )
+    transcript = str(result.get("transcript") or "").strip()
+    active_soul = ""
+    if transcript:
+        try:
+            from jarvis_cli.soul_registry import classify_prompt_soul
+
+            active_soul = str(classify_prompt_soul(transcript).get("id") or "")
+        except Exception as exc:
+            _log.debug("desktop STT soul classification failed: %s", exc)
+    try:
+        record_voice_activity(
+            get_jarvis_home(),
+            phase="transcribed" if result.get("success") else "stt_failed",
+            active_soul=active_soul,
+            transcript=transcript,
+            provider=str(result.get("provider") or ""),
+            engine=str(result.get("engine") or ""),
+            success=bool(result.get("success")),
+            latency_ms=int(result.get("latency_ms") or 0),
+            audio_bytes=int(result.get("bytes") or len(audio_bytes)),
+            content_type=content_type or "",
+        )
+    except Exception as exc:
+        _log.debug("desktop STT activity finish update failed: %s", exc)
     if result.get("success"):
         _log.info(
             "desktop STT success: provider=%s latency_ms=%s chars=%d",
@@ -1054,12 +1090,41 @@ async def post_voice_transcribe(request: Request):
 async def post_voice_synthesize(body: VoiceSynthesizeRequest):
     """Synthesize assistant text for desktop voice playback."""
     from jarvis_cli.desktop_voice import synthesize_desktop_speech
+    from jarvis_cli.team_runtime import load_team_activity, record_voice_activity
 
-    return await asyncio.to_thread(
+    active_soul = body.soul.strip().lower()
+    if not active_soul:
+        active_soul = str(load_team_activity(get_jarvis_home()).get("active_soul") or "jarvis").strip().lower()
+    try:
+        record_voice_activity(
+            get_jarvis_home(),
+            phase=body.phase or "synthesizing",
+            active_soul=active_soul,
+            text=body.text,
+        )
+    except Exception as exc:
+        _log.debug("desktop TTS activity start update failed: %s", exc)
+    result = await asyncio.to_thread(
         synthesize_desktop_speech,
         body.text,
         get_jarvis_home() / "voice-output",
     )
+    try:
+        record_voice_activity(
+            get_jarvis_home(),
+            phase="synthesized" if result.get("success") else "tts_failed",
+            active_soul=active_soul,
+            text=body.text,
+            provider=str(result.get("provider") or ""),
+            engine=str(result.get("engine") or ""),
+            success=bool(result.get("success")),
+            latency_ms=int(result.get("latency_ms") or 0),
+            audio_bytes=int(result.get("audio_bytes") or 0),
+            content_type=str(result.get("mime_type") or ""),
+        )
+    except Exception as exc:
+        _log.debug("desktop TTS activity finish update failed: %s", exc)
+    return result
 
 
 @app.post("/api/desktop/chat")
@@ -1483,6 +1548,8 @@ def _runtime_stats_snapshot() -> dict:
         stats["souls_online"] = sum(1 for soul in team_souls if soul.get("online"))
         stats["active_soul"] = team_state.get("active_soul") or stats.get("active_soul") or "jarvis"
         stats["delegate_souls"] = team_state.get("delegate_souls") or stats.get("delegate_souls") or []
+    if isinstance(team_state.get("voice_activity"), Mapping):
+        stats["voice_activity"] = dict(team_state["voice_activity"])
     with _DESKTOP_STREAM_LOCK:
         stream_soul = str(_DESKTOP_STREAM_COUNTER.get("active_soul") or "").strip().lower()
         stream_delegates = _DESKTOP_STREAM_COUNTER.get("delegate_souls")
