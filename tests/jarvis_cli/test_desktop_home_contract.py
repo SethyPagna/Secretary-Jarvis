@@ -30,13 +30,15 @@ class DesktopHomeContractTests(unittest.TestCase):
         self.assertNotIn('label: "Reference"', source)
         self.assertNotIn("RootRedirect", source)
 
-    def test_title_bar_uses_electron_preload_bridge(self) -> None:
+    def test_title_bar_uses_runtime_snapshot_and_window_controls(self) -> None:
         source = (WEB_ROOT / "src" / "components" / "DesktopTitleBar.tsx").read_text(
             encoding="utf-8",
         )
 
+        self.assertIn("useRuntimeSnapshot", source)
+        self.assertIn("bootstrapped", source)
+        self.assertIn("readiness", source)
         self.assertIn("window.jarvisDesktop?.windowControl", source)
-        self.assertIn("getBackendStatus", source)
         self.assertIn("minimize", source)
         self.assertIn("toggle-maximize", source)
         self.assertIn("close", source)

@@ -16,7 +16,7 @@ import {
 import spinners from "unicode-animations";
 import { H2 } from "@/components/NouiTypography";
 import { api } from "@/lib/api";
-import type { ProfileInfo, TeamSoulInfo } from "@/lib/api";
+import type { ProfileInfo } from "@/lib/api";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@jarvis_managed-research/ui/ui/components/checkbox";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
+import { useRuntimeSnapshot } from "@/contexts/RuntimeProvider";
 import { cn, themedBody } from "@/lib/utils";
 
 // Mirrors src/jarvis_cli/profiles.py::_PROFILE_ID_RE so we can reject obviously
@@ -67,11 +68,11 @@ function ProfilesLoadingSpinner() {
 
 export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<ProfileInfo[]>([]);
-  const [teamSouls, setTeamSouls] = useState<TeamSoulInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast, showToast } = useToast();
   const { t } = useI18n();
   const { setEnd } = usePageHeader();
+  const { teamSouls, refreshRuntime } = useRuntimeSnapshot();
 
   // Create modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -97,13 +98,10 @@ export default function ProfilesPage() {
   const activeSoulRequest = useRef<string | null>(null);
 
   const load = useCallback(() => {
-    Promise.all([
-      api.getProfiles(),
-      api.getTeamSouls().catch(() => ({ primary: "jarvis", souls: [] })),
-    ])
-      .then(([profilesRes, soulsRes]) => {
+    return api
+      .getProfiles()
+      .then((profilesRes) => {
         setProfiles(profilesRes.profiles);
-        setTeamSouls(soulsRes.souls);
       })
       .catch((e) => showToast(`${t.status.error}: ${e}`, "error"))
       .finally(() => setLoading(false));
@@ -129,7 +127,8 @@ export default function ProfilesPage() {
       showToast(`${t.profiles.created}: ${name}`, "success");
       setNewName("");
       setCreateModalOpen(false);
-      load();
+      await load();
+      await refreshRuntime();
     } catch (e) {
       showToast(`${t.status.error}: ${e}`, "error");
     } finally {
@@ -157,7 +156,8 @@ export default function ProfilesPage() {
       );
       setRenamingFrom(null);
       setRenameTo("");
-      load();
+      await load();
+      await refreshRuntime();
     } catch (e) {
       showToast(`${t.status.error}: ${e}`, "error");
     }
@@ -192,6 +192,7 @@ export default function ProfilesPage() {
     try {
       await api.updateProfileSoul(name, soulText);
       showToast(`${t.profiles.soulSaved}: ${name}`, "success");
+      await refreshRuntime();
     } catch (e) {
       showToast(`${t.status.error}: ${e}`, "error");
     } finally {
@@ -222,13 +223,14 @@ export default function ProfilesPage() {
         try {
           await api.deleteProfile(name);
           showToast(`${t.profiles.deleted}: ${name}`, "success");
-          load();
+          await load();
+          await refreshRuntime();
         } catch (e) {
           showToast(`${t.status.error}: ${e}`, "error");
           throw e;
         }
       },
-      [load, showToast, t.profiles.deleted, t.status.error],
+      [load, refreshRuntime, showToast, t.profiles.deleted, t.status.error],
     ),
   });
 

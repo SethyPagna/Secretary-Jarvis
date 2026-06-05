@@ -1,7 +1,7 @@
 import { Bell, Maximize2, Minus, PanelLeft, X } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 
-import { api } from "@/lib/api";
+import { useRuntimeSnapshot } from "@/contexts/RuntimeProvider";
 import { cn } from "@/lib/utils";
 
 interface DesktopTitleBarProps {
@@ -31,32 +31,17 @@ export function DesktopTitleBar({
   sidebarCollapsed,
 }: DesktopTitleBarProps) {
   const [clock, setClock] = useState(() => formatClock(new Date()));
-  const [backendStatus, setBackendStatus] = useState<BackendStatus>("checking");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { bootstrapped, status, readiness } = useRuntimeSnapshot();
+  const backendStatus: BackendStatus = !bootstrapped
+    ? "checking"
+    : status?.version || readiness
+      ? "idle"
+      : "offline";
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(formatClock(new Date())), 15_000);
     return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const check = window.jarvisDesktop?.getBackendStatus
-      ? window.jarvisDesktop.getBackendStatus()
-      : api.getStatus().then((status) => ({ ok: Boolean(status.version) }));
-
-    check
-      .then((status) => {
-        if (!cancelled) setBackendStatus(status.ok ? "idle" : "offline");
-      })
-      .catch(() => {
-        if (!cancelled) setBackendStatus("offline");
-      });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   useEffect(() => {
