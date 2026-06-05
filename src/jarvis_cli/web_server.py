@@ -2491,9 +2491,35 @@ def _sum_file_sizes(files: List[Path]) -> int:
 
 
 def _clone_local_model_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    def model_sort_key(item: Mapping[str, Any]) -> Tuple[int, int, int, str]:
+        text = f"{item.get('id') or ''} {item.get('name') or ''} {item.get('primary_file') or ''}".lower()
+        kind_rank = {"llm": 3, "stt": 2, "tts": 1}.get(str(item.get("kind") or ""), 0)
+        quant_rank = 0
+        for score, marker in (
+            (120, "q4_k_m"),
+            (115, "q4"),
+            (110, "q5_k_m"),
+            (100, "q5"),
+            (80, "q6"),
+            (60, "q8"),
+            (5, "f16"),
+        ):
+            if marker in text:
+                quant_rank = score
+                break
+        family_rank = 0
+        for score, marker in ((50, "qwen"), (40, "gemma"), (35, "llama"), (30, "mistral")):
+            if marker in text:
+                family_rank = score
+                break
+        size = int(item.get("size_bytes") or 0)
+        return (kind_rank, family_rank + quant_rank, -size, str(item.get("name") or ""))
+
+    models = [dict(item) for item in payload.get("models") or [] if isinstance(item, Mapping)]
+    models.sort(key=model_sort_key, reverse=True)
     return {
         "roots": list(payload.get("roots") or []),
-        "models": [dict(item) for item in payload.get("models") or [] if isinstance(item, Mapping)],
+        "models": models,
     }
 
 
@@ -2552,6 +2578,31 @@ def _local_model_payload(*, force_refresh: bool = False) -> Dict[str, Any]:
                 continue
             add_model(entry, _iter_local_model_files(entry))
 
+    def model_sort_key(item: Mapping[str, Any]) -> Tuple[int, int, int, str]:
+        text = f"{item.get('id') or ''} {item.get('name') or ''} {item.get('primary_file') or ''}".lower()
+        kind_rank = {"llm": 3, "stt": 2, "tts": 1}.get(str(item.get("kind") or ""), 0)
+        quant_rank = 0
+        for score, marker in (
+            (120, "q4_k_m"),
+            (115, "q4"),
+            (110, "q5_k_m"),
+            (100, "q5"),
+            (80, "q6"),
+            (60, "q8"),
+            (5, "f16"),
+        ):
+            if marker in text:
+                quant_rank = score
+                break
+        family_rank = 0
+        for score, marker in ((50, "qwen"), (40, "gemma"), (35, "llama"), (30, "mistral")):
+            if marker in text:
+                family_rank = score
+                break
+        size = int(item.get("size_bytes") or 0)
+        return (kind_rank, family_rank + quant_rank, -size, str(item.get("name") or ""))
+
+    models.sort(key=model_sort_key, reverse=True)
     payload = {"roots": [str(root) for root in roots], "models": models}
     _LOCAL_MODEL_PAYLOAD_CACHE["value"] = _clone_local_model_payload(payload)
     _LOCAL_MODEL_PAYLOAD_CACHE["expires_at"] = now + _LOCAL_MODEL_PAYLOAD_CACHE_SECONDS
