@@ -163,7 +163,16 @@ def _template_ready(soul: Mapping[str, Any]) -> bool:
     template = str(soul.get("template") or "")
     if not template:
         return False
+    return any(path.exists() for path in _candidate_template_paths(template))
+
+
+def _candidate_template_paths(template: str) -> tuple[Path, ...]:
     candidate = Path(template)
     if candidate.is_absolute():
-        return candidate.exists()
-    return (Path(__file__).resolve().parents[2] / template).exists()
+        return (candidate,)
+    module_dir = Path(__file__).resolve().parent
+    repo_root = module_dir.parents[1]
+    return (
+        repo_root / template,
+        module_dir / "data" / "souls" / candidate.name,
+    )
