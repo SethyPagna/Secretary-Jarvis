@@ -307,13 +307,43 @@ def default_llm_probe(config: Mapping[str, Any], env: Mapping[str, str], prompt:
     backend = settings["backend"]
     if backend == "unconfigured":
         return {"ready": False, "error": "No LLM provider or local backend is configured."}
-    if backend == "ollama":
-        return _ollama_probe(settings, prompt)
-    if backend == "anthropic":
-        return _anthropic_probe(settings, prompt)
-    if backend == "gemini":
-        return _gemini_probe(settings, prompt)
-    return _openai_compatible_probe(settings, prompt)
+    try:
+        if backend == "ollama":
+            result = _ollama_probe(settings, prompt)
+        elif backend == "anthropic":
+            result = _anthropic_probe(settings, prompt)
+        elif backend == "gemini":
+            result = _gemini_probe(settings, prompt)
+        else:
+            result = _openai_compatible_probe(settings, prompt)
+    except Exception as exc:
+        result = {"ready": False, "error": f"{type(exc).__name__}: {exc}"}
+
+    if result.get("ready"):
+        return result
+
+    # Desktop chat falls back to a verified Mistral key when the selected local
+    # llama.cpp/vLLM/Ollama endpoint is not actually serving chat. Keep smoke
+    # aligned with that user-visible behavior instead of reporting a dead local
+    # endpoint as the whole app being dead.
+    if backend in {"llama.cpp", "vllm", "ollama", "custom-local", "lm-studio"} and env.get("MISTRAL_API_KEY"):
+        fallback_settings = {
+            "provider_name": "mistral_api",
+            "provider": {},
+            "model": env.get("MISTRAL_MODEL") or "mistral-small-latest",
+            "base_url": "https://api.mistral.ai/v1",
+            "backend": "openai-compatible",
+            "api_key": env.get("MISTRAL_API_KEY") or "",
+        }
+        try:
+            fallback = _openai_compatible_probe(fallback_settings, prompt)
+        except Exception as exc:
+            fallback = {"ready": False, "error": f"{type(exc).__name__}: {exc}"}
+        fallback["fallback_from"] = backend
+        fallback["primary_error"] = result.get("error") or result
+        return fallback
+
+    return result
 
 
 def default_tts_probe(

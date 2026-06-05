@@ -82,6 +82,44 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(captured["payload"]["chat_template_kwargs"]["enable_thinking"], False)
         self.assertTrue(result["ready"])
 
+    def test_default_llm_probe_falls_back_to_mistral_when_local_endpoint_is_dead(self) -> None:
+        calls = []
+
+        def fake_openai_probe(settings, prompt):
+            calls.append((settings["provider_name"], settings["base_url"], settings["model"], prompt))
+            if settings["provider_name"] == "llama_cpp_local":
+                return {"ready": False, "error": "HTTPError: HTTP Error 404: Not Found"}
+            return {
+                "ready": True,
+                "response": "ready",
+                "latency_ms": 90,
+                "tokens_per_second": 22.2,
+                "model": settings["model"],
+                "backend": settings["backend"],
+                "provider": settings["provider_name"],
+            }
+
+        config = {
+            "providers": {
+                "llama_cpp_local": {
+                    "base_url": "http://127.0.0.1:8080/v1",
+                    "model": "qwen3.5-9b-q4_k_m",
+                }
+            }
+        }
+        with patch.object(runtime_smoke, "_openai_compatible_probe", side_effect=fake_openai_probe):
+            result = runtime_smoke.default_llm_probe(
+                config,
+                {"MISTRAL_API_KEY": "sk-test", "MISTRAL_MODEL": "mistral-small-latest"},
+                "Reply ready",
+            )
+
+        self.assertTrue(result["ready"])
+        self.assertEqual(result["provider"], "mistral_api")
+        self.assertEqual(result["fallback_from"], "llama.cpp")
+        self.assertIn("404", str(result["primary_error"]))
+        self.assertEqual([call[0] for call in calls], ["llama_cpp_local", "mistral_api"])
+
     def test_smoke_test_marks_runtime_ready_when_all_probes_succeed(self) -> None:
         calls = []
 
