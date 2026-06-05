@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 interface StatsPanelProps {
   readiness: RuntimeReadinessResponse | null;
   stats: RuntimeStatsResponse | null;
+  sttFallbackLabel?: string;
 }
 
 function formatValue(value: number | null | undefined, suffix = ""): string {
@@ -84,7 +85,7 @@ function formatVoicePhase(value: string | null | undefined): string {
   return value.replace(/_/g, " ");
 }
 
-export function StatsPanel({ readiness, stats }: StatsPanelProps) {
+export function StatsPanel({ readiness, stats, sttFallbackLabel }: StatsPanelProps) {
   const llm = readiness?.llm;
   const tts = readiness?.tts;
   const stt = readiness?.stt;
@@ -246,7 +247,13 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
         <RuntimeLine label="TTS" value={tts?.engine ?? tts?.model} />
         <RuntimeLine
           label="STT"
-          value={stt?.model_folder ?? stt?.model ?? stt?.configured_model ?? stt?.engine}
+          value={
+            stt?.model_folder ??
+            stt?.model ??
+            stt?.configured_model ??
+            stt?.engine ??
+            sttFallbackLabel
+          }
         />
         <RuntimeLine
           label="Voice"

@@ -1176,6 +1176,14 @@ export default function HomePage() {
   }, [liveTokensPerSecond, stats]);
   const activeVoice = readiness?.tts?.engine ?? "voice";
   const sttReady = subsystemReady(readiness?.stt);
+  const browserSpeechAvailable = Boolean(getBrowserSpeechRecognitionConstructor());
+  const sttFallbackLabel = sttReady
+    ? undefined
+    : browserSpeechAvailable
+      ? "browser live"
+      : autoVoiceArmed
+        ? "mic capture"
+        : "mic paused";
   const micLabel = sttReady
     ? "mic ready"
     : autoVoiceArmed
@@ -1279,7 +1287,11 @@ export default function HomePage() {
         </div>
 
         {statsVisible ? (
-          <StatsPanel readiness={readiness} stats={displayStats} />
+          <StatsPanel
+            readiness={readiness}
+            stats={displayStats}
+            sttFallbackLabel={sttFallbackLabel}
+          />
         ) : (
           <button
             type="button"

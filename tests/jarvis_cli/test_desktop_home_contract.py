@@ -61,6 +61,9 @@ class DesktopHomeContractTests(unittest.TestCase):
 
         self.assertIn("<JarvisOrb", source)
         self.assertIn("<StatsPanel", source)
+        self.assertIn("sttFallbackLabel", source)
+        self.assertIn("browser live", source)
+        self.assertIn("mic capture", source)
         self.assertIn("Voice", source)
         self.assertIn("Steering", source)
         self.assertIn("Terminal / Chat Input", source)
