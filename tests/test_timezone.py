@@ -27,6 +27,14 @@ def _reset_jarvis_time_cache():
     jarvis_time._cache_resolved = False
 
 
+def test_top_level_jarvis_time_module_matches_time_utils():
+    """Agent prompt imports use the top-level compatibility module."""
+    import jarvis_time as top_level_jarvis_time
+
+    assert top_level_jarvis_time.now is jarvis_time.now
+    assert top_level_jarvis_time.get_timezone is jarvis_time.get_timezone
+
+
 # =========================================================================
 # jarvis_time.now() — core helper
 # =========================================================================
