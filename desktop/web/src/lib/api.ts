@@ -1085,9 +1085,18 @@ export interface WorkflowRunResponse {
   ok: boolean;
   workflow_id: string;
   active_soul: NonNullable<DesktopChatReady["soul"]>;
+  team_state?: WorkflowTeamState;
   executed_nodes: Array<{ id: string; label: string; status: string }>;
   message: string;
   canvas: WorkflowCanvasResponse;
+}
+
+export interface WorkflowTeamState {
+  active_soul?: string;
+  delegate_souls?: string[];
+  surface?: string;
+  workflow_id?: string;
+  updated_at?: number;
 }
 
 export interface SkillInfo {

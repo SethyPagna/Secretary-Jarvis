@@ -23,6 +23,7 @@ _LOG = logging.getLogger(__name__)
 class WorkflowCanvasRun:
     workflow_id: str
     active_soul: dict[str, Any]
+    team_state: dict[str, Any]
     executed_nodes: list[dict[str, str]]
     message: str
 
@@ -137,10 +138,11 @@ def run_workflow_canvas(
         f"Workflow '{normalize_workflow_id(workflow_id)}' validated "
         f"with {len(executed_nodes)} nodes and routed through {soul['name']}."
     )
+    team_state: dict[str, Any] = {}
     try:
         from jarvis_cli.team_runtime import record_team_activity
 
-        record_team_activity(
+        team_state = record_team_activity(
             jarvis_home,
             active_soul=str(soul.get("id") or "jarvis"),
             surface="workflow",
@@ -157,6 +159,7 @@ def run_workflow_canvas(
     return WorkflowCanvasRun(
         workflow_id=normalize_workflow_id(workflow_id),
         active_soul=soul,
+        team_state=team_state,
         executed_nodes=executed_nodes,
         message=message,
     )

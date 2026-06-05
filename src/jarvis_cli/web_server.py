@@ -4394,6 +4394,7 @@ async def run_workflow(workflow_id: str, body: Optional[WorkflowCanvasRequest] =
             "ok": True,
             "workflow_id": run.workflow_id,
             "active_soul": run.active_soul,
+            "team_state": run.team_state,
             "executed_nodes": run.executed_nodes,
             "message": run.message,
             "canvas": saved,

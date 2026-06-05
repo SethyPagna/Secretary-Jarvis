@@ -33,6 +33,9 @@ class DesktopWorkflowContractTests(unittest.TestCase):
         self.assertIn(".runWorkflowCanvas", page_source)
         self.assertIn("Workflow saved to JARVIS.", page_source)
         self.assertIn("workflowIconForLabel(label)", page_source)
+        self.assertIn("lastTeamState", page_source)
+        self.assertIn("setLastTeamState(result.team_state ?? null)", page_source)
+        self.assertIn("Team: {lastTeamState.delegate_souls.join", page_source)
         self.assertIn("Node name", page_source)
         self.assertIn("Purpose", page_source)
         self.assertIn("Remove node", page_source)
@@ -54,11 +57,14 @@ class DesktopWorkflowContractTests(unittest.TestCase):
         self.assertIn("saveWorkflowCanvas", api_source)
         self.assertIn("runWorkflowCanvas", api_source)
         self.assertIn("WorkflowRunResponse", api_source)
+        self.assertIn("WorkflowTeamState", api_source)
+        self.assertIn("team_state?: WorkflowTeamState", api_source)
 
         self.assertIn('@app.get("/api/workflows")', server_source)
         self.assertIn('@app.get("/api/workflows/{workflow_id}")', server_source)
         self.assertIn('@app.put("/api/workflows/{workflow_id}")', server_source)
         self.assertIn('@app.post("/api/workflows/{workflow_id}/run")', server_source)
+        self.assertIn('"team_state": run.team_state', server_source)
 
 
 if __name__ == "__main__":

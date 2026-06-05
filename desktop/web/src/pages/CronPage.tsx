@@ -24,7 +24,13 @@ import { Select, SelectOption } from "@jarvis_managed-research/ui/ui/components/
 import { Spinner } from "@jarvis_managed-research/ui/ui/components/spinner";
 import { H2 } from "@/components/NouiTypography";
 import { api } from "@/lib/api";
-import type { CronJob, ProfileInfo, WorkflowCanvasPayload, WorkflowLastRun } from "@/lib/api";
+import type {
+  CronJob,
+  ProfileInfo,
+  WorkflowCanvasPayload,
+  WorkflowLastRun,
+  WorkflowTeamState,
+} from "@/lib/api";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
@@ -551,6 +557,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
   const [running, setRunning] = useState(false);
   const [syncState, setSyncState] = useState<"local" | "loading" | "saved" | "error">("loading");
   const [lastRun, setLastRun] = useState<WorkflowLastRun | null>(null);
+  const [lastTeamState, setLastTeamState] = useState<WorkflowTeamState | null>(null);
   const [lastMessage, setLastMessage] = useState("");
   const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? nodes[0];
   const palette = ["Trigger", "LLM", "Soul", "Skill", "HTTP", "File", "TTS", "Approval"];
@@ -656,6 +663,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
     try {
       const result = await api.runWorkflowCanvas("desktop-canvas", canvasPayload());
       setLastRun(result.canvas.last_run);
+      setLastTeamState(result.team_state ?? null);
       setSyncState("saved");
       setLastMessage(result.message);
     } catch (error) {
@@ -895,6 +903,12 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
                 <span>Run: manual, scheduled, platform trigger</span>
                 {lastRun?.active_soul ? (
                   <span>Routed: {lastRun.active_soul.name}</span>
+                ) : null}
+                {lastTeamState?.delegate_souls?.length ? (
+                  <span>Team: {lastTeamState.delegate_souls.join(", ")}</span>
+                ) : null}
+                {lastTeamState?.workflow_id ? (
+                  <span>Workflow: {lastTeamState.workflow_id}</span>
                 ) : null}
                 {lastMessage ? (
                   <span className="text-cyan-50/82">{lastMessage}</span>

@@ -52,6 +52,8 @@ class WorkflowStoreTests(unittest.TestCase):
             self.assertEqual(run.workflow_id, "desktop-canvas")
             self.assertEqual(len(run.executed_nodes), 3)
             self.assertIn("routed through", run.message)
+            self.assertEqual(run.team_state["surface"], "workflow")
+            self.assertEqual(run.team_state["workflow_id"], "desktop-canvas")
 
             saved = record_workflow_run(home, "desktop-canvas", canvas, run)
             self.assertIsNotNone(saved["last_run"])
