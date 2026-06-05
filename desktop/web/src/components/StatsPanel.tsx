@@ -97,6 +97,19 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
     : warnings;
   const badgeLabel = live ? "Live" : cached ? "Cached" : "Waiting";
   const voice = stats?.voice_activity;
+  const skillsSummary = stats?.skills_summary;
+  const skillsDetail = skillsSummary
+    ? [
+        `${skillsSummary.ready} ready`,
+        `${skillsSummary.setup_needed} need setup`,
+        `${skillsSummary.disabled} off`,
+        skillsSummary.setup_names.length
+          ? `setup: ${skillsSummary.setup_names.join(", ")}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" | ")
+    : `${stats?.active_skills ?? 0} active, ${stats?.listed_skills ?? 0} listed, ${stats?.total_skill_assets ?? 0} total skill assets`;
 
   return (
     <aside className="flex h-full max-h-full min-h-0 min-w-0 w-full max-w-full flex-col gap-2 overflow-hidden rounded-md border border-white/12 bg-[#10151d]/90 p-3 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
@@ -171,7 +184,7 @@ export function StatsPanel({ readiness, stats }: StatsPanelProps) {
           <div className="text-slate-300/58">Skills</div>
           <div
             className="truncate font-mono text-white"
-            title={`${stats?.active_skills ?? 0} active, ${stats?.listed_skills ?? 0} listed, ${stats?.total_skill_assets ?? 0} total skill assets`}
+            title={skillsDetail}
           >
             {stats?.active_skills ?? 0} / {stats?.listed_skills ?? 0}
           </div>

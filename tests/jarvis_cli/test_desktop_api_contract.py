@@ -15,6 +15,9 @@ class DesktopApiContractTests(unittest.TestCase):
         self.assertIn('@app.post("/api/shutdown")', source)
         self.assertIn("collect_runtime_stats", source)
         self.assertIn("perform_graceful_shutdown", source)
+        self.assertIn("_annotate_skill_runtime_status", source)
+        self.assertIn("_skills_runtime_summary", source)
+        self.assertIn('stats["skills_summary"] = _skills_runtime_summary()', source)
 
     def test_shutdown_endpoint_accepts_desktop_shutdown_token(self) -> None:
         source = (SRC_ROOT / "jarvis_cli" / "web_server.py").read_text(encoding="utf-8")

@@ -1477,6 +1477,76 @@ def _desktop_skill_catalog(*, include_disabled: bool = True) -> list[dict[str, A
     return sorted(merged, key=lambda item: (str(item.get("category") or ""), str(item.get("name") or "")))
 
 
+def _skill_setup_env_by_category() -> dict[str, list[str]]:
+    return {
+        "weather": ["OPENWEATHER_API_KEY", "WEATHER_API_KEY"],
+        "email": ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD"],
+        "web": [],
+        "browser": [],
+    }
+
+
+def _annotate_skill_runtime_status(
+    skills: list[dict[str, Any]],
+    env: Mapping[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    runtime_env = dict(env or {**os.environ, **load_env()})
+    setup_env_by_category = _skill_setup_env_by_category()
+    annotated: list[dict[str, Any]] = []
+    for skill in skills:
+        item = dict(skill)
+        item["enabled"] = bool(item.get("enabled", True))
+        text = f"{item.get('name', '')} {item.get('description', '')} {item.get('category', '')}".lower()
+        required_env: list[str] = []
+        for marker, keys in setup_env_by_category.items():
+            if marker in text:
+                required_env.extend(keys)
+        missing = [key for key in sorted(set(required_env)) if not runtime_env.get(key)]
+        item["requires_setup"] = bool(missing)
+        item["missing_env"] = missing
+        item["configured"] = not missing
+        item["status"] = "disabled" if not item["enabled"] else "setup_needed" if missing else "ready"
+        annotated.append(item)
+    return annotated
+
+
+def _skills_runtime_summary() -> dict[str, Any]:
+    now = time.time()
+    cached = _SKILL_COUNT_CACHE.get("runtime_summary")
+    if isinstance(cached, dict) and now < float(_SKILL_COUNT_CACHE.get("runtime_summary_expires_at") or 0):
+        return dict(cached)
+    try:
+        skills = _annotate_skill_runtime_status(_desktop_skill_catalog(include_disabled=True))
+    except Exception:
+        skills = []
+    status_counts = {"ready": 0, "setup_needed": 0, "disabled": 0}
+    categories: dict[str, int] = {}
+    ready_names: list[str] = []
+    setup_names: list[str] = []
+    for skill in skills:
+        status = str(skill.get("status") or "ready")
+        if status not in status_counts:
+            status_counts[status] = 0
+        status_counts[status] += 1
+        category = str(skill.get("category") or "general")
+        categories[category] = categories.get(category, 0) + 1
+        if status == "ready" and len(ready_names) < 12:
+            ready_names.append(str(skill.get("name") or ""))
+        elif status == "setup_needed" and len(setup_names) < 12:
+            setup_names.append(str(skill.get("name") or ""))
+    summary = {
+        "ready": status_counts.get("ready", 0),
+        "setup_needed": status_counts.get("setup_needed", 0),
+        "disabled": status_counts.get("disabled", 0),
+        "categories": dict(sorted(categories.items())),
+        "ready_names": [name for name in ready_names if name],
+        "setup_names": [name for name in setup_names if name],
+    }
+    _SKILL_COUNT_CACHE["runtime_summary"] = dict(summary)
+    _SKILL_COUNT_CACHE["runtime_summary_expires_at"] = now + 30.0
+    return summary
+
+
 def _skill_count_snapshot() -> dict[str, Any]:
     now = time.time()
     cached = _SKILL_COUNT_CACHE.get("snapshot")
@@ -1542,6 +1612,7 @@ def _runtime_stats_snapshot() -> dict:
     )
     stats["listed_skills"] = int(skills.get("listed") or 0)
     stats["total_skill_assets"] = int(skills.get("total_assets") or 0)
+    stats["skills_summary"] = _skills_runtime_summary()
     try:
         from jarvis_cli.team_runtime import enrich_team_souls_manifest
 
@@ -4780,27 +4851,7 @@ class SkillToggle(BaseModel):
 
 @app.get("/api/skills")
 async def get_skills():
-    skills = _desktop_skill_catalog(include_disabled=True)
-    env = {**os.environ, **load_env()}
-    setup_env_by_category = {
-        "weather": ["OPENWEATHER_API_KEY", "WEATHER_API_KEY"],
-        "email": ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD"],
-        "web": [],
-        "browser": [],
-    }
-    for s in skills:
-        s["enabled"] = bool(s.get("enabled", True))
-        text = f"{s.get('name', '')} {s.get('description', '')} {s.get('category', '')}".lower()
-        required_env: list[str] = []
-        for marker, keys in setup_env_by_category.items():
-            if marker in text:
-                required_env.extend(keys)
-        missing = [key for key in sorted(set(required_env)) if not env.get(key)]
-        s["requires_setup"] = bool(missing)
-        s["missing_env"] = missing
-        s["configured"] = not missing
-        s["status"] = "disabled" if not s["enabled"] else "setup_needed" if missing else "ready"
-    return skills
+    return _annotate_skill_runtime_status(_desktop_skill_catalog(include_disabled=True))
 
 
 @app.put("/api/skills/toggle")

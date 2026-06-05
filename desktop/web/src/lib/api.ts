@@ -512,6 +512,7 @@ export interface RuntimeStatsResponse {
   active_skills: number;
   listed_skills?: number;
   total_skill_assets?: number;
+  skills_summary?: SkillsRuntimeSummary;
   gateway_connections: number;
   souls_online?: number;
   souls_total?: number;
@@ -1108,6 +1109,15 @@ export interface SkillInfo {
   requires_setup?: boolean;
   missing_env?: string[];
   status?: "ready" | "setup_needed" | "disabled" | string;
+}
+
+export interface SkillsRuntimeSummary {
+  ready: number;
+  setup_needed: number;
+  disabled: number;
+  categories: Record<string, number>;
+  ready_names: string[];
+  setup_names: string[];
 }
 
 export interface ToolsetInfo {
