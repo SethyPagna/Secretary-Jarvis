@@ -56,6 +56,7 @@ import { SidebarFooter } from "@/components/SidebarFooter";
 import { SidebarStatusStrip } from "@/components/SidebarStatusStrip";
 import { DesktopTitleBar } from "@/components/DesktopTitleBar";
 import { PageHeaderProvider } from "@/contexts/PageHeaderProvider";
+import { RuntimeProvider } from "@/contexts/RuntimeProvider";
 import { useSystemActions } from "@/contexts/useSystemActions";
 import type { SystemAction } from "@/contexts/system-actions-context";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -466,58 +467,59 @@ export default function App() {
       data-layout-variant={layoutVariant}
       className="flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden bg-[#080b10] text-text-primary antialiased"
     >
-      <SelectionSwitcher />
-      <DesktopTitleBar
-        onToggleSidebar={toggleSidebar}
-        sidebarCollapsed={sidebarCollapsed}
-      />
-      {isHomeRoute ? <Backdrop /> : <div className="fixed inset-0 -z-10 bg-[#1a1a2e]" />}
-      <PluginSlot name="backdrop" />
-
-      {mobileOpen && (
-        <Button
-          ghost
-          aria-label={t.app.closeNavigation}
-          onClick={closeMobile}
-          className={cn(
-            "lg:hidden fixed inset-0 z-40 p-0 block",
-            "bg-black/60 backdrop-blur-sm",
-          )}
+      <RuntimeProvider>
+        <SelectionSwitcher />
+        <DesktopTitleBar
+          onToggleSidebar={toggleSidebar}
+          sidebarCollapsed={sidebarCollapsed}
         />
-      )}
+        {isHomeRoute ? <Backdrop /> : <div className="fixed inset-0 -z-10 bg-[#1a1a2e]" />}
+        <PluginSlot name="backdrop" />
 
-      <PluginSlot name="header-banner" />
-
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex min-h-0 min-w-0 flex-1">
-          <aside
-            id="app-sidebar"
-            aria-label={t.app.navigation}
+        {mobileOpen && (
+          <Button
+            ghost
+            aria-label={t.app.closeNavigation}
+            onClick={closeMobile}
             className={cn(
-              "fixed top-[42px] left-0 z-50 flex h-[calc(100dvh-42px)] max-h-[calc(100dvh-42px)] w-64 min-h-0 flex-col",
-              sidebarCollapsed ? "lg:w-20" : "lg:w-64",
-              "border-r border-white/10",
-              "bg-[#10151d]/95 backdrop-blur-md",
-              "transition-transform duration-200 ease-out",
-              mobileOpen ? "translate-x-0" : "-translate-x-full",
-              "lg:sticky lg:top-0 lg:h-full lg:max-h-full lg:translate-x-0 lg:shrink-0",
+              "lg:hidden fixed inset-0 z-40 p-0 block",
+              "bg-black/60 backdrop-blur-sm",
             )}
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(16,21,29,0.98), rgba(9,13,20,0.98))",
-            }}
-          >
-            <div className="flex h-10 shrink-0 items-center justify-end border-b border-current/20 px-3 lg:hidden">
-              <Button
-                ghost
-                size="icon"
-                onClick={closeMobile}
-                aria-label={t.app.closeNavigation}
-                className="lg:hidden text-text-secondary hover:text-midground"
-              >
-                <X />
-              </Button>
-            </div>
+          />
+        )}
+
+        <PluginSlot name="header-banner" />
+
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1">
+            <aside
+              id="app-sidebar"
+              aria-label={t.app.navigation}
+              className={cn(
+                "fixed top-[42px] left-0 z-50 flex h-[calc(100dvh-42px)] max-h-[calc(100dvh-42px)] w-64 min-h-0 flex-col",
+                sidebarCollapsed ? "lg:w-20" : "lg:w-64",
+                "border-r border-white/10",
+                "bg-[#10151d]/95 backdrop-blur-md",
+                "transition-transform duration-200 ease-out",
+                mobileOpen ? "translate-x-0" : "-translate-x-full",
+                "lg:sticky lg:top-0 lg:h-full lg:max-h-full lg:translate-x-0 lg:shrink-0",
+              )}
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(16,21,29,0.98), rgba(9,13,20,0.98))",
+              }}
+            >
+              <div className="flex h-10 shrink-0 items-center justify-end border-b border-current/20 px-3 lg:hidden">
+                <Button
+                  ghost
+                  size="icon"
+                  onClick={closeMobile}
+                  aria-label={t.app.closeNavigation}
+                  className="lg:hidden text-text-secondary hover:text-midground"
+                >
+                  <X />
+                </Button>
+              </div>
 
             <nav
               className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden border-t border-current/10 py-2"
@@ -557,10 +559,10 @@ export default function App() {
 
             </nav>
 
-            <SidebarSystemActions
-              onNavigate={closeMobile}
-              sidebarCollapsed={sidebarCollapsed}
-            />
+              <SidebarSystemActions
+                onNavigate={closeMobile}
+                sidebarCollapsed={sidebarCollapsed}
+              />
 
             <div
               className={cn(
@@ -582,8 +584,8 @@ export default function App() {
               </div>
             </div>
 
-            {!sidebarCollapsed && <SidebarFooter />}
-          </aside>
+              {!sidebarCollapsed && <SidebarFooter />}
+            </aside>
 
           <PageHeaderProvider pluginTabs={pluginTabMeta}>
             <div
@@ -633,9 +635,10 @@ export default function App() {
             </div>
           </PageHeaderProvider>
         </div>
-      </div>
+        </div>
 
-      <PluginSlot name="overlay" />
+        <PluginSlot name="overlay" />
+      </RuntimeProvider>
     </div>
   );
 }

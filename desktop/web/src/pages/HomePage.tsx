@@ -32,6 +32,7 @@ import {
   type TeamSoulInfo,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useRuntimeSnapshot } from "@/contexts/RuntimeProvider";
 
 const JarvisOrb = lazy(() =>
   import("@/components/JarvisOrb").then((module) => ({
@@ -134,10 +135,6 @@ const VOICE_SILENT_MONITOR_RESTART_MS = 4_000;
 const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 1_600;
 const VOICE_LIVE_TRANSCRIPT_FRESH_MS = 4_000;
 const VOICE_TTS_STREAM_CHUNK_CHARS = 88;
-const RUNTIME_POLL_VISIBLE_MS = 10_000;
-const RUNTIME_POLL_BACKGROUND_MS = 30_000;
-const STATS_POLL_VISIBLE_MS = 1_000;
-const STATS_POLL_BACKGROUND_MS = 5_000;
 
 function subsystemReady(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
@@ -218,16 +215,11 @@ export default function HomePage() {
   const voiceRetryTimerRef = useRef<number | null>(null);
   const liveTurnStartedAtRef = useRef<number | null>(null);
   const liveOutputCharsRef = useRef(0);
-  const [status, setStatus] = useState<StatusResponse | null>(null);
-  const [stats, setStats] = useState<RuntimeStatsResponse | null>(null);
+  const { status, stats, readiness, teamSouls, refreshStats } = useRuntimeSnapshot();
   const [liveTokensPerSecond, setLiveTokensPerSecond] = useState<number | null>(
     null,
   );
-  const [readiness, setReadiness] = useState<RuntimeReadinessResponse | null>(
-    null,
-  );
   const [smoke, setSmoke] = useState<RuntimeSmokeResponse | null>(null);
-  const [teamSouls, setTeamSouls] = useState<TeamSoulInfo[]>([]);
   const [activeTurnSoul, setActiveTurnSoul] = useState<string | null>(null);
   const [autoVoiceArmed, setAutoVoiceArmed] = useState(true);
   const [smokeRunning, setSmokeRunning] = useState(false);
@@ -402,109 +394,6 @@ export default function HomePage() {
     },
     [monitorAnalyser, stopAudioMeter],
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    let runtimeTimer: number | null = null;
-    let bootstrapped = false;
-
-    const runtimePollDelay = () =>
-      document.visibilityState === "visible"
-        ? RUNTIME_POLL_VISIBLE_MS
-        : RUNTIME_POLL_BACKGROUND_MS;
-
-    const refreshLiveRuntime = () =>
-      Promise.allSettled([
-        api.getStatus(),
-        api.getRuntimeReadiness(),
-        api.getTeamSouls(),
-      ]).then(
-        ([statusResult, readinessResult, soulsResult]) => {
-          if (cancelled) return;
-          if (statusResult.status === "fulfilled") setStatus(statusResult.value);
-          if (readinessResult.status === "fulfilled") {
-            setReadiness(readinessResult.value);
-          }
-          if (soulsResult.status === "fulfilled") {
-            setTeamSouls(soulsResult.value.souls);
-          }
-        },
-      );
-
-    const refreshStaticRuntime = () => {
-      const runtimeRequest = bootstrapped
-        ? refreshLiveRuntime()
-        : api
-            .getDesktopBootstrap()
-            .then((bootstrap) => {
-              bootstrapped = true;
-              if (cancelled) return;
-              setStatus(bootstrap.status);
-              setReadiness(bootstrap.readiness);
-              setTeamSouls(bootstrap.souls.souls);
-              if (bootstrap.stats) {
-                setStats((currentStats) =>
-                  currentStats?.timestamp && !currentStats.cached && currentStats.cache !== "startup-manifest"
-                    ? currentStats
-                    : bootstrap.stats ?? currentStats,
-                );
-              }
-              void refreshLiveRuntime();
-            })
-            .catch(() => {
-              bootstrapped = true;
-              return refreshLiveRuntime();
-            });
-
-      void runtimeRequest.finally(() => {
-        if (!cancelled) {
-          runtimeTimer = window.setTimeout(refreshStaticRuntime, runtimePollDelay());
-        }
-      });
-    };
-
-    refreshStaticRuntime();
-    return () => {
-      cancelled = true;
-      if (runtimeTimer !== null) {
-        window.clearTimeout(runtimeTimer);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    let statsTimer: number | null = null;
-
-    const statsPollDelay = () =>
-      document.visibilityState === "visible" && statsVisible
-        ? STATS_POLL_VISIBLE_MS
-        : STATS_POLL_BACKGROUND_MS;
-
-    const refreshStats = () => {
-      void api
-        .getRuntimeStats()
-        .then((nextStats) => {
-          if (!cancelled) setStats(nextStats);
-        })
-        .catch(() => {
-          if (!cancelled) setStats(null);
-        })
-        .finally(() => {
-          if (!cancelled) {
-            statsTimer = window.setTimeout(refreshStats, statsPollDelay());
-          }
-        });
-    };
-
-    refreshStats();
-    return () => {
-      cancelled = true;
-      if (statsTimer !== null) {
-        window.clearTimeout(statsTimer);
-      }
-    };
-  }, [statsVisible]);
 
   useEffect(() => {
     return () => {
@@ -824,13 +713,11 @@ export default function HomePage() {
           text: `\n[${result.input_tokens} in / ${result.output_tokens} out | ${Math.round(result.latency_ms)} ms]`,
         },
       ]);
-      void api
-        .getRuntimeStats()
-        .then((nextStats) => setStats(nextStats))
+      void refreshStats()
         .catch(() => undefined)
         .finally(() => setLiveTokensPerSecond(null));
     },
-    [queueVoiceDelta],
+    [queueVoiceDelta, refreshStats],
   );
 
   const runDesktopAgentTurn = useCallback(
