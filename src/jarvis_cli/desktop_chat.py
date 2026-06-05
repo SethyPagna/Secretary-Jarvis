@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from contextlib import redirect_stderr, redirect_stdout
@@ -333,6 +334,46 @@ def _endpoint_has_models(base_url: str) -> bool:
         return False
 
 
+def _chat_completions_url(base_url: str) -> str:
+    base = base_url.rstrip("/")
+    return f"{base}/chat/completions" if base.endswith("/v1") else f"{base}/v1/chat/completions"
+
+
+def _endpoint_has_chat_completions(base_url: str, model: str) -> bool:
+    """Return True only when a local OpenAI-style endpoint can answer chat.
+
+    `/models` alone is not enough: stale helpers and unrelated web servers can
+    expose or fake model-list routes while `/chat/completions` returns 404.
+    Desktop voice/chat must verify the route users actually need.
+    """
+    if not base_url or not model:
+        return False
+    payload = json.dumps(
+        {
+            "model": model,
+            "messages": [{"role": "user", "content": "ping"}],
+            "max_tokens": 1,
+            "temperature": 0,
+            "stream": False,
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        _chat_completions_url(base_url),
+        data=payload,
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=4.0) as response:
+            return 200 <= response.status < 300
+    except urllib.error.HTTPError as exc:
+        # 400/401/422 still prove the chat route exists. 404/405 means the
+        # selected endpoint is not a usable chat-completions server.
+        return exc.code not in {404, 405}
+    except Exception:
+        return False
+
+
 def _desktop_local_runtime_from_config(
     cfg: Mapping[str, Any],
     target_model: str,
@@ -376,7 +417,7 @@ def _desktop_local_runtime_from_config(
         model_name = str(provider.get("model") or target_model or "").strip()
         if not model_name:
             continue
-        if not _endpoint_has_models(base_url):
+        if not _endpoint_has_models(base_url) or not _endpoint_has_chat_completions(base_url, model_name):
             try:
                 from jarvis_cli.local_runtime import start_local_runtime
 
@@ -389,7 +430,7 @@ def _desktop_local_runtime_from_config(
                         model_name = str(plan_llm.get("model") or model_name)
             except Exception:
                 pass
-        if not _endpoint_has_models(base_url):
+        if not _endpoint_has_models(base_url) or not _endpoint_has_chat_completions(base_url, model_name):
             continue
         return (
             {
@@ -539,6 +580,14 @@ def run_desktop_chat_turn(
                 target_model=effective_model or None,
                 explicit_base_url=explicit_base_url_from_alias,
             )
+            base_url = str(runtime.get("base_url") or "")
+            if (
+                _is_loopback_openai_endpoint(base_url)
+                and not _endpoint_has_chat_completions(base_url, effective_model)
+            ):
+                cloud_runtime = _desktop_cloud_runtime_from_env()
+                if cloud_runtime is not None:
+                    runtime, effective_model = cloud_runtime
 
     toolsets_list = _normalize_toolsets(toolsets)
     if toolsets_list is None:

@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 import json
+import types
 from pathlib import Path
 from unittest.mock import patch
 
@@ -30,6 +31,69 @@ class FakeSessionDB:
 
 
 class DesktopChatPersistenceTests(unittest.TestCase):
+    def test_explicit_dead_local_provider_falls_back_to_cloud_runtime(self) -> None:
+        created_agents = []
+
+        class FakeAgent:
+            def __init__(self, **kwargs):
+                self.kwargs = kwargs
+                self.model = kwargs["model"]
+                self.session_input_tokens = 4
+                self.session_output_tokens = 5
+                created_agents.append(self)
+
+            def chat(self, _message, stream_callback=None):
+                if stream_callback:
+                    stream_callback("JARVIS live chat OK.")
+                return "JARVIS live chat OK."
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            desktop_chat,
+            "_endpoint_has_chat_completions",
+            return_value=False,
+        ), patch.object(
+            desktop_chat,
+            "_desktop_cloud_runtime_from_env",
+            return_value=(
+                {
+                    "provider": "custom",
+                    "requested_provider": "mistral_api",
+                    "api_mode": "chat_completions",
+                    "base_url": "https://api.mistral.ai/v1",
+                    "api_key": "sk-test",
+                },
+                "mistral-small-latest",
+            ),
+        ), patch.object(
+            desktop_chat,
+            "_create_session_db",
+            return_value=None,
+        ), patch(
+            "jarvis_cli.config.load_config",
+            return_value={"providers": {}},
+        ), patch(
+            "jarvis_cli.runtime_provider.resolve_runtime_provider",
+            return_value={
+                "provider": "custom",
+                "base_url": "http://127.0.0.1:8080/v1",
+                "api_key": "no-key-required",
+                "api_mode": "chat_completions",
+            },
+        ):
+            fake_runtime = types.ModuleType("agent.runtime")
+            fake_runtime.AIAgent = FakeAgent
+            with patch.dict("sys.modules", {"agent.runtime": fake_runtime}):
+                result = desktop_chat.run_desktop_chat_turn(
+                    "Say OK",
+                    jarvis_home=Path(temp_dir),
+                    model="qwen3.5-9b-q4_k_m",
+                    provider="llama_cpp_local",
+                )
+
+        self.assertEqual(result.response, "JARVIS live chat OK.")
+        self.assertEqual(created_agents[0].kwargs["base_url"], "https://api.mistral.ai/v1")
+        self.assertEqual(created_agents[0].kwargs["model"], "mistral-small-latest")
+
     def test_sessions_page_has_desktop_source_mapping(self) -> None:
         source = (
             Path(__file__).resolve().parents[2]
