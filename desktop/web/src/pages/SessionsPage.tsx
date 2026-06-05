@@ -27,7 +27,6 @@ import type {
   SessionInfo,
   SessionMessage,
   SessionSearchResult,
-  StatusResponse,
 } from "@/lib/api";
 import { timeAgo } from "@/lib/utils";
 import { Markdown } from "@/components/Markdown";
@@ -44,6 +43,7 @@ import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { useConfirmDelete } from "@/hooks/useConfirmDelete";
 import { Input } from "@/components/ui/input";
 import { useSystemActions } from "@/contexts/useSystemActions";
+import { useRuntimeSnapshot } from "@/contexts/RuntimeProvider";
 import { useToast } from "@/hooks/useToast";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
@@ -469,13 +469,13 @@ export default function SessionsPage() {
   const [searching, setSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const logScrollRef = useRef<HTMLPreElement | null>(null);
-  const [status, setStatus] = useState<StatusResponse | null>(null);
   const [overviewSessions, setOverviewSessions] = useState<SessionInfo[]>([]);
   const [view, setView] = useState<SessionsView>("overview");
   const { toast, showToast } = useToast();
   const { t } = useI18n();
   const { setAfterTitle } = usePageHeader();
   const { activeAction, actionStatus, dismissLog } = useSystemActions();
+  const { status, refreshRuntime } = useRuntimeSnapshot();
 
   useLayoutEffect(() => {
     if (loading) {
@@ -510,10 +510,10 @@ export default function SessionsPage() {
 
   const loadOverview = useCallback(() => {
     return Promise.allSettled([
-      api.getStatus().then(setStatus),
+      refreshRuntime(),
       api.getSessions(50).then((response) => setOverviewSessions(response.sessions)),
     ]);
-  }, []);
+  }, [refreshRuntime]);
 
   useScheduledPoll(loadOverview, { intervalMs: 5000 });
 
@@ -553,6 +553,7 @@ export default function SessionsPage() {
           await api.deleteSession(id);
           setSessions((prev) => prev.filter((s) => s.id !== id));
           setTotal((prev) => prev - 1);
+          void refreshRuntime();
           if (expandedId === id) setExpandedId(null);
           showToast(t.sessions.sessionDeleted, "success");
         } catch {
@@ -565,6 +566,7 @@ export default function SessionsPage() {
         showToast,
         t.sessions.sessionDeleted,
         t.sessions.failedToDelete,
+        refreshRuntime,
       ],
     ),
   });

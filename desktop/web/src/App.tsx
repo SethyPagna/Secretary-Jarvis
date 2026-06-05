@@ -521,120 +521,117 @@ export default function App() {
                 </Button>
               </div>
 
-            <nav
-              className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden border-t border-current/10 py-2"
-              aria-label={t.app.navigation}
-            >
-              {sidebarGroups.map((group) => (
-                <div
-                  aria-labelledby={`jarvis-sidebar-${group.key.toLowerCase()}-heading`}
-                  className="flex flex-col border-b border-current/10 pb-2 last:border-b-0"
-                  key={group.key}
-                  role="group"
-                >
-                  <span
-                    className={cn(
-                      "px-5 pt-2.5 pb-1",
-                      sidebarCollapsed ? "lg:hidden" : "",
-                      "text-xs font-semibold tracking-[0.08em] text-slate-400",
-                    )}
-                    id={`jarvis-sidebar-${group.key.toLowerCase()}-heading`}
+              <nav
+                className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden border-t border-current/10 py-2"
+                aria-label={t.app.navigation}
+              >
+                {sidebarGroups.map((group) => (
+                  <div
+                    aria-labelledby={`jarvis-sidebar-${group.key.toLowerCase()}-heading`}
+                    className="flex flex-col border-b border-current/10 pb-2 last:border-b-0"
+                    key={group.key}
+                    role="group"
                   >
-                    {group.label}
-                  </span>
+                    <span
+                      className={cn(
+                        "px-5 pt-2.5 pb-1",
+                        sidebarCollapsed ? "lg:hidden" : "",
+                        "text-xs font-semibold tracking-[0.08em] text-slate-400",
+                      )}
+                      id={`jarvis-sidebar-${group.key.toLowerCase()}-heading`}
+                    >
+                      {group.label}
+                    </span>
 
-                  <ul className="flex flex-col">
-                    {group.items.map((item) => (
-                      <SidebarNavLink
-                        closeMobile={closeMobile}
-                        item={item}
-                        key={item.path}
-                        sidebarCollapsed={sidebarCollapsed}
-                        t={t}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ))}
-
-            </nav>
+                    <ul className="flex flex-col">
+                      {group.items.map((item) => (
+                        <SidebarNavLink
+                          closeMobile={closeMobile}
+                          item={item}
+                          key={item.path}
+                          sidebarCollapsed={sidebarCollapsed}
+                          t={t}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </nav>
 
               <SidebarSystemActions
                 onNavigate={closeMobile}
                 sidebarCollapsed={sidebarCollapsed}
               />
 
-            <div
-              className={cn(
-                "flex shrink-0 items-center justify-between gap-2",
-                sidebarCollapsed && "lg:justify-center",
-                "px-3 py-2",
-                "border-t border-current/20",
-              )}
-            >
               <div
                 className={cn(
-                  "flex min-w-0 items-center gap-2",
+                  "flex shrink-0 items-center justify-between gap-2",
                   sidebarCollapsed && "lg:justify-center",
+                  "px-3 py-2",
+                  "border-t border-current/20",
                 )}
               >
-                <PluginSlot name="header-right" />
-                <ThemeSwitcher dropUp />
-                <LanguageSwitcher dropUp />
+                <div
+                  className={cn(
+                    "flex min-w-0 items-center gap-2",
+                    sidebarCollapsed && "lg:justify-center",
+                  )}
+                >
+                  <PluginSlot name="header-right" />
+                  <ThemeSwitcher dropUp />
+                  <LanguageSwitcher dropUp />
+                </div>
               </div>
-            </div>
 
               {!sidebarCollapsed && <SidebarFooter />}
             </aside>
 
-          <PageHeaderProvider pluginTabs={pluginTabMeta}>
-            <div
-              className={cn(
-                "relative z-2 flex min-w-0 min-h-0 flex-1 flex-col",
-                "px-3 sm:px-6",
-                isHomeRoute && "px-0 sm:px-0",
-                isChatRoute
-                  ? "pb-0 pt-1 sm:pt-2 lg:pt-4"
-                  : isHomeRoute
-                    ? "pt-0"
-                  : "pt-2 sm:pt-4 lg:pt-6",
-              )}
-            >
-              <PluginSlot name="pre-main" />
+            <PageHeaderProvider pluginTabs={pluginTabMeta}>
               <div
                 className={cn(
-                  "w-full min-w-0",
-                  !isChatRoute &&
-                    !isHomeRoute &&
-                    "pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-8",
-                  (isChatRoute || isHomeRoute) &&
-                    "min-h-0 flex flex-1 flex-col",
+                  "relative z-2 flex min-w-0 min-h-0 flex-1 flex-col",
+                  "px-3 sm:px-6",
+                  isHomeRoute && "px-0 sm:px-0",
+                  isChatRoute
+                    ? "pb-0 pt-1 sm:pt-2 lg:pt-4"
+                    : isHomeRoute
+                      ? "pt-0"
+                      : "pt-2 sm:pt-4 lg:pt-6",
                 )}
               >
-                <Suspense
-                  fallback={<AppLoadingFallback />}
+                <PluginSlot name="pre-main" />
+                <div
+                  className={cn(
+                    "w-full min-w-0",
+                    !isChatRoute &&
+                      !isHomeRoute &&
+                      "pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-8",
+                    (isChatRoute || isHomeRoute) &&
+                      "min-h-0 flex flex-1 flex-col",
+                  )}
                 >
-                  <div className={isHomeRoute ? "contents" : "hidden"}>
-                    <HomePage />
-                  </div>
-                  <Routes>
-                    <Route path="/" element={null} />
-                    {routedPages.map(({ key, path, element }) => (
-                      <Route key={key} path={path} element={element} />
-                    ))}
-                    <Route
-                      path="*"
-                      element={
-                        <UnknownRouteFallback pluginsLoading={pluginsLoading} />
-                      }
-                    />
-                  </Routes>
-                </Suspense>
+                  <Suspense fallback={<AppLoadingFallback />}>
+                    <div className={isHomeRoute ? "contents" : "hidden"}>
+                      <HomePage />
+                    </div>
+                    <Routes>
+                      <Route path="/" element={null} />
+                      {routedPages.map(({ key, path, element }) => (
+                        <Route key={key} path={path} element={element} />
+                      ))}
+                      <Route
+                        path="*"
+                        element={
+                          <UnknownRouteFallback pluginsLoading={pluginsLoading} />
+                        }
+                      />
+                    </Routes>
+                  </Suspense>
+                </div>
+                <PluginSlot name="post-main" />
               </div>
-              <PluginSlot name="post-main" />
-            </div>
-          </PageHeaderProvider>
-        </div>
+            </PageHeaderProvider>
+          </div>
         </div>
 
         <PluginSlot name="overlay" />

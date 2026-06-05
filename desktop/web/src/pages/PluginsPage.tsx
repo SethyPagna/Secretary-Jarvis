@@ -16,7 +16,7 @@ import {
 import type { Translations } from "@/i18n/types";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
-import type { HubAgentPluginRow, PluginsHubResponse, StatusResponse } from "@/lib/api";
+import type { HubAgentPluginRow, PluginsHubResponse } from "@/lib/api";
 import { Button } from "@jarvis_managed-research/ui/ui/components/button";
 import { Badge } from "@jarvis_managed-research/ui/ui/components/badge";
 import { Select, SelectOption } from "@jarvis_managed-research/ui/ui/components/select";
@@ -33,7 +33,7 @@ import { useI18n } from "@/i18n";
 import { PluginSlot } from "@/plugins";
 import { cn } from "@/lib/utils";
 import { usePageHeader } from "@/contexts/usePageHeader";
-import { useScheduledPoll } from "@/hooks/useScheduledPoll";
+import { useRuntimeSnapshot } from "@/contexts/RuntimeProvider";
 
 /** Select value for built-in memory (`config` uses empty string). Never use `""`; UI Select maps empty value to an empty label. */
 const MEMORY_PROVIDER_BUILTIN = "__jarvis_memory_builtin__";
@@ -49,7 +49,6 @@ const PLATFORM_SHORTCUTS = [
 
 export default function PluginsPage() {
   const [hub, setHub] = useState<PluginsHubResponse | null>(null);
-  const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [installId, setInstallId] = useState("");
   const [installForce, setInstallForce] = useState(false);
@@ -64,6 +63,7 @@ export default function PluginsPage() {
   const { toast, showToast } = useToast();
   const { t } = useI18n();
   const { setAfterTitle } = usePageHeader();
+  const { status, refreshRuntime } = useRuntimeSnapshot();
 
   const loadHub = useCallback(() => {
     return api
@@ -82,15 +82,6 @@ export default function PluginsPage() {
     void loadHub().finally(() => setLoading(false));
   }, [loadHub]);
 
-  const refreshStatus = useCallback(() => {
-    return api
-      .getStatus()
-      .then(setStatus)
-      .catch(() => setStatus(null));
-  }, []);
-
-  useScheduledPoll(refreshStatus, { intervalMs: 3000 });
-
   const onRescan = useCallback(async () => {
     setRescanBusy(true);
     try {
@@ -100,12 +91,13 @@ export default function PluginsPage() {
         "success",
       );
       await loadHub();
+      await refreshRuntime();
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Rescan failed", "error");
     } finally {
       setRescanBusy(false);
     }
-  }, [loadHub, showToast, t.pluginsPage.refreshDashboard]);
+  }, [loadHub, refreshRuntime, showToast, t.pluginsPage.refreshDashboard]);
 
   useEffect(() => {
     setAfterTitle(
@@ -142,6 +134,7 @@ export default function PluginsPage() {
         showToast(`${t.pluginsPage.missingEnvWarn} ${r.missing_env!.join(", ")}`, "error");
       setInstallId("");
       await loadHub();
+      await refreshRuntime();
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Install failed", "error");
     } finally {
@@ -159,6 +152,7 @@ export default function PluginsPage() {
       });
       showToast(t.pluginsPage.savedProviders, "success");
       await loadHub();
+      await refreshRuntime();
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Save failed", "error");
     } finally {
@@ -171,6 +165,7 @@ export default function PluginsPage() {
     try {
       await fn();
       await loadHub();
+      await refreshRuntime();
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Failed", "error");
     } finally {

@@ -41,6 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
+import { useRuntimeSnapshot } from "@/contexts/RuntimeProvider";
 import { PluginSlot } from "@/plugins";
 import { cn, themedBody } from "@/lib/utils";
 
@@ -559,6 +560,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
   const [lastRun, setLastRun] = useState<WorkflowLastRun | null>(null);
   const [lastTeamState, setLastTeamState] = useState<WorkflowTeamState | null>(null);
   const [lastMessage, setLastMessage] = useState("");
+  const { refreshRuntime } = useRuntimeSnapshot();
   const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? nodes[0];
   const executedNodeById = useMemo(
     () => new Map((lastRun?.executed_nodes ?? []).map((node) => [node.id, node])),
@@ -655,6 +657,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
       setLastRun(saved.last_run);
       setSyncState("saved");
       setLastMessage("Workflow saved to JARVIS.");
+      await refreshRuntime();
     } catch (error) {
       setSyncState("error");
       setLastMessage(error instanceof Error ? error.message : "Workflow save failed.");
@@ -671,6 +674,7 @@ function WorkflowCanvasOverview({ onCreate }: { onCreate: () => void }) {
       setLastTeamState(result.team_state ?? null);
       setSyncState("saved");
       setLastMessage(result.message);
+      await refreshRuntime();
     } catch (error) {
       setSyncState("error");
       setLastMessage(error instanceof Error ? error.message : "Workflow run failed.");
