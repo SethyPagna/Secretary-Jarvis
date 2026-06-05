@@ -209,6 +209,14 @@ def _normalize_local_command_model(model_name: Optional[str]) -> str:
 
 def _candidate_model_roots() -> list[Path]:
     roots: list[Path] = []
+    try:
+        local_cfg = _load_stt_config().get("local", {})
+        configured_dir = str(local_cfg.get("model_dir") or "").strip()
+        if configured_dir:
+            configured_path = Path(configured_dir).expanduser()
+            roots.extend([configured_path, configured_path.parent])
+    except Exception:
+        pass
     for env_name in ("JARVIS_MODELS_DIR", "JARVIS_RESOURCE_ROOT"):
         value = os.getenv(env_name, "").strip()
         if value:

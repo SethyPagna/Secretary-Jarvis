@@ -343,21 +343,81 @@ def _find_omnivoice_assets(roots: Iterable[Path]) -> dict[str, Any]:
     }
 
 
-def _find_whisper_assets(roots: Iterable[Path]) -> list[str]:
-    results = []
+def _whisper_model_rank(value: str) -> tuple[int, int, str]:
+    lowered = value.lower().replace("_", "-")
+    priority = 0
+    for index, marker in enumerate(
+        (
+            "large-v3-turbo",
+            "large-v3",
+            "large",
+            "medium",
+            "small",
+            "base",
+            "tiny",
+        )
+    ):
+        if marker in lowered:
+            priority = 100 - index * 10
+            break
+    return priority, -len(value), lowered
+
+
+def _local_whisper_model_name(path: Path) -> str:
+    name = path.name.lower().replace("_", "-")
+    if "large-v3-turbo" in name:
+        return "large-v3-turbo"
+    if "large-v3" in name:
+        return "large-v3"
+    if "large" in name:
+        return "large-v3"
+    if "medium" in name:
+        return "medium"
+    if "small" in name:
+        return "small"
+    if "base" in name:
+        return "base"
+    if "tiny" in name:
+        return "tiny"
+    return "base"
+
+
+def _find_whisper_assets(roots: Iterable[Path]) -> dict[str, Any]:
+    files: list[Path] = []
+    folders: list[Path] = []
     for root in roots:
         try:
             if not root.exists():
                 continue
             for path in root.rglob("*"):
                 if not path.is_file():
+                    if (
+                        path.is_dir()
+                        and "whisper" in path.name.lower()
+                        and (path / "config.json").exists()
+                        and (
+                            (path / "model.safetensors").exists()
+                            or (path / "pytorch_model.bin").exists()
+                            or any(path.glob("*.safetensors"))
+                        )
+                    ):
+                        folders.append(path)
                     continue
                 lower = str(path).lower()
                 if "whisper" in lower and path.suffix.lower() in {".bin", ".gguf", ".safetensors"}:
-                    results.append(str(path))
+                    files.append(path)
         except OSError:
             continue
-    return results[:20]
+
+    folders = sorted({path.resolve() for path in folders}, key=lambda path: _whisper_model_rank(str(path)), reverse=True)
+    files = sorted({path.resolve() for path in files}, key=lambda path: _whisper_model_rank(str(path)), reverse=True)
+    model_folder = folders[0] if folders else files[0].parent if files else None
+    return {
+        "files": [str(path) for path in files[:20]],
+        "folders": [str(path) for path in folders[:20]],
+        "model_folder": str(model_folder) if model_folder else "",
+        "selected_model": _local_whisper_model_name(model_folder) if model_folder else "",
+    }
 
 
 def _llm_plan(
@@ -553,29 +613,34 @@ def _stt_plan(
     whisper_cpp_ready = executable_available("whisper-cli") or executable_available("whisper")
     nvidia_ready = executable_available("nvidia-smi")
     assets = _find_whisper_assets(roots)
-    local_model = "large-v3" if nvidia_ready else "base"
+    asset_model = str(assets.get("selected_model") or "")
+    local_model = asset_model or ("large-v3" if nvidia_ready else "base")
     local_device = "auto" if nvidia_ready else "cpu"
     local_compute = "float16" if nvidia_ready else "int8"
     local_language = "" if nvidia_ready else "en"
 
     config_patch.setdefault("stt", {})
+    local_stt_config: dict[str, Any] = {
+        "model": local_model,
+        "language": local_language,
+        "device": local_device,
+        "compute_type": local_compute,
+    }
+    if assets.get("model_folder"):
+        local_stt_config["model_dir"] = assets["model_folder"]
+
     config_patch["stt"].update({
         "enabled": True,
         "provider": "local",
-        "local": {
-            "model": local_model,
-            "language": local_language,
-            "device": local_device,
-            "compute_type": local_compute,
-        },
+        "local": local_stt_config,
     })
 
     actions: list[str] = []
     if not faster_ready:
         actions.append("Install faster-whisper for local STT: pip install faster-whisper")
-    if assets and not faster_ready:
-        actions.append("Use the discovered Whisper assets after converting/downloading a faster-whisper compatible CTranslate2 model.")
-    if not assets and not faster_ready and not whisper_cpp_ready:
+    if assets.get("model_folder") and not faster_ready:
+        actions.append("Use the discovered downloaded Whisper model with the local Transformers STT fallback, or install faster-whisper for lower latency.")
+    if not assets.get("files") and not assets.get("folders") and not faster_ready and not whisper_cpp_ready:
         actions.append("Download a Whisper model, install whisper.cpp, or configure OpenAI Whisper API credentials.")
 
     return {
@@ -585,7 +650,9 @@ def _stt_plan(
         "whisper_cpp_ready": whisper_cpp_ready,
         "nvidia_ready": nvidia_ready,
         "selected_model": local_model,
-        "assets": assets,
+        "assets": assets.get("files", []),
+        "model_folder": assets.get("model_folder", ""),
+        "model_folders": assets.get("folders", []),
         "actions": actions,
         "optimization": "Use faster-whisper large-v3 on NVIDIA/CUDA; otherwise use base on CPU int8 for fast local STT. Fallback order is faster-whisper -> whisper.cpp -> OpenAI Whisper API.",
     }

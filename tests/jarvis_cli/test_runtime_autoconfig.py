@@ -43,8 +43,11 @@ class RuntimeAutoconfigTests(unittest.TestCase):
         self.assertIn("Install Kokoro runtime", plan["tts"]["actions"][0])
         self.assertEqual(plan["tts"]["fallback_chain"], ["kokoro", "omnivoice", "system"])
         self.assertEqual(plan["stt"]["provider"], "local")
-        self.assertEqual(plan["stt"]["selected_model"], "base")
-        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "base")
+        self.assertEqual(plan["stt"]["selected_model"], "large-v3-turbo")
+        self.assertEqual(plan["stt"]["model_folder"], str(whisper))
+        self.assertEqual(plan["stt"]["model_folders"], [])
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "large-v3-turbo")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["model_dir"], str(whisper))
         self.assertEqual(plan["config_patch"]["stt"]["local"]["device"], "cpu")
         self.assertEqual(plan["config_patch"]["stt"]["local"]["compute_type"], "int8")
         self.assertEqual(plan["config_patch"]["stt"]["local"]["language"], "en")
@@ -167,6 +170,28 @@ class RuntimeAutoconfigTests(unittest.TestCase):
         self.assertEqual(plan["stt"]["selected_model"], "large-v3")
         self.assertEqual(plan["config_patch"]["stt"]["local"]["device"], "auto")
         self.assertEqual(plan["config_patch"]["stt"]["local"]["compute_type"], "float16")
+
+    def test_autoconfig_uses_downloaded_whisper_folder_without_faster_whisper(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            whisper = root / "openai__whisper-large-v3-turbo"
+            whisper.mkdir()
+            (whisper / "config.json").write_text("{}", encoding="utf-8")
+            (whisper / "model.safetensors").write_bytes(b"weights")
+
+            plan = build_runtime_autoconfig_plan(
+                {},
+                model_roots=[root],
+                executable_available=lambda name: False,
+                package_available=lambda name: False,
+                port_available=lambda port: True,
+            )
+
+        self.assertEqual(plan["stt"]["selected_model"], "large-v3-turbo")
+        self.assertEqual(plan["stt"]["model_folder"], str(whisper))
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["model"], "large-v3-turbo")
+        self.assertEqual(plan["config_patch"]["stt"]["local"]["model_dir"], str(whisper))
+        self.assertIn("local Transformers STT fallback", " ".join(plan["stt"]["actions"]))
 
 
 if __name__ == "__main__":
