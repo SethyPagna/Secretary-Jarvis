@@ -835,10 +835,29 @@ export interface TeamSoulInfo {
   delegates?: string[];
   template: string;
   ready: boolean;
+  online?: boolean;
+  active?: boolean;
+  last_active_at?: number | null;
+  last_surface?: string | null;
+}
+
+export interface TeamSoulRouteInfo {
+  active_soul: string;
+  surface: string;
+  prompt_preview: string;
+  model: string;
+  provider: string;
+  session_id: string;
+  workflow_id: string;
+  platform: string;
+  updated_at?: number | null;
 }
 
 export interface TeamSoulsResponse {
   primary: string;
+  active_soul?: string;
+  delegate_souls?: string[];
+  last_route?: TeamSoulRouteInfo;
   souls: TeamSoulInfo[];
 }
 

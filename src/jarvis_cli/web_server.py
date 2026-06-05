@@ -1471,6 +1471,18 @@ def _runtime_stats_snapshot() -> dict:
     )
     stats["listed_skills"] = int(skills.get("listed") or 0)
     stats["total_skill_assets"] = int(skills.get("total_assets") or 0)
+    try:
+        from jarvis_cli.team_runtime import enrich_team_souls_manifest
+
+        team_state = enrich_team_souls_manifest(get_jarvis_home())
+    except Exception:
+        team_state = {}
+    team_souls = team_state.get("souls") if isinstance(team_state.get("souls"), list) else []
+    if team_souls:
+        stats["souls_total"] = len(team_souls)
+        stats["souls_online"] = sum(1 for soul in team_souls if soul.get("online"))
+        stats["active_soul"] = team_state.get("active_soul") or stats.get("active_soul") or "jarvis"
+        stats["delegate_souls"] = team_state.get("delegate_souls") or stats.get("delegate_souls") or []
     with _DESKTOP_STREAM_LOCK:
         stream_soul = str(_DESKTOP_STREAM_COUNTER.get("active_soul") or "").strip().lower()
         stream_delegates = _DESKTOP_STREAM_COUNTER.get("delegate_souls")
@@ -4521,25 +4533,10 @@ def _team_souls_manifest() -> Dict[str, Any]:
 
 @app.get("/api/souls/team")
 async def list_team_souls_endpoint():
+    from jarvis_cli.team_runtime import enrich_team_souls_manifest
+
     manifest = _team_souls_manifest()
-    souls = []
-    for soul in manifest.get("souls", []):
-        if not isinstance(soul, dict):
-            continue
-        template = str(soul.get("template", ""))
-        template_path = PROJECT_ROOT / template if template else Path()
-        souls.append({
-            "id": soul.get("id", ""),
-            "name": soul.get("name", ""),
-            "role": soul.get("role", "specialist"),
-            "when_to_use": soul.get("when_to_use", ""),
-            "responsibilities": soul.get("responsibilities", []),
-            "keywords": soul.get("keywords", []),
-            "delegates": soul.get("delegates", []),
-            "template": template,
-            "ready": bool(template_path.exists()),
-        })
-    return {"primary": manifest.get("primary", "jarvis"), "souls": souls}
+    return enrich_team_souls_manifest(get_jarvis_home(), manifest)
 
 
 @app.get("/api/profiles")

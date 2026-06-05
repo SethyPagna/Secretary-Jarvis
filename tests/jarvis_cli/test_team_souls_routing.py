@@ -42,6 +42,7 @@ class TeamSoulsRoutingTests(unittest.TestCase):
 
         self.assertIn("def _build_team_routing_context", source)
         self.assertIn("build_soul_system_context", source)
+        self.assertIn("record_team_activity", source)
         self.assertIn("team_context, selected_team_soul = self._build_team_routing_context(message)", source)
         self.assertIn("combined_ephemeral = (combined_ephemeral + \"\\n\\n\" + team_context).strip()", source)
         self.assertIn("ephemeral_system_prompt=team_context or None", source)

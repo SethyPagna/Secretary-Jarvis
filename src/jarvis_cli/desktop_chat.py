@@ -539,7 +539,7 @@ def run_desktop_chat_turn(
         active_soul=active_soul,
         delegate_souls=delegate_souls,
     )
-    _record_desktop_session_turn(
+    session_id = _record_desktop_session_turn(
         jarvis_home,
         prompt=clean_prompt,
         response=response,
@@ -550,6 +550,21 @@ def run_desktop_chat_turn(
         active_soul=active_soul,
         delegate_souls=delegate_souls,
     )
+    try:
+        from jarvis_cli.team_runtime import record_team_activity
+
+        record_team_activity(
+            jarvis_home,
+            active_soul=active_soul,
+            surface="desktop",
+            prompt=clean_prompt,
+            delegate_souls=delegate_souls,
+            model=model_name,
+            provider=provider_name,
+            session_id=session_id or "",
+        )
+    except Exception as exc:
+        logging.debug("Desktop team activity persistence failed: %s", exc)
     return DesktopChatResult(
         response=response,
         input_tokens=input_tokens,

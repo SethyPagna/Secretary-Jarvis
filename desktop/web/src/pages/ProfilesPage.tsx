@@ -374,33 +374,54 @@ export default function ProfilesPage() {
         </H2>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {teamSouls.map((soul) => (
-            <Card key={soul.id} className="overflow-hidden border-current/10 bg-background-base/40">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge className="text-[0.62rem] text-midground">{soul.role.replace(/_/g, " ")}</Badge>
-                      <Badge className={cn("text-[0.62rem]", soul.ready ? "text-emerald-300" : "text-amber-300")}>
-                        {soul.ready ? "Ready" : "Missing"}
-                      </Badge>
+          {teamSouls.map((soul) => {
+            const statusLabel = soul.active
+              ? "Active"
+              : soul.online
+                ? "Online"
+                : soul.ready
+                  ? "Ready"
+                  : "Missing";
+            const statusClass = soul.active
+              ? "text-cyan-200"
+              : soul.online
+                ? "text-emerald-300"
+                : soul.ready
+                  ? "text-sky-300"
+                  : "text-amber-300";
+            return (
+              <Card key={soul.id} className="overflow-hidden border-current/10 bg-background-base/40">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className="text-[0.62rem] text-midground">{soul.role.replace(/_/g, " ")}</Badge>
+                        <Badge className={cn("text-[0.62rem]", statusClass)}>
+                          {statusLabel}
+                        </Badge>
+                        {soul.last_surface ? (
+                          <Badge className="text-[0.62rem] text-text-tertiary">
+                            {soul.last_surface}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <h3 className="mt-2 truncate text-sm font-semibold text-text-primary">
+                        {soul.name}
+                      </h3>
                     </div>
-                    <h3 className="mt-2 truncate text-sm font-semibold text-text-primary">
-                      {soul.name}
-                    </h3>
                   </div>
-                </div>
-                <p className="mt-3 line-clamp-3 text-sm leading-5 text-text-secondary" title={soul.when_to_use}>
-                  {soul.when_to_use}
-                </p>
-                {soul.delegates?.length ? (
-                  <div className="mt-3 truncate text-xs text-text-tertiary">
-                    Manages: {soul.delegates.join(", ")}
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          ))}
+                  <p className="mt-3 line-clamp-3 text-sm leading-5 text-text-secondary" title={soul.when_to_use}>
+                    {soul.when_to_use}
+                  </p>
+                  {soul.delegates?.length ? (
+                    <div className="mt-3 truncate text-xs text-text-tertiary">
+                      Manages: {soul.delegates.join(", ")}
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

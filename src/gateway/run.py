@@ -2226,6 +2226,24 @@ class GatewayRunner:
             )
 
             selected_soul = classify_prompt_soul(user_message or "")
+            try:
+                from jarvis_cli.constants import get_jarvis_home
+                from jarvis_cli.team_runtime import record_team_activity
+
+                active_soul = str(selected_soul.get("id") or "jarvis")
+                record_team_activity(
+                    get_jarvis_home(),
+                    active_soul=active_soul,
+                    surface="gateway",
+                    prompt=user_message or "",
+                    delegate_souls=[
+                        str(item)
+                        for item in selected_soul.get("delegates", [])
+                        if str(item).strip() and str(item).strip().lower() != active_soul.lower()
+                    ],
+                )
+            except Exception as exc:
+                logger.debug("Gateway team activity persistence unavailable: %s", exc)
             return build_soul_system_context(selected_soul), selected_soul
         except Exception as exc:
             logger.debug("Gateway team routing context unavailable: %s", exc)

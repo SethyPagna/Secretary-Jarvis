@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import logging
 import re
 import time
 from pathlib import Path
@@ -15,6 +16,7 @@ from jarvis_cli.soul_registry import classify_prompt_soul
 WORKFLOW_SCHEMA_VERSION = 1
 DEFAULT_WORKFLOW_ID = "desktop-canvas"
 _WORKFLOW_ID_RE = re.compile(r"[^a-zA-Z0-9_.-]+")
+_LOG = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -135,6 +137,23 @@ def run_workflow_canvas(
         f"Workflow '{normalize_workflow_id(workflow_id)}' validated "
         f"with {len(executed_nodes)} nodes and routed through {soul['name']}."
     )
+    try:
+        from jarvis_cli.team_runtime import record_team_activity
+
+        record_team_activity(
+            jarvis_home,
+            active_soul=str(soul.get("id") or "jarvis"),
+            surface="workflow",
+            prompt=task_text,
+            delegate_souls=[
+                str(item)
+                for item in soul.get("delegates", [])
+                if str(item).strip()
+            ],
+            workflow_id=normalize_workflow_id(workflow_id),
+        )
+    except Exception as exc:
+        _LOG.debug("Workflow team activity persistence failed: %s", exc)
     return WorkflowCanvasRun(
         workflow_id=normalize_workflow_id(workflow_id),
         active_soul=soul,
