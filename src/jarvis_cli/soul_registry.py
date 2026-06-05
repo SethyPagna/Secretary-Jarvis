@@ -152,7 +152,14 @@ def classify_prompt_soul(task_text: str, registry: SoulRegistry | None = None) -
     """Pick the best JARVIS team soul for a desktop/gateway/workflow task."""
     active_registry = registry or load_soul_registry()
     selected = choose_delegate_for_task(task_text, active_registry)
-    delegates = [soul.id for soul in active_registry.souls if soul.id != selected.id][:12]
+    if selected.id == active_registry.primary.id:
+        delegates = [soul.id for soul in active_registry.delegates]
+    else:
+        delegates = [active_registry.primary.id] + [
+            soul.id
+            for soul in active_registry.delegates
+            if soul.id != selected.id
+        ]
     return {
         "id": selected.id,
         "name": selected.name,
@@ -183,11 +190,20 @@ def build_soul_system_context(soul: Mapping[str, Any]) -> str:
         for item in soul.get("responsibilities", [])
         if str(item).strip()
     ][:4]
+    delegates = [
+        str(item).strip().upper()
+        for item in soul.get("delegates", [])
+        if str(item).strip()
+    ][:7]
     responsibility_text = "\n".join(f"- {item}" for item in responsibilities)
+    delegate_text = ", ".join(delegates) if delegates else "JARVIS manager"
     return (
         "JARVIS team routing context:\n"
         f"Active soul: {name} ({role}).\n"
         f"When to use: {when_to_use or 'Handle the current user request.'}\n"
         f"Responsibilities:\n{responsibility_text or '- Respond clearly and complete the task.'}\n"
-        "Answer as JARVIS coordinating this specialist. Do not mention routing unless it helps the user."
+        f"Available collaborators: {delegate_text}.\n"
+        "Operate like a coordinated team: JARVIS remains the manager, the active soul handles the specialist work, "
+        "and collaborators are used implicitly when their responsibilities are relevant. "
+        "Answer directly and do not mention routing unless it helps the user."
     )

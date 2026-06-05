@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useLocation } from "react-router-dom";
 import {
   ChevronDown,
   Pencil,
@@ -67,6 +68,7 @@ function ProfilesLoadingSpinner() {
 }
 
 export default function ProfilesPage() {
+  const { pathname } = useLocation();
   const [profiles, setProfiles] = useState<ProfileInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast, showToast } = useToast();
@@ -235,9 +237,14 @@ export default function ProfilesPage() {
   });
 
   const pendingName = profileDelete.pendingId;
+  const showWorkspaceProfiles = pathname.replace(/\/$/, "") === "/profiles";
 
   // Put "Create" button in page header
   useLayoutEffect(() => {
+    if (!showWorkspaceProfiles) {
+      setEnd(null);
+      return;
+    }
     setEnd(
       <Button
         className="uppercase"
@@ -250,7 +257,7 @@ export default function ProfilesPage() {
     return () => {
       setEnd(null);
     };
-  }, [setEnd, t.common.create, loading]);
+  }, [setEnd, t.common.create, showWorkspaceProfiles]);
 
   if (loading) {
     return (
@@ -284,7 +291,7 @@ export default function ProfilesPage() {
       />
 
       {/* Create profile modal */}
-      {createModalOpen && (
+      {showWorkspaceProfiles && createModalOpen && (
         <div
           ref={createModalRef}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 backdrop-blur-sm p-4"
@@ -372,7 +379,7 @@ export default function ProfilesPage() {
       <div className="flex flex-col gap-3">
         <H2 variant="sm" className="flex items-center gap-2 text-muted-foreground">
           <Users className="h-4 w-4" />
-          JARVIS Staff ({teamSouls.length})
+          JARVIS Team ({teamSouls.length})
         </H2>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -417,7 +424,7 @@ export default function ProfilesPage() {
                   </p>
                   {soul.delegates?.length ? (
                     <div className="mt-3 truncate text-xs text-text-tertiary">
-                      Manages: {soul.delegates.join(", ")}
+                      Delegates: {soul.delegates.join(", ")}
                     </div>
                   ) : null}
                 </CardContent>
@@ -427,8 +434,9 @@ export default function ProfilesPage() {
         </div>
       </div>
 
-      {/* List */}
-      <div className="flex flex-col gap-3">
+      {/* Workspace profiles stay available at /profiles; /souls is the
+          specialist team surface used by the desktop app. */}
+      {showWorkspaceProfiles && <div className="flex flex-col gap-3">
         <H2
           variant="sm"
           className="flex items-center gap-2 text-muted-foreground"
@@ -619,7 +627,7 @@ export default function ProfilesPage() {
             </Card>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }

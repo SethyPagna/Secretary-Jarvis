@@ -24,7 +24,7 @@ class TeamSoulsRoutingTests(unittest.TestCase):
 
         self.assertIn("Active soul: FORGE", prompt)
         self.assertIn("User request:\nPackage the exe and validate the installer.", prompt)
-        self.assertIn("Answer as JARVIS coordinating this specialist", prompt)
+        self.assertIn("Operate like a coordinated team", prompt)
 
     def test_system_context_can_route_gateway_without_polluting_user_message(self) -> None:
         route = classify_prompt_soul("Send this through Telegram and monitor replies.")
@@ -32,7 +32,8 @@ class TeamSoulsRoutingTests(unittest.TestCase):
 
         self.assertIn("JARVIS team routing context:", context)
         self.assertIn("Active soul:", context)
-        self.assertIn("Answer as JARVIS coordinating this specialist", context)
+        self.assertIn("Available collaborators:", context)
+        self.assertIn("Operate like a coordinated team", context)
         self.assertNotIn("User request:", context)
 
     def test_gateway_runner_applies_team_context_as_ephemeral_system_prompt(self) -> None:
