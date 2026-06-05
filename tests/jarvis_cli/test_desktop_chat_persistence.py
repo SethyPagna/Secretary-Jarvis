@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -133,6 +134,33 @@ class DesktopChatPersistenceTests(unittest.TestCase):
         self.assertEqual(state["surface"], "gateway")
         self.assertEqual(state["platform"], "telegram")
         self.assertEqual(state["session_key"], "123456")
+
+    def test_status_counts_recent_desktop_and_gateway_session_files(self) -> None:
+        from jarvis_cli.web_server import _desktop_surface_active_sessions
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            home = Path(temp_dir)
+            desktop_state = home / "desktop" / "session.json"
+            telegram_state = home / "gateway" / "sessions" / "telegram" / "123456.json"
+            stale_state = home / "gateway" / "sessions" / "telegram" / "old.json"
+            desktop_state.parent.mkdir(parents=True)
+            telegram_state.parent.mkdir(parents=True)
+            desktop_state.write_text(
+                json.dumps({"session_id": "desktop-live", "updated_at": 1000.0}),
+                encoding="utf-8",
+            )
+            telegram_state.write_text(
+                json.dumps({"session_id": "telegram-live", "updated_at": 990.0}),
+                encoding="utf-8",
+            )
+            stale_state.write_text(
+                json.dumps({"session_id": "telegram-stale", "updated_at": 100.0}),
+                encoding="utf-8",
+            )
+
+            count = _desktop_surface_active_sessions(home, max_age_seconds=60, now=1001.0)
+
+        self.assertEqual(count, 2)
 
 
 if __name__ == "__main__":

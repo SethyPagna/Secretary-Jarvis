@@ -806,8 +806,47 @@ def _desktop_status_snapshot() -> dict[str, Any]:
         "gateway_platforms": gateway_platforms,
         "gateway_exit_reason": merged_gateway.get("exit_reason"),
         "gateway_updated_at": merged_gateway.get("updated_at"),
-        "active_sessions": 0,
+        "active_sessions": _desktop_surface_active_sessions(get_jarvis_home()),
     }
+
+
+def _desktop_surface_active_sessions(
+    jarvis_home: Path,
+    *,
+    max_age_seconds: int = 300,
+    now: float | None = None,
+) -> int:
+    """Count recent desktop and gateway session state files.
+
+    This complements the SQLite session list used by the full status endpoint.
+    The desktop app writes lightweight state files before/alongside transcript
+    persistence, so using them keeps the sidebar honest during voice and
+    messaging turns without scanning the whole session database.
+    """
+    current = time.time() if now is None else now
+    candidates = [jarvis_home / "desktop" / "session.json"]
+    gateway_sessions = jarvis_home / "gateway" / "sessions"
+    try:
+        candidates.extend(path for path in gateway_sessions.glob("*/*.json") if path.is_file())
+    except OSError:
+        pass
+
+    active_ids: set[str] = set()
+    for path in candidates:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, Mapping):
+            continue
+        session_id = str(payload.get("session_id") or path.stem).strip()
+        try:
+            updated_at = float(payload.get("updated_at") or payload.get("started_at") or path.stat().st_mtime)
+        except (OSError, TypeError, ValueError):
+            updated_at = 0.0
+        if session_id and current - updated_at <= max_age_seconds:
+            active_ids.add(session_id)
+    return len(active_ids)
 
 
 def _cached_manifest_section(manifest: Mapping[str, Any], key: str) -> dict[str, Any] | None:
@@ -963,6 +1002,7 @@ async def get_status():
             db.close()
     except Exception:
         pass
+    active_sessions = max(active_sessions, _desktop_surface_active_sessions(get_jarvis_home()))
 
     return {
         "version": __version__,
