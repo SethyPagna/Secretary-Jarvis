@@ -926,12 +926,15 @@ export default function HomePage() {
 
   const startVoiceRecording = useCallback(async () => {
     const browserSpeechAvailable = Boolean(getBrowserSpeechRecognitionConstructor());
-    if (!subsystemReady(readiness?.stt) && !browserSpeechAvailable) {
+    const backendSttReady = subsystemReady(readiness?.stt);
+    if (!backendSttReady && !browserSpeechAvailable) {
       setTerminalEntries((entries) => [
         ...entries,
-        { kind: "output", text: "STT is not ready yet. Waiting for the Whisper model." },
+        {
+          kind: "output",
+          text: "Voice capture is live; Whisper is still warming, so this turn will report any STT blocker after recording.",
+        },
       ]);
-      return;
     }
 
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
@@ -957,7 +960,16 @@ export default function HomePage() {
       voiceSilenceStartedAtRef.current = null;
       voiceRecordingStartedAtRef.current = Date.now();
       startStreamAudioMeter(stream);
-      startBrowserSpeechRecognition();
+      const browserSpeechStarted = startBrowserSpeechRecognition();
+      if (!backendSttReady && browserSpeechStarted) {
+        setTerminalEntries((entries) => [
+          ...entries,
+          {
+            kind: "output",
+            text: "Using browser live transcription while local Whisper finishes warming.",
+          },
+        ]);
+      }
       const preferredMime = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -1042,7 +1054,6 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!autoVoiceArmed || listening || voiceBusy || speaking) return;
-    if (!subsystemReady(readiness?.stt) && !getBrowserSpeechRecognitionConstructor()) return;
     if (voiceRetryAt && Date.now() < voiceRetryAt) return;
 
     let cancelled = false;
@@ -1077,7 +1088,6 @@ export default function HomePage() {
   }, [
     autoVoiceArmed,
     listening,
-    readiness?.stt?.ready,
     speaking,
     startVoiceRecording,
     voiceBusy,
