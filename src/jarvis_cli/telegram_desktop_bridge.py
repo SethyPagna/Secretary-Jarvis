@@ -143,7 +143,14 @@ def _handle_text_message(token: str, jarvis_home: Path, message: Mapping[str, An
 
     from jarvis_cli.desktop_chat import run_desktop_chat_turn
 
-    result = run_desktop_chat_turn(text, jarvis_home=jarvis_home)
+    result = run_desktop_chat_turn(
+        text,
+        jarvis_home=jarvis_home,
+        surface="gateway",
+        platform="telegram",
+        session_key=str(chat_id),
+        user_id=user_id or "telegram-user",
+    )
     _send_message(token, chat_id, result.response.strip() or "I did not receive a usable response.")
     _set_status(last_message_at=time.time(), messages_handled=int(_status.get("messages_handled") or 0) + 1)
 

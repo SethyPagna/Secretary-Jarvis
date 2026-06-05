@@ -91,8 +91,48 @@ class DesktopChatPersistenceTests(unittest.TestCase):
 
             self.assertEqual(first, second)
             state = desktop_chat._read_json(home / "desktop" / "session.json")
-            self.assertEqual(state["active_soul"], "argus")
-            self.assertEqual(state["delegate_souls"], ["jarvis"])
+        self.assertEqual(state["active_soul"], "argus")
+        self.assertEqual(state["delegate_souls"], ["jarvis"])
+
+    def test_gateway_session_turn_uses_platform_source_and_state(self) -> None:
+        fake_db = FakeSessionDB()
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.object(
+            desktop_chat,
+            "_create_session_db",
+            return_value=fake_db,
+        ):
+            home = Path(temp_dir)
+            session_id = desktop_chat._record_desktop_session_turn(
+                home,
+                prompt="Can you send this through Telegram?",
+                response="JARVIS routed this Telegram request through the team.",
+                input_tokens=24,
+                output_tokens=15,
+                model="qwen3.5-9b-q4_k_m",
+                provider="llama.cpp",
+                active_soul="jarvis",
+                delegate_souls=["friday"],
+                surface="gateway",
+                platform="telegram",
+                session_key="123456",
+                user_id="42",
+            )
+
+            state = desktop_chat._read_json(
+                home / "gateway" / "sessions" / "telegram" / "123456.json",
+            )
+
+        self.assertIsNotNone(session_id)
+        self.assertTrue(str(session_id).startswith("telegram-"))
+        self.assertEqual(fake_db.sessions[0][1], "telegram")
+        self.assertEqual(fake_db.sessions[0][2]["user_id"], "42")
+        self.assertEqual(fake_db.sessions[0][2]["model_config"]["surface"], "gateway")
+        self.assertEqual(fake_db.sessions[0][2]["model_config"]["platform"], "telegram")
+        self.assertEqual(fake_db.sessions[0][2]["model_config"]["session_key"], "123456")
+        self.assertEqual(state["surface"], "gateway")
+        self.assertEqual(state["platform"], "telegram")
+        self.assertEqual(state["session_key"], "123456")
 
 
 if __name__ == "__main__":

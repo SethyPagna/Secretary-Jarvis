@@ -132,6 +132,28 @@ def _desktop_session_state_path(jarvis_home: Path) -> Path:
     return jarvis_home / "desktop" / "session.json"
 
 
+def _surface_session_state_path(
+    jarvis_home: Path,
+    *,
+    surface: str = "desktop",
+    platform: str = "",
+    session_key: str = "",
+) -> Path:
+    source = _normalize_session_segment(platform or surface or "desktop")
+    if source == "desktop" and not session_key:
+        return _desktop_session_state_path(jarvis_home)
+    key = _normalize_session_segment(session_key or source)
+    return jarvis_home / "gateway" / "sessions" / source / f"{key}.json"
+
+
+def _normalize_session_segment(value: str) -> str:
+    normalized = "".join(
+        char.lower() if char.isalnum() else "-"
+        for char in str(value or "").strip()
+    ).strip("-")
+    return normalized[:80] or "default"
+
+
 def _get_or_create_desktop_session_id(
     jarvis_home: Path,
     *,
@@ -139,6 +161,9 @@ def _get_or_create_desktop_session_id(
     provider: str,
     active_soul: str,
     delegate_souls: list[str] | None = None,
+    surface: str = "desktop",
+    platform: str = "",
+    session_key: str = "",
 ) -> str:
     """Return the current desktop conversation id, creating it if needed.
 
@@ -146,7 +171,13 @@ def _get_or_create_desktop_session_id(
     session makes voice, typed chat, memory search, and analytics agree on the
     same transcript instead of scattering every utterance into a new row.
     """
-    state_path = _desktop_session_state_path(jarvis_home)
+    state_path = _surface_session_state_path(
+        jarvis_home,
+        surface=surface,
+        platform=platform,
+        session_key=session_key,
+    )
+    source = _normalize_session_segment(platform or surface or "desktop")
     now = time.time()
     payload = _read_json(state_path)
     session_id = str(payload.get("session_id") or "").strip()
@@ -157,12 +188,15 @@ def _get_or_create_desktop_session_id(
         started_at = 0.0
     max_age_seconds = int(os.getenv("JARVIS_DESKTOP_SESSION_MAX_AGE_SECONDS", "43200") or "43200")
     if not session_id or (started_at and now - started_at > max_age_seconds):
-        session_id = f"desktop-{time.strftime('%Y%m%d-%H%M%S')}-{uuid4().hex[:8]}"
+        session_id = f"{source}-{time.strftime('%Y%m%d-%H%M%S')}-{uuid4().hex[:8]}"
         payload = {"session_id": session_id, "started_at": now}
 
     payload.update(
         {
             "updated_at": now,
+            "surface": surface,
+            "platform": platform,
+            "session_key": session_key,
             "model": model,
             "provider": provider,
             "active_soul": active_soul,
@@ -190,6 +224,10 @@ def _record_desktop_session_turn(
     provider: str,
     active_soul: str,
     delegate_souls: list[str] | None = None,
+    surface: str = "desktop",
+    platform: str = "",
+    session_key: str = "",
+    user_id: str = "local-user",
 ) -> str | None:
     """Persist a desktop/voice turn to the shared SQLite session store."""
     db = _create_session_db()
@@ -201,21 +239,27 @@ def _record_desktop_session_turn(
         provider=provider,
         active_soul=active_soul,
         delegate_souls=delegate_souls,
+        surface=surface,
+        platform=platform,
+        session_key=session_key,
     )
+    source = _normalize_session_segment(platform or surface or "desktop")
     model_config = {
         "provider": provider,
         "model": model,
-        "surface": "desktop",
+        "surface": surface,
+        "platform": platform,
+        "session_key": session_key,
         "active_soul": active_soul,
         "delegate_souls": list(delegate_souls or []),
     }
     try:
         db.create_session(
             session_id,
-            "desktop",
+            source,
             model=model,
             model_config=model_config,
-            user_id="local-user",
+            user_id=user_id or "local-user",
         )
         db.append_message(
             session_id,
@@ -392,6 +436,10 @@ def run_desktop_chat_turn(
     provider: Optional[str] = None,
     toolsets: object = None,
     soul: Optional[str] = None,
+    surface: str = "desktop",
+    platform: str = "",
+    session_key: str = "",
+    user_id: str = "local-user",
 ) -> DesktopChatResult:
     """Run one desktop assistant turn and optionally stream text deltas."""
     clean_prompt = prompt.strip()
@@ -538,6 +586,10 @@ def run_desktop_chat_turn(
         provider=provider_name,
         active_soul=active_soul,
         delegate_souls=delegate_souls,
+        surface=surface,
+        platform=platform,
+        session_key=session_key,
+        user_id=user_id,
     )
     session_id = _record_desktop_session_turn(
         jarvis_home,
@@ -556,12 +608,13 @@ def run_desktop_chat_turn(
         record_team_activity(
             jarvis_home,
             active_soul=active_soul,
-            surface="desktop",
+            surface=surface,
             prompt=clean_prompt,
             delegate_souls=delegate_souls,
             model=model_name,
             provider=provider_name,
             session_id=session_id or "",
+            platform=platform,
         )
     except Exception as exc:
         logging.debug("Desktop team activity persistence failed: %s", exc)
