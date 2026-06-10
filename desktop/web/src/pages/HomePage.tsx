@@ -91,13 +91,22 @@ const TOOL_TOGGLES = [
   { key: "browser", label: "Browser" },
 ] as const;
 
-const VOICE_SPEECH_THRESHOLD = 0.035;
-const VOICE_AUTO_STOP_SILENCE_MS = 900;
+const VOICE_AUDIO_CONSTRAINTS: MediaTrackConstraints = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+  channelCount: { ideal: 1 },
+  sampleRate: { ideal: 16000 },
+  sampleSize: { ideal: 16 },
+};
+const VOICE_SPEECH_THRESHOLD = 0.028;
+const VOICE_MIN_SPEECH_MS = 360;
+const VOICE_AUTO_STOP_SILENCE_MS = 850;
 const VOICE_MAX_NO_SPEECH_MS = 30_000;
 const VOICE_EMPTY_RETRY_DELAY_MS = 8_000;
 const VOICE_MAX_EMPTY_RETRIES = 2;
 const VOICE_SILENT_MONITOR_RESTART_MS = 4_000;
-const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 1_600;
+const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 2_400;
 const VOICE_TTS_STREAM_CHUNK_CHARS = 88;
 
 function subsystemReady(value: unknown): boolean {
@@ -155,6 +164,7 @@ export default function HomePage() {
   const voiceOutputBufferRef = useRef("");
   const speechSynthesisTailRef = useRef<Promise<void>>(Promise.resolve());
   const speechPlaybackQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const speechQueuePendingRef = useRef(0);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const audioMeterContextRef = useRef<AudioContext | null>(null);
   const audioMeterFrameRef = useRef<number | null>(null);
@@ -171,6 +181,7 @@ export default function HomePage() {
   const activeTurnSoulRef = useRef<string | null>(null);
   const voiceTurnDispatchedRef = useRef(false);
   const voiceHadSpeechRef = useRef(false);
+  const voiceSpeechStartedAtRef = useRef<number | null>(null);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
   const voiceSilentRetryScheduledRef = useRef(false);
@@ -196,6 +207,7 @@ export default function HomePage() {
     web: true,
   });
   const [voiceOutput, setVoiceOutput] = useState(true);
+  const [ttsQueueBusy, setTtsQueueBusy] = useState(false);
   const [voiceRetryAt, setVoiceRetryAt] = useState(0);
   const [listening, setListening] = useState(false);
   const [voiceBusy, setVoiceBusy] = useState(false);
@@ -305,6 +317,8 @@ export default function HomePage() {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
       }
+      speechQueuePendingRef.current = 0;
+      setTtsQueueBusy(false);
       stopAudioMeter();
     };
   }, [stopAudioMeter]);
@@ -315,7 +329,7 @@ export default function HomePage() {
       typeof stats?.voice_activity?.updated_at === "number" &&
       Date.now() - stats.voice_activity.updated_at * 1000 < 5_000;
     if (!status) return "offline";
-    if (speaking) return "speaking";
+    if (speaking || ttsQueueBusy) return "speaking";
     if (voicePhaseFresh && voicePhase === "synthesizing") return "speaking";
     if (smokeRunning) return "thinking";
     if (listening) return "listening";
@@ -332,6 +346,7 @@ export default function HomePage() {
     stats?.voice_activity?.phase,
     stats?.voice_activity?.updated_at,
     status,
+    ttsQueueBusy,
     voiceBusy,
   ]);
 
@@ -528,6 +543,8 @@ export default function HomePage() {
       const text = terminalTextForSpeech(rawText);
       if (!text || !voiceOutput) return;
 
+      speechQueuePendingRef.current += 1;
+      setTtsQueueBusy(true);
       const synthesisPromise = speechSynthesisTailRef.current
         .catch(() => undefined)
         .then(() => synthesizeSpeechChunk(text));
@@ -548,6 +565,12 @@ export default function HomePage() {
               text: error instanceof Error ? error.message : String(error),
             },
           ]);
+        })
+        .finally(() => {
+          speechQueuePendingRef.current = Math.max(0, speechQueuePendingRef.current - 1);
+          if (speechQueuePendingRef.current === 0) {
+            setTtsQueueBusy(false);
+          }
         });
     },
     [playSynthesizedSpeech, synthesizeSpeechChunk, voiceOutput],
@@ -815,6 +838,7 @@ export default function HomePage() {
     stopVoiceStream();
     setListening(false);
     voiceSilenceStartedAtRef.current = null;
+    voiceSpeechStartedAtRef.current = null;
     voiceRecordingStartedAtRef.current = null;
   }, [stopVoiceStream]);
 
@@ -839,7 +863,9 @@ export default function HomePage() {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: VOICE_AUDIO_CONSTRAINTS,
+      });
       voiceStreamRef.current = stream;
       voiceCaptureIdRef.current += 1;
       voiceTurnIdRef.current = createVoiceTurnId();
@@ -849,6 +875,7 @@ export default function HomePage() {
       voiceLastSnapshotAtRef.current = 0;
       voiceSnapshotInFlightRef.current = false;
       voiceHadSpeechRef.current = false;
+      voiceSpeechStartedAtRef.current = null;
       voiceSilentRetryScheduledRef.current = false;
       voiceSilenceStartedAtRef.current = null;
       voiceRecordingStartedAtRef.current = Date.now();
@@ -879,6 +906,7 @@ export default function HomePage() {
         stopVoiceStream();
         setListening(false);
         voiceSilenceStartedAtRef.current = null;
+        voiceSpeechStartedAtRef.current = null;
         voiceRecordingStartedAtRef.current = null;
         if (!hadSpeech) {
           if (voiceSilentRetryScheduledRef.current) {
@@ -906,6 +934,7 @@ export default function HomePage() {
       stopVoiceStream();
       setListening(false);
       voiceSilenceStartedAtRef.current = null;
+      voiceSpeechStartedAtRef.current = null;
       voiceRecordingStartedAtRef.current = null;
       setTerminalEntries((entries) => [
         ...entries,
@@ -921,7 +950,7 @@ export default function HomePage() {
   ]);
 
   useEffect(() => {
-    if (!autoVoiceArmed || listening || voiceBusy || speaking) return;
+    if (!autoVoiceArmed || listening || voiceBusy || speaking || ttsQueueBusy) return;
     if (voiceRetryAt && Date.now() < voiceRetryAt) return;
 
     let cancelled = false;
@@ -958,6 +987,7 @@ export default function HomePage() {
     listening,
     speaking,
     startVoiceRecording,
+    ttsQueueBusy,
     voiceBusy,
     voiceRetryAt,
   ]);
@@ -971,6 +1001,9 @@ export default function HomePage() {
 
     if (audioLevel >= VOICE_SPEECH_THRESHOLD) {
       voiceHadSpeechRef.current = true;
+      if (voiceSpeechStartedAtRef.current === null) {
+        voiceSpeechStartedAtRef.current = now;
+      }
       voiceSilenceStartedAtRef.current = null;
       return;
     }
@@ -980,6 +1013,15 @@ export default function HomePage() {
         voiceSilenceStartedAtRef.current = now;
       }
       if (now - voiceSilenceStartedAtRef.current >= VOICE_AUTO_STOP_SILENCE_MS) {
+        const speechDuration =
+          voiceSpeechStartedAtRef.current === null ? 0 : now - voiceSpeechStartedAtRef.current;
+        if (speechDuration < VOICE_MIN_SPEECH_MS) {
+          voiceHadSpeechRef.current = false;
+          voiceSpeechStartedAtRef.current = null;
+          voiceSilentRetryScheduledRef.current = true;
+          setVoiceRetryAt(Date.now() + VOICE_SILENT_MONITOR_RESTART_MS);
+          window.setTimeout(() => setVoiceRetryAt(0), VOICE_SILENT_MONITOR_RESTART_MS);
+        }
         stopVoiceRecording();
       }
       return;
@@ -993,7 +1035,7 @@ export default function HomePage() {
   }, [audioLevel, listening, scheduleVoiceRetry, stopVoiceRecording]);
 
   const toggleMic = async () => {
-    if (autoVoiceArmed || listening || voiceBusy || speaking) {
+    if (autoVoiceArmed || listening || voiceBusy || speaking || ttsQueueBusy) {
       setAutoVoiceArmed(false);
       if (voiceRetryTimerRef.current !== null) {
         window.clearTimeout(voiceRetryTimerRef.current);
