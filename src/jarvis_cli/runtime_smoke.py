@@ -178,6 +178,36 @@ def _openai_compatible_probe(settings: Mapping[str, Any], prompt: str) -> dict[s
     }
 
 
+def _start_local_runtime_for_smoke(settings: Mapping[str, Any]) -> dict[str, Any]:
+    """Start the native local helper before declaring a local LLM offline."""
+    backend = str(settings.get("backend") or "").lower()
+    if backend not in {"llama.cpp", "vllm", "ollama", "custom-local", "lm-studio"}:
+        return {"ok": False, "skipped": True}
+    try:
+        from jarvis_cli.local_runtime import start_local_runtime
+
+        return dict(start_local_runtime(timeout_seconds=150.0))
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+
+def _settings_from_local_runtime(
+    original: Mapping[str, Any],
+    start_result: Mapping[str, Any],
+) -> dict[str, Any]:
+    settings = dict(original)
+    endpoint = str(start_result.get("endpoint") or "").strip()
+    if endpoint:
+        settings["base_url"] = endpoint
+    plan = start_result.get("plan")
+    plan_llm = plan.get("llm") if isinstance(plan, Mapping) and isinstance(plan.get("llm"), Mapping) else {}
+    if plan_llm.get("model"):
+        settings["model"] = str(plan_llm.get("model") or settings.get("model") or "")
+    if plan_llm.get("backend"):
+        settings["backend"] = str(plan_llm.get("backend") or settings.get("backend") or "")
+    return settings
+
+
 def _ollama_probe(settings: Mapping[str, Any], prompt: str) -> dict[str, Any]:
     model = str(settings.get("model") or "").strip()
     base_url = str(settings.get("base_url") or "http://127.0.0.1:11434").rstrip("/")
@@ -321,6 +351,40 @@ def default_llm_probe(config: Mapping[str, Any], env: Mapping[str, str], prompt:
 
     if result.get("ready"):
         return result
+
+    # If the selected local runtime is not answering yet, make the smoke test
+    # exercise the same native helper startup path the desktop chat uses. This
+    # warms the GGUF server and avoids falling back to cloud just because the
+    # endpoint was cold at probe time.
+    if backend in {"llama.cpp", "vllm", "ollama", "custom-local", "lm-studio"}:
+        local_start = _start_local_runtime_for_smoke(settings)
+        if local_start.get("ok"):
+            warmed_settings = _settings_from_local_runtime(settings, local_start)
+            try:
+                warmed = _openai_compatible_probe(warmed_settings, prompt)
+            except Exception as exc:
+                warmed = {"ready": False, "error": f"{type(exc).__name__}: {exc}"}
+            warmed["local_runtime_start"] = {
+                key: local_start.get(key)
+                for key in ("ok", "running", "already_running", "adopted", "pid", "endpoint")
+                if key in local_start
+            }
+            if warmed.get("ready"):
+                return warmed
+            result = {
+                **result,
+                "local_runtime_start": warmed["local_runtime_start"],
+                "local_runtime_error": warmed.get("error") or warmed,
+            }
+        else:
+            result = {
+                **result,
+                "local_runtime_start": {
+                    key: local_start.get(key)
+                    for key in ("ok", "error", "skipped", "endpoint")
+                    if key in local_start
+                },
+            }
 
     # Desktop chat falls back to a verified Mistral key when the selected local
     # llama.cpp/vLLM/Ollama endpoint is not actually serving chat. Keep smoke

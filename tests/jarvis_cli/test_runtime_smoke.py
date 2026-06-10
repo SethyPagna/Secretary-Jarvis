@@ -107,7 +107,8 @@ class RuntimeSmokeTests(unittest.TestCase):
                 }
             }
         }
-        with patch.object(runtime_smoke, "_openai_compatible_probe", side_effect=fake_openai_probe):
+        with patch.object(runtime_smoke, "_openai_compatible_probe", side_effect=fake_openai_probe), \
+             patch.object(runtime_smoke, "_start_local_runtime_for_smoke", return_value={"ok": False, "error": "missing helper"}):
             result = runtime_smoke.default_llm_probe(
                 config,
                 {"MISTRAL_API_KEY": "sk-test", "MISTRAL_MODEL": "mistral-small-latest"},
@@ -119,6 +120,59 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(result["fallback_from"], "llama.cpp")
         self.assertIn("404", str(result["primary_error"]))
         self.assertEqual([call[0] for call in calls], ["llama_cpp_local", "mistral_api"])
+
+    def test_default_llm_probe_starts_local_runtime_before_cloud_fallback(self) -> None:
+        calls = []
+
+        def fake_openai_probe(settings, prompt):
+            calls.append((settings["provider_name"], settings["base_url"], settings["model"], prompt))
+            if len(calls) == 1:
+                return {"ready": False, "error": "URLError: refused"}
+            return {
+                "ready": True,
+                "response": "ready",
+                "latency_ms": 250,
+                "tokens_per_second": 28.0,
+                "model": settings["model"],
+                "backend": settings["backend"],
+                "provider": settings["provider_name"],
+            }
+
+        config = {
+            "providers": {
+                "llama_cpp_local": {
+                    "base_url": "http://127.0.0.1:8081/v1",
+                    "model": "qwen3.5-9b-q4_k_m",
+                }
+            }
+        }
+        start_result = {
+            "ok": True,
+            "running": True,
+            "pid": 1234,
+            "endpoint": "http://127.0.0.1:8081/v1",
+            "plan": {
+                "llm": {
+                    "backend": "llama.cpp",
+                    "model": "qwen3.5-9b-q4_k_m",
+                    "endpoint": "http://127.0.0.1:8081/v1",
+                }
+            },
+        }
+        with patch.object(runtime_smoke, "_openai_compatible_probe", side_effect=fake_openai_probe), \
+             patch.object(runtime_smoke, "_start_local_runtime_for_smoke", return_value=start_result) as start_mock:
+            result = runtime_smoke.default_llm_probe(
+                config,
+                {"MISTRAL_API_KEY": "sk-test", "MISTRAL_MODEL": "mistral-small-latest"},
+                "Reply ready",
+            )
+
+        self.assertTrue(result["ready"])
+        self.assertEqual(result["provider"], "llama_cpp_local")
+        self.assertNotIn("fallback_from", result)
+        self.assertEqual(result["local_runtime_start"]["endpoint"], "http://127.0.0.1:8081/v1")
+        start_mock.assert_called_once()
+        self.assertEqual([call[0] for call in calls], ["llama_cpp_local", "llama_cpp_local"])
 
     def test_smoke_test_marks_runtime_ready_when_all_probes_succeed(self) -> None:
         calls = []
