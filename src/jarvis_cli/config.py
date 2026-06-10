@@ -1146,7 +1146,7 @@ DEFAULT_CONFIG = {
         "enabled": True,
         "provider": "local",  # "local" (free, faster-whisper) | "groq" | "openai" (Whisper API) | "mistral" (Voxtral Transcribe)
         "local": {
-            "model": "base",  # tiny, base, small, medium, large-v3
+            "model": "large-v3-turbo",  # tiny, base, small, medium, large-v3, large-v3-turbo
             "language": "",  # auto-detect by default; set to "en", "es", "fr", etc. to force
         },
         "openai": {

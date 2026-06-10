@@ -239,6 +239,34 @@ class TestTranscribeLocal:
         assert result["provider"] == "local_transformers"
         assert result["transcript"] == "local downloaded model works"
 
+    def test_downloaded_whisper_folder_is_preferred_by_default(self, tmp_path, monkeypatch):
+        audio_file = tmp_path / "test.ogg"
+        audio_file.write_bytes(b"fake audio")
+        model_dir = tmp_path / "openai__whisper-large-v3-turbo"
+        model_dir.mkdir()
+
+        monkeypatch.delenv("JARVIS_STT_PREFER_DOWNLOADED_WHISPER", raising=False)
+        with patch("tools.transcription_tools._HAS_FASTER_WHISPER", True), \
+             patch("tools.transcription_tools._find_local_whisper_transformers_dir", return_value=model_dir), \
+             patch(
+                 "tools.transcription_tools._transcribe_local_transformers",
+                 return_value={
+                     "success": True,
+                     "transcript": "downloaded turbo wins",
+                     "provider": "local_transformers",
+                     "model_path": str(model_dir),
+                 },
+             ) as downloaded_transcribe, \
+             patch("tools.transcription_tools._load_local_whisper_model") as faster_whisper_load:
+            from tools.transcription_tools import _transcribe_local
+            result = _transcribe_local(str(audio_file), "large-v3-turbo")
+
+        downloaded_transcribe.assert_called_once_with(str(audio_file), model_dir)
+        faster_whisper_load.assert_not_called()
+        assert result["success"] is True
+        assert result["provider"] == "local_transformers"
+        assert result["transcript"] == "downloaded turbo wins"
+
 
 # ---------------------------------------------------------------------------
 # OpenAI transcription

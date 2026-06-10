@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -38,6 +39,29 @@ class DesktopVoiceTests(unittest.TestCase):
         self.assertEqual(result["bytes"], len(b"webm-audio"))
         self.assertEqual(len(calls), 1)
         self.assertTrue(calls[0].endswith(".webm"))
+
+    def test_default_desktop_transcriber_uses_whisper_turbo_not_browser_or_base(self) -> None:
+        from jarvis_cli.desktop_voice import _default_transcriber
+
+        with patch.dict(os.environ, {}, clear=False), patch(
+            "tools.transcription_tools.transcribe_audio",
+            return_value={"success": True, "transcript": "accurate whisper transcript"},
+        ) as transcribe_audio:
+            result = _default_transcriber("sample.webm")
+
+        transcribe_audio.assert_called_once_with("sample.webm", model="large-v3-turbo")
+        self.assertTrue(result["success"])
+
+    def test_default_desktop_transcriber_allows_explicit_model_override(self) -> None:
+        from jarvis_cli.desktop_voice import _default_transcriber
+
+        with patch.dict(os.environ, {"JARVIS_DESKTOP_STT_MODEL": "medium"}, clear=False), patch(
+            "tools.transcription_tools.transcribe_audio",
+            return_value={"success": True, "transcript": "medium whisper transcript"},
+        ) as transcribe_audio:
+            _default_transcriber("sample.webm")
+
+        transcribe_audio.assert_called_once_with("sample.webm", model="medium")
 
     def test_synthesize_desktop_speech_returns_audio_payload_for_browser_playback(self) -> None:
         def fake_synthesizer(*, text: str, output_path: str):

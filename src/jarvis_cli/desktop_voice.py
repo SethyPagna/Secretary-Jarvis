@@ -83,7 +83,11 @@ def _coerce_mapping(payload: str | Mapping[str, Any]) -> dict[str, Any]:
 def _default_transcriber(path: str) -> Mapping[str, Any]:
     from tools.transcription_tools import transcribe_audio
 
-    return transcribe_audio(path)
+    # Desktop voice should favor recognition quality. Browser SpeechRecognition
+    # is intentionally not used by the renderer, so this route is the
+    # authoritative mic transcript and should prefer the downloaded Whisper pack.
+    model = os.getenv("JARVIS_DESKTOP_STT_MODEL", "large-v3-turbo").strip() or "large-v3-turbo"
+    return transcribe_audio(path, model=model)
 
 
 def transcribe_desktop_audio(

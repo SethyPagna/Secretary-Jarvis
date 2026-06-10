@@ -49,41 +49,6 @@ type SynthesizedSpeechChunk = {
   audioBlob: Blob;
 };
 
-type BrowserSpeechRecognitionResult = {
-  isFinal: boolean;
-  [index: number]: { transcript: string };
-};
-
-type BrowserSpeechRecognitionEvent = {
-  resultIndex: number;
-  results: {
-    length: number;
-    [index: number]: BrowserSpeechRecognitionResult;
-  };
-};
-
-type BrowserSpeechRecognition = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  onresult: ((event: BrowserSpeechRecognitionEvent) => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-
-type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
-
-function getBrowserSpeechRecognitionConstructor(): BrowserSpeechRecognitionConstructor | null {
-  const browserWindow = window as Window &
-    typeof globalThis & {
-      SpeechRecognition?: BrowserSpeechRecognitionConstructor;
-      webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;
-    };
-  return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition ?? null;
-}
-
 function base64ToAudioBlob(base64: string, mimeType: string): Blob {
   const binary = window.atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -133,7 +98,6 @@ const VOICE_EMPTY_RETRY_DELAY_MS = 8_000;
 const VOICE_MAX_EMPTY_RETRIES = 2;
 const VOICE_SILENT_MONITOR_RESTART_MS = 4_000;
 const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 1_600;
-const VOICE_LIVE_TRANSCRIPT_FRESH_MS = 4_000;
 const VOICE_TTS_STREAM_CHUNK_CHARS = 88;
 
 function subsystemReady(value: unknown): boolean {
@@ -195,8 +159,6 @@ export default function HomePage() {
   const audioMeterContextRef = useRef<AudioContext | null>(null);
   const audioMeterFrameRef = useRef<number | null>(null);
   const audioMeterSourceRef = useRef<AudioNode | null>(null);
-  const browserSpeechRef = useRef<BrowserSpeechRecognition | null>(null);
-  const browserSpeechStoppingRef = useRef(false);
   const autoVoicePromptedRef = useRef(false);
   const voiceLiveAnnouncedRef = useRef(false);
   const voiceLiveTranscriptRef = useRef("");
@@ -304,74 +266,6 @@ export default function HomePage() {
     [monitorAnalyser, stopAudioMeter],
   );
 
-  const stopBrowserSpeechRecognition = useCallback(() => {
-    const recognition = browserSpeechRef.current;
-    browserSpeechRef.current = null;
-    if (!recognition) return;
-    browserSpeechStoppingRef.current = true;
-    recognition.onresult = null;
-    recognition.onerror = null;
-    recognition.onend = null;
-    try {
-      recognition.stop();
-    } catch {
-      // Browser recognition may already be stopped.
-    } finally {
-      browserSpeechStoppingRef.current = false;
-    }
-  }, []);
-
-  const startBrowserSpeechRecognition = useCallback(() => {
-    const Recognition = getBrowserSpeechRecognitionConstructor();
-    if (!Recognition) return false;
-
-    stopBrowserSpeechRecognition();
-    const recognition = new Recognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-    recognition.onresult = (event) => {
-      let interim = "";
-      let finalText = "";
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        const result = event.results[index];
-        const transcript = result[0]?.transcript?.trim() ?? "";
-        if (!transcript) continue;
-        if (result.isFinal) {
-          finalText += `${transcript} `;
-        } else {
-          interim += `${transcript} `;
-        }
-      }
-      const nextTranscript = (finalText || interim).trim();
-      if (!nextTranscript) return;
-      voiceHadSpeechRef.current = true;
-      voiceLiveTranscriptRef.current = nextTranscript;
-      voiceLiveTranscriptAtRef.current = Date.now();
-      setTerminalInput(nextTranscript);
-      if (finalText.trim()) {
-        const recorder = mediaRecorderRef.current;
-        if (recorder && recorder.state !== "inactive") {
-          recorder.stop();
-        }
-      }
-    };
-    recognition.onerror = () => undefined;
-    recognition.onend = () => {
-      if (browserSpeechRef.current === recognition) {
-        browserSpeechRef.current = null;
-      }
-    };
-    try {
-      recognition.start();
-      browserSpeechRef.current = recognition;
-      return true;
-    } catch {
-      browserSpeechRef.current = null;
-      return false;
-    }
-  }, [stopBrowserSpeechRecognition]);
-
   const startPlaybackAudioMeter = useCallback(
     (audio: HTMLAudioElement) => {
       stopAudioMeter();
@@ -407,13 +301,12 @@ export default function HomePage() {
         recorder.stop();
       }
       voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
-      stopBrowserSpeechRecognition();
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
       }
       stopAudioMeter();
     };
-  }, [stopAudioMeter, stopBrowserSpeechRecognition]);
+  }, [stopAudioMeter]);
 
   const orbState: OrbState = useMemo(() => {
     const voicePhase = stats?.voice_activity?.phase ?? "";
@@ -906,11 +799,10 @@ export default function HomePage() {
   );
 
   const stopVoiceStream = useCallback(() => {
-    stopBrowserSpeechRecognition();
     voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
     voiceStreamRef.current = null;
     stopAudioMeter();
-  }, [stopAudioMeter, stopBrowserSpeechRecognition]);
+  }, [stopAudioMeter]);
 
   const stopVoiceRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
@@ -925,9 +817,8 @@ export default function HomePage() {
   }, [stopVoiceStream]);
 
   const startVoiceRecording = useCallback(async () => {
-    const browserSpeechAvailable = Boolean(getBrowserSpeechRecognitionConstructor());
     const backendSttReady = subsystemReady(readiness?.stt);
-    if (!backendSttReady && !browserSpeechAvailable) {
+    if (!backendSttReady) {
       setTerminalEntries((entries) => [
         ...entries,
         {
@@ -960,16 +851,6 @@ export default function HomePage() {
       voiceSilenceStartedAtRef.current = null;
       voiceRecordingStartedAtRef.current = Date.now();
       startStreamAudioMeter(stream);
-      const browserSpeechStarted = startBrowserSpeechRecognition();
-      if (!backendSttReady && browserSpeechStarted) {
-        setTerminalEntries((entries) => [
-          ...entries,
-          {
-            kind: "output",
-            text: "Using browser live transcription while local Whisper finishes warming.",
-          },
-        ]);
-      }
       const preferredMime = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -988,10 +869,6 @@ export default function HomePage() {
       };
       recorder.onstop = () => {
         const hadSpeech = voiceHadSpeechRef.current;
-        const liveTranscript = voiceLiveTranscriptRef.current.trim();
-        const liveTranscriptFresh =
-          liveTranscript &&
-          Date.now() - voiceLiveTranscriptAtRef.current <= VOICE_LIVE_TRANSCRIPT_FRESH_MS;
         const recordedAudio = new Blob(voiceChunksRef.current, {
           type: recorder.mimeType || preferredMime || "audio/webm",
         });
@@ -1001,15 +878,6 @@ export default function HomePage() {
         setListening(false);
         voiceSilenceStartedAtRef.current = null;
         voiceRecordingStartedAtRef.current = null;
-        if (liveTranscriptFresh && !voiceTurnDispatchedRef.current) {
-          voiceTurnDispatchedRef.current = true;
-          voiceCaptureIdRef.current += 1;
-          voiceSnapshotInFlightRef.current = false;
-          voiceEmptyCapturesRef.current = 0;
-          setTerminalInput("");
-          void runDesktopAgentTurn(liveTranscript, "voice");
-          return;
-        }
         if (!hadSpeech) {
           if (voiceSilentRetryScheduledRef.current) {
             voiceSilentRetryScheduledRef.current = false;
@@ -1046,8 +914,6 @@ export default function HomePage() {
     handleRecordedVoice,
     queueLiveVoiceTranscription,
     readiness?.stt,
-    runDesktopAgentTurn,
-    startBrowserSpeechRecognition,
     startStreamAudioMeter,
     stopVoiceStream,
   ]);
@@ -1176,14 +1042,11 @@ export default function HomePage() {
   }, [liveTokensPerSecond, stats]);
   const activeVoice = readiness?.tts?.engine ?? "voice";
   const sttReady = subsystemReady(readiness?.stt);
-  const browserSpeechAvailable = Boolean(getBrowserSpeechRecognitionConstructor());
   const sttFallbackLabel = sttReady
     ? undefined
-    : browserSpeechAvailable
-      ? "browser live"
-      : autoVoiceArmed
-        ? "mic capture"
-        : "mic paused";
+    : autoVoiceArmed
+      ? "whisper warming"
+      : "mic paused";
   const micLabel = sttReady
     ? "mic ready"
     : autoVoiceArmed
