@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -25,6 +26,16 @@ from jarvis_cli.utils import atomic_replace
 
 
 DeltaCallback = Callable[[str], None]
+
+
+_TOOL_INTENT_RE = re.compile(
+    r"\b("
+    r"attach|attached|browser|browse|click|crawl|download|email|file|folder|gateway|"
+    r"open|read|remind|run|schedule|search|send|shell|skill|telegram|terminal|tool|"
+    r"update|upload|web|whatsapp|workflow|write"
+    r")\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -64,6 +75,162 @@ def _normalize_toolsets(toolsets: object = None) -> list[str] | None:
         else:
             normalized.append(str(item).strip())
     return [item for item in normalized if item] or None
+
+
+def _desktop_prompt_needs_tools(prompt: str) -> bool:
+    """Return True when a natural desktop turn needs the agent tool layer.
+
+    Always loading every desktop toolset makes short voice turns slow because
+    the model receives a large tool schema and extra system guidance even for
+    "can you hear me?" style dialogue.  The dedicated UI buttons still call
+    their direct endpoints; this gate only keeps plain chat lean until the
+    user's words ask for action.
+    """
+    return bool(_TOOL_INTENT_RE.search(prompt or ""))
+
+
+def _desktop_tool_policy() -> str:
+    raw = os.getenv("JARVIS_DESKTOP_AUTO_TOOLS", "smart").strip().lower()
+    return raw if raw in {"smart", "always", "off"} else "smart"
+
+
+def _is_local_qwen_runtime(runtime: Mapping[str, Any], model: str) -> bool:
+    base_url = str(runtime.get("base_url") or "")
+    provider_name = str(runtime.get("provider") or runtime.get("requested_provider") or "").lower()
+    return (
+        "qwen" in str(model or "").lower()
+        and _is_loopback_openai_endpoint(base_url)
+        and ("llama" in provider_name or "custom" in provider_name or ":808" in base_url)
+    )
+
+
+def _desktop_request_overrides(runtime: Mapping[str, Any], model: str) -> dict[str, Any]:
+    """Provider request hints for fast desktop conversation turns."""
+    if not _is_local_qwen_runtime(runtime, model):
+        return {}
+    return {
+        "extra_body": {
+            "chat_template_kwargs": {"enable_thinking": False},
+            "reasoning": {"enabled": False},
+            "include_reasoning": False,
+        }
+    }
+
+
+def _desktop_model_prompt(prompt: str, runtime: Mapping[str, Any], model: str) -> str:
+    """Add model-native speed controls without changing persisted user text."""
+    if _is_local_qwen_runtime(runtime, model):
+        stripped = prompt.strip()
+        if not stripped.lower().startswith("/no_think"):
+            return f"/no_think\n{stripped}"
+    return prompt
+
+
+def _direct_desktop_chat_available(runtime: Mapping[str, Any], toolsets: list[str], model: str) -> bool:
+    """Use the fast direct path only for local no-tool desktop turns."""
+    return (
+        not toolsets
+        and bool(model)
+        and _is_loopback_openai_endpoint(str(runtime.get("base_url") or ""))
+        and str(runtime.get("api_mode") or "chat_completions") == "chat_completions"
+    )
+
+
+def _direct_desktop_chat_payload(
+    *,
+    model: str,
+    prompt: str,
+    system_prompt: str,
+    runtime: Mapping[str, Any],
+    stream: bool,
+    max_tokens: int,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": _desktop_model_prompt(prompt, runtime, model)},
+        ],
+        "temperature": 0,
+        "max_tokens": max_tokens,
+        "stream": stream,
+    }
+    if _is_local_qwen_runtime(runtime, model):
+        payload["chat_template_kwargs"] = {"enable_thinking": False}
+    return payload
+
+
+def _run_direct_desktop_chat(
+    *,
+    prompt: str,
+    runtime: Mapping[str, Any],
+    model: str,
+    system_prompt: str,
+    on_delta: DeltaCallback | None,
+    max_tokens: int,
+) -> tuple[str, int, int]:
+    """Stream a local OpenAI-compatible no-tool turn without AIAgent overhead."""
+    url = _chat_completions_url(str(runtime.get("base_url") or ""))
+    api_key = str(runtime.get("api_key") or "")
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    payload = _direct_desktop_chat_payload(
+        model=model,
+        prompt=prompt,
+        system_prompt=system_prompt,
+        runtime=runtime,
+        stream=bool(on_delta),
+        max_tokens=max_tokens,
+    )
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    timeout = float(os.getenv("JARVIS_DESKTOP_DIRECT_TIMEOUT_SECONDS", "45") or "45")
+    pieces: list[str] = []
+    usage: Mapping[str, Any] = {}
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        if payload["stream"]:
+            for raw_line in response:
+                line = raw_line.decode("utf-8", errors="replace").strip()
+                if not line or not line.startswith("data:"):
+                    continue
+                data = line[5:].strip()
+                if data == "[DONE]":
+                    break
+                try:
+                    event = json.loads(data)
+                except json.JSONDecodeError:
+                    continue
+                choices = event.get("choices") or []
+                if not choices:
+                    continue
+                delta = choices[0].get("delta") or {}
+                text = str(delta.get("content") or "")
+                if text:
+                    pieces.append(text)
+                    if on_delta:
+                        on_delta(text)
+                if isinstance(event.get("usage"), Mapping):
+                    usage = event["usage"]
+        else:
+            body = json.loads(response.read().decode("utf-8", errors="replace"))
+            choices = body.get("choices") or []
+            if choices:
+                message = choices[0].get("message") or {}
+                text = str(message.get("content") or "")
+                pieces.append(text)
+                if text and on_delta:
+                    on_delta(text)
+            if isinstance(body.get("usage"), Mapping):
+                usage = body["usage"]
+    response_text = "".join(pieces).strip()
+    input_tokens = int(usage.get("prompt_tokens") or 0) if usage else 0
+    output_tokens = int(usage.get("completion_tokens") or 0) if usage else 0
+    return response_text, input_tokens, output_tokens
 
 
 def _create_session_db():
@@ -591,13 +758,101 @@ def run_desktop_chat_turn(
 
     toolsets_list = _normalize_toolsets(toolsets)
     if toolsets_list is None:
-        toolsets_list = sorted(_get_platform_tools(cfg, "desktop"))
-        if not toolsets_list:
-            toolsets_list = sorted(_get_platform_tools(cfg, "cli"))
+        tool_policy = _desktop_tool_policy()
+        if tool_policy == "off" or (
+            tool_policy == "smart" and not _desktop_prompt_needs_tools(clean_prompt)
+        ):
+            toolsets_list = []
+        else:
+            toolsets_list = sorted(_get_platform_tools(cfg, "desktop"))
+            if not toolsets_list:
+                toolsets_list = sorted(_get_platform_tools(cfg, "cli"))
 
     fallback = cfg.get("fallback_providers") or cfg.get("fallback_model") or []
     if isinstance(fallback, dict):
         fallback = [fallback] if fallback.get("provider") and fallback.get("model") else []
+
+    desktop_max_tokens = int(os.getenv("JARVIS_DESKTOP_MAX_TOKENS", "512") or "512")
+    desktop_system_prompt = (
+        team_context
+        + "\n\n"
+        "Desktop voice/chat contract: answer the user's latest words directly. "
+        "Do not repeat the transcript, do not expose routing mechanics, and keep short voice replies natural."
+    )
+
+    if _direct_desktop_chat_available(runtime, toolsets_list, effective_model):
+        started = time.perf_counter()
+        try:
+            response, input_tokens, output_tokens = _run_direct_desktop_chat(
+                prompt=clean_prompt,
+                runtime=runtime,
+                model=effective_model,
+                system_prompt=desktop_system_prompt,
+                on_delta=on_delta,
+                max_tokens=desktop_max_tokens,
+            )
+            latency_ms = int((time.perf_counter() - started) * 1000)
+            if input_tokens <= 0:
+                input_tokens = _estimated_tokens(clean_prompt) + _estimated_tokens(desktop_system_prompt)
+            if output_tokens <= 0:
+                output_tokens = _estimated_tokens(response)
+            provider_name = str(runtime.get("provider") or effective_provider or "")
+            _record_desktop_tokens(
+                jarvis_home,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                model=effective_model,
+                provider=provider_name,
+                active_soul=active_soul,
+                delegate_souls=delegate_souls,
+                surface=surface,
+                platform=platform,
+                session_key=session_key,
+                user_id=user_id,
+            )
+            session_id = _record_desktop_session_turn(
+                jarvis_home,
+                prompt=clean_prompt,
+                response=response,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                model=effective_model,
+                provider=provider_name,
+                active_soul=active_soul,
+                delegate_souls=delegate_souls,
+                surface=surface,
+                platform=platform,
+                session_key=session_key,
+                user_id=user_id,
+            )
+            try:
+                from jarvis_cli.team_runtime import record_team_activity
+
+                record_team_activity(
+                    jarvis_home,
+                    active_soul=active_soul,
+                    surface=surface,
+                    prompt=clean_prompt,
+                    delegate_souls=delegate_souls,
+                    model=effective_model,
+                    provider=provider_name,
+                    session_id=session_id or "",
+                    platform=platform,
+                )
+            except Exception as exc:
+                logging.debug("Desktop team activity persistence failed: %s", exc)
+            return DesktopChatResult(
+                response=response,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                model=effective_model,
+                provider=provider_name,
+                latency_ms=latency_ms,
+                active_soul=active_soul,
+                delegate_souls=delegate_souls,
+            )
+        except Exception as exc:
+            logging.debug("Direct desktop chat failed; falling back to AIAgent: %s", exc)
 
     agent = AIAgent(
         api_key=runtime.get("api_key"),
@@ -605,17 +860,12 @@ def run_desktop_chat_turn(
         provider=runtime.get("provider"),
         api_mode=runtime.get("api_mode"),
         model=effective_model,
-        max_tokens=int(os.getenv("JARVIS_DESKTOP_MAX_TOKENS", "512") or "512"),
+        max_tokens=desktop_max_tokens,
         max_iterations=int(os.getenv("JARVIS_DESKTOP_MAX_ITERATIONS", "8") or "8"),
         tool_delay=float(os.getenv("JARVIS_DESKTOP_TOOL_DELAY_SECONDS", "0") or "0"),
         enabled_toolsets=toolsets_list,
         quiet_mode=True,
-        ephemeral_system_prompt=(
-            team_context
-            + "\n\n"
-            "Desktop voice/chat contract: answer the user's latest words directly. "
-            "Do not repeat the transcript, do not expose routing mechanics, and keep short voice replies natural."
-        ),
+        ephemeral_system_prompt=desktop_system_prompt,
         platform="desktop",
         skip_context_files=(
             os.getenv("JARVIS_DESKTOP_SKIP_CONTEXT_FILES", "1").strip().lower()
@@ -628,6 +878,8 @@ def run_desktop_chat_turn(
         session_db=_create_session_db(),
         credential_pool=runtime.get("credential_pool"),
         fallback_model=fallback or None,
+        reasoning_config={"enabled": False} if _is_local_qwen_runtime(runtime, effective_model) else None,
+        request_overrides=_desktop_request_overrides(runtime, effective_model),
         clarify_callback=lambda question, choices=None: (
             "[desktop mode: make the most reasonable assumption and continue.]"
         ),
@@ -637,9 +889,10 @@ def run_desktop_chat_turn(
     agent.tool_gen_callback = None
 
     started = time.perf_counter()
+    model_prompt = _desktop_model_prompt(clean_prompt, runtime, effective_model)
     with open(os.devnull, "w", encoding="utf-8") as devnull:
         with redirect_stdout(devnull), redirect_stderr(devnull):
-            response = agent.chat(clean_prompt, stream_callback=on_delta) or ""
+            response = agent.chat(model_prompt, stream_callback=on_delta) or ""
     latency_ms = int((time.perf_counter() - started) * 1000)
 
     input_tokens = int(getattr(agent, "session_input_tokens", 0) or 0)

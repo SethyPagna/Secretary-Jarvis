@@ -100,8 +100,84 @@ class DesktopChatPersistenceTests(unittest.TestCase):
         self.assertFalse(created_agents[0].kwargs["load_soul_identity"])
         self.assertEqual(created_agents[0].kwargs["max_iterations"], 8)
         self.assertEqual(created_agents[0].kwargs["tool_delay"], 0.0)
+        self.assertEqual(created_agents[0].kwargs["enabled_toolsets"], [])
         self.assertIn("Desktop voice/chat contract", created_agents[0].kwargs["ephemeral_system_prompt"])
         self.assertNotIn("User request:", created_agents[0].last_message)
+
+    def test_desktop_tool_gate_keeps_plain_voice_turns_lean(self) -> None:
+        self.assertFalse(desktop_chat._desktop_prompt_needs_tools("Can you hear me?"))
+        self.assertFalse(desktop_chat._desktop_prompt_needs_tools("What is your name?"))
+        self.assertTrue(desktop_chat._desktop_prompt_needs_tools("Search the web for this."))
+        self.assertTrue(desktop_chat._desktop_prompt_needs_tools("Send that on Telegram."))
+        self.assertTrue(desktop_chat._desktop_prompt_needs_tools("Read the attached file."))
+
+    def test_desktop_local_qwen_turns_disable_thinking_without_persisting_prefix(self) -> None:
+        runtime = {
+            "provider": "custom",
+            "requested_provider": "llama_cpp_local",
+            "base_url": "http://127.0.0.1:8081/v1",
+        }
+
+        self.assertEqual(
+            desktop_chat._desktop_model_prompt("Can you hear me?", runtime, "qwen3.5-9b-q4_k_m"),
+            "/no_think\nCan you hear me?",
+        )
+        overrides = desktop_chat._desktop_request_overrides(runtime, "qwen3.5-9b-q4_k_m")
+        self.assertEqual(
+            overrides["extra_body"]["chat_template_kwargs"],
+            {"enable_thinking": False},
+        )
+        self.assertEqual(overrides["extra_body"]["reasoning"], {"enabled": False})
+        self.assertFalse(overrides["extra_body"]["include_reasoning"])
+
+    def test_desktop_cloud_turns_do_not_receive_qwen_no_think_controls(self) -> None:
+        runtime = {"provider": "custom", "base_url": "https://api.mistral.ai/v1"}
+
+        self.assertEqual(
+            desktop_chat._desktop_model_prompt("Can you hear me?", runtime, "mistral-small-latest"),
+            "Can you hear me?",
+        )
+        self.assertEqual(
+            desktop_chat._desktop_request_overrides(runtime, "mistral-small-latest"),
+            {},
+        )
+
+    def test_direct_desktop_payload_is_compact_streaming_local_qwen_request(self) -> None:
+        runtime = {
+            "provider": "custom",
+            "requested_provider": "llama_cpp_local",
+            "api_mode": "chat_completions",
+            "base_url": "http://127.0.0.1:8081/v1",
+        }
+
+        self.assertTrue(
+            desktop_chat._direct_desktop_chat_available(
+                runtime,
+                [],
+                "qwen3.5-9b-q4_k_m",
+            )
+        )
+        self.assertFalse(
+            desktop_chat._direct_desktop_chat_available(
+                runtime,
+                ["web"],
+                "qwen3.5-9b-q4_k_m",
+            )
+        )
+        payload = desktop_chat._direct_desktop_chat_payload(
+            model="qwen3.5-9b-q4_k_m",
+            prompt="Can you hear me?",
+            system_prompt="JARVIS direct system",
+            runtime=runtime,
+            stream=True,
+            max_tokens=128,
+        )
+
+        self.assertEqual(payload["messages"][0], {"role": "system", "content": "JARVIS direct system"})
+        self.assertEqual(payload["messages"][1]["content"], "/no_think\nCan you hear me?")
+        self.assertTrue(payload["stream"])
+        self.assertEqual(payload["max_tokens"], 128)
+        self.assertEqual(payload["chat_template_kwargs"], {"enable_thinking": False})
 
     def test_sessions_page_has_desktop_source_mapping(self) -> None:
         source = (
