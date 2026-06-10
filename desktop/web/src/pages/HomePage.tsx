@@ -168,6 +168,7 @@ export default function HomePage() {
   const voiceCaptureIdRef = useRef(0);
   const voiceTurnIdRef = useRef("");
   const assistantTurnIdRef = useRef("");
+  const activeTurnSoulRef = useRef<string | null>(null);
   const voiceTurnDispatchedRef = useRef(false);
   const voiceHadSpeechRef = useRef(false);
   const voiceSilenceStartedAtRef = useRef<number | null>(null);
@@ -448,7 +449,7 @@ export default function HomePage() {
 
       const result = await api.synthesizeSpeech(text, {
         turnId: assistantTurnIdRef.current,
-        soul: activeTurnSoul ?? stats?.active_soul ?? "jarvis",
+        soul: activeTurnSoulRef.current ?? stats?.active_soul ?? "jarvis",
         phase: "synthesizing",
       });
       if (!result.success || !result.audio_base64) {
@@ -462,7 +463,7 @@ export default function HomePage() {
         ),
       };
     },
-    [activeTurnSoul, stats?.active_soul, voiceOutput],
+    [stats?.active_soul, voiceOutput],
   );
 
   const playSynthesizedSpeech = useCallback(
@@ -620,10 +621,7 @@ export default function HomePage() {
       if (source === "voice") {
         setTerminalInput("");
       }
-      const agentPrompt =
-        source === "voice"
-          ? `Spoken user message: ${cleanPrompt}\n\nRespond naturally, briefly, and directly. Do not echo disfluent transcription artifacts.`
-          : cleanPrompt;
+      const agentPrompt = cleanPrompt;
       const turnId =
         source === "voice"
           ? voiceTurnIdRef.current || createVoiceTurnId()
@@ -634,6 +632,7 @@ export default function HomePage() {
       liveOutputCharsRef.current = 0;
       setLiveTokensPerSecond(0);
       setActiveTurnSoul(null);
+      activeTurnSoulRef.current = null;
       voiceOutputBufferRef.current = "";
       setTerminalEntries((entries) => [
         ...entries,
@@ -645,6 +644,7 @@ export default function HomePage() {
         await api.streamDesktopChat(agentPrompt, {
           onReady: (result) => {
             const nextSoul = (result.active_soul || result.soul?.id || "jarvis").toLowerCase();
+            activeTurnSoulRef.current = nextSoul;
             setActiveTurnSoul(nextSoul);
             appendTerminalOutput(`\n[${nextSoul.toUpperCase()} online]\n`);
           },
@@ -654,7 +654,9 @@ export default function HomePage() {
             queueVoiceDelta(text);
           },
           onDone: (result) => {
-            setActiveTurnSoul(result.active_soul || null);
+            const doneSoul = result.active_soul || null;
+            activeTurnSoulRef.current = doneSoul;
+            setActiveTurnSoul(doneSoul);
             handleDesktopChatDone(result);
           },
           onError: (message) => {
@@ -991,6 +993,23 @@ export default function HomePage() {
   }, [audioLevel, listening, scheduleVoiceRetry, stopVoiceRecording]);
 
   const toggleMic = async () => {
+    if (autoVoiceArmed || listening || voiceBusy || speaking) {
+      setAutoVoiceArmed(false);
+      if (voiceRetryTimerRef.current !== null) {
+        window.clearTimeout(voiceRetryTimerRef.current);
+        voiceRetryTimerRef.current = null;
+      }
+      setVoiceRetryAt(0);
+      if (listening) {
+        stopVoiceRecording();
+      }
+      setTerminalEntries((entries) => [
+        ...entries,
+        { kind: "output", text: "Voice loop paused." },
+      ]);
+      return;
+    }
+
     if (listening) {
       stopVoiceRecording();
       return;
@@ -1209,7 +1228,6 @@ export default function HomePage() {
               active={autoVoiceArmed || listening || voiceBusy}
               busy={voiceBusy}
               onClick={() => {
-                setAutoVoiceArmed(true);
                 void toggleMic();
               }}
             />
