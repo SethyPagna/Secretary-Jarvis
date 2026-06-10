@@ -658,8 +658,8 @@ def _transcribe_local(file_path: str, model_name: str) -> Dict[str, Any]:
     normalized_model = _normalize_local_model(model_name)
     downloaded_model_dir = _find_local_whisper_transformers_dir(normalized_model)
     prefer_downloaded = is_truthy_value(
-        os.getenv("JARVIS_STT_PREFER_DOWNLOADED_WHISPER", "1"),
-        default=True,
+        os.getenv("JARVIS_STT_PREFER_DOWNLOADED_WHISPER", "0"),
+        default=False,
     )
     if downloaded_model_dir is not None and (prefer_downloaded or not _HAS_FASTER_WHISPER):
         downloaded_result = _transcribe_local_transformers(file_path, downloaded_model_dir)

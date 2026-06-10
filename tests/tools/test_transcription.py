@@ -239,13 +239,53 @@ class TestTranscribeLocal:
         assert result["provider"] == "local_transformers"
         assert result["transcript"] == "local downloaded model works"
 
-    def test_downloaded_whisper_folder_is_preferred_by_default(self, tmp_path, monkeypatch):
+    def test_faster_whisper_is_preferred_by_default_when_installed(self, tmp_path, monkeypatch):
         audio_file = tmp_path / "test.ogg"
         audio_file.write_bytes(b"fake audio")
         model_dir = tmp_path / "openai__whisper-large-v3-turbo"
         model_dir.mkdir()
 
+        mock_segment = MagicMock()
+        mock_segment.text = "faster whisper wins"
+        mock_info = MagicMock()
+        mock_info.language = "en"
+        mock_info.duration = 2.5
+        mock_model = MagicMock()
+        mock_model.transcribe.return_value = ([mock_segment], mock_info)
+        fake_fw = _fake_faster_whisper_module(mock_model)
+
         monkeypatch.delenv("JARVIS_STT_PREFER_DOWNLOADED_WHISPER", raising=False)
+        with patch("tools.transcription_tools._HAS_FASTER_WHISPER", True), \
+             patch.dict("sys.modules", {"faster_whisper": fake_fw}), \
+             patch("tools.transcription_tools._local_model", None), \
+             patch("tools.transcription_tools._local_model_runtime", None), \
+             patch("tools.transcription_tools._find_local_whisper_transformers_dir", return_value=model_dir), \
+             patch(
+                 "tools.transcription_tools._transcribe_local_transformers",
+                 return_value={
+                     "success": True,
+                     "transcript": "downloaded turbo wins",
+                     "provider": "local_transformers",
+                     "model_path": str(model_dir),
+                 },
+             ) as downloaded_transcribe, \
+             patch("tools.transcription_tools._load_stt_config", return_value={}):
+            from tools.transcription_tools import _transcribe_local
+            result = _transcribe_local(str(audio_file), "large-v3-turbo")
+
+        downloaded_transcribe.assert_not_called()
+        fake_fw.WhisperModel.assert_called_once()
+        assert result["success"] is True
+        assert result["provider"] == "local"
+        assert result["transcript"] == "faster whisper wins"
+
+    def test_downloaded_whisper_folder_can_be_preferred_by_env(self, tmp_path, monkeypatch):
+        audio_file = tmp_path / "test.ogg"
+        audio_file.write_bytes(b"fake audio")
+        model_dir = tmp_path / "openai__whisper-large-v3-turbo"
+        model_dir.mkdir()
+
+        monkeypatch.setenv("JARVIS_STT_PREFER_DOWNLOADED_WHISPER", "1")
         with patch("tools.transcription_tools._HAS_FASTER_WHISPER", True), \
              patch("tools.transcription_tools._find_local_whisper_transformers_dir", return_value=model_dir), \
              patch(
