@@ -332,6 +332,10 @@ def telegram_live_probe(base: str, token: str, send_latest: bool) -> dict[str, A
         "username": status_after.get("username") or started.get("username") or "",
         "updates_seen": status_after.get("updates_seen"),
         "messages_handled": status_after.get("messages_handled"),
+        "pending_updates": status_after.get("pending_updates"),
+        "webhook_url": status_after.get("webhook_url") or "",
+        "last_chat_id_known": bool(status_after.get("last_chat_id")),
+        "last_chat_label": status_after.get("last_chat_label") or "",
         "error": status_after.get("error") or status_after.get("last_error") or "",
         "before_state": status_before.get("state"),
     }
@@ -345,7 +349,7 @@ def telegram_live_probe(base: str, token: str, send_latest: bool) -> dict[str, A
             env = {**os.environ, **load_env()}
             bot_token = _token(env)
             updates = _api(bot_token, "getUpdates", {"timeout": 1}, timeout=8)
-            latest_chat = None
+            latest_chat = status_after.get("last_chat_id")
             for update in reversed(updates.get("result") or []):
                 message = update.get("message") if isinstance(update, dict) else None
                 chat = message.get("chat") if isinstance(message, dict) else None
@@ -355,7 +359,7 @@ def telegram_live_probe(base: str, token: str, send_latest: bool) -> dict[str, A
             if latest_chat:
                 text = f"JARVIS live Telegram probe OK at {time.strftime('%Y-%m-%d %H:%M:%S')}."
                 sent = _api(bot_token, "sendMessage", {"chat_id": latest_chat, "text": text}, timeout=15)
-                payload["send_latest"] = {"ok": bool(sent.get("ok")), "chat_id_found": True}
+                payload["send_latest"] = {"ok": bool(sent.get("ok")), "chat_id_found": True, "used_remembered_chat": latest_chat == status_after.get("last_chat_id")}
             else:
                 payload["send_latest"] = {"ok": False, "chat_id_found": False, "error": "No recent Telegram chat found."}
         except Exception as exc:  # noqa: BLE001 - diagnostic path.

@@ -1027,7 +1027,7 @@ async def get_status():
 async def get_telegram_bridge_status():
     from jarvis_cli.telegram_desktop_bridge import telegram_bridge_status
 
-    return telegram_bridge_status()
+    return telegram_bridge_status(get_jarvis_home())
 
 
 @app.post("/api/messaging/telegram/start")

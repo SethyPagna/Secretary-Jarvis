@@ -19,7 +19,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Mapping
 
-from jarvis_cli.config import load_env
+from jarvis_cli.config import get_jarvis_home, load_env
 
 _log = logging.getLogger(__name__)
 _thread: threading.Thread | None = None
@@ -34,8 +34,11 @@ _status: dict[str, Any] = {
     "username": "",
     "last_error": "",
     "last_message_at": None,
+    "last_update_at": None,
     "messages_handled": 0,
     "updates_seen": 0,
+    "pending_updates": None,
+    "webhook_url": "",
 }
 
 
@@ -59,6 +62,59 @@ def _allowed_users(env: Mapping[str, str] | None = None) -> set[str]:
     values = env or _merged_env()
     raw = values.get("TELEGRAM_ALLOWED_USERS") or values.get("JARVIS_TELEGRAM_ALLOWED_USERS") or ""
     return {part.strip() for part in raw.replace(";", ",").split(",") if part.strip()}
+
+
+def _state_path(jarvis_home: str | Path | None = None) -> Path:
+    home = Path(jarvis_home) if jarvis_home is not None else get_jarvis_home()
+    return home / "gateway" / "telegram_desktop_state.json"
+
+
+def _load_state(jarvis_home: str | Path | None = None) -> dict[str, Any]:
+    path = _state_path(jarvis_home)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _save_state(jarvis_home: str | Path, payload: Mapping[str, Any]) -> None:
+    path = _state_path(jarvis_home)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(dict(payload), indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _chat_label(chat: Mapping[str, Any]) -> str:
+    for key in ("title", "username", "first_name"):
+        value = str(chat.get(key) or "").strip()
+        if value:
+            return value
+    return str(chat.get("id") or "")
+
+
+def _remember_chat(jarvis_home: str | Path, message: Mapping[str, Any]) -> dict[str, Any]:
+    chat = message.get("chat") if isinstance(message.get("chat"), Mapping) else {}
+    sender = message.get("from") if isinstance(message.get("from"), Mapping) else {}
+    chat_id = chat.get("id")
+    if chat_id is None:
+        return _load_state(jarvis_home)
+    state = _load_state(jarvis_home)
+    state.update(
+        {
+            "last_chat_id": chat_id,
+            "last_chat_type": chat.get("type") or "",
+            "last_chat_label": _chat_label(chat),
+            "last_sender_id": sender.get("id") or "",
+            "last_sender_name": " ".join(
+                part for part in (str(sender.get("first_name") or "").strip(), str(sender.get("last_name") or "").strip()) if part
+            ),
+            "last_text_preview": str(message.get("text") or "")[:140],
+            "last_seen_at": time.time(),
+        }
+    )
+    _save_state(jarvis_home, state)
+    _set_status(last_message_at=state["last_seen_at"])
+    return state
 
 
 def _api(token: str, method: str, payload: Mapping[str, Any] | None = None, timeout: float = 20.0) -> dict[str, Any]:
@@ -94,7 +150,20 @@ def _set_status(**updates: Any) -> None:
         _status.update(updates)
 
 
-def telegram_bridge_status() -> dict[str, Any]:
+def _refresh_webhook_diagnostics(token: str) -> None:
+    try:
+        webhook = _api(token, "getWebhookInfo", timeout=4.0)
+        if webhook.get("ok"):
+            result = webhook.get("result") if isinstance(webhook.get("result"), Mapping) else {}
+            _set_status(
+                webhook_url=str(result.get("url") or ""),
+                pending_updates=result.get("pending_update_count"),
+            )
+    except Exception as exc:
+        _log.debug("Telegram webhook diagnostic failed: %s", exc)
+
+
+def telegram_bridge_status(jarvis_home: str | Path | None = None) -> dict[str, Any]:
     env = _merged_env()
     token = _token(env)
     with _status_lock:
@@ -109,8 +178,16 @@ def telegram_bridge_status() -> dict[str, Any]:
                 _set_status(connected=False, state="error", last_error=str(me.get("description") or "getMe failed"))
         except Exception as exc:
             _set_status(connected=False, state="error", last_error=f"Telegram getMe failed: {exc}")
+    if token:
+        _refresh_webhook_diagnostics(token)
     with _status_lock:
         payload = dict(_status)
+    state = _load_state(jarvis_home)
+    if state:
+        payload["last_chat_id"] = state.get("last_chat_id")
+        payload["last_chat_type"] = state.get("last_chat_type") or ""
+        payload["last_chat_label"] = state.get("last_chat_label") or ""
+        payload["last_seen_at"] = state.get("last_seen_at")
     payload["configured"] = bool(token)
     payload["allowed_users_configured"] = bool(_allowed_users(env))
     payload["error"] = payload.get("last_error") or ""
@@ -131,6 +208,7 @@ def _handle_text_message(token: str, jarvis_home: Path, message: Mapping[str, An
     text = str(message.get("text") or "").strip()
     if not chat_id or not text:
         return
+    _remember_chat(jarvis_home, message)
 
     allowed = _allowed_users()
     if allowed and user_id not in allowed:
@@ -182,7 +260,7 @@ def _poll_loop(token: str, jarvis_home: Path) -> None:
             _set_status(state="running", connected=True, last_error="")
             updates = response.get("result") if isinstance(response.get("result"), list) else []
             if updates:
-                _set_status(updates_seen=int(_status.get("updates_seen") or 0) + len(updates))
+                _set_status(updates_seen=int(_status.get("updates_seen") or 0) + len(updates), last_update_at=time.time())
             for update in updates:
                 if not isinstance(update, Mapping):
                     continue
@@ -207,9 +285,9 @@ def start_telegram_bridge(jarvis_home: str | Path) -> dict[str, Any]:
     token = _token(env)
     if not token:
         _set_status(configured=False, running=False, connected=False, state="not_configured", last_error="TELEGRAM_BOT_TOKEN is not configured.")
-        return telegram_bridge_status()
+        return telegram_bridge_status(jarvis_home)
     if _thread and _thread.is_alive():
-        return telegram_bridge_status()
+        return telegram_bridge_status(jarvis_home)
 
     _stop_event.clear()
     _set_status(configured=True, running=True, connected=False, state="starting", last_error="")
@@ -220,7 +298,7 @@ def start_telegram_bridge(jarvis_home: str | Path) -> dict[str, Any]:
         daemon=True,
     )
     _thread.start()
-    return telegram_bridge_status()
+    return telegram_bridge_status(jarvis_home)
 
 
 def stop_telegram_bridge(timeout: float = 4.0) -> dict[str, Any]:
