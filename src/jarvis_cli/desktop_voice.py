@@ -14,6 +14,7 @@ import importlib.util
 import json
 import mimetypes
 import os
+import struct
 import subprocess
 import tempfile
 import threading
@@ -43,6 +44,9 @@ _KOKORO_CACHE: dict[tuple[str, str, str], Any] = {}
 _KOKORO_SPACY_PREPARED = False
 _VOICE_WARMUP_STARTED = False
 _VOICE_WARMUP_LOCK = threading.Lock()
+_MIN_DESKTOP_VOICE_DURATION_SECONDS = 0.32
+_MIN_DESKTOP_VOICE_RMS = 0.0025
+_MIN_DESKTOP_VOICE_PEAK = 0.012
 
 
 def _writable_audio_dir(preferred: Path, purpose: str) -> Path:
@@ -90,6 +94,76 @@ def _default_transcriber(path: str) -> Mapping[str, Any]:
     return transcribe_audio(path, model=model)
 
 
+def _wav_quality(path: Path) -> dict[str, Any]:
+    """Return lightweight signal quality for browser WAV captures."""
+    try:
+        with wave.open(str(path), "rb") as wav_file:
+            frames = wav_file.getnframes()
+            sample_rate = wav_file.getframerate() or 0
+            sample_width = wav_file.getsampwidth()
+            channels = max(1, wav_file.getnchannels())
+            data = wav_file.readframes(frames)
+    except Exception:
+        return {}
+
+    duration_seconds = frames / sample_rate if sample_rate else 0.0
+    if sample_width != 2 or not data:
+        return {
+            "duration_seconds": duration_seconds,
+            "rms": None,
+            "peak": None,
+            "sample_rate": sample_rate,
+            "channels": channels,
+        }
+
+    sample_count = len(data) // 2
+    if sample_count <= 0:
+        return {
+            "duration_seconds": duration_seconds,
+            "rms": 0.0,
+            "peak": 0.0,
+            "sample_rate": sample_rate,
+            "channels": channels,
+        }
+
+    samples = struct.unpack("<" + "h" * sample_count, data)
+    if channels > 1:
+        samples = samples[::channels]
+    if not samples:
+        return {
+            "duration_seconds": duration_seconds,
+            "rms": 0.0,
+            "peak": 0.0,
+            "sample_rate": sample_rate,
+            "channels": channels,
+        }
+
+    total = sum(sample * sample for sample in samples)
+    rms = (total / len(samples)) ** 0.5 / 32768.0
+    peak = max(abs(sample) for sample in samples) / 32768.0
+    return {
+        "duration_seconds": duration_seconds,
+        "rms": rms,
+        "peak": peak,
+        "sample_rate": sample_rate,
+        "channels": channels,
+    }
+
+
+def _is_low_signal_wav(quality: Mapping[str, Any]) -> bool:
+    """True when a WAV capture is too short or silent for reliable Whisper STT."""
+    if not quality:
+        return False
+    duration = float(quality.get("duration_seconds") or 0.0)
+    rms = quality.get("rms")
+    peak = quality.get("peak")
+    if duration and duration < _MIN_DESKTOP_VOICE_DURATION_SECONDS:
+        return True
+    if rms is None or peak is None:
+        return False
+    return float(rms) < _MIN_DESKTOP_VOICE_RMS and float(peak) < _MIN_DESKTOP_VOICE_PEAK
+
+
 def transcribe_desktop_audio(
     audio_bytes: bytes,
     content_type: str | None,
@@ -109,6 +183,17 @@ def transcribe_desktop_audio(
     output_dir = _writable_audio_dir(output_dir, "voice-input")
     audio_path = output_dir / f"desktop-input-{uuid.uuid4().hex}{audio_extension_for(content_type)}"
     audio_path.write_bytes(audio_bytes)
+    quality = _wav_quality(audio_path) if audio_path.suffix.lower() == ".wav" else {}
+    if _is_low_signal_wav(quality):
+        return {
+            "success": False,
+            "transcript": "",
+            "error": "Microphone input was silent or too short for reliable transcription.",
+            "bytes": len(audio_bytes),
+            "input_path": str(audio_path),
+            "latency_ms": 0,
+            "quality": quality,
+        }
 
     started = time.perf_counter()
     payload = (transcriber or _default_transcriber)(str(audio_path))
@@ -116,6 +201,23 @@ def transcribe_desktop_audio(
     latency_ms = int((time.perf_counter() - started) * 1000)
 
     transcript = str(result.get("transcript") or "").strip()
+    try:
+        from tools.voice_mode import is_whisper_hallucination
+
+        if is_whisper_hallucination(transcript):
+            return {
+                **result,
+                "success": False,
+                "transcript": "",
+                "error": "Whisper returned a silence/noise hallucination instead of speech.",
+                "bytes": len(audio_bytes),
+                "input_path": str(audio_path),
+                "latency_ms": latency_ms,
+                "quality": quality,
+                "filtered": True,
+            }
+    except Exception:
+        pass
     success = bool(result.get("success")) and bool(transcript)
     return {
         **result,
@@ -124,6 +226,7 @@ def transcribe_desktop_audio(
         "bytes": len(audio_bytes),
         "input_path": str(audio_path),
         "latency_ms": latency_ms,
+        "quality": quality,
     }
 
 

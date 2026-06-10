@@ -1,7 +1,9 @@
 import json
 import os
+import struct
 import tempfile
 import unittest
+import wave
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,6 +12,20 @@ from jarvis_cli.desktop_voice import (
     synthesize_desktop_speech,
     transcribe_desktop_audio,
 )
+
+
+def _wav_bytes(samples: list[int], *, sample_rate: int = 16_000) -> bytes:
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as handle:
+        path = Path(handle.name)
+    try:
+        with wave.open(str(path), "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(sample_rate)
+            wav_file.writeframes(struct.pack("<" + "h" * len(samples), *samples))
+        return path.read_bytes()
+    finally:
+        path.unlink(missing_ok=True)
 
 
 class DesktopVoiceTests(unittest.TestCase):
@@ -62,6 +78,47 @@ class DesktopVoiceTests(unittest.TestCase):
             _default_transcriber("sample.webm")
 
         transcribe_audio.assert_called_once_with("sample.webm", model="medium")
+
+    def test_transcribe_desktop_audio_rejects_silent_wav_before_whisper(self) -> None:
+        called = False
+
+        def fake_transcriber(path: str):
+            nonlocal called
+            called = True
+            return {"success": True, "transcript": "thank you"}
+
+        silent_audio = _wav_bytes([0] * 16_000)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = transcribe_desktop_audio(
+                silent_audio,
+                "audio/wav",
+                Path(temp_dir),
+                transcriber=fake_transcriber,
+            )
+
+        self.assertFalse(result["success"])
+        self.assertFalse(called)
+        self.assertIn("silent", result["error"].lower())
+        self.assertEqual(result["quality"]["peak"], 0.0)
+
+    def test_transcribe_desktop_audio_filters_whisper_hallucinations(self) -> None:
+        voiced_audio = _wav_bytes([1200, -1200] * 12_000)
+
+        def fake_transcriber(path: str):
+            return {"success": True, "transcript": "Thank you. Thank you.", "provider": "local"}
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = transcribe_desktop_audio(
+                voiced_audio,
+                "audio/wav",
+                Path(temp_dir),
+                transcriber=fake_transcriber,
+            )
+
+        self.assertFalse(result["success"])
+        self.assertEqual(result["transcript"], "")
+        self.assertTrue(result["filtered"])
+        self.assertIn("hallucination", result["error"].lower())
 
     def test_synthesize_desktop_speech_returns_audio_payload_for_browser_playback(self) -> None:
         def fake_synthesizer(*, text: str, output_path: str):

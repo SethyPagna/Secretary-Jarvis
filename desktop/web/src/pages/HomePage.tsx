@@ -109,13 +109,12 @@ const VOICE_AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   sampleRate: { ideal: 16000 },
   sampleSize: { ideal: 16 },
 };
-const VOICE_SPEECH_THRESHOLD = 0.028;
-const VOICE_MIN_SPEECH_MS = 360;
-const VOICE_AUTO_STOP_SILENCE_MS = 850;
+const VOICE_SPEECH_THRESHOLD = 0.018;
+const VOICE_MIN_SPEECH_MS = 520;
+const VOICE_AUTO_STOP_SILENCE_MS = 1050;
 const VOICE_MAX_NO_SPEECH_MS = 30_000;
-const VOICE_EMPTY_RETRY_DELAY_MS = 8_000;
-const VOICE_MAX_EMPTY_RETRIES = 2;
-const VOICE_SILENT_MONITOR_RESTART_MS = 4_000;
+const VOICE_EMPTY_RETRY_DELAY_MS = 1_600;
+const VOICE_SILENT_MONITOR_RESTART_MS = 1_800;
 const VOICE_LIVE_TRANSCRIBE_INTERVAL_MS = 2_400;
 const VOICE_TTS_STREAM_CHUNK_CHARS = 88;
 
@@ -870,29 +869,24 @@ export default function HomePage() {
     (reason: "empty" | "silent") => {
       if (!autoVoiceArmed) return;
       voiceEmptyCapturesRef.current += 1;
-      const paused = voiceEmptyCapturesRef.current >= VOICE_MAX_EMPTY_RETRIES;
-      if (paused) {
-        setAutoVoiceArmed(false);
-      } else {
-        const retryAt = Date.now() + VOICE_EMPTY_RETRY_DELAY_MS;
-        setVoiceRetryAt(retryAt);
-        if (voiceRetryTimerRef.current !== null) {
-          window.clearTimeout(voiceRetryTimerRef.current);
-        }
-        voiceRetryTimerRef.current = window.setTimeout(() => {
-          voiceRetryTimerRef.current = null;
-          setVoiceRetryAt(0);
-        }, VOICE_EMPTY_RETRY_DELAY_MS);
+      const retryAt = Date.now() + VOICE_EMPTY_RETRY_DELAY_MS;
+      setVoiceRetryAt(retryAt);
+      if (voiceRetryTimerRef.current !== null) {
+        window.clearTimeout(voiceRetryTimerRef.current);
       }
+      voiceRetryTimerRef.current = window.setTimeout(() => {
+        voiceRetryTimerRef.current = null;
+        setVoiceRetryAt(0);
+      }, VOICE_EMPTY_RETRY_DELAY_MS);
+      if (voiceEmptyCapturesRef.current > 1) return;
       setTerminalEntries((entries) => [
         ...entries,
         {
           kind: "output",
-          text: paused
-            ? "Voice is paused until the microphone has a clear signal."
-            : reason === "silent"
-              ? "Voice is still live. Waiting for a clearer signal."
-              : "Listening for a clearer phrase.",
+          text:
+            reason === "silent"
+              ? "Voice is live. Waiting for speech."
+              : "Voice is live. Listening again.",
         },
       ]);
     },
