@@ -49,6 +49,16 @@ type SynthesizedSpeechChunk = {
   audioBlob: Blob;
 };
 
+function audioContextConstructor():
+  | typeof AudioContext
+  | undefined {
+  return (
+    window.AudioContext ??
+    (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext
+  );
+}
+
 function base64ToAudioBlob(base64: string, mimeType: string): Blob {
   const binary = window.atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -156,11 +166,64 @@ function createVoiceTurnId(): string {
   return `voice-${Date.now().toString(36)}-${random}`;
 }
 
+function mergePcmChunks(chunks: Float32Array[]): Float32Array {
+  const length = chunks.reduce((total, chunk) => total + chunk.length, 0);
+  const merged = new Float32Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return merged;
+}
+
+function encodePcm16Wav(samples: Float32Array, sampleRate: number): Blob {
+  const bytesPerSample = 2;
+  const channels = 1;
+  const dataSize = samples.length * bytesPerSample;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+  const writeAscii = (offset: number, text: string) => {
+    for (let index = 0; index < text.length; index += 1) {
+      view.setUint8(offset + index, text.charCodeAt(index));
+    }
+  };
+
+  writeAscii(0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeAscii(8, "WAVE");
+  writeAscii(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, channels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * channels * bytesPerSample, true);
+  view.setUint16(32, channels * bytesPerSample, true);
+  view.setUint16(34, 16, true);
+  writeAscii(36, "data");
+  view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+  for (let index = 0; index < samples.length; index += 1) {
+    const clamped = Math.max(-1, Math.min(1, samples[index]));
+    view.setInt16(offset, clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff, true);
+    offset += bytesPerSample;
+  }
+
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
 export default function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const voiceChunksRef = useRef<Blob[]>([]);
   const voiceStreamRef = useRef<MediaStream | null>(null);
+  const voicePcmContextRef = useRef<AudioContext | null>(null);
+  const voicePcmProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const voicePcmSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const voicePcmSilenceRef = useRef<GainNode | null>(null);
+  const voicePcmBuffersRef = useRef<Float32Array[]>([]);
+  const voicePcmSampleRateRef = useRef(16000);
   const voiceOutputBufferRef = useRef("");
   const speechSynthesisTailRef = useRef<Promise<void>>(Promise.resolve());
   const speechPlaybackQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -260,10 +323,7 @@ export default function HomePage() {
   const startStreamAudioMeter = useCallback(
     (stream: MediaStream) => {
       stopAudioMeter();
-      const AudioContextConstructor =
-        window.AudioContext ??
-        (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext;
+      const AudioContextConstructor = audioContextConstructor();
       if (!AudioContextConstructor) return;
 
       const context = new AudioContextConstructor();
@@ -282,10 +342,7 @@ export default function HomePage() {
   const startPlaybackAudioMeter = useCallback(
     (audio: HTMLAudioElement) => {
       stopAudioMeter();
-      const AudioContextConstructor =
-        window.AudioContext ??
-        (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext;
+      const AudioContextConstructor = audioContextConstructor();
       if (!AudioContextConstructor) return;
 
       const context = new AudioContextConstructor();
@@ -302,6 +359,69 @@ export default function HomePage() {
     [monitorAnalyser, stopAudioMeter],
   );
 
+  const stopPcmCapture = useCallback((clear = false) => {
+    try {
+      voicePcmSourceRef.current?.disconnect();
+    } catch {
+      // Source may already be detached.
+    }
+    try {
+      voicePcmProcessorRef.current?.disconnect();
+    } catch {
+      // Processor may already be detached.
+    }
+    try {
+      voicePcmSilenceRef.current?.disconnect();
+    } catch {
+      // Gain node may already be detached.
+    }
+    voicePcmSourceRef.current = null;
+    voicePcmProcessorRef.current = null;
+    voicePcmSilenceRef.current = null;
+    const context = voicePcmContextRef.current;
+    voicePcmContextRef.current = null;
+    if (context && context.state !== "closed") {
+      void context.close().catch(() => undefined);
+    }
+    if (clear) voicePcmBuffersRef.current = [];
+  }, []);
+
+  const startPcmCapture = useCallback(
+    (stream: MediaStream) => {
+      stopPcmCapture(true);
+      const AudioContextConstructor = audioContextConstructor();
+      if (!AudioContextConstructor) return;
+
+      const context = new AudioContextConstructor();
+      const source = context.createMediaStreamSource(stream);
+      const processor = context.createScriptProcessor(4096, 1, 1);
+      const silence = context.createGain();
+      silence.gain.value = 0;
+
+      voicePcmSampleRateRef.current = context.sampleRate || 16000;
+      processor.onaudioprocess = (event) => {
+        const channel = event.inputBuffer.getChannelData(0);
+        voicePcmBuffersRef.current.push(new Float32Array(channel));
+      };
+
+      source.connect(processor);
+      processor.connect(silence);
+      silence.connect(context.destination);
+
+      voicePcmContextRef.current = context;
+      voicePcmSourceRef.current = source;
+      voicePcmProcessorRef.current = processor;
+      voicePcmSilenceRef.current = silence;
+    },
+    [stopPcmCapture],
+  );
+
+  const createVoiceWavBlob = useCallback((): Blob => {
+    const samples = mergePcmChunks(voicePcmBuffersRef.current);
+    if (samples.length === 0) return new Blob([], { type: "audio/wav" });
+    return encodePcm16Wav(samples, voicePcmSampleRateRef.current || 16000);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (voiceRetryTimerRef.current !== null) {
@@ -314,6 +434,7 @@ export default function HomePage() {
         recorder.stop();
       }
       voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
+      stopPcmCapture(true);
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
       }
@@ -321,7 +442,7 @@ export default function HomePage() {
       setTtsQueueBusy(false);
       stopAudioMeter();
     };
-  }, [stopAudioMeter]);
+  }, [stopAudioMeter, stopPcmCapture]);
 
   const orbState: OrbState = useMemo(() => {
     const voicePhase = stats?.voice_activity?.phase ?? "";
@@ -724,15 +845,15 @@ export default function HomePage() {
   );
 
   const queueLiveVoiceTranscription = useCallback(
-    (mimeType: string) => {
+    () => {
       const now = Date.now();
       if (voiceSnapshotInFlightRef.current) return;
       if (now - voiceLastSnapshotAtRef.current < VOICE_LIVE_TRANSCRIBE_INTERVAL_MS) return;
-      if (!voiceHadSpeechRef.current || voiceChunksRef.current.length < 2) return;
+      if (!voiceHadSpeechRef.current || voicePcmBuffersRef.current.length < 2) return;
 
       const captureId = voiceCaptureIdRef.current;
-      const audio = new Blob([...voiceChunksRef.current], { type: mimeType || "audio/webm" });
-      if (audio.size < 1024) return;
+      const audio = createVoiceWavBlob();
+      if (audio.size < 4096) return;
 
       voiceSnapshotInFlightRef.current = true;
       voiceLastSnapshotAtRef.current = now;
@@ -742,7 +863,7 @@ export default function HomePage() {
           voiceSnapshotInFlightRef.current = false;
         });
     },
-    [transcribeVoiceSnapshot],
+    [createVoiceWavBlob, transcribeVoiceSnapshot],
   );
 
   const scheduleVoiceRetry = useCallback(
@@ -824,10 +945,11 @@ export default function HomePage() {
   );
 
   const stopVoiceStream = useCallback(() => {
+    stopPcmCapture();
     voiceStreamRef.current?.getTracks().forEach((track) => track.stop());
     voiceStreamRef.current = null;
     stopAudioMeter();
-  }, [stopAudioMeter]);
+  }, [stopAudioMeter, stopPcmCapture]);
 
   const stopVoiceRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
@@ -880,6 +1002,7 @@ export default function HomePage() {
       voiceSilenceStartedAtRef.current = null;
       voiceRecordingStartedAtRef.current = Date.now();
       startStreamAudioMeter(stream);
+      startPcmCapture(stream);
       const preferredMime = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -893,14 +1016,12 @@ export default function HomePage() {
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           voiceChunksRef.current.push(event.data);
-          queueLiveVoiceTranscription(recorder.mimeType || preferredMime || "audio/webm");
+          queueLiveVoiceTranscription();
         }
       };
       recorder.onstop = () => {
         const hadSpeech = voiceHadSpeechRef.current;
-        const recordedAudio = new Blob(voiceChunksRef.current, {
-          type: recorder.mimeType || preferredMime || "audio/webm",
-        });
+        const recordedAudio = createVoiceWavBlob();
         mediaRecorderRef.current = null;
         voiceChunksRef.current = [];
         stopVoiceStream();
@@ -943,8 +1064,10 @@ export default function HomePage() {
     }
   }, [
     handleRecordedVoice,
+    createVoiceWavBlob,
     queueLiveVoiceTranscription,
     readiness?.stt,
+    startPcmCapture,
     startStreamAudioMeter,
     stopVoiceStream,
   ]);
