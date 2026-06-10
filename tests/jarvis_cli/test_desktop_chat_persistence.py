@@ -38,11 +38,13 @@ class DesktopChatPersistenceTests(unittest.TestCase):
             def __init__(self, **kwargs):
                 self.kwargs = kwargs
                 self.model = kwargs["model"]
+                self.last_message = ""
                 self.session_input_tokens = 4
                 self.session_output_tokens = 5
                 created_agents.append(self)
 
-            def chat(self, _message, stream_callback=None):
+            def chat(self, message, stream_callback=None):
+                self.last_message = message
                 if stream_callback:
                     stream_callback("JARVIS live chat OK.")
                 return "JARVIS live chat OK."
@@ -93,6 +95,13 @@ class DesktopChatPersistenceTests(unittest.TestCase):
         self.assertEqual(result.response, "JARVIS live chat OK.")
         self.assertEqual(created_agents[0].kwargs["base_url"], "https://api.mistral.ai/v1")
         self.assertEqual(created_agents[0].kwargs["model"], "mistral-small-latest")
+        self.assertEqual(created_agents[0].last_message, "Say OK")
+        self.assertTrue(created_agents[0].kwargs["skip_context_files"])
+        self.assertFalse(created_agents[0].kwargs["load_soul_identity"])
+        self.assertEqual(created_agents[0].kwargs["max_iterations"], 8)
+        self.assertEqual(created_agents[0].kwargs["tool_delay"], 0.0)
+        self.assertIn("Desktop voice/chat contract", created_agents[0].kwargs["ephemeral_system_prompt"])
+        self.assertNotIn("User request:", created_agents[0].last_message)
 
     def test_sessions_page_has_desktop_source_mapping(self) -> None:
         source = (

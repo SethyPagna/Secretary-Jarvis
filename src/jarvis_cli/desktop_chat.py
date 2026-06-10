@@ -502,7 +502,7 @@ def run_desktop_chat_turn(
     from jarvis_cli.models import detect_provider_for_model
     from jarvis_cli.runtime_provider import resolve_runtime_provider
     from jarvis_cli.soul_registry import (
-        build_soul_routed_prompt,
+        build_soul_system_context,
         classify_prompt_soul,
         team_souls_by_id,
     )
@@ -514,7 +514,7 @@ def run_desktop_chat_turn(
     if soul:
         by_id = team_souls_by_id()
         selected_soul = by_id.get(str(soul).strip().lower(), selected_soul)
-    routed_prompt = build_soul_routed_prompt(clean_prompt, selected_soul)
+    team_context = build_soul_system_context(selected_soul)
     active_soul = str(selected_soul.get("id") or "jarvis").lower()
     delegate_souls = [
         str(item)
@@ -606,9 +606,25 @@ def run_desktop_chat_turn(
         api_mode=runtime.get("api_mode"),
         model=effective_model,
         max_tokens=int(os.getenv("JARVIS_DESKTOP_MAX_TOKENS", "512") or "512"),
+        max_iterations=int(os.getenv("JARVIS_DESKTOP_MAX_ITERATIONS", "8") or "8"),
+        tool_delay=float(os.getenv("JARVIS_DESKTOP_TOOL_DELAY_SECONDS", "0") or "0"),
         enabled_toolsets=toolsets_list,
         quiet_mode=True,
+        ephemeral_system_prompt=(
+            team_context
+            + "\n\n"
+            "Desktop voice/chat contract: answer the user's latest words directly. "
+            "Do not repeat the transcript, do not expose routing mechanics, and keep short voice replies natural."
+        ),
         platform="desktop",
+        skip_context_files=(
+            os.getenv("JARVIS_DESKTOP_SKIP_CONTEXT_FILES", "1").strip().lower()
+            not in {"0", "false", "no", "off"}
+        ),
+        load_soul_identity=(
+            os.getenv("JARVIS_DESKTOP_LOAD_SOUL_IDENTITY", "0").strip().lower()
+            in {"1", "true", "yes", "on"}
+        ),
         session_db=_create_session_db(),
         credential_pool=runtime.get("credential_pool"),
         fallback_model=fallback or None,
@@ -623,7 +639,7 @@ def run_desktop_chat_turn(
     started = time.perf_counter()
     with open(os.devnull, "w", encoding="utf-8") as devnull:
         with redirect_stdout(devnull), redirect_stderr(devnull):
-            response = agent.chat(routed_prompt, stream_callback=on_delta) or ""
+            response = agent.chat(clean_prompt, stream_callback=on_delta) or ""
     latency_ms = int((time.perf_counter() - started) * 1000)
 
     input_tokens = int(getattr(agent, "session_input_tokens", 0) or 0)
